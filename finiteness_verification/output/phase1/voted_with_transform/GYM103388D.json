@@ -1,0 +1,182 @@
+{
+  "problem_id": "GYM103388D",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 500000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "connected": false,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 500000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "connected": false,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "partition",
+        "description": "将节点集划分为两个互斥的子集，每个节点属于且仅属于一个子集（图的二分约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "maximum_value_constraint",
+        "description": "两个子集中的最大边权值必须相等",
+        "confidence": "1/1"
+      },
+      {
+        "name": "edge_removal",
+        "description": "连接不同子集的边将被删除",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "partition",
+              "description": "将节点集划分为两个互斥的子集，每个节点属于且仅属于一个子集（图的二分约束）"
+            },
+            {
+              "name": "maximum_value_constraint",
+              "description": "两个子集中的最大边权值必须相等"
+            },
+            {
+              "name": "edge_removal",
+              "description": "连接不同子集的边将被删除"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种划分方式使得两个子集的最大边权相等，并输出所有可能的相等最大边权值"
+        }
+      }
+    ],
+    "description": "判断是否存在一种划分方式使得两个子集的最大边权相等，并输出所有可能的相等最大边权值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到。在本题中，通过将城市划分为两个集合，每个集合内的道路最大值相等，可以确保整个问题的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "二分搜索：通过二分查找确定可能的最大道路美丽值，使得两个集合内的最大道路美丽值相等。搜索区间单调缩小，直到找到满足条件的最大值。",
+        "confidence": "1/1",
+        "properties": {
+          "search_interval_monotonic": true
+        }
+      },
+      {
+        "name": "partition_balance",
+        "description": "图划分不变量：将图中的节点划分为两个集合，使得每个集合内的边权最大值相等。这种划分方式保证了两个集合的美丽值相等。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到。在本题中，通过将城市划分为两个集合，每个集合内的道路最大值相等，可以确保整个问题的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "二分搜索：通过二分查找确定可能的最大道路美丽值，使得两个集合内的最大道路美丽值相等。搜索区间单调缩小，直到找到满足条件的最大值。",
+              "properties": {
+                "search_interval_monotonic": true
+              }
+            },
+            {
+              "name": "partition_balance",
+              "description": "图划分不变量：将图中的节点划分为两个集合，使得每个集合内的边权最大值相等。这种划分方式保证了两个集合的美丽值相等。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Max_Beauty": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "道路的最大美丽值"
+      },
+      "Num_Cities": {
+        "min": 1,
+        "max": 500000,
+        "description": "城市的数量"
+      },
+      "Num_Roads": {
+        "min": 1,
+        "max": 500000,
+        "description": "道路的数量"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count",
+      "maximize_beauty",
+      "minimize_beauty"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_parallel_edges",
+      "allow_negative_weights",
+      "require_connected_components",
+      "require_disconnected_components",
+      "require_even_number_of_cities",
+      "require_odd_number_of_cities"
+    ]
+  }
+}

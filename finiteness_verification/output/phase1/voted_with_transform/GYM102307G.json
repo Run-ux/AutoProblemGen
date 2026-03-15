@@ -1,0 +1,156 @@
+{
+  "problem_id": "GYM102307G",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 10000
+          },
+          "properties": {
+            "directed": true,
+            "acyclic": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 10000
+    },
+    "properties": {
+      "directed": true,
+      "acyclic": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "degree_bound",
+        "description": "每个节点的出度不超过 1（每个课程最多是另一个课程的先修课）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "flow_constraint",
+        "description": "每学期选择的课程数量不超过 k（每学期最多选 k 门课）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "课程之间存在先修关系，必须按顺序完成（拓扑排序约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "degree_bound",
+              "description": "每个节点的出度不超过 1（每个课程最多是另一个课程的先修课）",
+              "formal": "∀i, out_degree(i) ≤ 1"
+            },
+            {
+              "name": "flow_constraint",
+              "description": "每学期选择的课程数量不超过 k（每学期最多选 k 门课）",
+              "formal": "∀semester, |courses_in_semester| ≤ k"
+            },
+            {
+              "name": "ordering",
+              "description": "课程之间存在先修关系，必须按顺序完成（拓扑排序约束）",
+              "formal": "对于所有 (u, v) ∈ prerequisites, u 必须在 v 之前完成"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足依赖关系和每期限制条件下的最小时间周期数"
+        }
+      }
+    ],
+    "description": "求满足依赖关系和每期限制条件下的最小时间周期数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：课程的依赖关系构成有向无环图（DAG），存在一个拓扑排序使得所有课程按其依赖关系有序排列。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到。在本题中，每个学期选择最多k门没有前置课程要求的课程，最终所需的最少学期数由这些子问题的最优解决定。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：课程的依赖关系构成有向无环图（DAG），存在一个拓扑排序使得所有课程按其依赖关系有序排列。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到。在本题中，每个学期选择最多k门没有前置课程要求的课程，最终所需的最少学期数由这些子问题的最优解决定。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 10,
+        "description": "每学期最多可以选的课程数量"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_multiple_prerequisites",
+      "allow_self_prerequisites",
+      "allow_negative_prerequisites",
+      "multi_constraints"
+    ]
+  }
+}

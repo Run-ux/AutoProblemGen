@@ -1,0 +1,180 @@
+{
+  "problem_id": "GYM105505H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 1,
+            "max": 8000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000
+          },
+          "properties": {
+            "acyclic": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 8000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000
+    },
+    "properties": {
+      "acyclic": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "函数调用图中不存在环（无环性）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "每个函数的总执行时间是其基础执行时间和所有直接调用函数的总执行时间之和",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "更新操作会改变函数的基础执行时间，查询操作需要考虑所有之前的更新",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "事件列表中至少包含一个查询操作",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "函数调用图中不存在环（无环性）"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "每个函数的总执行时间是其基础执行时间和所有直接调用函数的总执行时间之和",
+              "formal": "T(i) = B_i + ∑_{j ∈ C(i)} T(j)"
+            },
+            {
+              "name": "state_transition",
+              "description": "更新操作会改变函数的基础执行时间，查询操作需要考虑所有之前的更新"
+            },
+            {
+              "name": "operation_limit",
+              "description": "事件列表中至少包含一个查询操作"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "计算所有查询函数的总执行时间加权和，并取模"
+        }
+      }
+    ],
+    "description": "计算所有查询函数的总执行时间加权和，并取模"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个函数的总执行时间由其基础执行时间和它直接调用的所有函数的总执行时间组成，满足递归定义的最优子结构。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：由于函数调用图中没有环，可以按照拓扑序处理所有函数，确保在计算某个函数的总执行时间时，所有它直接或间接调用的函数已经计算完毕。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个函数的总执行时间由其基础执行时间和它直接调用的所有函数的总执行时间组成，满足递归定义的最优子结构。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：由于函数调用图中没有环，可以按照拓扑序处理所有函数，确保在计算某个函数的总执行时间时，所有它直接或间接调用的函数已经计算完毕。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "用于计算最终结果的模数"
+      },
+      "N": {
+        "min": 1,
+        "max": 8000,
+        "description": "函数的数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 8000,
+        "description": "调用指令的数量"
+      },
+      "E": {
+        "min": 1,
+        "max": 1000000,
+        "description": "事件的数量"
+      }
+    },
+    "objective_options": [
+      "sum_weighted_execution_time",
+      "maximize_value",
+      "minimize_value",
+      "count_queries",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_base_times",
+      "allow_self_calls",
+      "allow_cycles",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "problem_id": "GYM106124B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 100
+          },
+          "value_range": {
+            "min": 5,
+            "max": 483
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100
+    },
+    "value_range": {
+      "min": 5,
+      "max": 483
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "ordering",
+        "description": "堆叠的书必须按脊高非递增顺序排列（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "堆叠书的总厚度不能超过书架的高度",
+        "confidence": "1/1"
+      },
+      {
+        "name": "inclusion",
+        "description": "至少有一本书竖立放置",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "ordering",
+              "description": "堆叠的书必须按脊高非递增顺序排列（图着色约束）",
+              "formal": "对于堆叠的书，h[i] >= h[j] 对于所有 i < j"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "堆叠书的总厚度不能超过书架的高度",
+              "formal": "Σt[stacked_books] <= H"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "竖立书的总厚度加上堆叠书的总宽度不能超过书架的宽度",
+              "formal": "Σt[upright_books] + Σw[stacked_books] <= W"
+            },
+            {
+              "name": "inclusion",
+              "description": "至少有一本书竖立放置",
+              "formal": "|upright_books| >= 1"
+            },
+            {
+              "name": "inclusion",
+              "description": "至少有一本书堆叠放置",
+              "formal": "|stacked_books| >= 1"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个满足条件的书籍排列方案，其中至少有一本书直立放置且至少有一本书水平堆叠"
+        }
+      }
+    ],
+    "description": "构造一个满足条件的书籍排列方案，其中至少有一本书直立放置且至少有一本书水平堆叠"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "堆叠书籍的脊高按非递增顺序排列，确保堆叠部分的高度合法性可单调维护",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，即在选择某些书竖立和某些书堆叠时，每个子集的选择都是局部最优的",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "通过贪心选择性质，每次选择当前最优的书进行竖立或堆叠，以逐步构建全局最优解",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "竖立书籍的总厚度和堆叠书籍的总厚度可以通过端点差值计算，满足区间可加性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "堆叠书籍的脊高按非递增顺序排列，确保堆叠部分的高度合法性可单调维护",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，即在选择某些书竖立和某些书堆叠时，每个子集的选择都是局部最优的",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "通过贪心选择性质，每次选择当前最优的书进行竖立或堆叠，以逐步构建全局最优解",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "竖立书籍的总厚度和堆叠书籍的总厚度可以通过端点差值计算，满足区间可加性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "H": {
+        "min": 100,
+        "max": 500,
+        "description": "书架的高度（毫米）"
+      },
+      "W": {
+        "min": 200,
+        "max": 1000,
+        "description": "书架的宽度（毫米）"
+      },
+      "h_min": {
+        "min": 50,
+        "max": 400,
+        "description": "书籍脊高的最小值（毫米）"
+      },
+      "h_max": {
+        "min": 400,
+        "max": 600,
+        "description": "书籍脊高的最大值（毫米）"
+      },
+      "t_min": {
+        "min": 1,
+        "max": 30,
+        "description": "书籍厚度的最小值（毫米）"
+      },
+      "t_max": {
+        "min": 30,
+        "max": 80,
+        "description": "书籍厚度的最大值（毫米）"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_height_books",
+      "allow_zero_thickness_books",
+      "allow_equal_height_books_in_stack",
+      "allow_multiple_stacks",
+      "require_at_least_one_upright_book",
+      "require_at_least_one_stacked_book"
+    ]
+  }
+}

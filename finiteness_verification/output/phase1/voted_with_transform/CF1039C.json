@@ -1,0 +1,163 @@
+{
+  "problem_id": "CF1039C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 500000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1152921504606846975
+          },
+          "properties": {
+            "connected": false,
+            "weighted": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 500000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1152921504606846975
+    },
+    "properties": {
+      "connected": false,
+      "weighted": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "相邻节点取值不同（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "transformation",
+        "description": "节点值通过异或操作变换后仍需满足相邻节点取值不同",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "相邻节点取值不同（图着色约束）",
+              "formal": "对于所有边 (u, v) ∈ E，c_u ≠ c_v"
+            },
+            {
+              "name": "transformation",
+              "description": "节点值通过异或操作变换后仍需满足相邻节点取值不同",
+              "formal": "对于所有边 (u, v) ∈ E 和任意 x ∈ [0, 2^k - 1]，(c_u ⊕ x) ≠ (c_v ⊕ x)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的方案数（模10^9+7）"
+        }
+      }
+    ],
+    "description": "求满足条件的方案数（模10^9+7）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建，即在计算某个服务器集合和某个XOR值下的安全状态时，可以利用更小子集的安全状态信息。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：不同子集的安全状态计算是相互独立的，一个子集的状态不会影响另一个不相交子集的状态。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：对于任意给定的XOR值x，如果一个服务器集合A在x下是安全的，则其补集在相同的x下也是安全的。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建，即在计算某个服务器集合和某个XOR值下的安全状态时，可以利用更小子集的安全状态信息。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：不同子集的安全状态计算是相互独立的，一个子集的状态不会影响另一个不相交子集的状态。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：对于任意给定的XOR值x，如果一个服务器集合A在x下是安全的，则其补集在相同的x下也是安全的。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 60,
+        "description": "定义加密密钥范围的参数，密钥在 [0, 2^k - 1] 范围内"
+      },
+      "modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "结果取模的值，通常为 10^9 + 7"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "allow_negative_weights",
+      "allow_zero_weights",
+      "allow_non_connected_graph",
+      "allow_weighted_edges"
+    ]
+  }
+}

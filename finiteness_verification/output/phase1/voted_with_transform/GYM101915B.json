@@ -1,0 +1,188 @@
+{
+  "problem_id": "GYM101915B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "x": {
+              "min": 0,
+              "max": 1000
+            },
+            "y": {
+              "min": 0,
+              "max": 1000
+            },
+            "R": {
+              "min": 1,
+              "max": 1000
+            },
+            "S": {
+              "min": 0,
+              "max": 1000000
+            }
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "x": {
+        "min": 0,
+        "max": 1000
+      },
+      "y": {
+        "min": 0,
+        "max": 1000
+      },
+      "R": {
+        "min": 1,
+        "max": 1000
+      },
+      "S": {
+        "min": 0,
+        "max": 1000000
+      }
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subset_constraint",
+        "description": "选取的子集大小不超过 M",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "选择的点必须被选中的 WiFi 网络覆盖",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "目标是最大化选中网络的速度总和",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subset_constraint",
+              "description": "选取的子集大小不超过 M",
+              "formal": "|S| <= M"
+            },
+            {
+              "name": "coverage",
+              "description": "选择的点必须被选中的 WiFi 网络覆盖",
+              "formal": "∀ (x, y) ∈ P, ∃ (cx, cy, R, S) ∈ S, (x - cx)^2 + (y - cy)^2 <= R^2"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "目标是最大化选中网络的速度总和",
+              "formal": "maximize Σ S_i for all selected networks"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求在给定点集上，选择最多M个圆覆盖的点的最大权值和"
+        }
+      }
+    ],
+    "description": "求在给定点集上，选择最多M个圆覆盖的点的最大权值和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在选择最多M个WiFi网络时，可以将问题分解为选择前k个WiFi网络的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，优先选择当前覆盖点且速度最大的WiFi网络，局部最优选择能够导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在选择最多M个WiFi网络时，可以将问题分解为选择前k个WiFi网络的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，优先选择当前覆盖点且速度最大的WiFi网络，局部最优选择能够导致全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "M": {
+        "min": 1,
+        "max": 100,
+        "description": "Ali 可以加入的最大 WiFi 网络数量"
+      },
+      "R": {
+        "min": 1,
+        "max": 1000,
+        "description": "WiFi 网络的半径"
+      },
+      "S": {
+        "min": 0,
+        "max": 1000000,
+        "description": "WiFi 网络的速度"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_coordinates",
+      "allow_zero_radius",
+      "allow_repeated_networks",
+      "multi_constraints"
+    ]
+  }
+}

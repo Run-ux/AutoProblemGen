@@ -1,0 +1,178 @@
+{
+  "problem_id": "CF478E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000000000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 2
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000000000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "alternating_pattern_constraint",
+        "description": "数字的每一位（除了首位和末位）必须严格大于或小于其相邻的两位数字",
+        "confidence": "1/1"
+      },
+      {
+        "name": "divisibility",
+        "description": "找到的波浪数必须能被给定的整数 n 整除",
+        "confidence": "1/1"
+      },
+      {
+        "name": "k_mex_constraint",
+        "description": "找到的是第 k 小的满足条件的波浪数",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "找到的波浪数不能超过 10^14，如果不存在这样的数则输出 -1",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "alternating_pattern_constraint",
+              "description": "数字的每一位（除了首位和末位）必须严格大于或小于其相邻的两位数字"
+            },
+            {
+              "name": "divisibility",
+              "description": "找到的波浪数必须能被给定的整数 n 整除"
+            },
+            {
+              "name": "k_mex_constraint",
+              "description": "找到的是第 k 小的满足条件的波浪数"
+            },
+            {
+              "name": "range_bound",
+              "description": "找到的波浪数不能超过 10^14，如果不存在这样的数则输出 -1"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的第k小值"
+        }
+      }
+    ],
+    "description": "求满足条件的第k小值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的最优解组合得到，即找到第 k 个满足条件的数可以分解为找到前 k-1 个满足条件的数的问题。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：生成的波浪数是按从小到大的顺序生成的，因此在生成过程中，当前生成的波浪数始终大于之前生成的所有波浪数。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个波浪数生成下一个波浪数的过程中，通过特定的状态转移规则（如增加或减少某一位数字）来保证生成的数仍然满足波浪数的定义。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的最优解组合得到，即找到第 k 个满足条件的数可以分解为找到前 k-1 个满足条件的数的问题。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：生成的波浪数是按从小到大的顺序生成的，因此在生成过程中，当前生成的波浪数始终大于之前生成的所有波浪数。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个波浪数生成下一个波浪数的过程中，通过特定的状态转移规则（如增加或减少某一位数字）来保证生成的数仍然满足波浪数的定义。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 100000000000000,
+        "description": "波浪数的最大值，即找到的波浪数不能超过这个值"
+      },
+      "K": {
+        "min": 1,
+        "max": 100000000000000,
+        "description": "需要找到的第 K 小的波浪数"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_digits",
+      "allow_leading_zeros",
+      "allow_repeating_digits",
+      "strictly_increasing_decreasing"
+    ]
+  }
+}

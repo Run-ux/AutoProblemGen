@@ -1,0 +1,214 @@
+{
+  "problem_id": "P7432",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 250000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 250000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "capacity_constraint",
+        "description": "每个元素的选取数量不超过给定的上限（限购次数）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "某些元素在特定区间内不可选（禁止购买的玩具）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "cost_constraint",
+        "description": "每个用户的选择总成本不超过其预算（每个小朋友每天带的钱数）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "区间参数通过模运算和前一天的答案动态生成",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "capacity_constraint",
+              "description": "每个元素的选取数量不超过给定的上限（限购次数）",
+              "formal": "∀i, 0 ≤ x_i ≤ t_i"
+            },
+            {
+              "name": "exclusion",
+              "description": "某些元素在特定区间内不可选（禁止购买的玩具）",
+              "formal": "对于第 i 天，编号在 [l_i, r_i] 内的元素不可选"
+            },
+            {
+              "name": "cost_constraint",
+              "description": "每个用户的选择总成本不超过其预算（每个小朋友每天带的钱数）",
+              "formal": "∑(c_i * x_i) ≤ i, 其中 i 是小朋友的编号"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "区间参数通过模运算和前一天的答案动态生成",
+              "formal": "l_i = min((x + lastans - 1) % n + 1, (y + lastans - 1) % n + 1), r_i = max((x + lastans - 1) % n + 1, (y + lastans - 1) % n + 1)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求在给定约束条件下，最大化路径上的权值和"
+        }
+      }
+    ],
+    "description": "求在给定约束条件下，最大化路径上的权值和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每一天的最大愉悦度之和可以通过前一天的结果和当天的约束条件推导出来，满足动态规划的最优子结构性质",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：每一天的禁止购买区间可以通过前一天的答案和当前天的输入参数计算得出，且这些区间的合法性可以被维护和合并",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每一天的状态（最大愉悦度之和）可以通过前一天的状态和当天的约束条件进行转移，保持一致性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每一天的最大愉悦度之和可以通过前一天的结果和当天的约束条件推导出来，满足动态规划的最优子结构性质",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：每一天的禁止购买区间可以通过前一天的答案和当前天的输入参数计算得出，且这些区间的合法性可以被维护和合并",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每一天的状态（最大愉悦度之和）可以通过前一天的状态和当天的约束条件进行转移，保持一致性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Modulo": {
+        "min": 100000000,
+        "max": 100000000,
+        "description": "模数，用于对结果取模"
+      },
+      "T": {
+        "min": 1,
+        "max": 1000,
+        "description": "测试数据的组数"
+      },
+      "N": {
+        "min": 1,
+        "max": 1000,
+        "description": "玩具的种类数"
+      },
+      "M": {
+        "min": 1,
+        "max": 1000,
+        "description": "小朋友的数量"
+      },
+      "Q": {
+        "min": 1,
+        "max": 1000,
+        "description": "天数"
+      },
+      "C_i": {
+        "min": 0,
+        "max": 1000,
+        "description": "每种玩具的单价"
+      },
+      "V_i": {
+        "min": 1,
+        "max": 250000,
+        "description": "每种玩具提供的愉悦度"
+      },
+      "T_i": {
+        "min": 1,
+        "max": 1000,
+        "description": "每种玩具的限购次数"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_costs",
+      "allow_negative_values",
+      "allow_zero_joy",
+      "allow_unlimited_purchase",
+      "remove_modular_arithmetic",
+      "remove_exclusion_constraint",
+      "remove_cost_constraint",
+      "remove_capacity_constraint"
+    ]
+  }
+}

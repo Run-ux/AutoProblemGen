@@ -1,0 +1,168 @@
+{
+  "problem_id": "GYM105431B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 3
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 3
+    },
+    "value_range": {
+      "min": 1,
+      "max": 10000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "每个草皮的南侧和西侧必须紧邻地块边缘或其他草皮（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distance_bound",
+        "description": "所有没有北侧或东侧相邻草皮的草皮，必须与击球点有相同的曼哈顿距离",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "每个草皮的南侧和西侧必须紧邻地块边缘或其他草皮（图着色约束）"
+            },
+            {
+              "name": "distance_bound",
+              "description": "所有没有北侧或东侧相邻草皮的草皮，必须与击球点有相同的曼哈顿距离"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的方案数（所有草皮必须使用且符合规则，结果取模）"
+        }
+      }
+    ],
+    "description": "求满足条件的方案数（所有草皮必须使用且符合规则，结果取模）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建，即放置草皮的有效方案可以由更小规模的子问题的解组合而成。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态到另一个状态的转移是确定且一致的，即当前状态下的有效草皮放置方案可以通过前一个状态的有效方案推导出来。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "prefix_decomposability",
+        "description": "前缀可分解性：问题的解可以通过前缀部分的解来构建，即当前行或列的有效草皮放置方案可以通过前一行或列的有效方案推导出来。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建，即放置草皮的有效方案可以由更小规模的子问题的解组合而成。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态到另一个状态的转移是确定且一致的，即当前状态下的有效草皮放置方案可以通过前一个状态的有效方案推导出来。",
+              "properties": {}
+            },
+            {
+              "name": "prefix_decomposability",
+              "description": "前缀可分解性：问题的解可以通过前缀部分的解来构建，即当前行或列的有效草皮放置方案可以通过前一行或列的有效方案推导出来。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 10000,
+        "description": "可用的草皮数量"
+      },
+      "a": {
+        "min": 1,
+        "max": 10000,
+        "description": "地块的长度（米）"
+      },
+      "b": {
+        "min": 1,
+        "max": 10000,
+        "description": "地块的宽度（米）"
+      },
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "结果取模的值，通常为 10^9 + 7"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_square_tiles",
+      "allow_diagonal_adjacency",
+      "allow_variable_tile_sizes",
+      "allow_multiple_batting_points",
+      "allow_different_distance_constraints"
+    ]
+  }
+}

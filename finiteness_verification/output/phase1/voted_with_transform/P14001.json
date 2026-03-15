@@ -1,0 +1,170 @@
+{
+  "problem_id": "P14001",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 3
+          },
+          "value_range": {
+            "min": 0,
+            "max": 4299
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 3
+    },
+    "value_range": {
+      "min": 0,
+      "max": 4299
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "error_resilience_constraint",
+        "description": "编码方案必须能够容忍一个元素被删除后仍能正确解码（信息冗余约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "invariance_under_translation",
+        "description": "Alice 和 Bob 的 setup 函数必须返回相同的 N 值（一致性约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "injective_mapping",
+        "description": "Bob 必须能够从任意两个编码值中唯一确定原始值（唯一解码约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "error_resilience_constraint",
+              "description": "编码方案必须能够容忍一个元素被删除后仍能正确解码（信息冗余约束）",
+              "formal": "对于任意 A, encode(A) = [W1, W2, W3]，decode(Wi, Wj) = A (i ≠ j)"
+            },
+            {
+              "name": "invariance_under_translation",
+              "description": "Alice 和 Bob 的 setup 函数必须返回相同的 N 值（一致性约束）",
+              "formal": "setup(M)_alice == setup(M)_bob"
+            },
+            {
+              "name": "injective_mapping",
+              "description": "Bob 必须能够从任意两个编码值中唯一确定原始值（唯一解码约束）",
+              "formal": "对于任意 A, B (A ≠ B), decode(encode(A)) ≠ decode(encode(B))"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化可传递的信息数量"
+        }
+      }
+    ],
+    "description": "最大化可传递的信息数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：解码过程中的每一步都依赖于前一步的最优解，从而保证最终解的正确性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：编码和解码过程中，信息的传递方式在某些变换下保持不变，例如交换两个数字的位置不影响解码结果。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：编码和解码过程中，状态的转换是确定且一致的，确保了信息传递的可靠性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：解码过程中的每一步都依赖于前一步的最优解，从而保证最终解的正确性。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：编码和解码过程中，信息的传递方式在某些变换下保持不变，例如交换两个数字的位置不影响解码结果。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：编码和解码过程中，状态的转换是确定且一致的，确保了信息传递的可靠性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "M": {
+        "min": 1,
+        "max": 4300,
+        "description": "每个餐巾纸上可以写的数字范围，从0到M-1"
+      },
+      "T": {
+        "min": 1,
+        "max": 5000,
+        "description": "每天进行信息传递的次数"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_valid_schemes",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repetitions_in_encoding",
+      "disallow_repetitions_in_encoding",
+      "allow_variable_number_of_napkins",
+      "fixed_number_of_napkins"
+    ]
+  }
+}

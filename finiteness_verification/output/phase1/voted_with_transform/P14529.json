@@ -1,0 +1,192 @@
+{
+  "problem_id": "P14529",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 5000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 5000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "constant_value_constraint",
+        "description": "两人必须保持相同的高度（即路径上的高度值相同）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "cost_constraint",
+        "description": "路径的努力程度是路径上高度绝对差值的总和",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_position_constraint",
+        "description": "路径从高度 0 开始并在高度 0 结束",
+        "confidence": "1/1"
+      },
+      {
+        "name": "non_negative_value_constraint",
+        "description": "内部高度为严格正数",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "所有内部高度互不相同（仅在子任务 1 中有效）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "constant_value_constraint",
+              "description": "两人必须保持相同的高度（即路径上的高度值相同）"
+            },
+            {
+              "name": "cost_constraint",
+              "description": "路径的努力程度是路径上高度绝对差值的总和"
+            },
+            {
+              "name": "fixed_position_constraint",
+              "description": "路径从高度 0 开始并在高度 0 结束"
+            },
+            {
+              "name": "non_negative_value_constraint",
+              "description": "内部高度为严格正数"
+            },
+            {
+              "name": "distinctness",
+              "description": "所有内部高度互不相同（仅在子任务 1 中有效）",
+              "formal": "∀ i, j (1 < i < j < N), h[i] ≠ h[j]"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求两点间路径上的最小代价"
+        }
+      }
+    ],
+    "description": "求两点间路径上的最小代价"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在任意高度相遇时，两人分别从起点到该高度的努力程度之和最小。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着两人向山脉内部移动，他们之间的高度差值总和呈现单调变化趋势。当两人从两端向中间移动时，高度差值总和先减后增。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：两人从山脉两端开始攀登，最终在某一点相遇。由于两人必须保持相同高度，因此可以将问题转化为一个对称的问题，即两人的路径是对称的。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在任意高度相遇时，两人分别从起点到该高度的努力程度之和最小。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着两人向山脉内部移动，他们之间的高度差值总和呈现单调变化趋势。当两人从两端向中间移动时，高度差值总和先减后增。",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：两人从山脉两端开始攀登，最终在某一点相遇。由于两人必须保持相同高度，因此可以将问题转化为一个对称的问题，即两人的路径是对称的。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 3,
+        "max": 5000,
+        "description": "山脉的高度数组的长度"
+      },
+      "H": {
+        "min": 1,
+        "max": 1000000,
+        "description": "内部高度的最大值"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_heights",
+      "disallow_repeated_heights",
+      "allow_negative_heights",
+      "disallow_negative_heights",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "problem_id": "GYM105588H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "geometric_angle_constraint",
+        "description": "雷达在任意角度下必须覆盖至少 k 个点（岛屿）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "所有点（岛屿）的坐标必须不同，且不能位于原点",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "geometric_angle_constraint",
+              "description": "雷达在任意角度下必须覆盖至少 k 个点（岛屿）",
+              "formal": "∀θ, |{i | θ - α/2 ≤ atan2(y_i, x_i) ≤ θ + α/2}| ≥ k"
+            },
+            {
+              "name": "distinctness",
+              "description": "所有点（岛屿）的坐标必须不同，且不能位于原点",
+              "formal": "∀i ≠ j, (x_i, y_i) ≠ (x_j, y_j) ∧ (x_i, y_i) ≠ (0, 0)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的最小角度值"
+        }
+      }
+    ],
+    "description": "求满足条件的最小角度值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，通过旋转角度的增加来逐步覆盖更多的岛屿",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，即在某个角度范围内的最小扫描角度可以由更小范围内的最优解组合而成",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性，通过计算角度区间的覆盖情况，可以通过端点差值计算出覆盖的岛屿数量",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，通过旋转角度的增加来逐步覆盖更多的岛屿",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，即在某个角度范围内的最小扫描角度可以由更小范围内的最优解组合而成",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性，通过计算角度区间的覆盖情况，可以通过端点差值计算出覆盖的岛屿数量",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 200000,
+        "description": "雷达必须覆盖的最小岛屿数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 200000,
+        "description": "岛屿的总数"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision",
+      "count"
+    ],
+    "structural_options": [
+      "allow_origin_island",
+      "allow_duplicate_islands",
+      "multi_constraints"
+    ]
+  }
+}

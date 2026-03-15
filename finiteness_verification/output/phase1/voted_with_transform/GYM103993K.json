@@ -1,0 +1,189 @@
+{
+  "problem_id": "GYM103993K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 4,
+            "max": 4
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 4,
+      "max": 4
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "flow_constraint",
+        "description": "选取元素的权重和不超过容量上限（每次射击造成的伤害不超过敌方飞船的耐久度）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "选择的元素不能重复（每次只能选择一个激光器或同时选择两个激光器进行射击，但不能重复选择同一个激光器）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移约束（激光器的充电状态随时间变化，且每次射击后需要重新充电）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "flow_constraint",
+              "description": "选取元素的权重和不超过容量上限（每次射击造成的伤害不超过敌方飞船的耐久度）",
+              "formal": "P - s <= h"
+            },
+            {
+              "name": "exclusion",
+              "description": "选择的元素不能重复（每次只能选择一个激光器或同时选择两个激光器进行射击，但不能重复选择同一个激光器）",
+              "formal": "shoot(laser_i) or shoot(laser_1, laser_2)"
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移约束（激光器的充电状态随时间变化，且每次射击后需要重新充电）",
+              "formal": "charge_time(laser_i) = t_i"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的最小时间"
+        }
+      }
+    ],
+    "description": "求满足条件的最小时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "时间单调递增：每次操作后，总时间严格增加，直到达到目标状态",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：在任意时刻，选择当前最优的射击策略（单个激光或双激光同时），可以保证最终结果是最优的",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：每次选择当前可执行的最佳操作（即对敌方飞船造成最大伤害的操作）能够确保整体最优解",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "时间单调递增：每次操作后，总时间严格增加，直到达到目标状态",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：在任意时刻，选择当前最优的射击策略（单个激光或双激光同时），可以保证最终结果是最优的",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：每次选择当前可执行的最佳操作（即对敌方飞船造成最大伤害的操作）能够确保整体最优解",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "p1": {
+        "min": 2,
+        "max": 5000,
+        "description": "第一激光器的功率"
+      },
+      "t1": {
+        "min": 1,
+        "max": 1000000000000,
+        "description": "第一激光器的重装时间"
+      },
+      "p2": {
+        "min": 2,
+        "max": 5000,
+        "description": "第二激光器的功率"
+      },
+      "t2": {
+        "min": 1,
+        "max": 1000000000000,
+        "description": "第二激光器的重装时间"
+      },
+      "h": {
+        "min": 1,
+        "max": 5000,
+        "description": "敌方飞船的耐久度"
+      },
+      "s": {
+        "min": 1,
+        "max": 4999,
+        "description": "敌方飞船的护盾容量"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_equal_power_lasers",
+      "allow_zero_charge_initially",
+      "allow_shield_greater_than_power",
+      "allow_multiple_enemies"
+    ]
+  }
+}

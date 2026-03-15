@@ -1,0 +1,176 @@
+{
+  "problem_id": "CF1181E1",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "coverage",
+        "description": "两个矩形合并后的结果必须仍然是一个矩形",
+        "confidence": "1/1"
+      },
+      {
+        "name": "intersection_constraint",
+        "description": "初始的矩形区域不相交，但可以相切",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "每个城堡必须完全包含在某个初始国家的矩形区域内",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "coverage",
+              "description": "两个矩形合并后的结果必须仍然是一个矩形",
+              "formal": "∀ (R1, R2) ∈ Rectangles, R1 ∪ R2 is a rectangle"
+            },
+            {
+              "name": "intersection_constraint",
+              "description": "初始的矩形区域不相交，但可以相切",
+              "formal": "∀ (R1, R2) ∈ InitialRectangles, R1 ∩ R2 = ∅ or R1 and R2 touch"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "每个城堡必须完全包含在某个初始国家的矩形区域内",
+              "formal": "∀ C ∈ Castles, ∃ R ∈ InitialRectangles, C ⊆ R"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种划分方案，使得每个子集的并集为矩形"
+        }
+      }
+    ],
+    "description": "判断是否存在一种划分方案，使得每个子集的并集为矩形"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建，每个子问题的解是独立且最优的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在合并过程中，每次合并操作都保持了矩形区域的合法性，并且新的矩形区域可以由之前的矩形区域通过合法的合并操作得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：矩形区域可以通过合并操作进行合并，并且合并后的矩形区域仍然满足题目要求的矩形性质。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建，每个子问题的解是独立且最优的。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在合并过程中，每次合并操作都保持了矩形区域的合法性，并且新的矩形区域可以由之前的矩形区域通过合法的合并操作得到。",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：矩形区域可以通过合并操作进行合并，并且合并后的矩形区域仍然满足题目要求的矩形性质。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 1000,
+        "description": "国家和城堡的数量"
+      },
+      "X_MAX": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "矩形区域的 x 坐标的最大值"
+      },
+      "Y_MAX": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "矩形区域的 y 坐标的最大值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_touching_rectangles",
+      "disallow_touching_rectangles",
+      "allow_non_integer_coordinates",
+      "disallow_non_integer_coordinates",
+      "allow_overlapping_castles",
+      "disallow_overlapping_castles"
+    ]
+  }
+}

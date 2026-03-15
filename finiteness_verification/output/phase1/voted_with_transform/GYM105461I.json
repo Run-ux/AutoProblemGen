@@ -1,0 +1,167 @@
+{
+  "problem_id": "GYM105461I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "recurrence_relation",
+        "description": "序列由递推公式定义，即 a_i = (A * a_{i-1} + B * a_{i-2}) % M",
+        "confidence": "1/1"
+      },
+      {
+        "name": "repetition",
+        "description": "序列存在周期 T，使得对于某个 i_0 及之后的所有 i，有 a_i = a_{i+T}",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "recurrence_relation",
+              "description": "序列由递推公式定义，即 a_i = (A * a_{i-1} + B * a_{i-2}) % M",
+              "formal": "a_i = (A * a_{i-1} + B * a_{i-2}) % M, for i >= 2"
+            },
+            {
+              "name": "repetition",
+              "description": "序列存在周期 T，使得对于某个 i_0 及之后的所有 i，有 a_i = a_{i+T}",
+              "formal": "∃T > 0, ∃i_0, ∀i ≥ i_0, a_i = a_{i+T}"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求序列的最小周期长度"
+        }
+      }
+    ],
+    "description": "求序列的最小周期长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "pattern_preservation",
+        "description": "序列的周期性：存在一个正整数T，使得对于某个i0，对于所有i >= i0，有a_i = a_{i+T}。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：序列中的每个元素由前两个元素通过给定的递推公式确定。",
+        "confidence": "1/1",
+        "properties": {
+          "transition_formula": "a_i = (A * a_{i-1} + B * a_{i-2}) % M"
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "pattern_preservation",
+              "description": "序列的周期性：存在一个正整数T，使得对于某个i0，对于所有i >= i0，有a_i = a_{i+T}。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：序列中的每个元素由前两个元素通过给定的递推公式确定。",
+              "properties": {
+                "transition_formula": "a_i = (A * a_{i-1} + B * a_{i-2}) % M"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "M": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "模数，用于递推公式中的取模操作"
+      },
+      "a0": {
+        "min": 0,
+        "max": 999999999,
+        "description": "序列的初始值 a0"
+      },
+      "a1": {
+        "min": 0,
+        "max": 999999999,
+        "description": "序列的初始值 a1"
+      },
+      "A": {
+        "min": 0,
+        "max": 999999999,
+        "description": "递推公式中的系数 A"
+      },
+      "B": {
+        "min": 0,
+        "max": 999999999,
+        "description": "递推公式中的系数 B"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_coefficients",
+      "allow_equal_initial_values",
+      "allow_large_modulo",
+      "allow_small_modulo"
+    ]
+  }
+}

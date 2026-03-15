@@ -1,0 +1,169 @@
+{
+  "problem_id": "GYM105408J",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "non_negative_prefix_sum",
+        "description": "前缀和非负（在任何时刻，Shikanoko 吃的饼干数量不少于 Koshi 吃的饼干数量）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "revisiting_allowed",
+        "description": "只能从两端取元素（Koshi 只能从饼干包的两端取饼干）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "排列唯一性（不同的吃饼干顺序必须是不同的排列）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "non_negative_prefix_sum",
+              "description": "前缀和非负（在任何时刻，Shikanoko 吃的饼干数量不少于 Koshi 吃的饼干数量）",
+              "formal": "对于任意 0 ≤ i ≤ N, sum(M[0:i]) - (i - sum(M[0:i])) ≥ 0"
+            },
+            {
+              "name": "revisiting_allowed",
+              "description": "只能从两端取元素（Koshi 只能从饼干包的两端取饼干）",
+              "formal": "每次操作只能选择 M[0] 或 M[N-1]"
+            },
+            {
+              "name": "distinctness",
+              "description": "排列唯一性（不同的吃饼干顺序必须是不同的排列）",
+              "formal": "对于两个不同的天数 d1 和 d2，存在 i, j 使得在 d1 中 i 在 j 之前被吃掉，而在 d2 中 j 在 i 之前被吃掉"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足条件的不同排列数的最大值"
+        }
+      }
+    ],
+    "description": "求满足条件的不同排列数的最大值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，确保从两端取元素时的顺序合法性",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在每一步操作中，当前状态到下一个状态的转移是确定且一致的",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：每个子问题的解法不受其他子问题的影响，可以独立求解",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，确保从两端取元素时的顺序合法性",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在每一步操作中，当前状态到下一个状态的转移是确定且一致的",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：每个子问题的解法不受其他子问题的影响，可以独立求解",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "输出结果的模数，题目中固定为 10^9 + 7"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_prefix_sum",
+      "allow_middle_grabbing",
+      "allow_repeated_orders"
+    ]
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "problem_id": "CF1569D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distance_bound",
+        "description": "两点之间的最短路径（仅沿街道行走）严格大于它们的曼哈顿距离",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "所有人的位置坐标是唯一的，即没有两个人在同一个位置",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "城市可以表示为一个从 (0, 0) 到 (10^6, 10^6) 的网格，边界也是街道",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "每个人的位置必须在某条垂直或水平街道上，或者同时在两条街道的交点上",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distance_bound",
+              "description": "两点之间的最短路径（仅沿街道行走）严格大于它们的曼哈顿距离"
+            },
+            {
+              "name": "distinctness",
+              "description": "所有人的位置坐标是唯一的，即没有两个人在同一个位置"
+            },
+            {
+              "name": "range_bound",
+              "description": "城市可以表示为一个从 (0, 0) 到 (10^6, 10^6) 的网格，边界也是街道"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "每个人的位置必须在某条垂直或水平街道上，或者同时在两条街道的交点上"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "计算满足特定条件的点对数量"
+        }
+      }
+    ],
+    "description": "计算满足特定条件的点对数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "坐标轴上的点按顺序排列，垂直和水平街道的坐标单调递增，保证了在处理过程中可以利用有序性进行高效计算。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "interval_additivity",
+        "description": "通过前缀和的方式可以高效地计算出某个区间内的不便对数量，利用端点差值计算区间贡献。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的解可以通过子问题的解来构建，即通过计算每个子区间的不便对数量来得到整个区域的不便对数量。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "坐标轴上的点按顺序排列，垂直和水平街道的坐标单调递增，保证了在处理过程中可以利用有序性进行高效计算。",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "interval_additivity",
+              "description": "通过前缀和的方式可以高效地计算出某个区间内的不便对数量，利用端点差值计算区间贡献。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的解可以通过子问题的解来构建，即通过计算每个子区间的不便对数量来得到整个区域的不便对数量。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 200000,
+        "description": "垂直街道的数量"
+      },
+      "M": {
+        "min": 2,
+        "max": 200000,
+        "description": "水平街道的数量"
+      },
+      "K": {
+        "min": 2,
+        "max": 300000,
+        "description": "人的数量"
+      },
+      "T": {
+        "min": 1,
+        "max": 1000,
+        "description": "测试用例的数量"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_unique_points",
+      "allow_diagonal_streets",
+      "allow_non_grid_layout",
+      "allow_non_integer_coordinates"
+    ]
+  }
+}

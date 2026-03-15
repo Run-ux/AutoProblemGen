@@ -1,0 +1,153 @@
+{
+  "problem_id": "CF1373E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 150
+          },
+          "value_range": {
+            "min": 1,
+            "max": 150
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 150
+    },
+    "value_range": {
+      "min": 1,
+      "max": 150
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "sum_constraint",
+        "description": "选取的连续 k+1 个整数的数字和之和等于给定值 n",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "在满足上述和约束的情况下，找到最小的非负整数 x",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "sum_constraint",
+              "description": "选取的连续 k+1 个整数的数字和之和等于给定值 n",
+              "formal": "f(x) + f(x + 1) + ... + f(x + k) = n"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "在满足上述和约束的情况下，找到最小的非负整数 x",
+              "formal": "minimize x such that f(x) + f(x + 1) + ... + f(x + k) = n"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足给定条件的最小非负整数"
+        }
+      }
+    ],
+    "description": "求满足给定条件的最小非负整数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过计算连续整数的数字和，可以将问题转化为区间和的形式，利用前缀和的思想进行求解",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着x的增加，f(x) + f(x + 1) + ... + f(x + k)的值也呈现出一定的单调性，可以通过枚举或二分搜索来找到满足条件的最小x",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过计算连续整数的数字和，可以将问题转化为区间和的形式，利用前缀和的思想进行求解",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着x的增加，f(x) + f(x + 1) + ... + f(x + k)的值也呈现出一定的单调性，可以通过枚举或二分搜索来找到满足条件的最小x",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 0,
+        "max": 9,
+        "description": "连续整数的个数"
+      },
+      "n": {
+        "min": 1,
+        "max": 150,
+        "description": "目标和值"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_x",
+      "allow_large_k",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "problem_id": "P6880",
+  "source": "luogu",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 200
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000
+          },
+          "properties": {
+            "connected": false,
+            "weighted": true,
+            "directed": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 200
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000
+    },
+    "properties": {
+      "connected": false,
+      "weighted": true,
+      "directed": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "最多翻转一条边",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "从起点到终点再返回起点的路径代价最小化",
+        "confidence": "1/1"
+      },
+      {
+        "name": "cost_constraint",
+        "description": "翻转边的代价计入总代价",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "图必须连通，即存在从起点到终点再返回起点的路径",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "最多翻转一条边",
+              "formal": "flip_count <= 1"
+            },
+            {
+              "name": "path_constraint",
+              "description": "从起点到终点再返回起点的路径代价最小化",
+              "formal": "minimize(path_cost(1 -> N) + path_cost(N -> 1))"
+            },
+            {
+              "name": "cost_constraint",
+              "description": "翻转边的代价计入总代价",
+              "formal": "total_cost = path_cost(1 -> N) + path_cost(N -> 1) + flip_cost"
+            },
+            {
+              "name": "connectivity",
+              "description": "图必须连通，即存在从起点到终点再返回起点的路径",
+              "formal": "exists_path(1 -> N) and exists_path(N -> 1)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求在翻转至多一条边的情况下，从起点到终点再返回起点的最小路径代价和"
+        }
+      }
+    ],
+    "description": "求在翻转至多一条边的情况下，从起点到终点再返回起点的最小路径代价和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：从起点到终点再返回的最短路径可以分解为两个子问题的最优解，即从起点到终点的最短路径和从终点回到起点的最短路径。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：通过翻转一条边的状态（方向），可以改变路径的成本。在动态规划或图论算法中，这种状态转移保持一致性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "flow_conservation",
+        "description": "流守恒：在考虑翻转边的情况下，从起点到终点再返回的总流量守恒，即每个节点的流入等于流出。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：从起点到终点再返回的最短路径可以分解为两个子问题的最优解，即从起点到终点的最短路径和从终点回到起点的最短路径。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：通过翻转一条边的状态（方向），可以改变路径的成本。在动态规划或图论算法中，这种状态转移保持一致性。",
+              "properties": {}
+            },
+            {
+              "name": "flow_conservation",
+              "description": "流守恒：在考虑翻转边的情况下，从起点到终点再返回的总流量守恒，即每个节点的流入等于流出。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "D": {
+        "min": 0,
+        "max": 1000000,
+        "description": "翻转一条边的代价"
+      },
+      "C": {
+        "min": 0,
+        "max": 1000000,
+        "description": "每条边的通行代价"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision",
+      "count_paths"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "require_strongly_connected",
+      "require_weakly_connected"
+    ]
+  }
+}

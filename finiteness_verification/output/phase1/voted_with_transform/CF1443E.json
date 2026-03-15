@@ -1,0 +1,186 @@
+{
+  "problem_id": "CF1443E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "permutation_constraint",
+        "description": "序列是长度为 n 的排列，包含从 1 到 n 的每个整数恰好一次",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "排列 a 在字典序上小于排列 b，如果在第一个不同的位置 i 上，a[i] < b[i]",
+        "confidence": "1/1"
+      },
+      {
+        "name": "query_limit",
+        "description": "查询类型 1：给定区间 [l, r]，计算所需和",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "permutation_constraint",
+              "description": "序列是长度为 n 的排列，包含从 1 到 n 的每个整数恰好一次"
+            },
+            {
+              "name": "ordering",
+              "description": "排列 a 在字典序上小于排列 b，如果在第一个不同的位置 i 上，a[i] < b[i]"
+            },
+            {
+              "name": "permutation_constraint",
+              "description": "下一个排列是字典序上大于当前排列的最小排列"
+            },
+            {
+              "name": "query_limit",
+              "description": "查询类型 1：给定区间 [l, r]，计算所需和"
+            },
+            {
+              "name": "query_limit",
+              "description": "查询类型 2：给定 x，进行某种操作（题目中未明确具体操作，但保证所有此类查询均可处理）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求给定区间内的元素和"
+        }
+      }
+    ],
+    "description": "求给定区间内的元素和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "区间合法性可单调维护，查询和更新操作保持区间的有序性",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间和可通过端点差值计算，支持快速求解区间和",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移一致性，每次更新操作后，当前状态能够正确反映最新排列情况",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "区间合法性可单调维护，查询和更新操作保持区间的有序性",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间和可通过端点差值计算，支持快速求解区间和",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移一致性，每次更新操作后，当前状态能够正确反映最新排列情况",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 200000,
+        "description": "初始排列的长度"
+      },
+      "Q": {
+        "min": 1,
+        "max": 200000,
+        "description": "查询的数量"
+      },
+      "X": {
+        "min": 1,
+        "max": 100000,
+        "description": "第2类型查询中的参数x，用于某种操作（题目中未明确具体操作）"
+      }
+    },
+    "objective_options": [
+      "sum",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_consecutive_queries",
+      "allow_multiple_updates_before_query",
+      "allow_repeated_elements_in_permutation",
+      "allow_negative_numbers_in_permutation"
+    ]
+  }
+}

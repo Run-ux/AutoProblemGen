@@ -1,0 +1,177 @@
+{
+  "problem_id": "GYM102900K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "connected": false,
+            "weighted": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "connected": false,
+      "weighted": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "alternating_pattern_constraint",
+        "description": "路径上的节点取值必须交替变化（如：低-高-低-高...）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "图必须连通，即从起始节点出发可以到达任意其他节点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "起始节点的初始值必须为特定值（如：Low）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "每个节点的状态在离开后会反转（如：从 Low 变为 High 或从 High 变为 Low）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "alternating_pattern_constraint",
+              "description": "路径上的节点取值必须交替变化（如：低-高-低-高...）",
+              "formal": "c_{p_{2k}} = Low 且 c_{p_{2k+1}} = High 对于所有 k ≥ 0"
+            },
+            {
+              "name": "connectivity",
+              "description": "图必须连通，即从起始节点出发可以到达任意其他节点",
+              "formal": "存在一条路径从节点 0 到达任意节点 i"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "起始节点的初始值必须为特定值（如：Low）",
+              "formal": "c_0 = Low"
+            },
+            {
+              "name": "state_transition",
+              "description": "每个节点的状态在离开后会反转（如：从 Low 变为 High 或从 High 变为 Low）",
+              "formal": "离开节点 i 后，c_i 的状态反转"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在满足条件的无限路径"
+        }
+      }
+    ],
+    "description": "判断是否存在满足条件的无限路径"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "cycle_invariant",
+        "description": "环不变量：存在一个无限循环路径，使得价格状态交替变化（低-高-低-高...）",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个城市的价格状态在商人离开后会反转，且这种状态转移是确定的",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "cycle_invariant",
+              "description": "环不变量：存在一个无限循环路径，使得价格状态交替变化（低-高-低-高...）",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个城市的价格状态在商人离开后会反转，且这种状态转移是确定的",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 100,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 2,
+        "max": 200000,
+        "description": "城市的数量"
+      },
+      "m": {
+        "min": 1,
+        "max": 200000,
+        "description": "道路的数量"
+      }
+    },
+    "objective_options": [
+      "decision",
+      "count_paths",
+      "find_path"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "allow_disconnected_graph",
+      "start_node_variable",
+      "price_initialization_variable"
+    ]
+  }
+}

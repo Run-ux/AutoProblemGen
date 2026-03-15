@@ -1,0 +1,156 @@
+{
+  "problem_id": "GYM106225F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subsequence_constraint",
+        "description": "给定数组必须是某个 k 级别展开表的连续子数组",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "数组元素值域约束，每个元素必须在 1 到 10^9 之间",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subsequence_constraint",
+              "description": "给定数组必须是某个 k 级别展开表的连续子数组",
+              "formal": "存在 k 使得 a[1:n] 是 [i * j | 1 ≤ i, j ≤ k] 的连续子数组"
+            },
+            {
+              "name": "range_bound",
+              "description": "数组元素值域约束，每个元素必须在 1 到 10^9 之间",
+              "formal": "1 ≤ a[i] ≤ 10^9"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的最小整数值"
+        }
+      }
+    ],
+    "description": "求满足条件的最小整数值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "搜索区间单调缩小，通过二分查找确定最小的 k 值",
+        "confidence": "1/1",
+        "properties": {
+          "search_interval_monotonic": true
+        }
+      },
+      {
+        "name": "prefix_decomposability",
+        "description": "子数组在扩展后的乘法表中的存在性不变量，即给定子数组必须是某个 k 级别乘法表的连续子序列",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "搜索区间单调缩小，通过二分查找确定最小的 k 值",
+              "properties": {
+                "search_interval_monotonic": true
+              }
+            },
+            {
+              "name": "prefix_decomposability",
+              "description": "子数组在扩展后的乘法表中的存在性不变量，即给定子数组必须是某个 k 级别乘法表的连续子序列",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 2,
+        "max": 1000,
+        "description": "crafting table level, the maximum value of k such that the unrolled table can contain the given subarray"
+      },
+      "n": {
+        "min": 2,
+        "max": 100,
+        "description": "length of the subarray a_1, a_2, ..., a_n"
+      },
+      "a_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "elements of the subarray, each element must be in the range [1, 10^9]"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_contiguous_subarrays",
+      "allow_repeated_elements",
+      "allow_negative_elements"
+    ]
+  }
+}

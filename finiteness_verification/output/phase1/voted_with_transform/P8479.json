@@ -1,0 +1,203 @@
+{
+  "problem_id": "P8479",
+  "source": "luogu",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "path_constraint",
+        "description": "操作涉及树上从 u 到 v 的路径上的结点（含 u, v）构成的集合 P(u, v)。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "在操作 1 中，按标号从小到大枚举 w 的邻接点 x，若 x 不在 P(u, v) 中，则将 l_x 加入序列 S 的末尾。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subsequence_constraint",
+        "description": "操作 1 中，需要求出序列 S 的最大可空子段和。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个结点的度数受树结构限制。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "每次操作 0 将所有属于 P(u, v) 或其邻接点的结点的绚丽度赋值为 k。",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "path_constraint",
+              "description": "操作涉及树上从 u 到 v 的路径上的结点（含 u, v）构成的集合 P(u, v)。",
+              "formal": "P(u, v) = {w | w 在从 u 到 v 的路径上}"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "在操作 1 中，按标号从小到大枚举 w 的邻接点 x，若 x 不在 P(u, v) 中，则将 l_x 加入序列 S 的末尾。",
+              "formal": "对于 w ∈ P(u, v)，若 x 是 w 的邻接点且 x ∉ P(u, v)，则将 l_x 加入 S"
+            },
+            {
+              "name": "subsequence_constraint",
+              "description": "操作 1 中，需要求出序列 S 的最大可空子段和。",
+              "formal": "max(∑S[i:j] for i ≤ j)"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个结点的度数受树结构限制。",
+              "formal": "deg(w) ≤ n - 1"
+            },
+            {
+              "name": "operation_limit",
+              "description": "每次操作 0 将所有属于 P(u, v) 或其邻接点的结点的绚丽度赋值为 k。",
+              "formal": "对于 w ∈ P(u, v) 或存在邻接点 x ∈ P(u, v)，l_w = k"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求序列的最大可空子段和"
+        }
+      }
+    ],
+    "description": "求序列的最大可空子段和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：树上路径的绚丽度更新和查询操作满足状态转移一致性，即每次更新操作后，路径上的节点及其邻接点的状态能够正确反映当前的绚丽度值。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：在处理路径上的最大可空子段和时，可以利用前缀和的思想，通过计算路径上节点的累积和来求解最大子段和。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：每次操作（更新或查询）都是独立的，不会影响其他操作的结果。每个操作只依赖于当前树的状态。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：树上路径的绚丽度更新和查询操作满足状态转移一致性，即每次更新操作后，路径上的节点及其邻接点的状态能够正确反映当前的绚丽度值。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：在处理路径上的最大可空子段和时，可以利用前缀和的思想，通过计算路径上节点的累积和来求解最大子段和。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：每次操作（更新或查询）都是独立的，不会影响其他操作的结果。每个操作只依赖于当前树的状态。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": -1000000000,
+        "max": 1000000000,
+        "description": "操作 0 中用于更新路径上结点及其邻接点绚丽度的值"
+      },
+      "V_min": {
+        "min": -1000000000,
+        "max": -1,
+        "description": "初始点权及修改操作中点权的最小值"
+      },
+      "V_max": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "初始点权及修改操作中点权的最大值"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_subsequences",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_zero_weights",
+      "allow_positive_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "path_constraint_only",
+      "adjacency_relation_only",
+      "subsequence_constraint_only",
+      "degree_bound_only",
+      "operation_limit_only"
+    ]
+  }
+}

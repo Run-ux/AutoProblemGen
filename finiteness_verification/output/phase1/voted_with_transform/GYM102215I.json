@@ -1,0 +1,156 @@
+{
+  "problem_id": "GYM102215I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 2
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distance_bound",
+        "description": "中心点移动的最小距离必须覆盖整个区域（路径约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distance_bound",
+              "description": "中心点移动的最小距离必须覆盖整个区域（路径约束）"
+            },
+            {
+              "name": "distance_bound",
+              "description": "只能沿平行于边的方向移动（方向/朝向约束）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求两点间最短路径长度"
+        }
+      }
+    ],
+    "description": "求两点间最短路径长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "移动过程中，刷子中心的路径长度单调递增，直到覆盖整个正方形区域。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": false,
+          "window_shrinkable": false
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解可以通过子问题的最优解组合得到。具体来说，将大正方形划分为多个小区域，每个小区域的最优覆盖路径可以组合成整个正方形的最优路径。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "每次选择最短的路径来扩展已覆盖的区域，最终能够得到全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "移动过程中，刷子中心的路径长度单调递增，直到覆盖整个正方形区域。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": false,
+                "window_shrinkable": false
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解可以通过子问题的最优解组合得到。具体来说，将大正方形划分为多个小区域，每个小区域的最优覆盖路径可以组合成整个正方形的最优路径。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "每次选择最短的路径来扩展已覆盖的区域，最终能够得到全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "a": {
+        "min": 1,
+        "max": 1000000,
+        "description": "大正方形的边长"
+      },
+      "b": {
+        "min": 1,
+        "max": 1000000,
+        "description": "刷子的边长"
+      }
+    },
+    "objective_options": [
+      "minimize_distance",
+      "count_paths",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_square_brush",
+      "allow_diagonal_movement",
+      "multi_constraints"
+    ]
+  }
+}

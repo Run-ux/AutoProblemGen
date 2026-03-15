@@ -1,0 +1,181 @@
+{
+  "problem_id": "GYM105383D",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100
+          },
+          "properties": {
+            "ordered": true,
+            "inferred": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100
+    },
+    "properties": {
+      "ordered": true,
+      "inferred": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点的感染状态影响其隔离天数（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "independence",
+        "description": "不确定感染状态的乘客独立地以 1/2 概率被感染",
+        "confidence": "1/1"
+      },
+      {
+        "name": "probability_distribution",
+        "description": "计算期望值时需要考虑所有可能的感染状态组合",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "结果需要取模 10^9 + 7",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点的感染状态影响其隔离天数（图着色约束）",
+              "formal": "对于每个节点 i，如果 i 被感染，则其所有邻接节点 j 的隔离天数为 d1；如果 i 未被感染但与感染节点 k 角相邻，则 j 的隔离天数为 d2"
+            },
+            {
+              "name": "independence",
+              "description": "不确定感染状态的乘客独立地以 1/2 概率被感染",
+              "formal": "P(infected) = 0.5, P(not infected) = 0.5, 独立于其他乘客"
+            },
+            {
+              "name": "probability_distribution",
+              "description": "计算期望值时需要考虑所有可能的感染状态组合",
+              "formal": "E[total_days] = Σ (probability * total_days)"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "结果需要取模 10^9 + 7",
+              "formal": "result ≡ p * q^(-1) (mod 10^9 + 7)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化期望值，即求所有乘客需要被隔离的总天数的期望值"
+        }
+      }
+    ],
+    "description": "最大化期望值，即求所有乘客需要被隔离的总天数的期望值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构造，即每个乘客的隔离天数可以基于其相邻乘客的状态独立计算。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "expectation_linearity",
+        "description": "期望值线性性：整个系统的期望隔离天数等于每个乘客期望隔离天数之和。对于状态未知的乘客，其对总期望值的贡献是确定的（通过概率加权）。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构造，即每个乘客的隔离天数可以基于其相邻乘客的状态独立计算。",
+              "properties": {}
+            },
+            {
+              "name": "expectation_linearity",
+              "description": "期望值线性性：整个系统的期望隔离天数等于每个乘客期望隔离天数之和。对于状态未知的乘客，其对总期望值的贡献是确定的（通过概率加权）。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "d0": {
+        "min": 1,
+        "max": 100,
+        "description": "被感染乘客需要隔离的天数"
+      },
+      "d1": {
+        "min": 1,
+        "max": 100,
+        "description": "未被感染但与被感染乘客边缘相邻的乘客需要隔离的天数"
+      },
+      "d2": {
+        "min": 0,
+        "max": 100,
+        "description": "未被感染且不与被感染乘客边缘相邻，但与被感染乘客角落相邻的乘客需要隔离的天数"
+      },
+      "modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "结果取模的值，通常为 10^9 + 7"
+      }
+    },
+    "objective_options": [
+      "expected_total_days",
+      "count_solutions",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_negative_durations",
+      "allow_non_adjacent_infections",
+      "allow_variable_infection_probabilities",
+      "multi_constraints"
+    ]
+  }
+}

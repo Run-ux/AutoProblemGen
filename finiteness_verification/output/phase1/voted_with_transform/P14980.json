@@ -1,0 +1,174 @@
+{
+  "problem_id": "P14980",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "问题可以抽象为有向图，每头奶牛指向其最好的朋友",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "每头奶牛会沿着指向其最好朋友的路径寻找聚会，直到找到聚会或放弃",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "每个晚上，每头奶牛的状态（参加哪种类型的聚会）会根据当前和之前晚上的聚会类型进行更新",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "每头奶牛在每个晚上只能选择一个聚会参加，且只能跟随其最好的朋友的路径",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "每头奶牛在同一时间只能参加一种类型的聚会",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "问题可以抽象为有向图，每头奶牛指向其最好的朋友"
+            },
+            {
+              "name": "path_constraint",
+              "description": "每头奶牛会沿着指向其最好朋友的路径寻找聚会，直到找到聚会或放弃"
+            },
+            {
+              "name": "state_transition",
+              "description": "每个晚上，每头奶牛的状态（参加哪种类型的聚会）会根据当前和之前晚上的聚会类型进行更新"
+            },
+            {
+              "name": "operation_limit",
+              "description": "每头奶牛在每个晚上只能选择一个聚会参加，且只能跟随其最好的朋友的路径"
+            },
+            {
+              "name": "distinctness",
+              "description": "每头奶牛在同一时间只能参加一种类型的聚会"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "计算每个晚上参加不同类型聚会的奶牛数量"
+        }
+      }
+    ],
+    "description": "计算每个晚上参加不同类型聚会的奶牛数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每头奶牛的聚会选择基于其最好朋友的选择，形成一个依赖链。每个晚上，奶牛的状态（参加哪种类型的聚会）由其最好朋友的状态决定。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：在每晚的聚会安排中，奶牛之间的依赖关系形成了一个有向无环图（DAG）。每头奶牛的状态更新顺序遵循拓扑排序，确保所有依赖都已处理。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每头奶牛的聚会选择基于其最好朋友的选择，形成一个依赖链。每个晚上，奶牛的状态（参加哪种类型的聚会）由其最好朋友的状态决定。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：在每晚的聚会安排中，奶牛之间的依赖关系形成了一个有向无环图（DAG）。每头奶牛的状态更新顺序遵循拓扑排序，确保所有依赖都已处理。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 200000,
+        "description": "奶牛的数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 200000,
+        "description": "晚上的数量"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_self_best_friend",
+      "allow_multiple_best_friends",
+      "allow_cycle_in_friendship_graph",
+      "allow_multiple_parties_per_night",
+      "allow_party_type_changes"
+    ]
+  }
+}

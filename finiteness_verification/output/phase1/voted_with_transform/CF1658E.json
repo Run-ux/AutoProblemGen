@@ -1,0 +1,169 @@
+{
+  "problem_id": "CF1658E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 3,
+            "max": 2000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 4000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 2000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 4000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "所有网格上的值都是唯一的（即每个单元格的值都不相同）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimal_play",
+        "description": "玩家在每一步都采取最优策略以最大化自己的得分",
+        "confidence": "1/1"
+      },
+      {
+        "name": "turn_based",
+        "description": "游戏是回合制的，Marin先手，然后交替进行",
+        "confidence": "1/1"
+      },
+      {
+        "name": "revisiting_allowed",
+        "description": "允许在同一单元格上多次放置令牌，并且每次放置都会获得该单元格的分数",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "所有网格上的值都是唯一的（即每个单元格的值都不相同）",
+              "formal": "∀ (i, j) ≠ (i', j'), v_{i,j} ≠ v_{i',j'}"
+            },
+            {
+              "name": "optimal_play",
+              "description": "玩家在每一步都采取最优策略以最大化自己的得分",
+              "formal": "Marin and Gojou play optimally to maximize their points"
+            },
+            {
+              "name": "turn_based",
+              "description": "游戏是回合制的，Marin先手，然后交替进行",
+              "formal": "Players take turns, with Marin starting first"
+            },
+            {
+              "name": "revisiting_allowed",
+              "description": "允许在同一单元格上多次放置令牌，并且每次放置都会获得该单元格的分数",
+              "formal": "Tokens can be placed on the same cell multiple times, and each placement scores the value of the cell"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "game_outcome",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "game_outcome",
+          "description": "对于每个初始位置，判断在双方最优策略下游戏的结果（先手胜、后手胜或平局）"
+        }
+      }
+    ],
+    "description": "对于每个初始位置，判断在双方最优策略下游戏的结果（先手胜、后手胜或平局）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个子问题的最优解可以组合成原问题的最优解，即在每一步选择中，玩家总是会选择当前最优的策略以最大化自己的得分。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：由于游戏规则和初始条件对双方是对称的（除了Marin的第一步），因此在Marin第一步之后，双方的策略和得分情况是对称的。这种对称性保证了在相同的条件下，双方的得分差异仅由Marin的第一步决定。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个子问题的最优解可以组合成原问题的最优解，即在每一步选择中，玩家总是会选择当前最优的策略以最大化自己的得分。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：由于游戏规则和初始条件对双方是对称的（除了Marin的第一步），因此在Marin第一步之后，双方的策略和得分情况是对称的。这种对称性保证了在相同的条件下，双方的得分差异仅由Marin的第一步决定。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 3,
+        "max": 2000,
+        "description": "网格的大小，即 n x n 的矩阵"
+      },
+      "k": {
+        "min": 1,
+        "max": 1998,
+        "description": "题目中提到的 k 值，但具体用途未明确说明。假设它是一个可以调整的参数，用于某些约束或规则。"
+      }
+    },
+    "objective_options": [
+      "game_outcome",
+      "maximize_points",
+      "minimize_points",
+      "count_wins",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_revisiting_cells",
+      "distinct_values",
+      "optimal_play",
+      "turn_based",
+      "first_move_fixed",
+      "multiple_games_per_cell"
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "problem_id": "CF203D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 6,
+            "max": 6
+          },
+          "value_range": {
+            "min": -100,
+            "max": 100
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 6,
+      "max": 6
+    },
+    "value_range": {
+      "min": -100,
+      "max": 100
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "rectangle_shape",
+        "description": "点的坐标必须在指定的矩形区域内（0 ≤ x ≤ a, 0 ≤ z ≤ b）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "reflection_constraint",
+        "description": "当球碰到边界时，按照反射定律反弹（入射角等于反射角）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "球的初始位置在走廊中心（x, y, z）= (a/2, m, b/2)",
+        "confidence": "1/1"
+      },
+      {
+        "name": "orientation",
+        "description": "球的速度方向限制（v_y < 0, v_z ≥ 0）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "rectangle_shape",
+              "description": "点的坐标必须在指定的矩形区域内（0 ≤ x ≤ a, 0 ≤ z ≤ b）",
+              "formal": "0 ≤ x₀ ≤ a, 0 ≤ z₀ ≤ b"
+            },
+            {
+              "name": "reflection_constraint",
+              "description": "当球碰到边界时，按照反射定律反弹（入射角等于反射角）",
+              "formal": "反射定律：入射角 = 反射角"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "球的初始位置在走廊中心（x, y, z）= (a/2, m, b/2)",
+              "formal": "(x, y, z) = (a/2, m, b/2)"
+            },
+            {
+              "name": "orientation",
+              "description": "球的速度方向限制（v_y < 0, v_z ≥ 0）",
+              "formal": "v_y < 0, v_z ≥ 0"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造满足条件的点坐标"
+        }
+      }
+    ],
+    "description": "构造满足条件的点坐标"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "symmetry",
+        "description": "对称性：碰撞等价于穿越，可消除个体差异。在本题中，球在走廊内的反弹可以视为穿越一个无限重复的走廊网格。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：球在y轴方向上的运动是单调递减的，直到y=0时停止。",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "cyclic_invariance",
+        "description": "周期性：球在x和z轴方向上的运动具有周期性，即在每次碰撞后，球在x和z轴方向上的位移保持不变。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "symmetry",
+              "description": "对称性：碰撞等价于穿越，可消除个体差异。在本题中，球在走廊内的反弹可以视为穿越一个无限重复的走廊网格。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：球在y轴方向上的运动是单调递减的，直到y=0时停止。",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "cyclic_invariance",
+              "description": "周期性：球在x和z轴方向上的运动具有周期性，即在每次碰撞后，球在x和z轴方向上的位移保持不变。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "a": {
+        "min": 1,
+        "max": 100,
+        "description": "走廊的宽度，即矩形门的x方向长度"
+      },
+      "b": {
+        "min": 1,
+        "max": 100,
+        "description": "走廊的高度，即矩形门的z方向长度"
+      },
+      "m": {
+        "min": 1,
+        "max": 100,
+        "description": "Valera离门的距离"
+      },
+      "vx": {
+        "min": -100,
+        "max": 100,
+        "description": "球在x方向的速度分量"
+      },
+      "vy": {
+        "min": -100,
+        "max": -1,
+        "description": "球在y方向的速度分量（必须为负数）"
+      },
+      "vz": {
+        "min": 0,
+        "max": 100,
+        "description": "球在z方向的速度分量（必须为非负数）"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_vx",
+      "allow_positive_vy",
+      "allow_negative_vz",
+      "variable_start_position",
+      "variable_door_dimensions",
+      "multiple_bounces"
+    ]
+  }
+}

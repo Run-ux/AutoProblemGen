@@ -1,0 +1,151 @@
+{
+  "problem_id": "GYM104772B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 2,
+            "max": 1000000000000000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 2,
+      "max": 1000000000000000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "alphabet_constraint",
+        "description": "整数 n 在不同基数 b 下的表示中，0 的数量最大化",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "找到所有使得 0 的数量最大化的基数 b，并按升序排列",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "alphabet_constraint",
+              "description": "整数 n 在不同基数 b 下的表示中，0 的数量最大化",
+              "formal": "maximize count(0 in base_b_representation(n))"
+            },
+            {
+              "name": "distinctness",
+              "description": "找到所有使得 0 的数量最大化的基数 b，并按升序排列",
+              "formal": "find all b such that count(0 in base_b_representation(n)) is maximized, and sort b in ascending order"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求在所有可能的基数中，表示给定整数时包含零的最大数量"
+        }
+      }
+    ],
+    "description": "求在所有可能的基数中，表示给定整数时包含零的最大数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "在遍历可能的基数时，零的数量变化具有单调性，即随着基数的增加，表示中的零数量先增后减。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构建，即在找到一个基数使得表示中零的数量最大时，可以利用该基数下的零分布特性来确定其他符合条件的基数。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "在遍历可能的基数时，零的数量变化具有单调性，即随着基数的增加，表示中的零数量先增后减。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构建，即在找到一个基数使得表示中零的数量最大时，可以利用该基数下的零分布特性来确定其他符合条件的基数。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t": {
+        "min": 1,
+        "max": 1000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 2,
+        "max": 1000000000000000000,
+        "description": "给定的正整数 n"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "count_bases",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_integer_bases",
+      "allow_negative_numbers",
+      "allow_repeated_zeros",
+      "multi_constraints"
+    ]
+  }
+}

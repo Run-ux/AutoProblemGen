@@ -1,0 +1,178 @@
+{
+  "problem_id": "CF1389D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "sum_constraint",
+        "description": "总交集长度需要达到或超过给定的阈值 k",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "每个区间的端点在扩展过程中必须保持有序性，即左端点小于等于右端点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "每次操作只能选择一个区间并将其扩展 1 个单位长度",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "sum_constraint",
+              "description": "总交集长度需要达到或超过给定的阈值 k",
+              "formal": "∑ intersection_length([al_i, ar_i], [bl_i, br_i]) >= k"
+            },
+            {
+              "name": "range_bound",
+              "description": "每个区间的端点在扩展过程中必须保持有序性，即左端点小于等于右端点",
+              "formal": "∀ i, al_i ≤ ar_i ∧ bl_i ≤ br_i"
+            },
+            {
+              "name": "operation_limit",
+              "description": "每次操作只能选择一个区间并将其扩展 1 个单位长度",
+              "formal": "∀ i, (al_i' = al_i - 1 ∧ ar_i' = ar_i) ∨ (al_i' = al_i ∧ ar_i' = ar_i + 1) ∨ (bl_i' = bl_i - 1 ∧ br_i' = br_i) ∨ (bl_i' = bl_i ∧ br_i' = br_i + 1)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_count",
+          "description": "最小化操作次数以达到给定的总交集长度"
+        }
+      }
+    ],
+    "description": "最小化操作次数以达到给定的总交集长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "扩展操作单调增加总交集长度，每次操作至少使总交集长度非减",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择（每次选择能最大化当前交集增量的段进行扩展）导致全局最优解",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "扩展操作单调增加总交集长度，每次操作至少使总交集长度非减",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择（每次选择能最大化当前交集增量的段进行扩展）导致全局最优解",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "最小要求的总交集长度"
+      },
+      "n": {
+        "min": 1,
+        "max": 200000,
+        "description": "列表的长度"
+      },
+      "l1": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "初始段 [al_i, ar_i] 的左端点"
+      },
+      "r1": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "初始段 [al_i, ar_i] 的右端点"
+      },
+      "l2": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "初始段 [bl_i, br_i] 的左端点"
+      },
+      "r2": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "初始段 [bl_i, br_i] 的右端点"
+      }
+    },
+    "objective_options": [
+      "minimize_count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_equal_initial_segments",
+      "allow_negative_endpoints",
+      "allow_overlapping_initial_segments",
+      "multi_constraints"
+    ]
+  }
+}

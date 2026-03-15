@@ -1,0 +1,166 @@
+{
+  "problem_id": "GYM104777M",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 3
+          },
+          "value_range": {
+            "min": 0,
+            "max": 100
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 3
+    },
+    "value_range": {
+      "min": 0,
+      "max": 100
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制（携带宝箱的总时间不超过 k 秒）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "唯一性/去重（宝箱和钥匙的位置不同）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制（携带宝箱的总时间不超过 k 秒）",
+              "formal": "total_carry_time <= k"
+            },
+            {
+              "name": "distinctness",
+              "description": "唯一性/去重（宝箱和钥匙的位置不同）",
+              "formal": "x != y"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的最短时间"
+        }
+      }
+    ],
+    "description": "求满足条件的最短时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "时间轴上的单调性：Monocarp 的行动时间和携带宝箱的时间是单调递增的，不会出现时间倒流的情况。",
+        "confidence": "1/1",
+        "properties": {
+          "time_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：Monocarp 在任意时刻的最优解依赖于之前某个时刻的最优解。即，到达某个位置的最短时间可以由到达前一个位置的最短时间推导出来。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步决策中，选择当前最优的行动（如先取钥匙再搬宝箱或反之），最终能够得到全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "时间轴上的单调性：Monocarp 的行动时间和携带宝箱的时间是单调递增的，不会出现时间倒流的情况。",
+              "properties": {
+                "time_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：Monocarp 在任意时刻的最优解依赖于之前某个时刻的最优解。即，到达某个位置的最短时间可以由到达前一个位置的最短时间推导出来。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步决策中，选择当前最优的行动（如先取钥匙再搬宝箱或反之），最终能够得到全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "x": {
+        "min": 1,
+        "max": 1000,
+        "description": "宝箱的初始位置"
+      },
+      "y": {
+        "min": 1,
+        "max": 1000,
+        "description": "钥匙的位置"
+      },
+      "k": {
+        "min": 0,
+        "max": 1000,
+        "description": "Monocarp 可以携带宝箱的最大时间"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_same_position",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "problem_id": "CF1580C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "在任何时刻，每种模型的列车最多只有一辆存在（唯一性约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "列车的状态按固定周期变化：工作 x_i 天，维护 y_i 天，然后重复（状态转移约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_type",
+        "description": "每天的操作类型只能是添加或移除一辆列车（操作类型约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "inclusion",
+        "description": "移除列车时，该列车必须当前存在于系统中（包含/必选约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "添加列车时，该模型的列车不能已经存在于系统中（互斥/禁止约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "在任何时刻，每种模型的列车最多只有一辆存在（唯一性约束）"
+            },
+            {
+              "name": "state_transition",
+              "description": "列车的状态按固定周期变化：工作 x_i 天，维护 y_i 天，然后重复（状态转移约束）",
+              "formal": "状态 = (天数 % (x_i + y_i) < x_i) ? '工作' : '维护'"
+            },
+            {
+              "name": "operation_type",
+              "description": "每天的操作类型只能是添加或移除一辆列车（操作类型约束）"
+            },
+            {
+              "name": "inclusion",
+              "description": "移除列车时，该列车必须当前存在于系统中（包含/必选约束）"
+            },
+            {
+              "name": "exclusion",
+              "description": "添加列车时，该模型的列车不能已经存在于系统中（互斥/禁止约束）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "计算每个时间点处于特定状态的对象数量"
+        }
+      }
+    ],
+    "description": "计算每个时间点处于特定状态的对象数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个列车的状态（工作、维护）根据其周期性模式和当前时间进行更新，且状态转移规则一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：在任意给定的时间段内，处于维护状态的列车数量可以通过对每个列车的维护时间段进行累加计算得出。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个列车的状态（工作、维护）根据其周期性模式和当前时间进行更新，且状态转移规则一致。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：在任意给定的时间段内，处于维护状态的列车数量可以通过对每个列车的维护时间段进行累加计算得出。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "x_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "列车工作天数"
+      },
+      "y_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "列车维护天数"
+      }
+    },
+    "objective_options": [
+      "count_maintenance_trains",
+      "count_working_trains",
+      "decision_maintenance_trains_exist",
+      "decision_working_trains_exist"
+    ],
+    "structural_options": [
+      "allow_multiple_trains_per_model",
+      "allow_negative_x_y_values",
+      "allow_zero_x_y_values",
+      "allow_non_integer_x_y_values",
+      "allow_variable_operation_types",
+      "allow_concurrent_operations"
+    ]
+  }
+}

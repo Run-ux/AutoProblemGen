@@ -1,0 +1,183 @@
+{
+  "problem_id": "GYM105278A",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 50
+          },
+          "value_range": {
+            "min": 0,
+            "max": 3
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 50
+    },
+    "value_range": {
+      "min": 0,
+      "max": 3
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点（Pacman和ghost）的移动关系，每次移动后ghost随机移动到相邻位置",
+        "confidence": "1/1"
+      },
+      {
+        "name": "periodic_boundary",
+        "description": "边界环绕约束，Pacman、ghost和爆炸波可以通过迷宫边界到达对面",
+        "confidence": "1/1"
+      },
+      {
+        "name": "wave_propagation_constraint",
+        "description": "扩展波影响约束，爆炸波从初始位置开始每步向四个方向扩展，如果ghost进入扩展波范围则停止移动",
+        "confidence": "1/1"
+      },
+      {
+        "name": "negative_value_constraint",
+        "description": "失败条件约束，如果Pacman和ghost在游戏结束时位于同一位置，则玩家失败",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点（Pacman和ghost）的移动关系，每次移动后ghost随机移动到相邻位置",
+              "formal": "For each move of Pacman, ghost moves to a random adjacent position"
+            },
+            {
+              "name": "periodic_boundary",
+              "description": "边界环绕约束，Pacman、ghost和爆炸波可以通过迷宫边界到达对面",
+              "formal": "Pacman, ghost, and the explosion wave can wrap around the maze boundaries"
+            },
+            {
+              "name": "wave_propagation_constraint",
+              "description": "扩展波影响约束，爆炸波从初始位置开始每步向四个方向扩展，如果ghost进入扩展波范围则停止移动",
+              "formal": "Explosion wave expands from the initial position in all four directions. If the ghost enters the expansion wave, it stops moving"
+            },
+            {
+              "name": "negative_value_constraint",
+              "description": "失败条件约束，如果Pacman和ghost在游戏结束时位于同一位置，则玩家失败",
+              "formal": "If Pacman and ghost end up in the same position at the end of the game, the player loses"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化游戏失败的概率"
+        }
+      }
+    ],
+    "description": "最大化游戏失败的概率"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：Pacman和鬼的移动以及爆炸波的扩展遵循确定的状态转移规则，确保每一步的状态变化是可预测的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：Pacman和鬼在迷宫中的移动具有周期性和对称性，使得某些位置的概率分布具有对称性质。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "环不变量：Pacman和鬼的移动路径可能形成循环，这些循环路径上的概率分布保持不变。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：Pacman和鬼的移动以及爆炸波的扩展遵循确定的状态转移规则，确保每一步的状态变化是可预测的。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：Pacman和鬼在迷宫中的移动具有周期性和对称性，使得某些位置的概率分布具有对称性质。",
+              "properties": {}
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "环不变量：Pacman和鬼的移动路径可能形成循环，这些循环路径上的概率分布保持不变。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 50,
+        "description": "Pacman移动路径的长度"
+      },
+      "MazeSize": {
+        "min": 3,
+        "max": 20,
+        "description": "迷宫的大小（边长）"
+      }
+    },
+    "objective_options": [
+      "maximize_probability",
+      "minimize_probability",
+      "count_ways_to_lose",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_obstacles",
+      "allow_variable_maze_size",
+      "allow_non_periodic_boundary",
+      "allow_multiple_ghosts",
+      "allow_multiple_bombs",
+      "allow_different_explosion_patterns"
+    ]
+  }
+}

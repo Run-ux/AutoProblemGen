@@ -1,0 +1,154 @@
+{
+  "problem_id": "GYM105584B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "position_reversal_constraint",
+        "description": "在序列中，两个元素的累积和交替领先（即一个序列的前缀和超过另一个序列的前缀和）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "uniform_velocity_constraint",
+        "description": "每个元素在每分钟内的增量是恒定的（即每个元素的值在每分钟内保持不变）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "position_reversal_constraint",
+              "description": "在序列中，两个元素的累积和交替领先（即一个序列的前缀和超过另一个序列的前缀和）",
+              "formal": "∃i, j (1 ≤ i < j ≤ n) 使得 ∑(a[1:k]) > ∑(b[1:k]) 对于所有 k ∈ [i, j-1] 且 ∑(a[1:j]) < ∑(b[1:j])"
+            },
+            {
+              "name": "uniform_velocity_constraint",
+              "description": "每个元素在每分钟内的增量是恒定的（即每个元素的值在每分钟内保持不变）",
+              "formal": "∀k (1 ≤ k ≤ n), a_k 和 b_k 在每分钟内的增量是恒定的"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "计算序列中领先者变化的次数"
+        }
+      }
+    ],
+    "description": "计算序列中领先者变化的次数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，用于追踪两个运动员的相对位置变化",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在每分钟记录的距离基础上，通过累加距离来更新运动员的位置，并根据位置变化判断是否发生超越事件",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，用于追踪两个运动员的相对位置变化",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在每分钟记录的距离基础上，通过累加距离来更新运动员的位置，并根据位置变化判断是否发生超越事件",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 1000,
+        "description": "比赛的持续时间（分钟）"
+      },
+      "Distance_Max": {
+        "min": 1,
+        "max": 1000,
+        "description": "每分钟内运动员跑的距离上限（米）"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_distance",
+      "allow_negative_distance",
+      "allow_variable_velocity",
+      "multi_constraints"
+    ]
+  }
+}

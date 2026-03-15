@@ -1,0 +1,142 @@
+{
+  "problem_id": "CF1852D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": "A",
+            "max": "B"
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": "A",
+      "max": "B"
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点取值不同（图着色约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点取值不同（图着色约束）",
+              "formal": "对于每个 (r1, c1) 和 (r2, c2)，如果 |r1 - r2| + |c1 - c2| = 1，则 s[r1][c1] ≠ s[r2][c2]"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "相邻不同字符对的数量等于 k",
+              "formal": "sum(|s[i] ≠ t[i]| for i in range(n)) + sum(|t[i] ≠ t[i+1]| for i in range(n-1)) == k"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种填充方式使得相邻不同字符对的数量等于给定值"
+        }
+      }
+    ],
+    "description": "判断是否存在一种填充方式使得相邻不同字符对的数量等于给定值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：当前列的字符选择依赖于前一列的选择，且整个问题的解由各子问题的最优解组成。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择当前列的字符时，局部最优选择（使得相邻不同字符对数尽可能接近目标值）将导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：当前列的字符选择依赖于前一列的选择，且整个问题的解由各子问题的最优解组成。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择当前列的字符时，局部最优选择（使得相邻不同字符对数尽可能接近目标值）将导致全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 0,
+        "max": 600000,
+        "description": "相邻不同字符对的数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 200000,
+        "description": "网格的列数"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count"
+    ],
+    "structural_options": [
+      "allow_same_characters",
+      "allow_different_grid_sizes",
+      "multi_constraints"
+    ]
+  }
+}

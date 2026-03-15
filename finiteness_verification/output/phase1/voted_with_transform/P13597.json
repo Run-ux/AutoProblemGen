@@ -1,0 +1,190 @@
+{
+  "problem_id": "P13597",
+  "source": "luogu",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 1,
+            "max": 500000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 500000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "connectivity",
+        "description": "图必须连通（题目中的树是一个连通无环图）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "acyclicity",
+        "description": "图必须无环（题目中的树是一个无环图）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "路径上的节点颜色变化规则（从蓝色节点到白色节点的简单路径上的所有节点变为白色）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "probability_distribution",
+        "description": "节点选择概率与节点上的数字成正比（选择节点的概率与其上的数字成正比）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "节点颜色状态转移约束（节点颜色从蓝色变为白色，直到所有节点都变成白色）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "connectivity",
+              "description": "图必须连通（题目中的树是一个连通无环图）"
+            },
+            {
+              "name": "acyclicity",
+              "description": "图必须无环（题目中的树是一个无环图）"
+            },
+            {
+              "name": "path_constraint",
+              "description": "路径上的节点颜色变化规则（从蓝色节点到白色节点的简单路径上的所有节点变为白色）"
+            },
+            {
+              "name": "probability_distribution",
+              "description": "节点选择概率与节点上的数字成正比（选择节点的概率与其上的数字成正比）",
+              "formal": "P(i) = p_i / (Σ p_j for all j with color c)"
+            },
+            {
+              "name": "state_transition",
+              "description": "节点颜色状态转移约束（节点颜色从蓝色变为白色，直到所有节点都变成白色）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_probability",
+          "description": "求将所有节点变为白色的期望操作次数"
+        }
+      }
+    ],
+    "description": "求将所有节点变为白色的期望操作次数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "flow_conservation",
+        "description": "在每次操作中，节点上的数字总和保持不变，满足流守恒性质。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的解可以通过子路径的期望值递归地构建，满足最优子结构。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移过程中，从蓝色节点到白色节点的转换遵循固定的概率规则，且状态转移具有一致性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "flow_conservation",
+              "description": "在每次操作中，节点上的数字总和保持不变，满足流守恒性质。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的解可以通过子路径的期望值递归地构建，满足最优子结构。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移过程中，从蓝色节点到白色节点的转换遵循固定的概率规则，且状态转移具有一致性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "模数，用于计算结果的取模"
+      },
+      "P_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "节点上的正整数，影响选择概率"
+      }
+    },
+    "objective_options": [
+      "minimize_probability",
+      "count_operations",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_equal_weights",
+      "allow_variable_weights",
+      "fixed_start_node",
+      "variable_start_node",
+      "single_path_white_nodes",
+      "multiple_paths_white_nodes"
+    ]
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "problem_id": "GYM105327F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1
+          },
+          "value_range": {
+            "min": 1,
+            "max": 40
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1
+    },
+    "value_range": {
+      "min": 1,
+      "max": 40
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "recurrence_relation",
+        "description": "序列的每一项由前一项递归定义，且递归公式为 p_n = 1 / (1 + p_{n-1})",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coprime_constraint",
+        "description": "最终结果必须表示为最简分数形式，即分子和分母互质",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "recurrence_relation",
+              "description": "序列的每一项由前一项递归定义，且递归公式为 p_n = 1 / (1 + p_{n-1})",
+              "formal": "p_0 = 1, p_n = 1 / (1 + p_{n-1})"
+            },
+            {
+              "name": "coprime_constraint",
+              "description": "最终结果必须表示为最简分数形式，即分子和分母互质",
+              "formal": "gcd(a, b) = 1"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造给定层级的连分数，并输出其分子值"
+        }
+      }
+    ],
+    "description": "构造给定层级的连分数，并输出其分子值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建，即p_N的值可以通过p_{N-1}的值递归计算得出。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态到另一个状态的转换规则是固定的，即p_N = 1 / (1 + p_{N-1})。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建，即p_N的值可以通过p_{N-1}的值递归计算得出。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态到另一个状态的转换规则是固定的，即p_N = 1 / (1 + p_{N-1})。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 40,
+        "description": "连分数的层级，即需要计算的 p_N 的 N 值"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_coprime_result",
+      "vary_recurrence_formula"
+    ]
+  }
+}

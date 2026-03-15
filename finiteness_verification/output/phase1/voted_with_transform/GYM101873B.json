@@ -1,0 +1,175 @@
+{
+  "problem_id": "GYM101873B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "ordering",
+        "description": "序列必须非递减（高度约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "选取元素的高度和不超过给定的总高度上限",
+        "confidence": "1/1"
+      },
+      {
+        "name": "frequency_bound",
+        "description": "每个高度值出现的次数不超过给定的最大频次",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "ordering",
+              "description": "序列必须非递减（高度约束）",
+              "formal": "A[i] <= A[i+1] for all 0 <= i < n-1"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "选取元素的高度和不超过给定的总高度上限",
+              "formal": "sum(A[i]) <= H for all selected i"
+            },
+            {
+              "name": "frequency_bound",
+              "description": "每个高度值出现的次数不超过给定的最大频次",
+              "formal": "count(A[i]) <= F for all 0 <= i < n"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化满足条件的子数组和"
+        }
+      }
+    ],
+    "description": "最大化满足条件的子数组和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，区间合法性可单调维护",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，满足动态规划的最优子结构性质",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间和可通过端点差值计算，前缀和的区间可加性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，区间合法性可单调维护",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，满足动态规划的最优子结构性质",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间和可通过端点差值计算，前缀和的区间可加性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "H": {
+        "min": 1,
+        "max": 100000,
+        "description": "选取元素的高度和不超过给定的总高度上限"
+      },
+      "F": {
+        "min": 1,
+        "max": 100,
+        "description": "每个高度值出现的次数不超过给定的最大频次"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_heights",
+      "allow_repeated_heights",
+      "multi_constraints"
+    ]
+  }
+}

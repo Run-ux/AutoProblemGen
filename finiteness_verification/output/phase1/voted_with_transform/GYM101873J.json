@@ -1,0 +1,162 @@
+{
+  "problem_id": "GYM101873J",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 32,
+            "max": 126
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 32,
+      "max": 126
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "区间内不同元素数量不超过 K",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "数组必须非递减",
+        "confidence": "1/1"
+      },
+      {
+        "name": "frequency_bound",
+        "description": "每个元素出现次数不超过 M",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "区间内不同元素数量不超过 K",
+              "formal": "|distinct(A[l:r])| <= K"
+            },
+            {
+              "name": "ordering",
+              "description": "数组必须非递减",
+              "formal": "A[i] <= A[i+1] for all i in [0, n-2]"
+            },
+            {
+              "name": "frequency_bound",
+              "description": "每个元素出现次数不超过 M",
+              "formal": "count(A, x) <= M for all x in A"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在满足条件的解"
+        }
+      }
+    ],
+    "description": "判断是否存在满足条件的解"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，区间合法性可单调维护",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间和可通过端点差值计算，满足前缀和的性质",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，区间合法性可单调维护",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间和可通过端点差值计算，满足前缀和的性质",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 100,
+        "description": "区间内不同元素数量的最大值"
+      },
+      "M": {
+        "min": 1,
+        "max": 100,
+        "description": "每个元素出现次数的最大值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count"
+    ],
+    "structural_options": [
+      "allow_non_decreasing",
+      "allow_frequency_bound"
+    ]
+  }
+}

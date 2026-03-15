@@ -1,0 +1,148 @@
+{
+  "problem_id": "GYM105505F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点不能同时被选择（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "所有选定的节点必须覆盖整个序列，使得没有额外的节点可以满足相同的条件",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点不能同时被选择（图着色约束）",
+              "formal": "∀i, if A[i] = 'X', then A[i-1] ≠ 'X' and A[i+1] ≠ 'X'"
+            },
+            {
+              "name": "coverage",
+              "description": "所有选定的节点必须覆盖整个序列，使得没有额外的节点可以满足相同的条件",
+              "formal": "After placing K 'X's, no additional 'X' can be placed without violating the adjacency relation"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种方案使得给定数量的元素可以在满足特定条件的情况下被放置"
+        }
+      }
+    ],
+    "description": "判断是否存在一种方案使得给定数量的元素可以在满足特定条件的情况下被放置"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：每次选择当前最优的空位，即左右两边均为空的最左或最右位置，确保后续选择仍有最大可能满足条件",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过维护已占用和未占用区间的长度，可以快速计算出满足条件的新位置，以及判断是否还有满足条件的位置",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：每次选择当前最优的空位，即左右两边均为空的最左或最右位置，确保后续选择仍有最大可能满足条件",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过维护已占用和未占用区间的长度，可以快速计算出满足条件的新位置，以及判断是否还有满足条件的位置",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000000,
+        "description": "需要选择的厕所数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 1000000,
+        "description": "总厕所数量"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_adjacent_toilets",
+      "multiple_rows_of_toilets",
+      "variable_privacy_conditions"
+    ]
+  }
+}

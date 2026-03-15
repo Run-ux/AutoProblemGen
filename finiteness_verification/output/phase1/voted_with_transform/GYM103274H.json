@@ -1,0 +1,148 @@
+{
+  "problem_id": "GYM103274H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "transformation",
+        "description": "可以将序列中的某些子串替换为一个新的字符（'2'），并且能够通过该新字符还原原始序列",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "用于替换的子串长度不超过给定的最大值 b",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "transformation",
+              "description": "可以将序列中的某些子串替换为一个新的字符（'2'），并且能够通过该新字符还原原始序列",
+              "formal": "T' = T.replace(w, '2') 且 T = T'.replace('2', w)"
+            },
+            {
+              "name": "range_bound",
+              "description": "用于替换的子串长度不超过给定的最大值 b",
+              "formal": "|w| <= b"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求字符串经过指定替换操作后的最小长度"
+        }
+      }
+    ],
+    "description": "求字符串经过指定替换操作后的最小长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：压缩后的文件大小由子问题的最优解决定，即通过选择合适的子串w来替换以达到最小化压缩后文件大小的目的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在选择子串w时，局部最优的选择（如选择出现频率最高的子串）能够导致全局最优解，即最终压缩后的文件大小最小。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：压缩后的文件大小由子问题的最优解决定，即通过选择合适的子串w来替换以达到最小化压缩后文件大小的目的。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在选择子串w时，局部最优的选择（如选择出现频率最高的子串）能够导致全局最优解，即最终压缩后的文件大小最小。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "b": {
+        "min": 1,
+        "max": 200,
+        "description": "CPU 支持的最大位数，用于限制子串 w 的长度"
+      },
+      "T_length": {
+        "min": 1,
+        "max": 100000,
+        "description": "输入字符串 T 的长度"
+      }
+    },
+    "objective_options": [
+      "minimize_length",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_variable_T_length",
+      "allow_variable_b",
+      "multi_constraints"
+    ]
+  }
+}

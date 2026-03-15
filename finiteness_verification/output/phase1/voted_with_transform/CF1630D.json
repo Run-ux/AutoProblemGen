@@ -1,0 +1,155 @@
+{
+  "problem_id": "CF1630D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subset_constraint",
+        "description": "集合 B 中的元素必须是数组 a 的前半部分索引的子集（即 1 ≤ b_i ≤ ⌊n/2⌋）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "集合 B 中的元素必须是互不相同的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "可以对数组 a 进行任意次数的操作，每次操作选择一个 b_i 并翻转区间 [b_i, n - b_i + 1] 内的元素符号",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subset_constraint",
+              "description": "集合 B 中的元素必须是数组 a 的前半部分索引的子集（即 1 ≤ b_i ≤ ⌊n/2⌋）",
+              "formal": "∀ b_i ∈ B, 1 ≤ b_i ≤ ⌊n/2⌋"
+            },
+            {
+              "name": "distinctness",
+              "description": "集合 B 中的元素必须是互不相同的",
+              "formal": "∀ b_i, b_j ∈ B, i ≠ j → b_i ≠ b_j"
+            },
+            {
+              "name": "operation_limit",
+              "description": "可以对数组 a 进行任意次数的操作，每次操作选择一个 b_i 并翻转区间 [b_i, n - b_i + 1] 内的元素符号",
+              "formal": "∀ b_i ∈ B, 可以进行任意次数的操作：a[b_i..n-b_i+1] = -a[b_i..n-b_i+1]"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化数组元素和"
+        }
+      }
+    ],
+    "description": "最大化数组元素和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过翻转操作，可以将任意区间的元素和进行累加计算，且该性质在多次操作后仍然成立。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：对于任意一个翻转操作，其效果等价于将区间内的所有元素取反，这种对称变换不改变问题的整体结构。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过翻转操作，可以将任意区间的元素和进行累加计算，且该性质在多次操作后仍然成立。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：对于任意一个翻转操作，其效果等价于将区间内的所有元素取反，这种对称变换不改变问题的整体结构。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "m": {
+        "min": 1,
+        "max": 500000,
+        "description": "集合 B 中的元素个数，范围为 1 到 ⌊n/2⌋"
+      },
+      "t": {
+        "min": 1,
+        "max": 100000,
+        "description": "测试用例的数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_operations",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_elements",
+      "allow_zero_elements",
+      "allow_duplicate_elements_in_B",
+      "vary_operation_type"
+    ]
+  }
+}

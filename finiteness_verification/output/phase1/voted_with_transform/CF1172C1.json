@@ -1,0 +1,158 @@
+{
+  "problem_id": "CF1172C1",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 50
+          },
+          "value_range": {
+            "min": 1,
+            "max": 50
+          },
+          "properties": {
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 50
+    },
+    "value_range": {
+      "min": 1,
+      "max": 50
+    },
+    "properties": {
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "probability_distribution",
+        "description": "每个元素的选取概率与其权重成正比（概率分布约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "transformation",
+        "description": "根据选择结果更新权重，喜欢则加1，不喜欢则减1（操作规则）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "计算期望值并取模（模运算约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "probability_distribution",
+              "description": "每个元素的选取概率与其权重成正比（概率分布约束）",
+              "formal": "P(i) = w_i / Σ(w_j)"
+            },
+            {
+              "name": "transformation",
+              "description": "根据选择结果更新权重，喜欢则加1，不喜欢则减1（操作规则）",
+              "formal": "w_i' = w_i + 1 if a_i == 1, w_i - 1 if a_i == 0"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "计算期望值并取模（模运算约束）",
+              "formal": "r_i ≡ q_i * p_i^(-1) (mod 998244353)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "求每个元素在一系列操作后的期望值"
+        }
+      }
+    ],
+    "description": "求每个元素在一系列操作后的期望值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每次访问网站后，图片的权重根据是否喜欢进行更新，且更新规则一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "expectation_linearity",
+        "description": "期望值线性性：每张图片最终的期望权重可以通过多次访问的期望值累加得到。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每次访问网站后，图片的权重根据是否喜欢进行更新，且更新规则一致。",
+              "properties": {}
+            },
+            {
+              "name": "expectation_linearity",
+              "description": "期望值线性性：每张图片最终的期望权重可以通过多次访问的期望值累加得到。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "m": {
+        "min": 1,
+        "max": 1000,
+        "description": "Nauuo访问网站的次数"
+      },
+      "Modulo": {
+        "min": 1000000007,
+        "max": 998244353,
+        "description": "模数，用于计算期望值取模"
+      }
+    },
+    "objective_options": [
+      "expected_weight",
+      "count_visits",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_zero_weights",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "problem_id": "GYM104757I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 10,
+            "max": 13
+          },
+          "value_range": {
+            "min": 0,
+            "max": 12
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 10,
+      "max": 13
+    },
+    "value_range": {
+      "min": 0,
+      "max": 12
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "modular_arithmetic",
+        "description": "校验位必须满足特定的计算规则（ISBN-10 和 ISBN-13 有不同的校验规则）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "syntax_validity",
+        "description": "ISBN-10 必须是 10 个字符长，ISBN-13 必须是 13 个字符长",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sequence_pattern_constraint",
+        "description": "ISBN-10 中的连字符位置必须符合特定规则（最多三个连字符，不能在开头或结尾，不能连续出现，如果存在三个连字符，则最后一个必须在倒数第二个字符和校验位之间）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "alphabet_constraint",
+        "description": "ISBN-10 中的字符只能是数字（0-9）、连字符（-）或大写字母 X",
+        "confidence": "1/1"
+      },
+      {
+        "name": "transformation",
+        "description": "ISBN-10 转换为 ISBN-13 的规则：在前面添加 978 并移除旧的校验位，然后根据 ISBN-13 的规则计算新的校验位",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "modular_arithmetic",
+              "description": "校验位必须满足特定的计算规则（ISBN-10 和 ISBN-13 有不同的校验规则）"
+            },
+            {
+              "name": "syntax_validity",
+              "description": "ISBN-10 必须是 10 个字符长，ISBN-13 必须是 13 个字符长"
+            },
+            {
+              "name": "sequence_pattern_constraint",
+              "description": "ISBN-10 中的连字符位置必须符合特定规则（最多三个连字符，不能在开头或结尾，不能连续出现，如果存在三个连字符，则最后一个必须在倒数第二个字符和校验位之间）"
+            },
+            {
+              "name": "alphabet_constraint",
+              "description": "ISBN-10 中的字符只能是数字（0-9）、连字符（-）或大写字母 X"
+            },
+            {
+              "name": "transformation",
+              "description": "ISBN-10 转换为 ISBN-13 的规则：在前面添加 978 并移除旧的校验位，然后根据 ISBN-13 的规则计算新的校验位"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个满足给定规则的转换后的字符串"
+        }
+      }
+    ],
+    "description": "构造一个满足给定规则的转换后的字符串"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "modular_invariance",
+        "description": "校验和不变性：ISBN-10 和 ISBN-13 的校验和计算规则确保了转换后的 ISBN-13 仍然有效",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "prefix_decomposability",
+        "description": "前缀不变性：ISBN-10 转换为 ISBN-13 时，前缀 978 的添加保持了 ISBN 的唯一性和有效性",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "position_freedom_invariance",
+        "description": "连字符位置不变性：ISBN-10 中的连字符位置在转换为 ISBN-13 时保持不变，确保格式一致性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "modular_invariance",
+              "description": "校验和不变性：ISBN-10 和 ISBN-13 的校验和计算规则确保了转换后的 ISBN-13 仍然有效",
+              "properties": {}
+            },
+            {
+              "name": "prefix_decomposability",
+              "description": "前缀不变性：ISBN-10 转换为 ISBN-13 时，前缀 978 的添加保持了 ISBN 的唯一性和有效性",
+              "properties": {}
+            },
+            {
+              "name": "position_freedom_invariance",
+              "description": "连字符位置不变性：ISBN-10 中的连字符位置在转换为 ISBN-13 时保持不变，确保格式一致性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 25,
+        "description": "测试用例的数量"
+      },
+      "ISBN_10_Length": {
+        "min": 10,
+        "max": 13,
+        "description": "ISBN-10 的长度（包括连字符）"
+      },
+      "ISBN_13_Prefix": {
+        "min": 978,
+        "max": 978,
+        "description": "转换为 ISBN-13 时添加的前缀"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_hyphens_in_ISBN_10",
+      "allow_X_in_ISBN_10",
+      "use_different_prefix_for_ISBN_13",
+      "vary_checksum_rules"
+    ]
+  }
+}

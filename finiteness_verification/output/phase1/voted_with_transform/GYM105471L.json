@@ -1,0 +1,167 @@
+{
+  "problem_id": "GYM105471L",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 200000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 200000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "convexity",
+        "description": "多边形必须是凸的，即每个内角都小于 π",
+        "confidence": "1/1"
+      },
+      {
+        "name": "invariance_under_translation",
+        "description": "两个多边形在平面上的投影可以通过沿向量 (d_x, d_y, 10^9) 平移重合，不允许旋转",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "投影面积的多重集 {S_i} 是“酷”的条件：存在一个元素 x 使得所有 S_i 的和等于 2x",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "convexity",
+              "description": "多边形必须是凸的，即每个内角都小于 π"
+            },
+            {
+              "name": "invariance_under_translation",
+              "description": "两个多边形在平面上的投影可以通过沿向量 (d_x, d_y, 10^9) 平移重合，不允许旋转"
+            },
+            {
+              "name": "distinctness",
+              "description": "投影面积的多重集 {S_i} 是“酷”的条件：存在一个元素 x 使得所有 S_i 的和等于 2x"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化满足特定条件的投影面积集合的概率"
+        }
+      }
+    ],
+    "description": "最大化满足特定条件的投影面积集合的概率"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "convexity",
+        "description": "凸性不变量：多边形P的凸性保证了投影面积的计算和概率分析的有效性",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：平移向量(d_x, d_y)在圆上的均匀分布，使得问题具有旋转对称性",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：通过分析每个投影面积S_i的贡献，可以递归地解决整个问题",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "convexity",
+              "description": "凸性不变量：多边形P的凸性保证了投影面积的计算和概率分析的有效性",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：平移向量(d_x, d_y)在圆上的均匀分布，使得问题具有旋转对称性",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：通过分析每个投影面积S_i的贡献，可以递归地解决整个问题",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "r": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "平移向量 (d_x, d_y) 所在圆的半径"
+      },
+      "z_distance": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "两个平行平面之间的距离"
+      }
+    },
+    "objective_options": [
+      "maximize_probability",
+      "count_cool_multisets",
+      "decision_is_cool_multiset_possible"
+    ],
+    "structural_options": [
+      "allow_non_convex_polygons",
+      "allow_rotation_of_polygons",
+      "allow_different_z_distances",
+      "allow_variable_radius_for_translation_vector"
+    ]
+  }
+}

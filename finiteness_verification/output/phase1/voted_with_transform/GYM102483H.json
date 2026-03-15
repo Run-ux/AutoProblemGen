@@ -1,0 +1,172 @@
+{
+  "problem_id": "GYM102483H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 500000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "ordered": true,
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 500000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "ordered": true,
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "xor_subarray_sum_constraint",
+        "description": "位串中相邻位不同的数量必须恰好为 c",
+        "confidence": "1/1"
+      },
+      {
+        "name": "binary_matrix_constraint",
+        "description": "某些指定位置的位必须固定为 0，且第一个位不能是 0，最后一个位必须是 0",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "xor_subarray_sum_constraint",
+              "description": "位串中相邻位不同的数量必须恰好为 c",
+              "formal": "sum(1 for i in range(n-1) if s[i] != s[i+1]) == c"
+            },
+            {
+              "name": "binary_matrix_constraint",
+              "description": "某些指定位置的位必须固定为 0，且第一个位不能是 0，最后一个位必须是 0",
+              "formal": "s[0] == '1' and s[n-1] == '0' and all(s[z_i-1] == '0' for z_i in broken_bits)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个满足给定条件的二进制字符串"
+        }
+      }
+    ],
+    "description": "构造一个满足给定条件的二进制字符串"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针或滑动窗口的左右端点单调前进，确保在处理过程中逐步逼近最优解",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构建，满足动态规划的基本性质",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择可以导致全局最优解，通过贪心策略逐步构建满足条件的解",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针或滑动窗口的左右端点单调前进，确保在处理过程中逐步逼近最优解",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构建，满足动态规划的基本性质",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择可以导致全局最优解，通过贪心策略逐步构建满足条件的解",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 2,
+        "max": 500000,
+        "description": "硬驱动的位数"
+      },
+      "c": {
+        "min": 1,
+        "max": 499999,
+        "description": "期望的位变化数量"
+      },
+      "b": {
+        "min": 1,
+        "max": 499999,
+        "description": "损坏的位数"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_first_bit_to_be_zero",
+      "allow_last_bit_to_be_one",
+      "allow_broken_bits_anywhere",
+      "multi_constraints"
+    ]
+  }
+}

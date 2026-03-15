@@ -1,0 +1,173 @@
+{
+  "problem_id": "CF1874D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 3000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 3000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 3000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 3000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "sum_constraint",
+        "description": "选取元素权重和不超过容量上限（所有道路的美丽值之和不超过 m）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "从起点到终点的路径必须存在且唯一（城市 0 到城市 n 的路径是唯一的）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "probability_distribution",
+        "description": "每条边被选择的概率与其权重成正比（选择某条边的概率是该边美丽值除以当前城市所有连接边的美丽值总和）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "sum_constraint",
+              "description": "选取元素权重和不超过容量上限（所有道路的美丽值之和不超过 m）",
+              "formal": "Σ a_i ≤ m"
+            },
+            {
+              "name": "path_constraint",
+              "description": "从起点到终点的路径必须存在且唯一（城市 0 到城市 n 的路径是唯一的）",
+              "formal": "存在唯一路径从节点 0 到节点 n"
+            },
+            {
+              "name": "probability_distribution",
+              "description": "每条边被选择的概率与其权重成正比（选择某条边的概率是该边美丽值除以当前城市所有连接边的美丽值总和）",
+              "formal": "P(选择边 i) = a_i / Σ a_j, 其中 j 是与当前城市相连的所有边"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_probability",
+          "description": "最小化从起点到终点的期望路径长度"
+        }
+      }
+    ],
+    "description": "最小化从起点到终点的期望路径长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即从城市0到城市n的最小期望天数可以由从城市i-1到城市i的最小期望天数递推得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在动态规划过程中，当前状态（城市）的期望天数基于前一个状态（城市）的期望天数进行更新，且这种更新方式在整个算法执行过程中保持一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "flow_conservation",
+        "description": "流守恒：在随机游走模型中，每个节点（城市）的流入概率等于流出概率，即每个城市的总离开概率等于1。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即从城市0到城市n的最小期望天数可以由从城市i-1到城市i的最小期望天数递推得到。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在动态规划过程中，当前状态（城市）的期望天数基于前一个状态（城市）的期望天数进行更新，且这种更新方式在整个算法执行过程中保持一致。",
+              "properties": {}
+            },
+            {
+              "name": "flow_conservation",
+              "description": "流守恒：在随机游走模型中，每个节点（城市）的流入概率等于流出概率，即每个城市的总离开概率等于1。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "m": {
+        "min": 1,
+        "max": 3000,
+        "description": "所有道路的美丽值之和的最大限制"
+      },
+      "n": {
+        "min": 1,
+        "max": 3000,
+        "description": "城市的数量（同时也是道路的数量）"
+      }
+    },
+    "objective_options": [
+      "minimize_expected_days",
+      "count_optimal_solutions",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_non_unique_path",
+      "allow_negative_weights",
+      "allow_zero_weights",
+      "allow_disconnected_graph",
+      "multi_constraints"
+    ]
+  }
+}

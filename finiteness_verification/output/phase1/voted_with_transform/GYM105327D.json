@@ -1,0 +1,163 @@
+{
+  "problem_id": "GYM105327D",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "sum_constraint",
+        "description": "选取元素的权重和等于目标值（使用若干个操作，使得总减少量等于初始值）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "不同序列视为不同的组合（考虑顺序的排列）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "sum_constraint",
+              "description": "选取元素的权重和等于目标值（使用若干个操作，使得总减少量等于初始值）",
+              "formal": "Σ(a_i * x_i) = N, 其中 x_i 是非负整数"
+            },
+            {
+              "name": "distinctness",
+              "description": "不同序列视为不同的组合（考虑顺序的排列）",
+              "formal": "两个序列 (x_1, x_2, ..., x_k) 和 (y_1, y_2, ..., y_m) 不同当且仅当存在 i 使得 x_i ≠ y_i"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的方案数（取模）"
+        }
+      }
+    ],
+    "description": "求满足条件的方案数（取模）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解组合而成，即通过减少N的不同方式可以递归地分解为更小规模的问题。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态到另一个状态的转换是基于明确的规则（使用特定的法术），并且这种转换保持了问题的一致性和可解性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解组合而成，即通过减少N的不同方式可以递归地分解为更小规模的问题。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态到另一个状态的转换是基于明确的规则（使用特定的法术），并且这种转换保持了问题的一致性和可解性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 1000000000000000000,
+        "description": "表示敌人的初始力量，即需要减少到零的二进制数"
+      },
+      "M": {
+        "min": 1,
+        "max": 100000,
+        "description": "表示可用法术的数量"
+      },
+      "a_i": {
+        "min": 1,
+        "max": 100,
+        "description": "表示第i个法术每次使用时减少的力量值"
+      },
+      "b_i": {
+        "min": 0,
+        "max": 60,
+        "description": "表示第i个法术的某种限制条件（例如，可以使用的最大次数）"
+      },
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "答案取模的基数，通常为10^9 + 7"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_a_i",
+      "allow_negative_a_i",
+      "allow_variable_b_i",
+      "multi_constraints"
+    ]
+  }
+}

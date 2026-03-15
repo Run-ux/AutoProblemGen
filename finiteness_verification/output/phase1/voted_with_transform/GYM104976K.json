@@ -1,0 +1,155 @@
+{
+  "problem_id": "GYM104976K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 300000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 300000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 300000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 300000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "在操作过程中，如果新加入的元素与序列中的某个元素相同，则移除该元素及其之后的所有元素，直到序列中没有重复元素为止。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "query_limit",
+        "description": "查询是在线进行的，每个查询的结果用于解码下一个查询。",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "在操作过程中，如果新加入的元素与序列中的某个元素相同，则移除该元素及其之后的所有元素，直到序列中没有重复元素为止。",
+              "formal": "For each operation i, if a[i] is in the sequence s, remove all elements from s starting from the first occurrence of a[i] to the end of s."
+            },
+            {
+              "name": "query_limit",
+              "description": "查询是在线进行的，每个查询的结果用于解码下一个查询。",
+              "formal": "Each query (l_i, r_i) is decoded using the answer of the previous query (lastans): l_i = l'_i ⊕ lastans, r_i = r'_i ⊕ lastans. If no queries have been answered, lastans = 0."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足条件的子数组中剩余元素的数量"
+        }
+      }
+    ],
+    "description": "求满足条件的子数组中剩余元素的数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每一步操作后，卡片序列的状态可以通过前一步的状态和当前操作确定。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：对于任意子区间，其最终剩余卡片数量可以通过该区间的初始状态和操作序列计算得出。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每一步操作后，卡片序列的状态可以通过前一步的状态和当前操作确定。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：对于任意子区间，其最终剩余卡片数量可以通过该区间的初始状态和操作序列计算得出。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 300000,
+        "description": "卡片的数量"
+      },
+      "Q": {
+        "min": 1,
+        "max": 300000,
+        "description": "查询的数量"
+      },
+      "A_i": {
+        "min": 1,
+        "max": 300000,
+        "description": "每张卡片上的数字"
+      }
+    },
+    "objective_options": [
+      "count_remaining_cards",
+      "decision_non_empty_sequence",
+      "maximize_remaining_cards",
+      "minimize_remaining_cards"
+    ],
+    "structural_options": [
+      "allow_duplicates_in_initial_sequence",
+      "allow_negative_numbers",
+      "allow_zero_values",
+      "multi_constraints"
+    ]
+  }
+}

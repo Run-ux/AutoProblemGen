@@ -1,0 +1,164 @@
+{
+  "problem_id": "GYM104857H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "recurrence_relation",
+        "description": "函数 f(n) 和 g(n) 通过递归关系定义，其中 f(n) 依赖于 g(n/2), g(n/3), g(n/5), g(n/7)，g(n) 依赖于 f(n/2), f(n/3), f(n/4), f(n/5)",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "计算结果需要对 M 取模",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "recurrence_relation",
+              "description": "函数 f(n) 和 g(n) 通过递归关系定义，其中 f(n) 依赖于 g(n/2), g(n/3), g(n/5), g(n/7)，g(n) 依赖于 f(n/2), f(n/3), f(n/4), f(n/5)",
+              "formal": "f(n) = max(n, g(⌊n/2⌋) + g(⌊n/3⌋) + g(⌊n/5⌋) + g(⌊n/7⌋)), g(n) = max(n, f(⌊n/2⌋) + f(⌊n/3⌋) + f(⌊n/4⌋) + f(⌊n/5⌋))"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "计算结果需要对 M 取模",
+              "formal": "f(m) % M, g(m) % M"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求解递归关系定义的两个函数在给定点的值并取模"
+        }
+      }
+    ],
+    "description": "求解递归关系定义的两个函数在给定点的值并取模"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构造，即f(n)和g(n)的值依赖于更小规模的子问题f(⌊n/k⌋)和g(⌊n/k⌋)的解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "divide_conquer",
+        "description": "分治不变量：大问题的解由子问题解合成，通过递归地解决较小规模的问题，并将结果合并以得到原问题的解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构造，即f(n)和g(n)的值依赖于更小规模的子问题f(⌊n/k⌋)和g(⌊n/k⌋)的解。",
+              "properties": {}
+            },
+            {
+              "name": "divide_conquer",
+              "description": "分治不变量：大问题的解由子问题解合成，通过递归地解决较小规模的问题，并将结果合并以得到原问题的解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "M": {
+        "min": 2,
+        "max": 1000000000000000,
+        "description": "模数，用于对结果取模"
+      },
+      "T": {
+        "min": 1,
+        "max": 100000,
+        "description": "查询的数量"
+      },
+      "f_0": {
+        "min": 0,
+        "max": 100000,
+        "description": "初始值 f(0)"
+      },
+      "g_0": {
+        "min": 0,
+        "max": 100000,
+        "description": "初始值 g(0)"
+      },
+      "m": {
+        "min": 0,
+        "max": 1000000000000000,
+        "description": "查询的输入值 m"
+      }
+    },
+    "objective_options": [
+      "compute_values",
+      "count_solutions",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_different_divisors",
+      "allow_variable_number_of_calls",
+      "allow_non_max_aggregation",
+      "allow_different_initial_conditions"
+    ]
+  }
+}

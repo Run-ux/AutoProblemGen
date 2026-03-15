@@ -1,0 +1,176 @@
+{
+  "problem_id": "P11421",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "matching_constraint",
+        "description": "二元组 (i, j) 构成匹配当且仅当 b_i = 0 且 b_j = 1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "每个整数 i 在极大匹配方案 S_max 中出现至多一次",
+        "confidence": "1/1"
+      },
+      {
+        "name": "constant_value_constraint",
+        "description": "在满足匹配条件的前提下，满足 a_u = a_v 的二元组 (u, v) 数量最多",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "matching_constraint",
+              "description": "二元组 (i, j) 构成匹配当且仅当 b_i = 0 且 b_j = 1"
+            },
+            {
+              "name": "distinctness",
+              "description": "每个整数 i 在极大匹配方案 S_max 中出现至多一次"
+            },
+            {
+              "name": "matching_constraint",
+              "description": "在满足匹配条件的前提下，极大匹配方案 S_max 的大小 |S_max| 最大"
+            },
+            {
+              "name": "constant_value_constraint",
+              "description": "在满足匹配条件的前提下，满足 a_u = a_v 的二元组 (u, v) 数量最多"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足条件的二元组集合的最大大小"
+        }
+      }
+    ],
+    "description": "求满足条件的二元组集合的最大大小"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：极大匹配方案的大小可以通过子问题的最优解来构造，即每个子区间的极大匹配方案可以合并成整个区间的极大匹配方案。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在每次修改操作后，通过维护当前状态（如匹配对的数量和匹配对的具体位置），可以高效地更新极大匹配方案。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：在处理修改操作时，可以通过合并相邻区间的匹配信息来维护全局的极大匹配方案。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：极大匹配方案的大小可以通过子问题的最优解来构造，即每个子区间的极大匹配方案可以合并成整个区间的极大匹配方案。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在每次修改操作后，通过维护当前状态（如匹配对的数量和匹配对的具体位置），可以高效地更新极大匹配方案。",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：在处理修改操作时，可以通过合并相邻区间的匹配信息来维护全局的极大匹配方案。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 200000,
+        "description": "序列的长度"
+      },
+      "M": {
+        "min": 0,
+        "max": 200000,
+        "description": "修改操作的次数"
+      },
+      "A_MAX": {
+        "min": 1,
+        "max": 200000,
+        "description": "序列 a 中元素的最大值"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_duplicates_in_a",
+      "allow_negative_values_in_a",
+      "allow_more_than_two_values_in_b",
+      "multi_constraints"
+    ]
+  }
+}

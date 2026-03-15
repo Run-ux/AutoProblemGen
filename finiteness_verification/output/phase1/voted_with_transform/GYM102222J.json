@@ -1,0 +1,176 @@
+{
+  "problem_id": "GYM102222J",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "symmetric_structure_constraint",
+        "description": "每个点必须位于前一个三角形内部（不包括边界）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "解决方案必须是字典序最小的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "所有点必须是唯一的",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "symmetric_structure_constraint",
+              "description": "每个点必须位于前一个三角形内部（不包括边界）",
+              "formal": "对于所有 i ≥ 2, A_{v_i} 位于三角形 PQA_{v_{i-1}} 内部"
+            },
+            {
+              "name": "ordering",
+              "description": "解决方案必须是字典序最小的",
+              "formal": "对于任何其他可行解 u_1, u_2, ..., u_k, v_1 < u_1 或存在整数 i (1 ≤ i < k) 使得 v_1 = u_1, v_2 = u_2, ..., v_i = u_i 但 v_{i+1} < u_{i+1}"
+            },
+            {
+              "name": "distinctness",
+              "description": "所有点必须是唯一的",
+              "formal": "所有点坐标不同"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "最大化满足条件的嵌套三角形组的数量"
+        }
+      }
+    ],
+    "description": "最大化满足条件的嵌套三角形组的数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。在本题中，找到一个点序列使得每个点都在前一个点形成的三角形内部，且整个序列具有最大长度和字典序最小。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着点序列的构建，每个新加入的点必须位于之前所有点形成的三角形内部，这保证了点的选择是严格递进的。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": false
+        }
+      },
+      {
+        "name": "lexicographic_invariance",
+        "description": "字典序不变量：在满足嵌套三角形条件的前提下，选择的点序列应具有最小的字典序。这意味着在多个可行解中，优先选择字典序较小的解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。在本题中，找到一个点序列使得每个点都在前一个点形成的三角形内部，且整个序列具有最大长度和字典序最小。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着点序列的构建，每个新加入的点必须位于之前所有点形成的三角形内部，这保证了点的选择是严格递进的。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": false
+              }
+            },
+            {
+              "name": "lexicographic_invariance",
+              "description": "字典序不变量：在满足嵌套三角形条件的前提下，选择的点序列应具有最小的字典序。这意味着在多个可行解中，优先选择字典序较小的解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 1000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 100000,
+        "description": "其他点的数量"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "decision",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_non_unique_points",
+      "allow_points_on_line_PQ",
+      "allow_different_pivots",
+      "allow_variable_number_of_pivots"
+    ]
+  }
+}

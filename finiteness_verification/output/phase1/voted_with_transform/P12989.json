@@ -1,0 +1,178 @@
+{
+  "problem_id": "P12989",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 8,
+            "max": 8
+          },
+          "value_range": {
+            "min": 0,
+            "max": 255
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 8,
+      "max": 8
+    },
+    "value_range": {
+      "min": 0,
+      "max": 255
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制，每个测试用例最多进行 300 次操作",
+        "confidence": "1/1"
+      },
+      {
+        "name": "transformation",
+        "description": "每次操作将当前值 X 与旋转后的 V 进行异或运算，更新记录值",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "每次操作后返回新值中 1 的数量，直到所有位为 0 或达到操作次数上限",
+        "confidence": "1/1"
+      },
+      {
+        "name": "terminal_vertex",
+        "description": "目标是通过一系列操作将记录值变为全 0",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制，每个测试用例最多进行 300 次操作",
+              "formal": "T ≤ 300"
+            },
+            {
+              "name": "transformation",
+              "description": "每次操作将当前值 X 与旋转后的 V 进行异或运算，更新记录值",
+              "formal": "X' = X XOR W, 其中 W 是 V 右旋 r 位的结果"
+            },
+            {
+              "name": "state_transition",
+              "description": "每次操作后返回新值中 1 的数量，直到所有位为 0 或达到操作次数上限",
+              "formal": "N_i = count_ones(X')"
+            },
+            {
+              "name": "terminal_vertex",
+              "description": "目标是通过一系列操作将记录值变为全 0",
+              "formal": "X = 00000000"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否能在给定操作次数内将二进制字符串的所有位变为0"
+        }
+      }
+    ],
+    "description": "判断是否能在给定操作次数内将二进制字符串的所有位变为0"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每次操作后，记录的状态通过固定的规则进行更新，且最终可以达到目标状态（全0）。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "idempotency",
+        "description": "幂等性：多次应用相同的操作不会改变结果。对于相同的输入值V和旋转r，连续应用两次XOR W操作将恢复到原始状态。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：旋转操作具有周期性和对称性，可以通过不同的旋转值来覆盖所有可能的位移情况。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每次操作后，记录的状态通过固定的规则进行更新，且最终可以达到目标状态（全0）。",
+              "properties": {}
+            },
+            {
+              "name": "idempotency",
+              "description": "幂等性：多次应用相同的操作不会改变结果。对于相同的输入值V和旋转r，连续应用两次XOR W操作将恢复到原始状态。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：旋转操作具有周期性和对称性，可以通过不同的旋转值来覆盖所有可能的位移情况。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Bit_Length": {
+        "min": 4,
+        "max": 16,
+        "description": "二进制字符串的位数"
+      },
+      "Operation_Limit": {
+        "min": 50,
+        "max": 500,
+        "description": "每个测试用例允许的最大操作次数"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "minimize_operations"
+    ],
+    "structural_options": [
+      "allow_different_initial_values",
+      "vary_rotation_range",
+      "include_additional_constraints"
+    ]
+  }
+}

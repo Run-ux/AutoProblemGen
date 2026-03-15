@@ -1,0 +1,195 @@
+{
+  "problem_id": "CF1633E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 50
+          },
+          "value_range": {
+            "min": 0,
+            "max": 100000000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 50
+    },
+    "value_range": {
+      "min": 0,
+      "max": 100000000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "spanning_constraint",
+        "description": "必须选择一个生成树，且该生成树的边权和满足特定条件",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "生成树的成本是所有边权与给定值 x 的绝对差之和",
+        "confidence": "1/1"
+      },
+      {
+        "name": "query_limit",
+        "description": "查询次数有限制，部分查询通过递推公式生成",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "最终输出为所有查询结果的异或值",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "spanning_constraint",
+              "description": "必须选择一个生成树，且该生成树的边权和满足特定条件"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "生成树的成本是所有边权与给定值 x 的绝对差之和",
+              "formal": "cost = ∑ |w_i - x|, i = 1 to n-1"
+            },
+            {
+              "name": "query_limit",
+              "description": "查询次数有限制，部分查询通过递推公式生成"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "最终输出为所有查询结果的异或值"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求给定参数下，所有查询中最小化生成树的代价之和"
+        }
+      }
+    ],
+    "description": "求给定参数下，所有查询中最小化生成树的代价之和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个查询的最优解可以通过子问题的最优解构造，即最小生成树的代价可以通过已知的边权和查询值x计算得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：对于给定的x值，选择与x最接近的边权可以使得绝对差之和最小，从而构建出成本最低的生成树。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：在处理多个查询时，可以通过将查询结果进行异或操作来合并不同查询的结果，最终得到所有查询的异或结果。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个查询的最优解可以通过子问题的最优解构造，即最小生成树的代价可以通过已知的边权和查询值x计算得到。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：对于给定的x值，选择与x最接近的边权可以使得绝对差之和最小，从而构建出成本最低的生成树。",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：在处理多个查询时，可以通过将查询结果进行异或操作来合并不同查询的结果，最终得到所有查询的异或结果。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "p": {
+        "min": 1,
+        "max": 100000,
+        "description": "显式提供的查询数量"
+      },
+      "k": {
+        "min": 1,
+        "max": 10000000,
+        "description": "总查询数量"
+      },
+      "a": {
+        "min": 0,
+        "max": 100000000,
+        "description": "递推公式中的乘法系数"
+      },
+      "b": {
+        "min": 0,
+        "max": 100000000,
+        "description": "递推公式中的加法常数"
+      },
+      "c": {
+        "min": 1,
+        "max": 100000000,
+        "description": "递推公式中的模数"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "weighted_graph",
+      "unweighted_graph"
+    ]
+  }
+}

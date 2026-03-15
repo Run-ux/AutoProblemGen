@@ -1,0 +1,171 @@
+{
+  "problem_id": "CF1059E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "path_constraint",
+        "description": "路径长度不超过 L 个节点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "路径上节点权重和不超过 S",
+        "confidence": "1/1"
+      },
+      {
+        "name": "partition",
+        "description": "每个节点必须且仅属于一条路径",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "path_constraint",
+              "description": "路径长度不超过 L 个节点",
+              "formal": "len(path) <= L"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "路径上节点权重和不超过 S",
+              "formal": "sum(w_i for i in path) <= S"
+            },
+            {
+              "name": "partition",
+              "description": "每个节点必须且仅属于一条路径",
+              "formal": "forall v in V: exists! path s.t. v in path"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_count",
+          "description": "求满足条件的最少路径数"
+        }
+      }
+    ],
+    "description": "求满足条件的最少路径数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即每个节点的最优路径划分依赖于其子树的最优路径划分。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从根节点到叶子节点的路径上，每个节点的状态（是否满足路径长度和权重限制）可以由其父节点的状态推导得出。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：在处理当前节点时，其子树的最优解已经确定且相互独立，不会受到其他兄弟节点的影响。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即每个节点的最优路径划分依赖于其子树的最优路径划分。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从根节点到叶子节点的路径上，每个节点的状态（是否满足路径长度和权重限制）可以由其父节点的状态推导得出。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：在处理当前节点时，其子树的最优解已经确定且相互独立，不会受到其他兄弟节点的影响。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "L": {
+        "min": 1,
+        "max": 100000,
+        "description": "路径的最大长度"
+      },
+      "S": {
+        "min": 1,
+        "max": 1000000000000000000,
+        "description": "路径上节点权重和的最大值"
+      }
+    },
+    "objective_options": [
+      "minimize_count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_zero_weights",
+      "allow_duplicate_weights",
+      "multi_constraints"
+    ]
+  }
+}

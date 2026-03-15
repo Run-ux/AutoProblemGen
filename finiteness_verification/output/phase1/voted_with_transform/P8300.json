@@ -1,0 +1,192 @@
+{
+  "problem_id": "P8300",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 300000
+          },
+          "value_range": {
+            "min": -1000000,
+            "max": 1000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 300000
+    },
+    "value_range": {
+      "min": -1000000,
+      "max": 1000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "pairwise_exclusion",
+        "description": "每个节点最多只能被一个元素占用（公司搬入时，原公司搬出）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_query_max",
+        "description": "查询区间内的最大值（Mirko 检查经过的办公室中当前最富有的公司的账户余额）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "事件按时间顺序给出且每天最多发生一个事件（所有 T 严格递增）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "delayed_access_constraint",
+        "description": "新元素在插入后的下一个时间单位才开始生效（新公司直到搬入后的第二天才开始营业）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "pairwise_exclusion",
+              "description": "每个节点最多只能被一个元素占用（公司搬入时，原公司搬出）"
+            },
+            {
+              "name": "range_query_max",
+              "description": "查询区间内的最大值（Mirko 检查经过的办公室中当前最富有的公司的账户余额）"
+            },
+            {
+              "name": "ordering",
+              "description": "事件按时间顺序给出且每天最多发生一个事件（所有 T 严格递增）"
+            },
+            {
+              "name": "delayed_access_constraint",
+              "description": "新元素在插入后的下一个时间单位才开始生效（新公司直到搬入后的第二天才开始营业）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求区间内最大值"
+        }
+      }
+    ],
+    "description": "求区间内最大值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "事件时间严格递增，确保处理顺序的单调性",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间内公司账户余额的最大值可通过子区间的最大值合并计算",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "每个办公室的状态（空或有公司）和公司账户余额随时间变化的一致性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "事件时间严格递增，确保处理顺序的单调性",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间内公司账户余额的最大值可通过子区间的最大值合并计算",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "每个办公室的状态（空或有公司）和公司账户余额随时间变化的一致性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 100000,
+        "description": "办公室的数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 300000,
+        "description": "事件（公司搬入或Mirko巡视）的数量"
+      },
+      "T": {
+        "min": 1,
+        "max": 1000000,
+        "description": "事件发生的日期"
+      },
+      "Z": {
+        "min": -1000000,
+        "max": 1000000,
+        "description": "公司的每日利润"
+      },
+      "S": {
+        "min": -1000000,
+        "max": 1000000,
+        "description": "公司搬入当天的账户余额"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_non_empty_offices",
+      "decision_existence_of_positive_balance"
+    ],
+    "structural_options": [
+      "allow_negative_profits",
+      "allow_zero_profits",
+      "allow_repeated_office_occupancy",
+      "allow_multiple_events_per_day",
+      "allow_immediate_profit_on_move_in"
+    ]
+  }
+}

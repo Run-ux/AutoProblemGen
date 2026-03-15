@@ -1,0 +1,175 @@
+{
+  "problem_id": "GYM104460K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 10000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "degree_bound",
+        "description": "每个节点的出边在最坏情况下最多被阻塞 d_i 条（图中每个节点的度数约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "从起点到任意一个出口必须存在一条路径（图的连通性约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "计算从起点到任意一个出口的最短路径时间，考虑最坏情况下的路径阻塞（路径约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "degree_bound",
+              "description": "每个节点的出边在最坏情况下最多被阻塞 d_i 条（图中每个节点的度数约束）"
+            },
+            {
+              "name": "connectivity",
+              "description": "从起点到任意一个出口必须存在一条路径（图的连通性约束）"
+            },
+            {
+              "name": "path_constraint",
+              "description": "计算从起点到任意一个出口的最短路径时间，考虑最坏情况下的路径阻塞（路径约束）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "min_max",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "min_max",
+          "description": "求在最坏情况下从起点到任意一个终点的最短路径长度"
+        }
+      }
+    ],
+    "description": "求在最坏情况下从起点到任意一个终点的最短路径长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即从起点到任意点的最短路径可以由从起点到该点前驱节点的最短路径加上边权值得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在搜索过程中，每个节点的状态（如最短路径）根据其前驱节点的状态进行更新，并且这种更新方式在整个算法执行过程中保持一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "flow_conservation",
+        "description": "流守恒：在考虑路径被怪物阻断的情况下，从一个节点出发的所有可能路径数量之和等于到达该节点的所有可能路径数量之和，确保了路径选择的连贯性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即从起点到任意点的最短路径可以由从起点到该点前驱节点的最短路径加上边权值得到。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在搜索过程中，每个节点的状态（如最短路径）根据其前驱节点的状态进行更新，并且这种更新方式在整个算法执行过程中保持一致。",
+              "properties": {}
+            },
+            {
+              "name": "flow_conservation",
+              "description": "流守恒：在考虑路径被怪物阻断的情况下，从一个节点出发的所有可能路径数量之和等于到达该节点的所有可能路径数量之和，确保了路径选择的连贯性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 100000,
+        "description": "出口的数量"
+      },
+      "D_i": {
+        "min": 0,
+        "max": 1000000,
+        "description": "每个节点的怪物数量，决定了该节点最多可以被阻塞的路径数"
+      },
+      "W_i": {
+        "min": 1,
+        "max": 10000,
+        "description": "每条路径的权重（长度）"
+      }
+    },
+    "objective_options": [
+      "minimize_length",
+      "decision",
+      "count_paths"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "allow_disconnected_graph",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "problem_id": "GYM104757K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1500
+          },
+          "value_range": {
+            "min": 3,
+            "max": 20
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1500
+    },
+    "value_range": {
+      "min": 3,
+      "max": 20
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "两个字符串在恰好两个相邻位置上不同",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "每对字符串是唯一的，即没有其他字符串对满足相同的条件",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "两个字符串在恰好两个相邻位置上不同",
+              "formal": "∃i, s1[i] ≠ s2[i] ∧ s1[i+1] ≠ s2[i+1] ∧ ∀j ≠ i, i+1, s1[j] = s2[j]"
+            },
+            {
+              "name": "distinctness",
+              "description": "每对字符串是唯一的，即没有其他字符串对满足相同的条件",
+              "formal": "∀s3, s4 ∈ words, (s3, s4) ≠ (s1, s2) ∧ (s3, s4) 满足 adjacency_difference 的条件 → 不存在"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足特定条件的单词对数量"
+        }
+      }
+    ],
+    "description": "求满足特定条件的单词对数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "pairwise_distinctness",
+        "description": "每对单词必须在恰好两个连续位置上不同，并且是唯一满足该条件的单词对",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的解可以通过子问题的解来构造，即通过检查每个单词与其他单词之间的差异来确定是否形成有效的单词对",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "pairwise_distinctness",
+              "description": "每对单词必须在恰好两个连续位置上不同，并且是唯一满足该条件的单词对",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的解可以通过子问题的解来构造，即通过检查每个单词与其他单词之间的差异来确定是否形成有效的单词对",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 1500,
+        "description": "单词列表中的单词数量"
+      },
+      "Word_Length": {
+        "min": 3,
+        "max": 20,
+        "description": "每个单词的长度"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_adjacent_differences",
+      "allow_more_than_two_differences",
+      "allow_multiple_pairs_for_same_clue",
+      "allow_case_sensitive_words",
+      "allow_special_characters"
+    ]
+  }
+}

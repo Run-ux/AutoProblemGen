@@ -1,0 +1,185 @@
+{
+  "problem_id": "CF2027E1",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1073741823
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1073741823
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "turn_based",
+        "description": "游戏是回合制的，两名玩家轮流进行操作",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "每一步操作必须从某一堆中移除一定数量的石头，且移除的数量必须满足特定条件",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimal_play",
+        "description": "双方玩家都采取最优策略进行游戏",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "游戏状态在每次操作后发生变化，直到某一方无法进行有效操作为止",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "turn_based",
+              "description": "游戏是回合制的，两名玩家轮流进行操作"
+            },
+            {
+              "name": "operation_limit",
+              "description": "每一步操作必须从某一堆中移除一定数量的石头，且移除的数量必须满足特定条件"
+            },
+            {
+              "name": "optimal_play",
+              "description": "双方玩家都采取最优策略进行游戏"
+            },
+            {
+              "name": "state_transition",
+              "description": "游戏状态在每次操作后发生变化，直到某一方无法进行有效操作为止"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "game_outcome",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "game_outcome",
+          "description": "确定在给定条件下，先手玩家是否能赢得游戏"
+        }
+      }
+    ],
+    "description": "确定在给定条件下，先手玩家是否能赢得游戏"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：游戏的最终结果可以通过子问题（每个堆的状态）的最优解来确定。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：玩家的每一步操作都会将当前状态转移到一个新的合法状态，且这种转移是确定性的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：每个堆的状态和操作独立于其他堆，可以分别处理。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：游戏的最终结果可以通过子问题（每个堆的状态）的最优解来确定。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：玩家的每一步操作都会将当前状态转移到一个新的合法状态，且这种转移是确定性的。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：每个堆的状态和操作独立于其他堆，可以分别处理。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t": {
+        "min": 1,
+        "max": 1000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 10000,
+        "description": "每组测试用例中石堆的数量"
+      },
+      "a_i": {
+        "min": 1,
+        "max": 1073741823,
+        "description": "每个石堆的关联值"
+      },
+      "x_i": {
+        "min": 1,
+        "max": 1073741823,
+        "description": "每个石堆中的石头数量"
+      }
+    },
+    "objective_options": [
+      "decision",
+      "count_winning_moves",
+      "minimize_turns_to_win",
+      "maximize_turns_to_win"
+    ],
+    "structural_options": [
+      "allow_zero_stones_in_pile",
+      "allow_negative_stones_in_pile",
+      "allow_variable_initial_player",
+      "allow_multiple_operations_per_turn",
+      "allow_different_operation_rules",
+      "allow_additional_constraints_on_operations"
+    ]
+  }
+}

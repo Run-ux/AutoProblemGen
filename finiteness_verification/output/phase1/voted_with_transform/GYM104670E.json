@@ -1,0 +1,177 @@
+{
+  "problem_id": "GYM104670E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 20000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 20000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 10000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distance_bound",
+        "description": "在任意连续 x 个时间步内，最多只能有两个消息被暴露（即完全发送）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "一旦开始发送某个消息，必须连续发送直到完成，不能中断",
+        "confidence": "1/1"
+      },
+      {
+        "name": "concurrency",
+        "description": "多个消息可以并行发送，互不影响",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distance_bound",
+              "description": "在任意连续 x 个时间步内，最多只能有两个消息被暴露（即完全发送）",
+              "formal": "对于任意 i, j (i <= j < i + x)，满足 sum(t_k) 完全在 [i, j] 内的消息数量 <= 2"
+            },
+            {
+              "name": "connectivity",
+              "description": "一旦开始发送某个消息，必须连续发送直到完成，不能中断",
+              "formal": "如果消息 t_i 在时间 t 开始发送，则它必须在时间 [t, t + t_i - 1] 内连续发送"
+            },
+            {
+              "name": "concurrency",
+              "description": "多个消息可以并行发送，互不影响",
+              "formal": "多个消息可以在同一时间步开始发送，且它们的传输时间互不影响"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的最小时间长度"
+        }
+      }
+    ],
+    "description": "求满足条件的最小时间长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在某个时间点之前发送的消息集合的最优解可以用于构造整个问题的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着消息发送时间的推进，已发送消息的数量和总时间均单调增加，且在任意时刻，选择更早的时间开始发送不会导致更差的结果。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": false
+        }
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：在任意给定的时间段内，所有在此时间段内完全发送的消息的总时间可以通过该时间段的端点计算得出。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在某个时间点之前发送的消息集合的最优解可以用于构造整个问题的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着消息发送时间的推进，已发送消息的数量和总时间均单调增加，且在任意时刻，选择更早的时间开始发送不会导致更差的结果。",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": false
+              }
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：在任意给定的时间段内，所有在此时间段内完全发送的消息的总时间可以通过该时间段的端点计算得出。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "x": {
+        "min": 1,
+        "max": 10000,
+        "description": "攻击者可以禁用安全协议的连续时间步数"
+      },
+      "n": {
+        "min": 1,
+        "max": 20000,
+        "description": "Alice 想要发送的消息数量"
+      },
+      "t_i": {
+        "min": 1,
+        "max": 10000,
+        "description": "每个消息的传输时间"
+      }
+    },
+    "objective_options": [
+      "minimize_time",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_more_exposed_messages",
+      "vary_number_of_attacks",
+      "allow_non_consecutive_attacks",
+      "allow_variable_message_start_times"
+    ]
+  }
+}

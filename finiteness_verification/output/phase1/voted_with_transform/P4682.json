@@ -1,0 +1,207 @@
+{
+  "problem_id": "P4682",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 100
+          },
+          "value_range": {
+            "min": -10000,
+            "max": 10000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100
+    },
+    "value_range": {
+      "min": -10000,
+      "max": 10000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "maximum_destruction_count",
+        "description": "每个粒子碰撞次数不超过 K 次后消亡",
+        "confidence": "1/1"
+      },
+      {
+        "name": "reflection_constraint",
+        "description": "粒子碰到边界时发生完全弹性碰撞，速度方向镜面反射，速度大小不变",
+        "confidence": "1/1"
+      },
+      {
+        "name": "independence",
+        "description": "所有粒子的运动互不干扰",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "初始位置在圆形区域内",
+        "confidence": "1/1"
+      },
+      {
+        "name": "non_zero_vector_constraint",
+        "description": "每个粒子的速度向量非零",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "maximum_destruction_count",
+              "description": "每个粒子碰撞次数不超过 K 次后消亡",
+              "formal": "∀i, collision_count(i) ≤ k"
+            },
+            {
+              "name": "reflection_constraint",
+              "description": "粒子碰到边界时发生完全弹性碰撞，速度方向镜面反射，速度大小不变",
+              "formal": "if particle collides with boundary at (x, y), new velocity = reflect(velocity, tangent(x, y))"
+            },
+            {
+              "name": "independence",
+              "description": "所有粒子的运动互不干扰",
+              "formal": "∀i, j, motion(i) is independent of motion(j)"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "初始位置在圆形区域内",
+              "formal": "∀i, (x_i - x_0)^2 + (y_i - y_0)^2 ≤ R^2"
+            },
+            {
+              "name": "non_zero_vector_constraint",
+              "description": "每个粒子的速度向量非零",
+              "formal": "∀i, (v_{x_i}, v_{y_i}) ≠ (0, 0)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求所有粒子在运动过程中的历史最近距离"
+        }
+      }
+    ],
+    "description": "求所有粒子在运动过程中的历史最近距离"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：粒子在碰撞前后的位置和速度遵循确定的物理规则，确保状态转移的一致性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：粒子与器皿壁发生完全弹性碰撞时，碰撞前后的轨迹具有镜像对称性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：每个粒子的碰撞次数随时间单调递增，直到达到消亡条件。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：每个粒子的运动和碰撞过程可以独立处理，互不影响。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：粒子在碰撞前后的位置和速度遵循确定的物理规则，确保状态转移的一致性。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：粒子与器皿壁发生完全弹性碰撞时，碰撞前后的轨迹具有镜像对称性。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：每个粒子的碰撞次数随时间单调递增，直到达到消亡条件。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：每个粒子的运动和碰撞过程可以独立处理，互不影响。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "R": {
+        "min": 1,
+        "max": 10000,
+        "description": "圆形器皿的半径"
+      },
+      "k": {
+        "min": 1,
+        "max": 100,
+        "description": "每个粒子碰撞次数不超过 k 次后消亡"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count_collisions",
+      "decision_collision_occurs"
+    ],
+    "structural_options": [
+      "allow_non_circular_boundaries",
+      "allow_variable_collision_thresholds",
+      "allow_particle_interactions",
+      "allow_zero_velocity_vectors"
+    ]
+  }
+}

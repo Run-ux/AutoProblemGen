@@ -1,0 +1,152 @@
+{
+  "problem_id": "GYM105427K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000000000000000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 255
+          },
+          "properties": {
+            "ordered": false,
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000000000000000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 255
+    },
+    "properties": {
+      "ordered": false,
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "读取操作次数限制为 2 * ceil(log2(N)) 次",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "读取操作次数限制为 2 * ceil(log2(N)) 次",
+              "formal": "reads <= 2 * ceil(log2(N))"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "确定字符串的实际长度N"
+        }
+      }
+    ],
+    "description": "确定字符串的实际长度N"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "divide_conquer",
+        "description": "通过二分查找的方式逐步缩小搜索区间，每次查询中间位置的字节来确定字符串的实际长度N的位置。",
+        "confidence": "1/1",
+        "properties": {
+          "search_interval_monotonic": true
+        }
+      },
+      {
+        "name": "monotonicity",
+        "description": "在二分查找过程中，左端点和右端点单调地向目标值靠近，且搜索区间单调递减。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true,
+          "window_shrinkable": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "divide_conquer",
+              "description": "通过二分查找的方式逐步缩小搜索区间，每次查询中间位置的字节来确定字符串的实际长度N的位置。",
+              "properties": {
+                "search_interval_monotonic": true
+              }
+            },
+            {
+              "name": "monotonicity",
+              "description": "在二分查找过程中，左端点和右端点单调地向目标值靠近，且搜索区间单调递减。",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true,
+                "window_shrinkable": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 1000000000000000000,
+        "description": "字符串的实际长度"
+      },
+      "Reads_Limit_Multiplier": {
+        "min": 1,
+        "max": 4,
+        "description": "读取操作次数限制的乘数，原题为 2 * ceil(log2(N))"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_bytes_in_string",
+      "vary_read_limit_formula",
+      "multi_constraints"
+    ]
+  }
+}

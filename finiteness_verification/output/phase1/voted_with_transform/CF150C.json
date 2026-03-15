@@ -1,0 +1,186 @@
+{
+  "problem_id": "CF150C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 150000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 150000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "exclusion",
+        "description": "可以选择一个区间 [C, D] 不售票，即不计算该区间的票价",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "在每个区间 [i, i+1] 上，如果进行检查且有乘客未购票，则对售票员罚款 c 单位货币",
+        "confidence": "1/1"
+      },
+      {
+        "name": "probability_distribution",
+        "description": "每个区间 [i, i+1] 有 p_i 的概率进行检查，p_i 是百分比形式的概率",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "站点坐标 x_i 是严格递增的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "对于未售票的区间 [C, D]，节省的票价由售票员和乘客平分",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "exclusion",
+              "description": "可以选择一个区间 [C, D] 不售票，即不计算该区间的票价"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "在每个区间 [i, i+1] 上，如果进行检查且有乘客未购票，则对售票员罚款 c 单位货币"
+            },
+            {
+              "name": "probability_distribution",
+              "description": "每个区间 [i, i+1] 有 p_i 的概率进行检查，p_i 是百分比形式的概率"
+            },
+            {
+              "name": "ordering",
+              "description": "站点坐标 x_i 是严格递增的"
+            },
+            {
+              "name": "coverage",
+              "description": "对于未售票的区间 [C, D]，节省的票价由售票员和乘客平分"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化期望收益"
+        }
+      }
+    ],
+    "description": "最大化期望收益"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，适用于动态规划求解",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：区间的成本或收益可以通过端点差值计算，适用于前缀和优化区间查询",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：区间的最优解可以通过子区间的最优解合并得到，适用于线段树等数据结构进行区间操作",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，适用于动态规划求解",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：区间的成本或收益可以通过端点差值计算，适用于前缀和优化区间查询",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：区间的最优解可以通过子区间的最优解合并得到，适用于线段树等数据结构进行区间操作",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "c": {
+        "min": 1,
+        "max": 10000,
+        "description": "罚款金额，单位为货币单位"
+      },
+      "p_i": {
+        "min": 0,
+        "max": 100,
+        "description": "每个区间 [i, i+1] 上的检查概率，以百分比形式表示"
+      }
+    },
+    "objective_options": [
+      "maximize_profit",
+      "minimize_fine",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_multiple_exclusions",
+      "allow_non_consecutive_exclusions",
+      "allow_variable_fine_per_segment",
+      "allow_variable_inspection_probability"
+    ]
+  }
+}

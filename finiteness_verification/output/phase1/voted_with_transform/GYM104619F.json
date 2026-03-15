@@ -1,0 +1,176 @@
+{
+  "problem_id": "GYM104619F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "connected": false,
+            "weighted": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "connected": false,
+      "weighted": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "simple_undirected_graph",
+        "description": "图是简单无向图，即任意一对顶点之间最多只有一条边",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "图的连通性在每次删除边后可能发生变化，需要报告剩余的桥的数量",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_order",
+        "description": "边的删除顺序是固定的，必须按照给定的顺序依次删除",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "每条边只能被删除一次，不能重复删除同一条边",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "simple_undirected_graph",
+              "description": "图是简单无向图，即任意一对顶点之间最多只有一条边"
+            },
+            {
+              "name": "connectivity",
+              "description": "图的连通性在每次删除边后可能发生变化，需要报告剩余的桥的数量"
+            },
+            {
+              "name": "operation_order",
+              "description": "边的删除顺序是固定的，必须按照给定的顺序依次删除"
+            },
+            {
+              "name": "exclusion",
+              "description": "每条边只能被删除一次，不能重复删除同一条边"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求图中桥的数量"
+        }
+      }
+    ],
+    "description": "求图中桥的数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "divide_conquer",
+        "description": "分治不变量：大问题的解由子问题解合成。在桥的识别过程中，通过递归地处理子图来确定整个图中的桥。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在深度优先搜索（DFS）过程中，每个节点的状态（访问时间、低点值等）根据其邻接节点的状态进行更新。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：在DFS树中，节点的发现时间和完成时间满足拓扑序关系，即对于任意边(u, v)，u的发现时间早于v的发现时间。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "divide_conquer",
+              "description": "分治不变量：大问题的解由子问题解合成。在桥的识别过程中，通过递归地处理子图来确定整个图中的桥。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在深度优先搜索（DFS）过程中，每个节点的状态（访问时间、低点值等）根据其邻接节点的状态进行更新。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：在DFS树中，节点的发现时间和完成时间满足拓扑序关系，即对于任意边(u, v)，u的发现时间早于v的发现时间。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "q": {
+        "min": 1,
+        "max": 200000,
+        "description": "要删除的边的数量"
+      }
+    },
+    "objective_options": [
+      "count_bridges",
+      "decision_existence_of_bridges",
+      "minimize_bridges",
+      "maximize_bridges"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_parallel_edges",
+      "weighted_edges",
+      "directed_graph",
+      "report_after_each_removal",
+      "report_final_state_only"
+    ]
+  }
+}

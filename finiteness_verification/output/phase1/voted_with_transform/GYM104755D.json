@@ -1,0 +1,149 @@
+{
+  "problem_id": "GYM104755D",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "directed": true,
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "directed": true,
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "state_transition",
+        "description": "状态转移约束：根据当前节点的访问次数决定下一个节点的选择。如果当前节点被访问了奇数次，则选择第一个出边，否则选择第二个出边。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "cycle_count_constraint",
+        "description": "图结构约束：每个节点有两个出边，一个指向下一个节点，另一个指向前一个节点，形成一个环形图。",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "state_transition",
+              "description": "状态转移约束：根据当前节点的访问次数决定下一个节点的选择。如果当前节点被访问了奇数次，则选择第一个出边，否则选择第二个出边。",
+              "formal": "next_station = (visit_count % 2 == 1) ? first_outgoing_connection : second_outgoing_connection"
+            },
+            {
+              "name": "cycle_count_constraint",
+              "description": "图结构约束：每个节点有两个出边，一个指向下一个节点，另一个指向前一个节点，形成一个环形图。",
+              "formal": "outgoing_connections[i] = ['>', '<']"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个满足给定条件的路径终点"
+        }
+      }
+    ],
+    "description": "构造一个满足给定条件的路径终点"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：根据当前状态和访问次数的奇偶性决定下一个状态，满足状态机的一致性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "环不变量：由于存在循环连接（如最后的符号总是 '<'），系统最终会进入一个循环模式，且该循环模式在给定的规则下是固定的。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：根据当前状态和访问次数的奇偶性决定下一个状态，满足状态机的一致性。",
+              "properties": {}
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "环不变量：由于存在循环连接（如最后的符号总是 '<'），系统最终会进入一个循环模式，且该循环模式在给定的规则下是固定的。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "q": {
+        "min": 1,
+        "max": 200000,
+        "description": "查询次数，即需要计算的列车运行次数"
+      },
+      "l": {
+        "min": 1,
+        "max": 1000000000000000000,
+        "description": "每次查询中列车移动的步数"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_different_connection_symbols",
+      "allow_non_circular_connections",
+      "allow_variable_number_of_outgoing_connections"
+    ]
+  }
+}

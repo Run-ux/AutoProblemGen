@@ -1,0 +1,154 @@
+{
+  "problem_id": "GYM105216K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "区间内不同元素数量不超过 K（即 Jose 拥有的每台电脑的名字必须唯一）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "frequency_bound",
+        "description": "每个元素的出现频次不超过 1（即每台电脑的名字在当前拥有的电脑中只能出现一次）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "区间内不同元素数量不超过 K（即 Jose 拥有的每台电脑的名字必须唯一）",
+              "formal": "|distinct(A[1:k])| <= k"
+            },
+            {
+              "name": "frequency_bound",
+              "description": "每个元素的出现频次不超过 1（即每台电脑的名字在当前拥有的电脑中只能出现一次）",
+              "formal": "freq(x) <= 1 for all x in A[1:k]"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "求期望值，即最大化事件发生的期望周数"
+        }
+      }
+    ],
+    "description": "求期望值，即最大化事件发生的期望周数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：系统从一个状态转移到另一个状态的过程中，状态的合法性保持不变。具体表现为新购入的计算机名称与已有计算机名称不重复时，系统状态合法。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建。在本题中，期望值的计算可以分解为更小规模的问题，即当前拥有i台计算机时的期望值可以通过已知的拥有i-1台计算机时的期望值来递推得到。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：系统从一个状态转移到另一个状态的过程中，状态的合法性保持不变。具体表现为新购入的计算机名称与已有计算机名称不重复时，系统状态合法。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建。在本题中，期望值的计算可以分解为更小规模的问题，即当前拥有i台计算机时的期望值可以通过已知的拥有i-1台计算机时的期望值来递推得到。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 1000000000000,
+        "description": "计算机名称的范围，即随机整数的上限"
+      },
+      "k": {
+        "min": 2,
+        "max": 1000000,
+        "description": "Jose 同时可以拥有的最大计算机数量"
+      },
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "输出结果的模数，题目中固定为 10^9 + 7"
+      }
+    },
+    "objective_options": [
+      "expected_value",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_names",
+      "allow_non_uniform_distribution",
+      "allow_variable_k_over_time",
+      "allow_initial_computers"
+    ]
+  }
+}

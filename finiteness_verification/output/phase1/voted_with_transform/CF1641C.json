@@ -1,0 +1,160 @@
+{
+  "problem_id": "CF1641C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "window_constraint",
+        "description": "区间查询，对于给定的区间 [l, r]，判断该区间内是否存在至少一个特定元素（如病患）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_type",
+        "description": "确定性状态查询，根据已有的区间查询结果，确定某个位置 j 的元素是否为特定值（如是否为病患）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "query_limit",
+        "description": "查询一致性约束，所有区间查询结果必须与某种可能的序列一致",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "window_constraint",
+              "description": "区间查询，对于给定的区间 [l, r]，判断该区间内是否存在至少一个特定元素（如病患）",
+              "formal": "query(l, r, x) where x = 0 or 1"
+            },
+            {
+              "name": "operation_type",
+              "description": "确定性状态查询，根据已有的区间查询结果，确定某个位置 j 的元素是否为特定值（如是否为病患）",
+              "formal": "status(j) -> 'NO', 'YES', or 'N/A'"
+            },
+            {
+              "name": "query_limit",
+              "description": "查询一致性约束，所有区间查询结果必须与某种可能的序列一致",
+              "formal": "∃ sequence S such that all queries are consistent with S"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断给定条件下每个查询点的状态是否可以确定"
+        }
+      }
+    ],
+    "description": "判断给定条件下每个查询点的状态是否可以确定"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_mergeable",
+        "description": "区间信息可通过子区间合并，适用于线段树等数据结构中区间的更新与查询操作",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量，通过处理每个查询来更新和维护每个位置的状态（是否确定为病患或非病患）",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_mergeable",
+              "description": "区间信息可通过子区间合并，适用于线段树等数据结构中区间的更新与查询操作",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量，通过处理每个查询来更新和维护每个位置的状态（是否确定为病患或非病患）",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 1,
+        "max": 200000,
+        "description": "人数，即队列的长度"
+      },
+      "q": {
+        "min": 1,
+        "max": 200000,
+        "description": "查询的数量"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_sick_people",
+      "count_healthy_people"
+    ],
+    "structural_options": [
+      "allow_empty_intervals",
+      "allow_overlapping_intervals",
+      "allow_negative_queries",
+      "allow_multiple_sick_in_interval",
+      "allow_multiple_healthy_in_interval"
+    ]
+  }
+}

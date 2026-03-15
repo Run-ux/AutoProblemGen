@@ -1,0 +1,195 @@
+{
+  "problem_id": "CF1569E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 3
+          },
+          "value_range": {
+            "min": [
+              1,
+              100,
+              0
+            ],
+            "max": [
+              5,
+              100000000,
+              998244352
+            ]
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 3
+    },
+    "value_range": {
+      "min": [
+        1,
+        100,
+        0
+      ],
+      "max": [
+        5,
+        100000000,
+        998244352
+      ]
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "比赛结构为完全二叉树，每一轮比赛的胜者进入下一轮，直到决出冠军",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_order",
+        "description": "每个队伍在被淘汰时被分配一个名次，名次根据淘汰轮次确定",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "所有队伍的名次通过给定的哈希公式计算出的哈希值必须与给定的哈希值一致",
+        "confidence": "1/1"
+      },
+      {
+        "name": "matching_constraint",
+        "description": "初始配对是固定的，例如队伍1和队伍2总是首先对阵",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "比赛结构为完全二叉树，每一轮比赛的胜者进入下一轮，直到决出冠军"
+            },
+            {
+              "name": "operation_order",
+              "description": "每个队伍在被淘汰时被分配一个名次，名次根据淘汰轮次确定"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "所有队伍的名次通过给定的哈希公式计算出的哈希值必须与给定的哈希值一致"
+            },
+            {
+              "name": "matching_constraint",
+              "description": "初始配对是固定的，例如队伍1和队伍2总是首先对阵"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种方案使得给定的哈希值与某种排列方式一致"
+        }
+      }
+    ],
+    "description": "判断是否存在一种方案使得给定的哈希值与某种排列方式一致"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "divide_conquer",
+        "description": "大问题的解由子问题解合成，每一轮比赛的结果决定了下一轮的参赛队伍，最终结果由所有轮次的比赛结果决定",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，每个阶段的比赛结果决定了后续阶段的参赛队伍和最终排名",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量，每场比赛后，队伍的状态（胜者/败者）发生确定性变化，且这种变化是可预测的",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "divide_conquer",
+              "description": "大问题的解由子问题解合成，每一轮比赛的结果决定了下一轮的参赛队伍，最终结果由所有轮次的比赛结果决定",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，每个阶段的比赛结果决定了后续阶段的参赛队伍和最终排名",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量，每场比赛后，队伍的状态（胜者/败者）发生确定性变化，且这种变化是可预测的",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 5,
+        "description": "参与比赛的队伍数量为2^k"
+      },
+      "A": {
+        "min": 100,
+        "max": 100000000,
+        "description": "哈希公式中的基数"
+      },
+      "h": {
+        "min": 0,
+        "max": 998244352,
+        "description": "给定的哈希值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_variable_initial_pairing",
+      "allow_custom_hash_function",
+      "allow_variable_modulo"
+    ]
+  }
+}

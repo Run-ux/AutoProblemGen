@@ -1,0 +1,208 @@
+{
+  "problem_id": "GYM101775I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 0,
+            "max": 80000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 0,
+      "max": 80000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distance_bound",
+        "description": "玩家从初始位置到最终安全区域的距离必须在给定时间内可到达（基于速度和时间）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "window_constraint",
+        "description": "玩家必须在两个特定时间点之间进入较小的安全区域，否则会受到不同的持续伤害",
+        "confidence": "1/1"
+      },
+      {
+        "name": "accumulated_sum_constraint",
+        "description": "玩家在安全区域外的时间内会累积伤害，伤害率在不同时间段内可能不同",
+        "confidence": "1/1"
+      },
+      {
+        "name": "inclusion",
+        "description": "玩家必须在某个时刻进入一个不断缩小的圆形区域内部以避免伤害",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distance_bound",
+              "description": "玩家从初始位置到最终安全区域的距离必须在给定时间内可到达（基于速度和时间）",
+              "formal": "distance((x0, y0), (x2, y2)) <= v * t2"
+            },
+            {
+              "name": "window_constraint",
+              "description": "玩家必须在两个特定时间点之间进入较小的安全区域，否则会受到不同的持续伤害",
+              "formal": "t1 < t < t2"
+            },
+            {
+              "name": "accumulated_sum_constraint",
+              "description": "玩家在安全区域外的时间内会累积伤害，伤害率在不同时间段内可能不同",
+              "formal": "damage = d1 * (t1 - t0) + d2 * (t2 - t1)"
+            },
+            {
+              "name": "inclusion",
+              "description": "玩家必须在某个时刻进入一个不断缩小的圆形区域内部以避免伤害",
+              "formal": "(x, y) ∈ C1 and (x, y) ∈ C2 at t2"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求从初始点到目标区域的最小累积代价"
+        }
+      }
+    ],
+    "description": "求从初始点到目标区域的最小累积代价"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在每个时间点选择最优路径进入安全区可以最小化总伤害",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：安全区域随时间单调缩小，玩家受到的伤害随时间单调增加（从d1到d2）",
+        "confidence": "1/1",
+        "properties": {
+          "time_monotonic": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：玩家的位置和当前时间决定了其是否在安全区内以及所受伤害，这种状态转移是确定且一致的",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在每个时间点选择最优路径进入安全区可以最小化总伤害",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：安全区域随时间单调缩小，玩家受到的伤害随时间单调增加（从d1到d2）",
+              "properties": {
+                "time_monotonic": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：玩家的位置和当前时间决定了其是否在安全区内以及所受伤害，这种状态转移是确定且一致的",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "v": {
+        "min": 50,
+        "max": 400,
+        "description": "玩家的移动速度"
+      },
+      "r1": {
+        "min": 1,
+        "max": 80000,
+        "description": "初始安全区域的半径"
+      },
+      "r2": {
+        "min": 1,
+        "max": 80000,
+        "description": "最终安全区域的半径"
+      },
+      "d1": {
+        "min": 1,
+        "max": 11,
+        "description": "在t1之前的安全区域外的伤害率"
+      },
+      "d2": {
+        "min": 1,
+        "max": 11,
+        "description": "在t2之后的安全区域外的伤害率"
+      },
+      "t1": {
+        "min": 0,
+        "max": 80000,
+        "description": "安全区域开始缩小的时间点"
+      },
+      "t2": {
+        "min": 0,
+        "max": 80000,
+        "description": "安全区域缩小到最终大小的时间点"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_coordinates",
+      "allow_non_integer_coordinates",
+      "allow_variable_damage_rates",
+      "allow_multiple_shrink_phases"
+    ]
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "problem_id": "GYM105789J",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 500
+          },
+          "value_range": {
+            "min": -1000,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 500
+    },
+    "value_range": {
+      "min": -1000,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "geometric_angle_constraint",
+        "description": "最大视角角度不超过90度，且必须避免包含任何给定点（星体）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "视角内不能包含任何星体",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "geometric_angle_constraint",
+              "description": "最大视角角度不超过90度，且必须避免包含任何给定点（星体）",
+              "formal": "0 ≤ θ ≤ 90°, 其中θ为视角角度，且视角内不包含任何星体"
+            },
+            {
+              "name": "exclusion",
+              "description": "视角内不能包含任何星体",
+              "formal": "对于所有星体 (X, Y, Z)，视角内的点 (x, y, z) 满足 (x, y, z) ≠ (X, Y, Z)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求满足条件的最大角度"
+        }
+      }
+    ],
+    "description": "求满足条件的最大角度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "convexity",
+        "description": "凸性不变量：所有星体构成的点集在三维空间中形成一个凸包，最大视角问题转化为求解该凸包上某点到原点的最大夹角",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着视角角度的增大，包含的星体数量非递减，因此可以通过二分查找确定最大合法视角",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "convexity",
+              "description": "凸性不变量：所有星体构成的点集在三维空间中形成一个凸包，最大视角问题转化为求解该凸包上某点到原点的最大夹角",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着视角角度的增大，包含的星体数量非递减，因此可以通过二分查找确定最大合法视角",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 500,
+        "description": "星体的数量"
+      },
+      "Coordinate_Range": {
+        "min": -1000,
+        "max": 1000,
+        "description": "星体坐标的范围"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "decision",
+      "count_valid_angles"
+    ],
+    "structural_options": [
+      "allow_negative_coordinates",
+      "allow_zero_coordinates",
+      "allow_repeated_coordinates",
+      "multi_constraints"
+    ]
+  }
+}

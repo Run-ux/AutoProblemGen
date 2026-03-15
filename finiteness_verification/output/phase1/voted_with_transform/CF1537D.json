@@ -1,0 +1,160 @@
+{
+  "problem_id": "CF1537D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "optimal_play",
+        "description": "双方玩家都采取最优策略进行游戏",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_type",
+        "description": "每次操作必须选择当前数的一个非1且非自身的因数进行减法操作",
+        "confidence": "1/1"
+      },
+      {
+        "name": "turn_based",
+        "description": "游戏按回合制进行，Alice先手，Bob后手，交替进行",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "当某一方无法进行合法操作时，该方失败",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "optimal_play",
+              "description": "双方玩家都采取最优策略进行游戏"
+            },
+            {
+              "name": "operation_type",
+              "description": "每次操作必须选择当前数的一个非1且非自身的因数进行减法操作"
+            },
+            {
+              "name": "turn_based",
+              "description": "游戏按回合制进行，Alice先手，Bob后手，交替进行"
+            },
+            {
+              "name": "operation_limit",
+              "description": "当某一方无法进行合法操作时，该方失败"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "game_outcome",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "game_outcome",
+          "description": "判断先手玩家是否能在双方都采取最优策略的情况下获胜"
+        }
+      }
+    ],
+    "description": "判断先手玩家是否能在双方都采取最优策略的情况下获胜"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：当前状态的最优解可以通过其子问题的最优解来确定，即游戏胜负取决于当前数的所有非平凡因子所对应的状态的胜负情况。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态转移到另一个状态的过程是通过减去该状态的一个非平凡因子实现的，且每个状态的合法性仅依赖于其数值本身。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：当前状态的最优解可以通过其子问题的最优解来确定，即游戏胜负取决于当前数的所有非平凡因子所对应的状态的胜负情况。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态转移到另一个状态的过程是通过减去该状态的一个非平凡因子实现的，且每个状态的合法性仅依赖于其数值本身。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 10000,
+        "description": "测试用例的数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "初始数 n 的值"
+      }
+    },
+    "objective_options": [
+      "decision",
+      "count_winning_moves"
+    ],
+    "structural_options": [
+      "allow_divisors_equal_to_n",
+      "allow_divisors_equal_to_1",
+      "allow_non_positive_integers",
+      "multiple_operations_per_turn"
+    ]
+  }
+}

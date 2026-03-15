@@ -1,0 +1,202 @@
+{
+  "problem_id": "GYM102028B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "turn_based",
+        "description": "战斗按回合制进行，每回合先由怪物攻击，然后 Ultraman 选择一个怪物进行攻击",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "Ultraman 每回合只能选择一个怪物进行攻击",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "每个怪物的健康点数在受到攻击后会减少相应的值，如果健康点数小于等于零则该怪物死亡",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "Ultraman 的总伤害是所有回合中怪物对其造成的伤害之和",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "最优策略的字符串描述在字典序上最小",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "turn_based",
+              "description": "战斗按回合制进行，每回合先由怪物攻击，然后 Ultraman 选择一个怪物进行攻击"
+            },
+            {
+              "name": "operation_limit",
+              "description": "Ultraman 每回合只能选择一个怪物进行攻击"
+            },
+            {
+              "name": "state_transition",
+              "description": "每个怪物的健康点数在受到攻击后会减少相应的值，如果健康点数小于等于零则该怪物死亡"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "Ultraman 的总伤害是所有回合中怪物对其造成的伤害之和"
+            },
+            {
+              "name": "ordering",
+              "description": "最优策略的字符串描述在字典序上最小"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "最小化在战斗中受到的总伤害"
+        }
+      }
+    ],
+    "description": "最小化在战斗中受到的总伤害"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在每一步选择攻击哪个怪物时，当前决策基于剩余怪物的生命值和已造成的总伤害来决定，以确保最终总伤害最小。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择攻击哪个怪物时，总是选择当前生命值较高或攻击值较高的怪物进行攻击，以尽快减少受到的总伤害。这种局部最优选择可以导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着战斗时间的增加，怪物的生命值逐渐减少，直到为零。同时，Ultraman 所受的总伤害随时间单调递增。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在每一步选择攻击哪个怪物时，当前决策基于剩余怪物的生命值和已造成的总伤害来决定，以确保最终总伤害最小。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择攻击哪个怪物时，总是选择当前生命值较高或攻击值较高的怪物进行攻击，以尽快减少受到的总伤害。这种局部最优选择可以导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着战斗时间的增加，怪物的生命值逐渐减少，直到为零。同时，Ultraman 所受的总伤害随时间单调递增。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "HP_A": {
+        "min": 1,
+        "max": 1000,
+        "description": "Aodzilla的初始生命值"
+      },
+      "HP_B": {
+        "min": 1,
+        "max": 1000,
+        "description": "Bodzilla的初始生命值"
+      },
+      "ATK_A": {
+        "min": 1,
+        "max": 1000,
+        "description": "Aodzilla的攻击值"
+      },
+      "ATK_B": {
+        "min": 1,
+        "max": 1000,
+        "description": "Bodzilla的攻击值"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_equal_attack_values",
+      "allow_higher_health_points",
+      "allow_lower_attack_values",
+      "allow_multiple_monsters",
+      "allow_varying_attack_order"
+    ]
+  }
+}

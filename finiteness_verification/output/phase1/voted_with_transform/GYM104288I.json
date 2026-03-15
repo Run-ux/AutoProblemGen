@@ -1,0 +1,202 @@
+{
+  "problem_id": "GYM104288I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 3,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "degree_bound",
+        "description": "每个节点的度数不超过2（每个节点最多有两个桥连接）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "路径必须经过所有遇到的桥（路径上不能跳过任何桥）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "桥只能连接相邻的边（桥的两个端点必须在同一距离圆周上的相邻边）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distance_bound",
+        "description": "桥的两个端点到中心的距离相同（桥的两个端点必须在同一个距离圆周上）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "添加的桥数量最小化（需要添加的桥的数量最少）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "degree_bound",
+              "description": "每个节点的度数不超过2（每个节点最多有两个桥连接）",
+              "formal": "∀v ∈ V, deg(v) ≤ 2"
+            },
+            {
+              "name": "path_constraint",
+              "description": "路径必须经过所有遇到的桥（路径上不能跳过任何桥）",
+              "formal": "∀e ∈ E, e 必须在路径上"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "桥只能连接相邻的边（桥的两个端点必须在同一距离圆周上的相邻边）",
+              "formal": "∀e = (u, v) ∈ E, u 和 v 是相邻的边"
+            },
+            {
+              "name": "distance_bound",
+              "description": "桥的两个端点到中心的距离相同（桥的两个端点必须在同一个距离圆周上）",
+              "formal": "∀e = (u, v) ∈ E, dist(u, center) = dist(v, center)"
+            },
+            {
+              "name": "operation_limit",
+              "description": "添加的桥数量最小化（需要添加的桥的数量最少）",
+              "formal": "minimize |E' - E|, 其中 E' 是添加桥后的边集"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_count",
+          "description": "求从每个起点到指定终点所需的最少添加边数"
+        }
+      }
+    ],
+    "description": "求从每个起点到指定终点所需的最少添加边数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。对于每个起点，到达目标点的最小桥数可以通过已知的子路径的最小桥数来确定。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态到另一个状态的转移是基于固定的规则，并且这种转移在整个过程中保持一致。在这个问题中，Charlotte 从一个桥移动到下一个桥或终点的过程遵循固定的规则。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "环不变量：在循环结构中，某些性质在每次循环后保持不变。在这个问题中，Charlotte 在网中的行走可以被视为在一个循环结构上的移动，而需要添加的桥的数量在每次循环后保持不变。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。对于每个起点，到达目标点的最小桥数可以通过已知的子路径的最小桥数来确定。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态到另一个状态的转移是基于固定的规则，并且这种转移在整个过程中保持一致。在这个问题中，Charlotte 从一个桥移动到下一个桥或终点的过程遵循固定的规则。",
+              "properties": {}
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "环不变量：在循环结构中，某些性质在每次循环后保持不变。在这个问题中，Charlotte 在网中的行走可以被视为在一个循环结构上的移动，而需要添加的桥的数量在每次循环后保持不变。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 3,
+        "max": 200000,
+        "description": "蜘蛛网的边数"
+      },
+      "m": {
+        "min": 0,
+        "max": 500000,
+        "description": "蜘蛛网中现有的桥的数量"
+      },
+      "s": {
+        "min": 1,
+        "max": 200000,
+        "description": "Charlotte 最喜欢的终点边编号"
+      },
+      "d": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "桥到蜘蛛网中心的距离"
+      }
+    },
+    "objective_options": [
+      "minimize_count",
+      "decision",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_non_adjacent_bridges",
+      "allow_variable_bridge_distances",
+      "allow_negative_distances",
+      "allow_duplicate_bridges"
+    ]
+  }
+}

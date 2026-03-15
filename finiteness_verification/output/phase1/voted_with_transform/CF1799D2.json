@@ -1,0 +1,168 @@
+{
+  "problem_id": "CF1799D2",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 300000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 300000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 300000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 300000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻程序的执行时间取决于前一个程序是否相同，如果相同则使用较短的时间，否则使用较长的时间",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_order",
+        "description": "程序必须按给定顺序依次执行，每个程序必须在前一个程序完成后才能开始",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻程序的执行时间取决于前一个程序是否相同，如果相同则使用较短的时间，否则使用较长的时间",
+              "formal": "time(a_i) = hot[a_i] if a_i == a_{i-1}, otherwise cold[a_i]"
+            },
+            {
+              "name": "operation_order",
+              "description": "程序必须按给定顺序依次执行，每个程序必须在前一个程序完成后才能开始",
+              "formal": "start_time(a_i) >= end_time(a_{i-1})"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求完成给定序列任务所需的最短时间"
+        }
+      }
+    ],
+    "description": "求完成给定序列任务所需的最短时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：当前状态的最优解由前一个状态的最优解决定，通过动态规划实现。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个程序的运行时间取决于其前一个程序的状态（是否为同一程序），从而影响后续程序的运行时间。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：当前状态的最优解由前一个状态的最优解决定，通过动态规划实现。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个程序的运行时间取决于其前一个程序的状态（是否为同一程序），从而影响后续程序的运行时间。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t": {
+        "min": 1,
+        "max": 100000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 300000,
+        "description": "程序序列的长度"
+      },
+      "k": {
+        "min": 1,
+        "max": 300000,
+        "description": "程序的数量"
+      },
+      "cold_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "程序i在冷启动时的运行时间"
+      },
+      "hot_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "程序i在热启动时的运行时间，必须小于等于对应的cold_i"
+      }
+    },
+    "objective_options": [
+      "minimize_time",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_same_programs",
+      "disallow_same_programs",
+      "allow_negative_times",
+      "disallow_negative_times",
+      "allow_zero_times",
+      "disallow_zero_times",
+      "allow_non_consecutive_same_programs",
+      "disallow_non_consecutive_same_programs"
+    ]
+  }
+}

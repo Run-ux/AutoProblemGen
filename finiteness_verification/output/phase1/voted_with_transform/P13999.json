@@ -1,0 +1,193 @@
+{
+  "problem_id": "P13999",
+  "source": "luogu",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 1,
+            "max": 2000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "weighted": true,
+            "connected": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 2000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "weighted": true,
+      "connected": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "path_constraint",
+        "description": "路径长度固定为 K，且路径可以重复经过节点和边",
+        "confidence": "1/1"
+      },
+      {
+        "name": "lexicographical_maximization",
+        "description": "路径选择策略是字典序最大化，即每次选择当前可选的最大值",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个节点至少有一个出边",
+        "confidence": "1/1"
+      },
+      {
+        "name": "constant_edge_weight",
+        "description": "每条边的权重在多次通过时保持不变",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "path_constraint",
+              "description": "路径长度固定为 K，且路径可以重复经过节点和边",
+              "formal": "len(path) = K, path[i] ∈ V, (path[i], path[i+1]) ∈ E"
+            },
+            {
+              "name": "lexicographical_maximization",
+              "description": "路径选择策略是字典序最大化，即每次选择当前可选的最大值",
+              "formal": "path[i] = argmax(d[path[i-1], u]) for all u ∈ V and (path[i-1], u) ∈ E"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个节点至少有一个出边",
+              "formal": "∀v ∈ V, ∃u ∈ V such that (v, u) ∈ E"
+            },
+            {
+              "name": "constant_edge_weight",
+              "description": "每条边的权重在多次通过时保持不变",
+              "formal": "d[u, v] is constant for all (u, v) ∈ E"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "lexicographic_optimize",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "lexicographic_optimize",
+          "description": "求在给定步数内，按照字典序最大的路径上的权值和"
+        }
+      }
+    ],
+    "description": "求在给定步数内，按照字典序最大的路径上的权值和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，总是选择当前最优的走廊以最大化钻石数量。这种局部最优选择最终导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：由于存在有向边且每个节点至少有一条出边，可以构建一个拓扑排序。在这个排序下，路径的选择始终遵循从高到低的顺序。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态转移到另一个状态时，通过选择当前最优的走廊来更新状态。这种状态转移的一致性保证了算法的正确性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，总是选择当前最优的走廊以最大化钻石数量。这种局部最优选择最终导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：由于存在有向边且每个节点至少有一条出边，可以构建一个拓扑排序。在这个排序下，路径的选择始终遵循从高到低的顺序。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态转移到另一个状态时，通过选择当前最优的走廊来更新状态。这种状态转移的一致性保证了算法的正确性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000,
+        "description": "Petar 将通过的走廊数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 4000,
+        "description": "走廊的数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 2000,
+        "description": "大厅的数量"
+      },
+      "D_MAX": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "每条走廊上钻石的最大数量"
+      }
+    },
+    "objective_options": [
+      "lexicographic_optimize",
+      "count_paths",
+      "decision_existence"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "allow_disconnected_graph",
+      "unique_edge_weights",
+      "single_edge_weight_2"
+    ]
+  }
+}

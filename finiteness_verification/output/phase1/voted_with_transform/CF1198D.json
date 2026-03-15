@@ -1,0 +1,146 @@
+{
+  "problem_id": "CF1198D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 50
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 50
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "optimization_objective",
+        "description": "操作成本由矩形的最大边长决定（即 max(h, w)）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "所有黑色单元格必须被覆盖并变为白色",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "optimization_objective",
+              "description": "操作成本由矩形的最大边长决定（即 max(h, w)）",
+              "formal": "cost(h, w) = max(h, w)"
+            },
+            {
+              "name": "coverage",
+              "description": "所有黑色单元格必须被覆盖并变为白色",
+              "formal": "∀ (i, j) ∈ black_cells, ∃ rectangle R s.t. (i, j) ∈ R and all cells in R are white"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "最小化覆盖所有特定点的矩形总代价"
+        }
+      }
+    ],
+    "description": "最小化覆盖所有特定点的矩形总代价"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即最小化总成本可以分解为多个子矩形的最小化成本之和。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：每次选择当前最优（即覆盖当前最大黑块的最小代价矩形）的操作能够逐步逼近全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即最小化总成本可以分解为多个子矩形的最小化成本之和。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：每次选择当前最优（即覆盖当前最大黑块的最小代价矩形）的操作能够逐步逼近全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 50,
+        "description": "网格的大小，即 n x n 的网格"
+      },
+      "Cost_Function": {
+        "min": 1,
+        "max": 50,
+        "description": "矩形操作的成本函数，当前为 max(h, w)，可以考虑其他形式如 h + w 或 h * w"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_square_grid",
+      "allow_variable_cost_function",
+      "allow_multiple_operations_per_rectangle",
+      "allow_precolored_white_cells",
+      "allow_partial_coverage"
+    ]
+  }
+}

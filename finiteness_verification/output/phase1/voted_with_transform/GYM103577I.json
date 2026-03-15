@@ -1,0 +1,160 @@
+{
+  "problem_id": "GYM103577I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "bipartite_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "bipartite_graph",
+          "length": {
+            "min": 1,
+            "max": 40000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 500
+          },
+          "properties": {
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 40000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 500
+    },
+    "properties": {
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "attribute_constraint",
+        "description": "每个问题设置者必须至少分配到一个主题，且每个主题必须被至少一个问题设置者覆盖",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "如果两个或多个问题设置者在同一个主题上工作，并且其中至少一个还在其他主题上工作，则会导致问题过于复杂，不允许这种情况发生",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "attribute_constraint",
+              "description": "每个问题设置者必须至少分配到一个主题，且每个主题必须被至少一个问题设置者覆盖",
+              "formal": "∀k ∈ [0, n-1], ∃t ∈ [0, n-1] 使得 k 被分配到 t; ∀t ∈ [0, n-1], ∃k ∈ [0, n-1] 使得 t 被 k 覆盖"
+            },
+            {
+              "name": "exclusion",
+              "description": "如果两个或多个问题设置者在同一个主题上工作，并且其中至少一个还在其他主题上工作，则会导致问题过于复杂，不允许这种情况发生",
+              "formal": "对于任意 k1, k2 ∈ [0, n-1] 和 t1, t2 ∈ [0, n-1]，如果 k1 和 k2 都在 t1 上工作，并且 k1 或 k2 在 t2 (t2 ≠ t1) 上工作，则不满足条件"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足条件的最小总权值"
+        }
+      }
+    ],
+    "description": "求满足条件的最小总权值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，每个子问题的解都是独立且最优的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：在分配问题时，每个问题设定者的选择不会影响其他问题设定者的最优选择。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：局部最优选择（即每次选择当前最优的时间分配）可以导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，每个子问题的解都是独立且最优的。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：在分配问题时，每个问题设定者的选择不会影响其他问题设定者的最优选择。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：局部最优选择（即每次选择当前最优的时间分配）可以导致全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "h_max": {
+        "min": 1,
+        "max": 500,
+        "description": "每个问题设置者准备一个主题所需的最大时间"
+      },
+      "m": {
+        "min": 1,
+        "max": 40000,
+        "description": "数据点的数量，表示问题设置者和主题之间的关系数量"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_multiple_topics_per_setter",
+      "disallow_creative_combinations",
+      "require_all_setters_assigned",
+      "require_all_topics_covered"
+    ]
+  }
+}

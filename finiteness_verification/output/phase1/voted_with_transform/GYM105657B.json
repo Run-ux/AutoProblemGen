@@ -1,0 +1,176 @@
+{
+  "problem_id": "GYM105657B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 9223372036854775807
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 9223372036854775807
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "range_bound",
+        "description": "区间内选择的元素必须在给定范围内",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "区间内必须排除一个元素",
+        "confidence": "1/1"
+      },
+      {
+        "name": "bitwise_closure",
+        "description": "团队评分是区间内所有选定元素的按位与结果",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "需要最大化团队评分",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "range_bound",
+              "description": "区间内选择的元素必须在给定范围内",
+              "formal": "l_i <= p_j <= r_i"
+            },
+            {
+              "name": "exclusion",
+              "description": "区间内必须排除一个元素",
+              "formal": "∃p_j, l_i <= p_j <= r_i 且 p_j 不参与计算"
+            },
+            {
+              "name": "bitwise_closure",
+              "description": "团队评分是区间内所有选定元素的按位与结果",
+              "formal": "rating = a_{p_1} & a_{p_2} & ... & a_{p_k}"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "需要最大化团队评分",
+              "formal": "maximize(rating)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化区间内去除一个元素后的剩余元素按位与结果"
+        }
+      }
+    ],
+    "description": "最大化区间内去除一个元素后的剩余元素按位与结果"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_mergeable",
+        "description": "区间信息可通过子区间合并，适用于线段树等数据结构中维护区间信息",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，通过解决子区间的问题来求解整个区间的最大值",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择导致全局最优，通过移除一个元素来最大化区间内的位与结果",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_mergeable",
+              "description": "区间信息可通过子区间合并，适用于线段树等数据结构中维护区间信息",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，通过解决子区间的问题来求解整个区间的最大值",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择导致全局最优，通过移除一个元素来最大化区间内的位与结果",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Rating_Bit_Length": {
+        "min": 1,
+        "max": 63,
+        "description": "每个猪的评分的最大位数，决定了评分范围"
+      },
+      "Query_Count": {
+        "min": 1,
+        "max": 1000000,
+        "description": "查询事件的数量"
+      }
+    },
+    "objective_options": [
+      "maximize",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_rating_changes",
+      "exclude_one_element",
+      "bitwise_and_operation",
+      "range_bound"
+    ]
+  }
+}

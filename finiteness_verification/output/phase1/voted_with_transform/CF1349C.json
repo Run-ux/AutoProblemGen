@@ -1,0 +1,149 @@
+{
+  "problem_id": "CF1349C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点的状态变化依赖于其邻接节点的状态（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "每个节点的状态根据规则进行状态转移（状态转移约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点的状态变化依赖于其邻接节点的状态（图着色约束）",
+              "formal": "cell(i, j) 的颜色在迭代 p 时取决于其相邻的 4 个细胞的颜色"
+            },
+            {
+              "name": "state_transition",
+              "description": "每个节点的状态根据规则进行状态转移（状态转移约束）",
+              "formal": "cell(i, j) 在迭代 p+1 时的颜色由其在迭代 p 时的颜色及其相邻细胞的颜色决定"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断给定条件下，特定位置在指定迭代次数后的状态"
+        }
+      }
+    ],
+    "description": "判断给定条件下，特定位置在指定迭代次数后的状态"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个细胞的颜色变化规则是固定的，且仅依赖于其当前状态及其相邻细胞的状态",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cyclic_invariance",
+        "description": "周期性不变量：由于网格大小有限，系统最终会进入一个循环状态，即存在一个周期T使得对于所有t>T，状态s(t) = s(t+T)",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个细胞的颜色变化规则是固定的，且仅依赖于其当前状态及其相邻细胞的状态",
+              "properties": {}
+            },
+            {
+              "name": "cyclic_invariance",
+              "description": "周期性不变量：由于网格大小有限，系统最终会进入一个循环状态，即存在一个周期T使得对于所有t>T，状态s(t) = s(t+T)",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "p": {
+        "min": 1,
+        "max": 1000000000000000000,
+        "description": "查询的迭代次数"
+      },
+      "t": {
+        "min": 1,
+        "max": 100000,
+        "description": "查询的数量"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_square_grid",
+      "allow_variable_initial_states",
+      "allow_custom_adjacency_rules",
+      "allow_periodic_boundary_conditions"
+    ]
+  }
+}

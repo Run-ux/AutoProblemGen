@@ -1,0 +1,201 @@
+{
+  "problem_id": "GYM100247I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "ordering",
+        "description": "输入的时间序列是严格递增的（时间戳有序）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "所有时间点 t_i 是互不相同的（无重复时间戳）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "flow_constraint",
+        "description": "在任意时刻，力场的能量不能低于当前撞击的陨石的伤害值，否则会受到伤害（能量约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "需要尽可能少地使用炮弹击毁陨石以避免受到任何伤害（操作次数最小化）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "ordering",
+              "description": "输入的时间序列是严格递增的（时间戳有序）",
+              "formal": "t[i] < t[i+1] for all 0 <= i < n-1"
+            },
+            {
+              "name": "distinctness",
+              "description": "所有时间点 t_i 是互不相同的（无重复时间戳）",
+              "formal": "t[i] != t[j] for all 0 <= i < j < n"
+            },
+            {
+              "name": "flow_constraint",
+              "description": "在任意时刻，力场的能量不能低于当前撞击的陨石的伤害值，否则会受到伤害（能量约束）",
+              "formal": "shield_power >= d[i] at time t[i]"
+            },
+            {
+              "name": "operation_limit",
+              "description": "需要尽可能少地使用炮弹击毁陨石以避免受到任何伤害（操作次数最小化）",
+              "formal": "minimize number of shots such that shield_power >= d[i] at time t[i] for all i"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_count",
+          "description": "求满足条件的最小操作次数"
+        }
+      }
+    ],
+    "description": "求满足条件的最小操作次数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "时间戳 t_i 严格递增，确保事件按时间顺序处理",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，即在每个时间点选择是否射击以最小化总射击次数",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择导致全局最优，即在每个时间点选择是否射击以避免当前及后续时间点的伤害",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移一致性，即根据当前时间和盾牌能量决定是否射击以及盾牌能量的变化",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "时间戳 t_i 严格递增，确保事件按时间顺序处理",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，即在每个时间点选择是否射击以最小化总射击次数",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择导致全局最优，即在每个时间点选择是否射击以避免当前及后续时间点的伤害",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移一致性，即根据当前时间和盾牌能量决定是否射击以及盾牌能量的变化",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 200000,
+        "description": "陨石的数量"
+      },
+      "T_MAX": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "时间戳的最大值"
+      },
+      "D_MAX": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "陨石伤害的最大值"
+      }
+    },
+    "objective_options": [
+      "minimize_count",
+      "decision",
+      "count_all_solutions"
+    ],
+    "structural_options": [
+      "allow_negative_damage",
+      "allow_duplicate_times",
+      "allow_non_increasing_times",
+      "allow_zero_damage",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "problem_id": "GYM100685F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 2,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000
+          },
+          "properties": {
+            "connected": false,
+            "weighted": false,
+            "directed": true,
+            "acyclic": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000
+    },
+    "properties": {
+      "connected": false,
+      "weighted": false,
+      "directed": true,
+      "acyclic": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "图中不存在环（无环性）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "flow_constraint",
+        "description": "每个节点的水容量有上限，超过上限的水会均匀流向相邻节点或流出系统",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个节点的出度和入度有限制，且没有多重边",
+        "confidence": "1/1"
+      },
+      {
+        "name": "terminal_vertex",
+        "description": "存在一个特殊的节点（目标池塘），最终计算该节点的水位",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "图中不存在环（无环性）"
+            },
+            {
+              "name": "flow_constraint",
+              "description": "每个节点的水容量有上限，超过上限的水会均匀流向相邻节点或流出系统"
+            },
+            {
+              "name": "flow_constraint",
+              "description": "水流从一个节点流向其相邻节点时，流量是均匀分配的"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个节点的出度和入度有限制，且没有多重边"
+            },
+            {
+              "name": "terminal_vertex",
+              "description": "存在一个特殊的节点（目标池塘），最终计算该节点的水位"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求网络流中目标节点的最终水位"
+        }
+      }
+    ],
+    "description": "求网络流中目标节点的最终水位"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "flow_conservation",
+        "description": "流守恒：每个节点的流入量等于流出量，除非该节点是源点或汇点。在本题中，每个水塘的流入水量等于其流出水量，除非该水塘是接收降雨的源头或最终目标水塘。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：由于题目保证了河流流向无环，因此可以按照拓扑序处理各个水塘。在拓扑排序的过程中，每个水塘的处理顺序确保了所有上游水塘已经处理完毕。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "flow_conservation",
+              "description": "流守恒：每个节点的流入量等于流出量，除非该节点是源点或汇点。在本题中，每个水塘的流入水量等于其流出水量，除非该水塘是接收降雨的源头或最终目标水塘。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：由于题目保证了河流流向无环，因此可以按照拓扑序处理各个水塘。在拓扑排序的过程中，每个水塘的处理顺序确保了所有上游水塘已经处理完毕。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 0,
+        "max": 100000,
+        "description": "水塘之间的连接数"
+      },
+      "P_i": {
+        "min": 0,
+        "max": 1000000,
+        "description": "每个水塘的最大容量"
+      },
+      "A_i": {
+        "min": 0,
+        "max": 1000000,
+        "description": "每个水塘的初始水量"
+      },
+      "Y": {
+        "min": 1,
+        "max": 1000000,
+        "description": "添加到特定水塘的水量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_initial_water",
+      "allow_multiple_rivers_between_ponds",
+      "allow_cycles_in_river_flows",
+      "allow_variable_flow_distribution"
+    ]
+  }
+}

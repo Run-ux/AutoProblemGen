@@ -1,0 +1,158 @@
+{
+  "problem_id": "GYM106072C",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 7,
+            "max": 7
+          },
+          "value_range": {
+            "min": 0,
+            "max": 100000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 7,
+      "max": 7
+    },
+    "value_range": {
+      "min": 0,
+      "max": 100000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "partition",
+        "description": "将问题集划分为三个子集，每个子集对应一个学生解决的问题集合",
+        "confidence": "1/1"
+      },
+      {
+        "name": "minimize_max_min_difference",
+        "description": "最大化最小值，即最大化三个学生中解决问题数量最少的学生的解题数量",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "每个问题只能分配给能够解决它的学生之一",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "partition",
+              "description": "将问题集划分为三个子集，每个子集对应一个学生解决的问题集合",
+              "formal": "P = P1 ∪ P2 ∪ P3, P1 ∩ P2 = ∅, P1 ∩ P3 = ∅, P2 ∩ P3 = ∅"
+            },
+            {
+              "name": "minimize_max_min_difference",
+              "description": "最大化最小值，即最大化三个学生中解决问题数量最少的学生的解题数量",
+              "formal": "maximize(min(|P1|, |P2|, |P3|))"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "每个问题只能分配给能够解决它的学生之一",
+              "formal": "∀i ∈ [1, S], Pi ∈ {P1, P2, P3} 且 Pi 只能分配给能解决它的学生"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "max_min",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "max_min",
+          "description": "最大化三个学生中解题数量最少的学生的解题数量"
+        }
+      }
+    ],
+    "description": "最大化三个学生中解题数量最少的学生的解题数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即通过分配每个类别的问题给学生，使得每个学生的最小解题数最大化。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，优先将问题分配给当前解题数最少的学生，以保证最终每个学生的解题数尽可能均衡。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即通过分配每个类别的问题给学生，使得每个学生的最小解题数最大化。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，优先将问题分配给当前解题数最少的学生，以保证最终每个学生的解题数尽可能均衡。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "S": {
+        "min": 0,
+        "max": 70000000,
+        "description": "问题集中的总问题数量"
+      },
+      "T": {
+        "min": 1,
+        "max": 100000,
+        "description": "测试用例的数量"
+      }
+    },
+    "objective_options": [
+      "maximize_min_value",
+      "count_solutions",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_zero_problems_in_categories",
+      "vary_number_of_students",
+      "vary_number_of_categories"
+    ]
+  }
+}

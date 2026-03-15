@@ -1,0 +1,168 @@
+{
+  "problem_id": "GYM101341K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "intersection",
+        "description": "选择的区间不能重叠（时间不冲突）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "每个区间的开始时间必须小于结束时间",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "在总用处最大的情况下，总时长最小",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "intersection",
+              "description": "选择的区间不能重叠（时间不冲突）"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "每个区间的开始时间必须小于结束时间"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "在总用处最大的情况下，总时长最小"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "multi_objective",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "multi_objective",
+          "description": "最大化一组不重叠区间的选择，使得这些区间的权值和最大且在权值和相同的情况下总长度最小"
+        }
+      }
+    ],
+    "description": "最大化一组不重叠区间的选择，使得这些区间的权值和最大且在权值和相同的情况下总长度最小"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在选择参加哪些比赛时，当前最优解依赖于之前已解决的子问题的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，总是选择当前情况下最有用的比赛（或在有用性相同的情况下选择持续时间最短的比赛），这种局部最优选择最终能够导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：比赛的时间段可以看作是区间，区间的总长度（即总持续时间）可以通过各个区间的长度累加得到。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在选择参加哪些比赛时，当前最优解依赖于之前已解决的子问题的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，总是选择当前情况下最有用的比赛（或在有用性相同的情况下选择持续时间最短的比赛），这种局部最优选择最终能够导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：比赛的时间段可以看作是区间，区间的总长度（即总持续时间）可以通过各个区间的长度累加得到。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 200000,
+        "description": "比赛的数量"
+      },
+      "C": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "比赛的有用性"
+      }
+    },
+    "objective_options": [
+      "maximize_usefulness",
+      "minimize_duration",
+      "count_solutions",
+      "decision_existence"
+    ],
+    "structural_options": [
+      "allow_overlapping_intervals",
+      "allow_negative_usefulness",
+      "allow_zero_duration",
+      "multi_constraints"
+    ]
+  }
+}

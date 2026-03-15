@@ -1,0 +1,189 @@
+{
+  "problem_id": "P11054",
+  "source": "luogu",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "connected": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 2
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "connected": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "connectivity",
+        "description": "图是连通的，即每对顶点之间都存在一条路径",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coloring_constraint",
+        "description": "每个顶点的颜色在 0 到 N-1 之间，且没有顶点的颜色是斯芬克斯之色（N）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "uniform_color_path",
+        "description": "单色路径上的所有顶点颜色相同",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connected_component_color_constraint",
+        "description": "两个顶点在同一个单色分支中当且仅当它们被某条单色路径连接",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "重新着色实验最多进行 2750 次",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "connectivity",
+              "description": "图是连通的，即每对顶点之间都存在一条路径"
+            },
+            {
+              "name": "coloring_constraint",
+              "description": "每个顶点的颜色在 0 到 N-1 之间，且没有顶点的颜色是斯芬克斯之色（N）"
+            },
+            {
+              "name": "uniform_color_path",
+              "description": "单色路径上的所有顶点颜色相同"
+            },
+            {
+              "name": "connected_component_color_constraint",
+              "description": "两个顶点在同一个单色分支中当且仅当它们被某条单色路径连接"
+            },
+            {
+              "name": "operation_limit",
+              "description": "重新着色实验最多进行 2750 次"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个顶点颜色数组，使得该数组与图中实际的顶点颜色一致"
+        }
+      }
+    ],
+    "description": "构造一个顶点颜色数组，使得该数组与图中实际的顶点颜色一致"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：通过多次实验确定每个顶点的颜色，每次实验的结果可以用于推断部分顶点的颜色，最终通过组合这些局部最优解得到全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每次重新着色实验后，图的单色分支数量发生变化，但这种变化是基于当前颜色状态和实验操作的确定性结果。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：在确定每个顶点的颜色时，可以通过独立的实验来验证相邻顶点的颜色关系，不同顶点的颜色确定过程互不影响。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：通过多次实验确定每个顶点的颜色，每次实验的结果可以用于推断部分顶点的颜色，最终通过组合这些局部最优解得到全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每次重新着色实验后，图的单色分支数量发生变化，但这种变化是基于当前颜色状态和实验操作的确定性结果。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：在确定每个顶点的颜色时，可以通过独立的实验来验证相邻顶点的颜色关系，不同顶点的颜色确定过程互不影响。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 1000,
+        "description": "图中顶点的数量"
+      },
+      "M": {
+        "min": "N-1",
+        "max": "N*(N-1)/2",
+        "description": "图中边的数量"
+      },
+      "Max_Experiments": {
+        "min": 1,
+        "max": 2750,
+        "description": "允许的最大重新着色实验次数"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_disconnected_graph",
+      "allow_special_color",
+      "allow_repeated_colors",
+      "allow_negative_experiment_values"
+    ]
+  }
+}

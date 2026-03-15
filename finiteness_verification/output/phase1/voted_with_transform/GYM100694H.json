@@ -1,0 +1,147 @@
+{
+  "problem_id": "GYM100694H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "每个学生最多可以发起一次噪声干扰",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "在记忆句子过程中受到干扰时，需要重新开始记忆该句子",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "每个学生最多可以发起一次噪声干扰"
+            },
+            {
+              "name": "state_transition",
+              "description": "在记忆句子过程中受到干扰时，需要重新开始记忆该句子"
+            },
+            {
+              "name": "state_transition",
+              "description": "在书写句子过程中受到干扰时，需要重新记忆并书写剩余部分"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化路径上的额外时间"
+        }
+      }
+    ],
+    "description": "最大化路径上的额外时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即每个句子的最大延迟时间可以由其前一个句子的最大延迟时间推导得出。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：对于每个学生发起的噪声，选择在当前句子记忆或书写过程中插入噪声，以最大化总延迟时间。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即每个句子的最大延迟时间可以由其前一个句子的最大延迟时间推导得出。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：对于每个学生发起的噪声，选择在当前句子记忆或书写过程中插入噪声，以最大化总延迟时间。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000,
+        "description": "学生数量，每个学生可以发起一次噪声干扰"
+      },
+      "Cj": {
+        "min": 1,
+        "max": 1000,
+        "description": "每个学生发起的噪声持续时间"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_multiple_noises_per_student",
+      "vary_noise_effect_on_memory_and_writing",
+      "allow_partial_sentence_remembrance",
+      "allow_variable_sentence_lengths"
+    ]
+  }
+}

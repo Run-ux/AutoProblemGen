@@ -1,0 +1,199 @@
+{
+  "problem_id": "CF1498D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "每个时间步必须应用一次且仅一次操作",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "每次操作中选择的 a_i 必须在 [0, y_i] 范围内",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "状态 k 的更新规则依赖于操作类型和参数 x_i, a_i",
+        "confidence": "1/1"
+      },
+      {
+        "name": "reachability",
+        "description": "需要找到最早的时间步，使得 k 等于特定的目标值 j",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "每个时间步必须应用一次且仅一次操作",
+              "formal": "对于每个 i (1 ≤ i ≤ n)，恰好执行一次第 i 个操作"
+            },
+            {
+              "name": "range_bound",
+              "description": "每次操作中选择的 a_i 必须在 [0, y_i] 范围内",
+              "formal": "0 ≤ a_i ≤ y_i"
+            },
+            {
+              "name": "state_transition",
+              "description": "状态 k 的更新规则依赖于操作类型和参数 x_i, a_i",
+              "formal": "k := ceil(k + a_i * x_i) 或 k := ceil(k * x_i^a_i)"
+            },
+            {
+              "name": "reachability",
+              "description": "需要找到最早的时间步，使得 k 等于特定的目标值 j",
+              "formal": "找到最小的 t 使得 k = j，否则输出 -1"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "对于每个目标值，判断是否存在一种操作序列使得最终状态达到该目标值，并输出最早的操作步数"
+        }
+      }
+    ],
+    "description": "对于每个目标值，判断是否存在一种操作序列使得最终状态达到该目标值，并输出最早的操作步数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "操作序列的单调性：每一步操作后，香蕉数量非递减",
+        "confidence": "1/1",
+        "properties": {
+          "non_decreasing": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在每个时间步，根据当前状态和操作类型确定下一个状态，且状态转移是确定性的",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：达到某个香蕉数量的最早时间步可以通过之前的时间步的状态推导出来",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "操作序列的单调性：每一步操作后，香蕉数量非递减",
+              "properties": {
+                "non_decreasing": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在每个时间步，根据当前状态和操作类型确定下一个状态，且状态转移是确定性的",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：达到某个香蕉数量的最早时间步可以通过之前的时间步的状态推导出来",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 1,
+        "max": 200,
+        "description": "时间步数,即操作的总次数"
+      },
+      "m": {
+        "min": 2,
+        "max": 100000,
+        "description": "目标香蕉数量的最大值"
+      },
+      "y_i": {
+        "min": 1,
+        "max": 100000,
+        "description": "每次操作中 a_i 的最大值"
+      },
+      "x'_i": {
+        "min": 1,
+        "max": 10000000000,
+        "description": "用于计算 x_i 的参数,x_i = x'_i / 100000"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions",
+      "minimize_time_steps"
+    ],
+    "structural_options": [
+      "allow_fractional_x_i",
+      "allow_large_y_i",
+      "allow_small_y_i",
+      "allow_both_operation_types",
+      "allow_only_type_1_operations",
+      "allow_only_type_2_operations",
+      "allow_negative_initial_k",
+      "allow_zero_initial_k",
+      "allow_positive_initial_k"
+    ]
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "problem_id": "GYM105637F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 2,
+            "max": 750
+          },
+          "value_range": {
+            "min": 1,
+            "max": 562500
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 750
+    },
+    "value_range": {
+      "min": 1,
+      "max": 562500
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "geometric_height_constraint",
+        "description": "矩形子区域的四个角的高度必须大于该子区域内的其他所有单元格的高度",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subregion_size_constraint",
+        "description": "矩形子区域的宽度和高度至少为 2",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "geometric_height_constraint",
+              "description": "矩形子区域的四个角的高度必须大于该子区域内的其他所有单元格的高度",
+              "formal": "对于任意矩形子区域 (i1, j1) 到 (i2, j2)，满足 h[i1][j1] > h[x][y], h[i1][j2] > h[x][y], h[i2][j1] > h[x][y], h[i2][j2] > h[x][y]，其中 (x, y) 是该子区域内的任意一个非角落单元格"
+            },
+            {
+              "name": "subregion_size_constraint",
+              "description": "矩形子区域的宽度和高度至少为 2",
+              "formal": "对于任意矩形子区域 (i1, j1) 到 (i2, j2)，满足 i2 - i1 + 1 >= 2 且 j2 - j1 + 1 >= 2"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的子矩形数量"
+        }
+      }
+    ],
+    "description": "求满足条件的子矩形数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建，即一个矩形区域的有效性可以通过其子矩形区域的有效性来判断。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：在确定矩形区域的过程中，通过高度值的比较可以确保四个角的高度始终大于内部其他点的高度，从而保证了矩形区域的合法性。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": false,
+          "window_shrinkable": false
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建，即一个矩形区域的有效性可以通过其子矩形区域的有效性来判断。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：在确定矩形区域的过程中，通过高度值的比较可以确保四个角的高度始终大于内部其他点的高度，从而保证了矩形区域的合法性。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": false,
+                "window_shrinkable": false
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "min_subregion_size": {
+        "min": 2,
+        "max": 10,
+        "description": "矩形子区域的最小宽度和高度"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_distinct_heights",
+      "require_all_corners_higher",
+      "require_only_two_corners_higher",
+      "require_only_three_corners_higher"
+    ]
+  }
+}

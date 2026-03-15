@@ -1,0 +1,186 @@
+{
+  "problem_id": "GYM102861D",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "pairwise_exclusion",
+        "description": "每一步操作后，每个节点的邻居必须不同（即每个人的新伴侣必须与之前的伴侣不同）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "最终形成的每对节点的权值和模 M 后的结果必须相同",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "pairwise_exclusion",
+              "description": "每一步操作后，每个节点的邻居必须不同（即每个人的新伴侣必须与之前的伴侣不同）"
+            },
+            {
+              "name": "pairwise_exclusion",
+              "description": "在整个过程中，任意一对节点不能在不同的时刻再次面对彼此"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "最终形成的每对节点的权值和模 M 后的结果必须相同"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的方案数（模10^9+7）"
+        }
+      }
+    ],
+    "description": "求满足条件的方案数（模10^9+7）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "modular_invariance",
+        "description": "模数不变性：在整个舞蹈过程中，每对舞者的年龄和在模M下的余数保持一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "置换不变性：每个步骤中，舞者的位置通过一个固定的置换进行变换，且该置换是可逆的。",
+        "confidence": "1/1",
+        "properties": {
+          "reversible": true
+        }
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "循环不变性：舞者在圆圈上的位置变化是周期性的，且每次旋转的步数P_i决定了新的位置。",
+        "confidence": "1/1",
+        "properties": {
+          "cyclic_rotation": true
+        }
+      },
+      {
+        "name": "matching_constraint",
+        "description": "配对不变性：每一步后，所有舞者的配对关系必须满足唯一性和不重复性。",
+        "confidence": "1/1",
+        "properties": {
+          "unique_pairing": true,
+          "no_repeated_pairs": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "modular_invariance",
+              "description": "模数不变性：在整个舞蹈过程中，每对舞者的年龄和在模M下的余数保持一致。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "置换不变性：每个步骤中，舞者的位置通过一个固定的置换进行变换，且该置换是可逆的。",
+              "properties": {
+                "reversible": true
+              }
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "循环不变性：舞者在圆圈上的位置变化是周期性的，且每次旋转的步数P_i决定了新的位置。",
+              "properties": {
+                "cyclic_rotation": true
+              }
+            },
+            {
+              "name": "matching_constraint",
+              "description": "配对不变性：每一步后，所有舞者的配对关系必须满足唯一性和不重复性。",
+              "properties": {
+                "unique_pairing": true,
+                "no_repeated_pairs": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000000,
+        "description": "舞蹈的步数"
+      },
+      "M": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "神圣的模数，用于计算年龄和的余数"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_pairs",
+      "allow_same_partner_after_step",
+      "allow_non_unique_pairing",
+      "allow_different_modulo_results"
+    ]
+  }
+}

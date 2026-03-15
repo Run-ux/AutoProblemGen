@@ -1,0 +1,154 @@
+{
+  "problem_id": "GYM103993F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 10000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "每个操作（移动盖子）只能进行一次，且只能向左移动或保持不动",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "只有被盖子覆盖的盒子中的杂志才能被保护",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "每个操作（移动盖子）只能进行一次，且只能向左移动或保持不动"
+            },
+            {
+              "name": "coverage",
+              "description": "只有被盖子覆盖的盒子中的杂志才能被保护"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化在给定约束条件下可保护的元素总和"
+        }
+      }
+    ],
+    "description": "最大化在给定约束条件下可保护的元素总和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，左指针指向当前未覆盖的盒子，右指针指向最近的有盖子的盒子",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择导致全局最优，每次选择最左侧未覆盖的盒子，并将其右侧最近的盖子移动到该盒子上",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，左指针指向当前未覆盖的盒子，右指针指向最近的有盖子的盒子",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择导致全局最优，每次选择最左侧未覆盖的盒子，并将其右侧最近的盖子移动到该盒子上",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 200000,
+        "description": "盒子的数量"
+      },
+      "A_MAX": {
+        "min": 1,
+        "max": 10000,
+        "description": "每个盒子中杂志的最大数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_empty_boxes",
+      "allow_multiple_lids_per_box",
+      "lid_movement_both_directions",
+      "lid_movement_only_left",
+      "lid_movement_only_right"
+    ]
+  }
+}

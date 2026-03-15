@@ -1,0 +1,176 @@
+{
+  "problem_id": "GYM105584I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 300
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 300
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "probability_distribution",
+        "description": "每个玩家的命中概率是一个在 [0, 1] 范围内的实数，且有 9 位小数",
+        "confidence": "1/1"
+      },
+      {
+        "name": "binary_classification",
+        "description": "玩家分为两个互斥的类别：盟友和敌人",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimal_play",
+        "description": "必须选择最优的目标以最大化盟友存活的概率",
+        "confidence": "1/1"
+      },
+      {
+        "name": "turn_based",
+        "description": "游戏按固定顺序进行 n 个回合，每个回合由一个特定的玩家行动",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "不能攻击自己队伍的玩家",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "probability_distribution",
+              "description": "每个玩家的命中概率是一个在 [0, 1] 范围内的实数，且有 9 位小数"
+            },
+            {
+              "name": "binary_classification",
+              "description": "玩家分为两个互斥的类别：盟友和敌人"
+            },
+            {
+              "name": "optimal_play",
+              "description": "必须选择最优的目标以最大化盟友存活的概率"
+            },
+            {
+              "name": "turn_based",
+              "description": "游戏按固定顺序进行 n 个回合，每个回合由一个特定的玩家行动"
+            },
+            {
+              "name": "exclusion",
+              "description": "不能攻击自己队伍的玩家"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化特定条件下所有指定元素存活的概率"
+        }
+      }
+    ],
+    "description": "最大化特定条件下所有指定元素存活的概率"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在每一步选择攻击目标时，当前状态的最优解依赖于之前状态的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态到另一个状态的转移是确定且一致的。在本题中，每个玩家按照顺序行动，并且每次行动后游戏的状态（存活情况）会发生变化，但这种变化是基于前一状态和当前玩家的选择。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在每一步选择攻击目标时，当前状态的最优解依赖于之前状态的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态到另一个状态的转移是确定且一致的。在本题中，每个玩家按照顺序行动，并且每次行动后游戏的状态（存活情况）会发生变化，但这种变化是基于前一状态和当前玩家的选择。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 2,
+        "max": 300,
+        "description": "玩家数量"
+      },
+      "hit_probability_precision": {
+        "min": 1,
+        "max": 9,
+        "description": "命中概率的小数位数"
+      }
+    },
+    "objective_options": [
+      "maximize_probability",
+      "minimize_probability",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_self_attack",
+      "allow_negative_hit_probabilities",
+      "allow_multiple_teams",
+      "allow_variable_team_sizes",
+      "allow_unordered_action_order"
+    ]
+  }
+}

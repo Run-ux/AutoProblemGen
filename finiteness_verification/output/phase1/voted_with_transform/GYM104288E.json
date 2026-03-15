@@ -1,0 +1,173 @@
+{
+  "problem_id": "GYM104288E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 12
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 12
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subset_constraint",
+        "description": "选取的 k 个元素必须是 n 个元素的一个子集",
+        "confidence": "1/1"
+      },
+      {
+        "name": "permutation_constraint",
+        "description": "k-1 个元素的排列方式必须能够传递信息",
+        "confidence": "1/1"
+      },
+      {
+        "name": "partition",
+        "description": "n 个元素被分成 m 个互不相交的子集，每个子集有特定的标记方法",
+        "confidence": "1/1"
+      },
+      {
+        "name": "inclusion",
+        "description": "第 k 个元素必须属于某个标记子集",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subset_constraint",
+              "description": "选取的 k 个元素必须是 n 个元素的一个子集",
+              "formal": "S ⊆ N, |S| = k"
+            },
+            {
+              "name": "permutation_constraint",
+              "description": "k-1 个元素的排列方式必须能够传递信息",
+              "formal": "P(k-1) -> info"
+            },
+            {
+              "name": "partition",
+              "description": "n 个元素被分成 m 个互不相交的子集，每个子集有特定的标记方法",
+              "formal": "N = ∪_{i=1}^m N_i, N_i ∩ N_j = ∅ (i ≠ j)"
+            },
+            {
+              "name": "inclusion",
+              "description": "第 k 个元素必须属于某个标记子集",
+              "formal": "k-th element ∈ N_i for some i"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化正确猜测第k张牌的概率"
+        }
+      }
+    ],
+    "description": "最大化正确猜测第k张牌的概率"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过标记方法和排列方式传递信息以达到最优猜测概率。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：在选择隐藏卡片和排列其他卡片时，不同的排列方式和隐藏卡片的选择可以看作是对称的操作，这些操作不会改变问题的本质结构。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过标记方法和排列方式传递信息以达到最优猜测概率。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：在选择隐藏卡片和排列其他卡片时，不同的排列方式和隐藏卡片的选择可以看作是对称的操作，这些操作不会改变问题的本质结构。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 2,
+        "max": 10,
+        "description": "选取的卡片数量"
+      },
+      "m": {
+        "min": 1,
+        "max": 10,
+        "description": "标记方法的数量"
+      },
+      "n": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "总卡片数量"
+      }
+    },
+    "objective_options": [
+      "maximize_probability",
+      "minimize_error",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_cards",
+      "allow_negative_markings",
+      "multi_constraints"
+    ]
+  }
+}

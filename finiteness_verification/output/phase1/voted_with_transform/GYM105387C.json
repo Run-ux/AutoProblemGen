@@ -1,0 +1,147 @@
+{
+  "problem_id": "GYM105387C",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 2147483647
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 2147483647
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "bitwise_xor_operation",
+        "description": "通过位异或操作将序列转换为符合特定模式的序列",
+        "confidence": "1/1"
+      },
+      {
+        "name": "monotonicity",
+        "description": "转换后的序列应先非递减后非递增，且每个区间的长度至少为2",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "bitwise_xor_operation",
+              "description": "通过位异或操作将序列转换为符合特定模式的序列",
+              "formal": "r_i = t_i xor k"
+            },
+            {
+              "name": "monotonicity",
+              "description": "转换后的序列应先非递减后非递增，且每个区间的长度至少为2",
+              "formal": "存在索引 i, j (1 <= i < j < n) 使得 r_1 <= r_2 <= ... <= r_i >= r_{i+1} >= ... >= r_n 且 j - i + 1 >= 2"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一个整数k，使得对序列中的每个元素应用异或操作后，得到的序列先不降后不升，且非单调区间长度至少为2"
+        }
+      }
+    ],
+    "description": "判断是否存在一个整数k，使得对序列中的每个元素应用异或操作后，得到的序列先不降后不升，且非单调区间长度至少为2"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "序列在某个位翻转后，存在一个分界点，使得前半部分非递减，后半部分非递增",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "bitwise_independence",
+        "description": "通过异或操作可以将原序列转换为满足单调性要求的序列",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "序列在某个位翻转后，存在一个分界点，使得前半部分非递减，后半部分非递增",
+              "properties": {}
+            },
+            {
+              "name": "bitwise_independence",
+              "description": "通过异或操作可以将原序列转换为满足单调性要求的序列",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 3,
+        "max": 10000,
+        "description": "测量的数量"
+      },
+      "T_MAX": {
+        "min": 0,
+        "max": 2147483647,
+        "description": "温度测量的最大值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_non_consecutive_intervals",
+      "require_strict_monotonicity",
+      "allow_single_element_intervals"
+    ]
+  }
+}

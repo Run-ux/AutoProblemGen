@@ -1,0 +1,183 @@
+{
+  "problem_id": "CF1810D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "linear_relation",
+        "description": "每个事件的属性 a 和 b 满足 a > b 的线性关系约束",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移约束：白天爬升 a 米，夜晚下滑 b 米，直到达到高度 h 为止",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制：对于每个事件类型 1，决定是否采用该消息；对于每个事件类型 2，计算并输出天数或 -1",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "linear_relation",
+              "description": "每个事件的属性 a 和 b 满足 a > b 的线性关系约束"
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移约束：白天爬升 a 米，夜晚下滑 b 米，直到达到高度 h 为止"
+            },
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制：对于每个事件类型 1，决定是否采用该消息；对于每个事件类型 2，计算并输出天数或 -1"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断给定条件下是否存在可行解，并在存在时输出最小化值"
+        }
+      }
+    ],
+    "description": "判断给定条件下是否存在可行解，并在存在时输出最小化值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "高度随时间单调递增，直到达到或超过树的高度。在每个白天，高度增加a米；在每个夜晚，高度减少b米。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构建。具体来说，第n天的高度可以由前n-1天的高度加上当天的净爬升高度得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "每天选择爬升a米并在夜间滑落b米是局部最优选择，这种选择最终会导致全局最优解，即最短时间到达树顶。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "高度随时间单调递增，直到达到或超过树的高度。在每个白天，高度增加a米；在每个夜晚，高度减少b米。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构建。具体来说，第n天的高度可以由前n-1天的高度加上当天的净爬升高度得到。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "每天选择爬升a米并在夜间滑落b米是局部最优选择，这种选择最终会导致全局最优解，即最短时间到达树顶。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "h": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "树的高度，即目标高度"
+      },
+      "a": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "白天爬升的高度"
+      },
+      "b": {
+        "min": 1,
+        "max": 999999999,
+        "description": "夜晚下滑的高度"
+      },
+      "n": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "事件类型1中指定的天数"
+      }
+    },
+    "objective_options": [
+      "minimize_days",
+      "decision",
+      "count_solutions"
+    ],
+    "structural_options": [
+      "allow_negative_b",
+      "allow_equal_a_b",
+      "multiple_snails",
+      "variable_starting_height"
+    ]
+  }
+}

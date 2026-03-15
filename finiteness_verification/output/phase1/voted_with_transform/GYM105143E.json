@@ -1,0 +1,177 @@
+{
+  "problem_id": "GYM105143E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "connected": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "connected": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "图结构为树，即无环连通图",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distance_bound",
+        "description": "假消息从节点 r 传播到距离不超过 t 的所有节点，即 V(r, t) = {v | dis(r, v) ≤ t}",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "反驳消息从节点 r' 传播到距离不超过 k(t - t0) 的所有节点，即 V'(r', t) = {v | dis(r', v) ≤ k(t - t0)}",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "反驳消息必须覆盖所有被假消息覆盖的节点，即 V(r, t) ⊆ V'(r', t)",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "图结构为树，即无环连通图"
+            },
+            {
+              "name": "distance_bound",
+              "description": "假消息从节点 r 传播到距离不超过 t 的所有节点，即 V(r, t) = {v | dis(r, v) ≤ t}",
+              "formal": "V(r, t) = {v | dis(r, v) ≤ t}"
+            },
+            {
+              "name": "operation_limit",
+              "description": "反驳消息从节点 r' 传播到距离不超过 k(t - t0) 的所有节点，即 V'(r', t) = {v | dis(r', v) ≤ k(t - t0)}",
+              "formal": "V'(r', t) = {v | dis(r', v) ≤ k(t - t0)}"
+            },
+            {
+              "name": "coverage",
+              "description": "反驳消息必须覆盖所有被假消息覆盖的节点，即 V(r, t) ⊆ V'(r', t)",
+              "formal": "V(r, t) ⊆ V'(r', t)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求满足覆盖条件的最小时间"
+        }
+      }
+    ],
+    "description": "求满足覆盖条件的最小时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "传播时间的单调性：随着反驳速度k的增加，最早完全覆盖假新闻的时间单调不增",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：对于任意给定的k值，找到最早的t使得V(r,t)⊆V'(r',t)，可以分解为在树上寻找满足条件的最远节点的问题",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个节点到另一个节点的状态转移（即消息或反驳信息的传播）遵循固定的规则，且该规则在整个算法执行过程中保持一致",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "传播时间的单调性：随着反驳速度k的增加，最早完全覆盖假新闻的时间单调不增",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：对于任意给定的k值，找到最早的t使得V(r,t)⊆V'(r',t)，可以分解为在树上寻找满足条件的最远节点的问题",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个节点到另一个节点的状态转移（即消息或反驳信息的传播）遵循固定的规则，且该规则在整个算法执行过程中保持一致",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t0": {
+        "min": 1,
+        "max": 200000,
+        "description": "假消息开始传播的时间"
+      },
+      "k": {
+        "min": 1,
+        "max": 200000,
+        "description": "反驳消息的传播速度，是假消息传播速度的倍数"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "multi_constraints"
+    ]
+  }
+}

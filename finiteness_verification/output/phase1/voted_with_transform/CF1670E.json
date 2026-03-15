@@ -1,0 +1,159 @@
+{
+  "problem_id": "CF1670E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 2,
+            "max": 131072
+          },
+          "value_range": {
+            "min": 1,
+            "max": 262143
+          },
+          "properties": {
+            "connected": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 131072
+    },
+    "value_range": {
+      "min": 1,
+      "max": 262143
+    },
+    "properties": {
+      "connected": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "所有节点和边的值必须是唯一的（无重复）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "所有节点和边的值必须在 [1, 2n-1] 范围内",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "选择一个根节点，使得从该根节点到任何节点或边的简单路径的最大异或成本最小化",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "所有节点和边的值必须是唯一的（无重复）",
+              "formal": "∀ i, j ∈ [1, 2n-1], i ≠ j → value(i) ≠ value(j)"
+            },
+            {
+              "name": "range_bound",
+              "description": "所有节点和边的值必须在 [1, 2n-1] 范围内",
+              "formal": "∀ i ∈ [1, n] ∪ [1, n-1], 1 ≤ value(i) ≤ 2n-1"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "选择一个根节点，使得从该根节点到任何节点或边的简单路径的最大异或成本最小化",
+              "formal": "minimize(max(cost(root, u) for all nodes u and edges e))"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "min_max",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "min_max",
+          "description": "选择根节点并分配节点和边的值，使得从根节点出发到任意节点或边的简单路径的最大成本最小化"
+        }
+      }
+    ],
+    "description": "选择根节点并分配节点和边的值，使得从根节点出发到任意节点或边的简单路径的最大成本最小化"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过其子问题的最优解来构造，即树中任意节点作为根时，其子树的最优解可以用于构建整个树的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：在树结构中，通过交换某些节点或边的值，可以保持整体路径成本的不变性。这种对称性允许我们通过对部分节点或边进行操作来优化全局解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过其子问题的最优解来构造，即树中任意节点作为根时，其子树的最优解可以用于构建整个树的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：在树结构中，通过交换某些节点或边的值，可以保持整体路径成本的不变性。这种对称性允许我们通过对部分节点或边进行操作来优化全局解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "P": {
+        "min": 1,
+        "max": 17,
+        "description": "树的节点数 n = 2^P，其中 P 是一个整数"
+      },
+      "T": {
+        "min": 1,
+        "max": 50000,
+        "description": "测试用例的数量"
+      }
+    },
+    "objective_options": [
+      "minimize_max_cost",
+      "count_solutions",
+      "decision_existence"
+    ],
+    "structural_options": [
+      "allow_non_power_of_two_nodes",
+      "allow_repeated_values",
+      "allow_different_value_ranges",
+      "allow_non_tree_structures"
+    ]
+  }
+}

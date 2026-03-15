@@ -1,0 +1,193 @@
+{
+  "problem_id": "CF160E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "inclusion",
+        "description": "每个乘客的起点和终点必须在所选公交车的行驶范围内",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "乘客到达车站的时间必须早于或等于所选公交车的出发时间",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "每个乘客选择最早满足条件的公交车",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "inclusion",
+              "description": "每个乘客的起点和终点必须在所选公交车的行驶范围内",
+              "formal": "s_j ≤ l_i 且 r_i ≤ f_j"
+            },
+            {
+              "name": "range_bound",
+              "description": "乘客到达车站的时间必须早于或等于所选公交车的出发时间",
+              "formal": "b_i ≤ t_j"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "每个乘客选择最早满足条件的公交车",
+              "formal": "min(t_j) 使得 s_j ≤ l_i 且 r_i ≤ f_j 且 b_i ≤ t_j"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断每个请求是否存在可行解，并输出可行解对应的编号，若无解则输出-1"
+        }
+      }
+    ],
+    "description": "判断每个请求是否存在可行解，并输出可行解对应的编号，若无解则输出-1"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "时间戳单调性：对于每个乘客，选择的公交车的时间戳 t_j 是满足条件 s_j ≤ l_i, r_i ≤ f_i 且 b_i ≤ t_j 的最小值。",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：每个乘客选择最早出发且能够到达目的地的公交车，这种局部最优选择导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "时间戳单调性：对于每个乘客，选择的公交车的时间戳 t_j 是满足条件 s_j ≤ l_i, r_i ≤ f_i 且 b_i ≤ t_j 的最小值。",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：每个乘客选择最早出发且能够到达目的地的公交车，这种局部最优选择导致全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 100000,
+        "description": "公交车的数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 100000,
+        "description": "乘客的数量"
+      },
+      "S": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "公交车起点站的编号"
+      },
+      "F": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "公交车终点站的编号"
+      },
+      "T": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "公交车出发的时间"
+      },
+      "L": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "乘客起点站的编号"
+      },
+      "R": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "乘客终点站的编号"
+      },
+      "B": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "乘客到达车站的时间"
+      }
+    },
+    "objective_options": [
+      "decision",
+      "feasibility",
+      "count"
+    ],
+    "structural_options": [
+      "allow_same_t",
+      "allow_non_unique_b",
+      "allow_out_of_range",
+      "allow_multiple_trips"
+    ]
+  }
+}

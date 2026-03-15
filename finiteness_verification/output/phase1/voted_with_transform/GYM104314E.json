@@ -1,0 +1,168 @@
+{
+  "problem_id": "GYM104314E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "connected": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "connected": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "connectivity",
+        "description": "图必须连通（所有岛屿通过改变最少的水单元为陆地单元连接起来）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "bipartiteness",
+        "description": "图是二分图（岛屿和水域分别属于两个不同的集合，且只在不同集合之间有边）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个节点的度数有限制（每个陆地单元最多与四个相邻单元相连）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "connectivity",
+              "description": "图必须连通（所有岛屿通过改变最少的水单元为陆地单元连接起来）"
+            },
+            {
+              "name": "bipartiteness",
+              "description": "图是二分图（岛屿和水域分别属于两个不同的集合，且只在不同集合之间有边）"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个节点的度数有限制（每个陆地单元最多与四个相邻单元相连）",
+              "formal": "∀v ∈ V, degree(v) ≤ 4"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求最小化连接所有连通块所需的边数"
+        }
+      }
+    ],
+    "description": "求最小化连接所有连通块所需的边数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。在本题中，连接两个岛屿的最小桥长度可以通过解决更小规模的子问题（即连接两个较小区域）来得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：通过遍历矩阵中的每个单元格，可以将当前状态（未访问、已访问但未处理、已处理）进行一致性的转换。这种状态转移确保了所有岛屿都被正确识别和处理。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在寻找最短路径连接两个岛屿时，每次选择最近的可连接点作为下一步，最终能够找到全局最优解。这是因为局部最优的选择（即每次选择最近的点）能够累积成全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。在本题中，连接两个岛屿的最小桥长度可以通过解决更小规模的子问题（即连接两个较小区域）来得到。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：通过遍历矩阵中的每个单元格，可以将当前状态（未访问、已访问但未处理、已处理）进行一致性的转换。这种状态转移确保了所有岛屿都被正确识别和处理。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在寻找最短路径连接两个岛屿时，每次选择最近的可连接点作为下一步，最终能够找到全局最优解。这是因为局部最优的选择（即每次选择最近的点）能够累积成全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 2,
+        "max": 10,
+        "description": "岛屿的最小数量。题目要求至少有两个岛屿，但可以增加这个数量来生成更复杂的实例。"
+      },
+      "D": {
+        "min": 1,
+        "max": 10,
+        "description": "岛屿之间的最大距离。可以通过限制岛屿之间的最大距离来生成不同的实例。"
+      }
+    },
+    "objective_options": [
+      "minimize_length",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_diagonal_connections",
+      "allow_multiple_bridges",
+      "islands_must_be_connected_to_specific_island",
+      "islands_must_be_connected_in_a_certain_order"
+    ]
+  }
+}

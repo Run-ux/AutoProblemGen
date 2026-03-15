@@ -1,0 +1,192 @@
+{
+  "problem_id": "GYM105588E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 2,
+            "max": 250
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1073741823
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 250
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1073741823
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "query_limit",
+        "description": "查询次数限制为 n 次",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "查询的路径必须包含恰好 k 条边，否则返回 -1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "bitwise_xor_operation",
+        "description": "查询结果是路径上所有节点权重的异或值",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "根节点的权重固定为 0",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "输入的边构成一棵树",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "query_limit",
+              "description": "查询次数限制为 n 次",
+              "formal": "q <= n"
+            },
+            {
+              "name": "path_constraint",
+              "description": "查询的路径必须包含恰好 k 条边，否则返回 -1",
+              "formal": "if path(u, v) has exactly k edges, return XOR of weights; otherwise, return -1"
+            },
+            {
+              "name": "bitwise_xor_operation",
+              "description": "查询结果是路径上所有节点权重的异或值",
+              "formal": "result = w[u] ⊕ w[v] ⊕ ... (all nodes on the path from u to v)"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "根节点的权重固定为 0",
+              "formal": "w[1] = 0"
+            },
+            {
+              "name": "connectivity",
+              "description": "输入的边构成一棵树",
+              "formal": "edges form a connected acyclic graph (tree)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否能在给定的查询次数内确定所有节点的权重"
+        }
+      }
+    ],
+    "description": "判断是否能在给定的查询次数内确定所有节点的权重"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：通过子问题的解可以推导出整个问题的解。在本题中，通过查询路径上的节点权重异或值，可以逐步推导出每个节点的权重。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在求解过程中，从已知信息到未知信息的状态转移是确定且一致的。具体来说，通过已知的路径异或值和部分节点权重，可以唯一确定其他节点的权重。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：路径上的节点权重异或值可以通过路径端点的信息进行计算。这种性质保证了通过查询路径上的异或值可以有效地推导出节点权重。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：通过子问题的解可以推导出整个问题的解。在本题中，通过查询路径上的节点权重异或值，可以逐步推导出每个节点的权重。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在求解过程中，从已知信息到未知信息的状态转移是确定且一致的。具体来说，通过已知的路径异或值和部分节点权重，可以唯一确定其他节点的权重。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：路径上的节点权重异或值可以通过路径端点的信息进行计算。这种性质保证了通过查询路径上的异或值可以有效地推导出节点权重。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 249,
+        "description": "查询路径必须包含的边数"
+      },
+      "weight_limit": {
+        "min": 0,
+        "max": 1073741823,
+        "description": "节点权重的最大值（即 2^30 - 1）"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_duplicate_weights",
+      "vary_query_limit",
+      "vary_tree_structure"
+    ]
+  }
+}

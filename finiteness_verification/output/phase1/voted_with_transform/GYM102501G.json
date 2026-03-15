@@ -1,0 +1,155 @@
+{
+  "problem_id": "GYM102501G",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻元素可以交换位置（图的边约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "输出结果必须是所有可能序列中字典序最小的一个（有序性约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻元素可以交换位置（图的边约束）",
+              "formal": "对于每对 (A, B)，如果 A 和 B 相邻，则可以交换它们的位置"
+            },
+            {
+              "name": "ordering",
+              "description": "输出结果必须是所有可能序列中字典序最小的一个（有序性约束）",
+              "formal": "输出序列 w_0, ..., w_{N-1} 必须满足 w_0, ..., w_{N-1} 是所有可能序列中的字典序最小者"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "lexicographic_optimize",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "lexicographic_optimize",
+          "description": "求在给定约束条件下，所有可能的排列中字典序最小的序列"
+        }
+      }
+    ],
+    "description": "求在给定约束条件下，所有可能的排列中字典序最小的序列"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：在允许的交换操作下，最终输出的序列是所有可能序列中字典序最小的一个，满足DAG上的顺序依赖关系",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "exchange_argument",
+        "description": "交换论证：通过局部交换操作（相邻元素交换）可以逐步优化序列，使其达到全局最优解（字典序最小）",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：在允许的交换操作下，最终输出的序列是所有可能序列中字典序最小的一个，满足DAG上的顺序依赖关系",
+              "properties": {}
+            },
+            {
+              "name": "exchange_argument",
+              "description": "交换论证：通过局部交换操作（相邻元素交换）可以逐步优化序列，使其达到全局最优解（字典序最小）",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "S": {
+        "min": 1,
+        "max": 200,
+        "description": "动物种类的数量"
+      },
+      "L": {
+        "min": 0,
+        "max": 10000,
+        "description": "友好动物对的数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 100000,
+        "description": "进入等待队列的动物数量"
+      }
+    },
+    "objective_options": [
+      "lexicographic_optimize",
+      "count_possible_sequences",
+      "decision_possible_sequence"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "allow_negative_weights",
+      "allow_repeated_species",
+      "multi_constraints"
+    ]
+  }
+}

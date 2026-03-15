@@ -1,0 +1,175 @@
+{
+  "problem_id": "GYM105278E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "distinct": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "distinct": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "数组中的所有元素必须是唯一的（去重）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "stack_sortable_constraint",
+        "description": "子数组可以通过栈操作排序为升序",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subsequence_constraint",
+        "description": "计算数组中满足特定条件的子数组数量",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "数组中的所有元素必须是唯一的（去重）",
+              "formal": "∀i, j (1 ≤ i < j ≤ N) : A[i] ≠ A[j]"
+            },
+            {
+              "name": "stack_sortable_constraint",
+              "description": "子数组可以通过栈操作排序为升序",
+              "formal": "对于每个子数组 A[l:r]，存在一个操作序列使得通过栈操作可以将其排序为升序"
+            },
+            {
+              "name": "subsequence_constraint",
+              "description": "计算数组中满足特定条件的子数组数量",
+              "formal": "计算满足 stack_sortable 条件的子数组数量"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足条件的子数组数量"
+        }
+      }
+    ],
+    "description": "求满足条件的子数组数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，用于维护当前子数组的合法性",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优解包含子问题的最优解，通过动态规划计算每个子数组是否为 melo 子数组",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "stack_invariant",
+        "description": "栈操作满足 LIFO 特性，且在处理过程中保持栈内元素的相对顺序不变",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，用于维护当前子数组的合法性",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优解包含子问题的最优解，通过动态规划计算每个子数组是否为 melo 子数组",
+              "properties": {}
+            },
+            {
+              "name": "stack_invariant",
+              "description": "栈操作满足 LIFO 特性，且在处理过程中保持栈内元素的相对顺序不变",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 1000000,
+        "description": "数组的长度"
+      },
+      "Value_Range_Max": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "数组中元素的最大值"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_distinct_elements",
+      "allow_negative_values",
+      "allow_zero_values",
+      "multi_constraints"
+    ]
+  }
+}

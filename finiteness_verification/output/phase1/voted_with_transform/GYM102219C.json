@@ -1,0 +1,161 @@
+{
+  "problem_id": "GYM102219C",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "flow_constraint",
+        "description": "选取元素的时间不超过给定的容量上限",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distance_bound",
+        "description": "选取元素的价值减去超出容量的部分，计算最终收益",
+        "confidence": "1/1"
+      },
+      {
+        "name": "inclusion",
+        "description": "每次只能选择一个元素进行处理",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "flow_constraint",
+              "description": "选取元素的时间不超过给定的容量上限",
+              "formal": "t_i <= S"
+            },
+            {
+              "name": "distance_bound",
+              "description": "选取元素的价值减去超出容量的部分，计算最终收益",
+              "formal": "f_i - (t_i - S) if t_i > S, otherwise f_i"
+            },
+            {
+              "name": "inclusion",
+              "description": "每次只能选择一个元素进行处理",
+              "formal": "choose exactly one i in [1, N]"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化选择一个餐厅后的净收益"
+        }
+      }
+    ],
+    "description": "最大化选择一个餐厅后的净收益"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个餐厅的选择问题可以分解为更小的子问题，且全局最优解可以通过子问题的最优解组合得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，选择当前情况下最优的餐厅，最终能够得到全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个餐厅的选择问题可以分解为更小的子问题，且全局最优解可以通过子问题的最优解组合得到。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，选择当前情况下最优的餐厅，最终能够得到全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "S": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "Nina的午餐时间限制"
+      },
+      "D": {
+        "min": 1,
+        "max": 10,
+        "description": "天数，即需要处理的独立实例数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "decision",
+      "count"
+    ],
+    "structural_options": [
+      "allow_negative_fi",
+      "allow_negative_ti",
+      "allow_zero_fi",
+      "allow_zero_ti",
+      "allow_repeated_restaurants",
+      "multi_constraints"
+    ]
+  }
+}

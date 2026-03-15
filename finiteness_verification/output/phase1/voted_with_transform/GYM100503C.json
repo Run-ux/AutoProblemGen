@@ -1,0 +1,180 @@
+{
+  "problem_id": "GYM100503C",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 30000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "weighted": true,
+            "connected": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 30000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "weighted": true,
+      "connected": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "焊接过程中不能形成环路，即焊接后的图必须是无环的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个节点可以连接多条边，但最终形成的图中每个节点的度数不超过其实际连接的边数",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "如果焊接过程中形成环路，则环路中最不可靠的边会被烧断（即从图中移除）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "焊接过程中不能形成环路，即焊接后的图必须是无环的"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个节点可以连接多条边，但最终形成的图中每个节点的度数不超过其实际连接的边数"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "如果焊接过程中形成环路，则环路中最不可靠的边会被烧断（即从图中移除）"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "焊接顺序需要使得最终形成的图的总成本最大"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化无环图中边的总权值"
+        }
+      }
+    ],
+    "description": "最大化无环图中边的总权值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在选择焊接顺序时，每一步的选择都基于当前已焊接线缆形成的子图的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择焊接线缆时，总是选择当前情况下能最大化总成本的线缆进行焊接，且这种局部最优选择最终能够导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "环不变量：在焊接过程中，如果形成了环，则会烧断环中可靠性最低的线缆。这一过程保证了最终形成的图是无环的，并且每次烧断操作后，剩余的图仍然保持无环性质。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即在选择焊接顺序时，每一步的选择都基于当前已焊接线缆形成的子图的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择焊接线缆时，总是选择当前情况下能最大化总成本的线缆进行焊接，且这种局部最优选择最终能够导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "环不变量：在焊接过程中，如果形成了环，则会烧断环中可靠性最低的线缆。这一过程保证了最终形成的图是无环的，并且每次烧断操作后，剩余的图仍然保持无环性质。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 30000,
+        "description": "焊接的线缆数量"
+      },
+      "Max_Reliability": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "线缆的最大可靠性"
+      },
+      "Max_Cost": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "线缆的最大成本"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "minimize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "require_connected_graph",
+      "require_disconnected_graph"
+    ]
+  }
+}

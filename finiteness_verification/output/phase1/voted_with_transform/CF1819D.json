@@ -1,0 +1,182 @@
+{
+  "problem_id": "CF1819D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 200000
+          },
+          "properties": {
+            "ordered": true,
+            "inferred": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 200000
+    },
+    "properties": {
+      "ordered": true,
+      "inferred": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "背包中每种苹果最多只能有一个，否则所有苹果消失",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "每个摊位的苹果种类是总种类的一个子集",
+        "confidence": "1/1"
+      },
+      {
+        "name": "undefined_value_constraint",
+        "description": "某些摊位的苹果种类未知，可以是任意子集（包括空集）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "背包中每种苹果最多只能有一个，否则所有苹果消失",
+              "formal": "∀i, count(a[i]) ≤ 1"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "每个摊位的苹果种类是总种类的一个子集",
+              "formal": "∀i, A_i ⊆ {1, 2, ..., m}"
+            },
+            {
+              "name": "undefined_value_constraint",
+              "description": "某些摊位的苹果种类未知，可以是任意子集（包括空集）",
+              "formal": "∃i, A_i ∈ 2^M ∪ {}"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "最大化在给定条件下，不重复元素的总数量"
+        }
+      }
+    ],
+    "description": "最大化在给定条件下，不重复元素的总数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：背包中苹果的最大数量可以通过子问题的最优解组合得到，即每个摊位的购买决策基于之前摊位的最佳状态。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在访问每个摊位时，背包中的苹果种类和数量的状态会根据当前摊位的苹果种类进行更新。如果当前摊位有重复的苹果种类，则背包中的所有苹果消失。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：对于已知摊位的苹果种类，可以将这些信息合并以计算背包中苹果的最大数量。未知摊位的信息可以在最后通过贪心策略来优化。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：背包中苹果的最大数量可以通过子问题的最优解组合得到，即每个摊位的购买决策基于之前摊位的最佳状态。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在访问每个摊位时，背包中的苹果种类和数量的状态会根据当前摊位的苹果种类进行更新。如果当前摊位有重复的苹果种类，则背包中的所有苹果消失。",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：对于已知摊位的苹果种类，可以将这些信息合并以计算背包中苹果的最大数量。未知摊位的信息可以在最后通过贪心策略来优化。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t": {
+        "min": 1,
+        "max": 200000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 200000,
+        "description": "摊位的数量"
+      },
+      "m": {
+        "min": 1,
+        "max": 200000,
+        "description": "苹果种类的数量"
+      },
+      "k_i": {
+        "min": 0,
+        "max": 200000,
+        "description": "每个摊位销售的苹果种类数量"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_empty_stalls",
+      "allow_unknown_stalls",
+      "allow_repeated_apples_in_stalls",
+      "allow_negative_k_i"
+    ]
+  }
+}

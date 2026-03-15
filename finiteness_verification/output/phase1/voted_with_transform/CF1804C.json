@@ -1,0 +1,170 @@
+{
+  "problem_id": "CF1804C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": 3,
+            "max": 100000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": 3,
+      "max": 100000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "cyclic_shift_constraint",
+        "description": "轮盘按固定的步长模式循环前进，每秒前进的步数依次递减（f, f-1, f-2, ...）直到停止",
+        "confidence": "1/1"
+      },
+      {
+        "name": "reachability_constraint",
+        "description": "通过一次操作（选择一个整数力 f）能否使轮盘从初始位置 x 到达目标位置 0",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "cyclic_shift_constraint",
+              "description": "轮盘按固定的步长模式循环前进，每秒前进的步数依次递减（f, f-1, f-2, ...）直到停止",
+              "formal": "advance = (f + (f-1) + (f-2) + ... + 1) % n"
+            },
+            {
+              "name": "reachability_constraint",
+              "description": "通过一次操作（选择一个整数力 f）能否使轮盘从初始位置 x 到达目标位置 0",
+              "formal": "exists f in [1, p] such that (x + advance(f)) % n == 0"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一个整数力使得轮盘停止时指向特定位置"
+        }
+      }
+    ],
+    "description": "判断是否存在一个整数力使得轮盘停止时指向特定位置"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "轮盘旋转的总步数随初始力的增加而单调递增，且每一步的步长随时间递减。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "interval_additivity",
+        "description": "轮盘旋转的总步数可以通过求和公式计算得出，满足区间可加性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "modular_invariance",
+        "description": "轮盘旋转后的最终位置可以通过模运算确定，即 (x + 总步数) % n。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "轮盘旋转的总步数随初始力的增加而单调递增，且每一步的步长随时间递减。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "interval_additivity",
+              "description": "轮盘旋转的总步数可以通过求和公式计算得出，满足区间可加性。",
+              "properties": {}
+            },
+            {
+              "name": "modular_invariance",
+              "description": "轮盘旋转后的最终位置可以通过模运算确定，即 (x + 总步数) % n。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 3,
+        "max": 100000,
+        "description": "轮盘上的扇区数量"
+      },
+      "x": {
+        "min": 0,
+        "max": 99999,
+        "description": "箭头当前指向的扇区编号"
+      },
+      "p": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "Vesper 可以施加的最大力"
+      }
+    },
+    "objective_options": [
+      "decision",
+      "count"
+    ],
+    "structural_options": [
+      "allow_zero_force",
+      "allow_negative_x",
+      "allow_non_cyclic_wheel",
+      "multiple_target_sectors"
+    ]
+  }
+}

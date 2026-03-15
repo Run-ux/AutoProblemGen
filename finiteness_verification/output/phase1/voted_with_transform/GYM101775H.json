@@ -1,0 +1,153 @@
+{
+  "problem_id": "GYM101775H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 97,
+            "max": 122
+          },
+          "properties": {
+            "charset": "a-z,?",
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 97,
+      "max": 122
+    },
+    "properties": {
+      "charset": "a-z,?",
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻字符不能同时为连续的 X 个元音或 Y 个辅音",
+        "confidence": "1/1"
+      },
+      {
+        "name": "pattern_matching",
+        "description": "模板中的问号可以被任意小写字母替换，但必须满足上述相邻关系约束",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻字符不能同时为连续的 X 个元音或 Y 个辅音",
+              "formal": "对于任意 i, j (i < j)，如果 S[i:j] 全部是元音，则 j - i + 1 <= X；如果 S[i:j] 全部是辅音，则 j - i + 1 <= Y"
+            },
+            {
+              "name": "pattern_matching",
+              "description": "模板中的问号可以被任意小写字母替换，但必须满足上述相邻关系约束",
+              "formal": "对于每个 '?' 在 S 中，可以替换成 'a' 到 'z' 之间的任意字母，但替换后的字符串必须满足 adjacency_relation 约束"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在满足给定条件的字符串替换方案"
+        }
+      }
+    ],
+    "description": "判断是否存在满足给定条件的字符串替换方案"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：通过维护当前连续的元音和辅音数量，可以确定是否满足题目要求的条件。在遍历模板时，根据字符类型更新这些计数器。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在处理每个问号时，优先选择能够避免连续X个元音或Y个辅音的字符，以尽可能满足Mrs. Panda喜欢的条件。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：通过维护当前连续的元音和辅音数量，可以确定是否满足题目要求的条件。在遍历模板时，根据字符类型更新这些计数器。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在处理每个问号时，优先选择能够避免连续X个元音或Y个辅音的字符，以尽可能满足Mrs. Panda喜欢的条件。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "X": {
+        "min": 1,
+        "max": 1000000,
+        "description": "连续元音的最大数量，使得Mrs. Panda不喜欢这首歌"
+      },
+      "Y": {
+        "min": 1,
+        "max": 1000000,
+        "description": "连续辅音的最大数量，使得Mrs. Panda不喜欢这首歌"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_question_marks",
+      "disallow_question_marks",
+      "allow_vowels_only",
+      "allow_consonants_only",
+      "allow_both_vowels_and_consonants",
+      "multi_constraints"
+    ]
+  }
+}

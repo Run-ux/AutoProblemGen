@@ -1,0 +1,174 @@
+{
+  "problem_id": "CF1623D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10
+          },
+          "value_range": {
+            "min": 2,
+            "max": 100000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10
+    },
+    "value_range": {
+      "min": 2,
+      "max": 100000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "reflection_constraint",
+        "description": "机器人在遇到边界时，移动方向会反射（即改变符号）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "probability_distribution",
+        "description": "每秒清洁操作以概率 p/100 执行，不执行的概率为 1 - p/100，且每次操作独立",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "期望时间必须表示为模 10^9 + 7 的结果",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "reflection_constraint",
+              "description": "机器人在遇到边界时，移动方向会反射（即改变符号）",
+              "formal": "if (r + dr < 1 or r + dr > n) then dr = -dr; if (c + dc < 1 or c + dc > m) then dc = -dc"
+            },
+            {
+              "name": "probability_distribution",
+              "description": "每秒清洁操作以概率 p/100 执行，不执行的概率为 1 - p/100，且每次操作独立",
+              "formal": "P(clean) = p/100, P(not clean) = 1 - p/100, independent each second"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "期望时间必须表示为模 10^9 + 7 的结果",
+              "formal": "result ≡ x * y^(-1) (mod 10^9 + 7)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_probability",
+          "description": "最小化完成任务的期望时间"
+        }
+      }
+    ],
+    "description": "最小化完成任务的期望时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：机器人在房间内的位置和移动方向的状态转移具有确定性，且每次移动后的新状态仅依赖于当前状态。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "对称性：当机器人遇到墙壁时，其移动方向会反射，这种反射操作保持了机器人运动的对称性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "expectation_linearity",
+        "description": "期望值不变量：在每一步中，机器人清洁脏单元格的概率是固定的，因此整个过程中的期望时间可以通过概率和期望值的线性性质进行计算。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：机器人在房间内的位置和移动方向的状态转移具有确定性，且每次移动后的新状态仅依赖于当前状态。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "对称性：当机器人遇到墙壁时，其移动方向会反射，这种反射操作保持了机器人运动的对称性。",
+              "properties": {}
+            },
+            {
+              "name": "expectation_linearity",
+              "description": "期望值不变量：在每一步中，机器人清洁脏单元格的概率是固定的，因此整个过程中的期望时间可以通过概率和期望值的线性性质进行计算。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "p": {
+        "min": 1,
+        "max": 99,
+        "description": "机器人每秒清洁操作的概率（以百分比表示）"
+      },
+      "n": {
+        "min": 2,
+        "max": 316,
+        "description": "房间的行数"
+      },
+      "m": {
+        "min": 2,
+        "max": 316,
+        "description": "房间的列数"
+      }
+    },
+    "objective_options": [
+      "expected_time",
+      "probability_of_cleaning_within_k_seconds"
+    ],
+    "structural_options": [
+      "allow_initial_position_to_be_dirty_cell",
+      "allow_multiple_dirty_cells",
+      "allow_variable_probability_per_second",
+      "allow_non_reflective_boundaries"
+    ]
+  }
+}

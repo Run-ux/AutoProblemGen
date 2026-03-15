@@ -1,0 +1,188 @@
+{
+  "problem_id": "CF1062E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "connected": true,
+            "directed": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "connected": true,
+      "directed": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "输入的有向图是一个树结构，根节点为1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "每个计划涉及的员工范围是整个员工集合的一个子集",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "项目管理者必须能够覆盖所有参与计划的员工",
+        "confidence": "1/1"
+      },
+      {
+        "name": "decrease_only_constraint",
+        "description": "每个计划可以减少一个员工而不影响计划的执行",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "选择被移除的员工以使得项目管理者的级别尽可能高",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "输入的有向图是一个树结构，根节点为1"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "每个计划涉及的员工范围是整个员工集合的一个子集"
+            },
+            {
+              "name": "coverage",
+              "description": "项目管理者必须能够覆盖所有参与计划的员工"
+            },
+            {
+              "name": "decrease_only_constraint",
+              "description": "每个计划可以减少一个员工而不影响计划的执行"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "选择被移除的员工以使得项目管理者的级别尽可能高"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化在移除一个元素后，满足条件的子集的最大层级值"
+        }
+      }
+    ],
+    "description": "最大化在移除一个元素后，满足条件的子集的最大层级值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个计划的最优解可以通过其子问题的最优解来构建，即在移除一个员工后，剩余员工的最优项目经理可以由子树中的最优解确定。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：为了最大化项目经理的级别，每次选择移除的员工应当使得剩余员工的项目经理级别尽可能高。这种局部最优选择能够导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：在处理每个计划时，可以按照树的拓扑顺序（从叶子到根）来处理员工，确保在处理某个员工时，其所有下属已经处理完毕。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个计划的最优解可以通过其子问题的最优解来构建，即在移除一个员工后，剩余员工的最优项目经理可以由子树中的最优解确定。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：为了最大化项目经理的级别，每次选择移除的员工应当使得剩余员工的项目经理级别尽可能高。这种局部最优选择能够导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：在处理每个计划时，可以按照树的拓扑顺序（从叶子到根）来处理员工，确保在处理某个员工时，其所有下属已经处理完毕。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Q": {
+        "min": 1,
+        "max": 100000,
+        "description": "计划的数量"
+      },
+      "N": {
+        "min": 2,
+        "max": 100000,
+        "description": "员工的数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "minimize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_self_inclusion",
+      "allow_non_contiguous_ranges",
+      "allow_multiple_removals",
+      "allow_negative_levels"
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "problem_id": "P10611",
+  "source": "luogu",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 400000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 400000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "range_bound",
+        "description": "矩阵 A 的初始值均为 0",
+        "confidence": "1/1"
+      },
+      {
+        "name": "transformation",
+        "description": "对于操作 1，将矩阵 A 中指定行的指定列范围内的元素修改为给定值",
+        "confidence": "1/1"
+      },
+      {
+        "name": "query_limit",
+        "description": "对于操作 2，查询矩阵 A 中指定子矩阵的最大值，并乘以序列 b 对应位置的值",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "所有修改操作在查询之前",
+        "confidence": "1/1"
+      },
+      {
+        "name": "submatrix_transformation",
+        "description": "对于修改操作，保证 l = r，即只修改单个列",
+        "confidence": "1/1"
+      },
+      {
+        "name": "random_position_constraint",
+        "description": "数据随机生成，包括操作参数和序列 b",
+        "confidence": "1/1"
+      },
+      {
+        "name": "constant_value_constraint",
+        "description": "序列 b 中所有元素均为 1",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "range_bound",
+              "description": "矩阵 A 的初始值均为 0",
+              "formal": "A_{i,j} = 0, \\forall i, j"
+            },
+            {
+              "name": "transformation",
+              "description": "对于操作 1，将矩阵 A 中指定行的指定列范围内的元素修改为给定值",
+              "formal": "A_{x,i} = v, \\forall l \\le i \\le r"
+            },
+            {
+              "name": "query_limit",
+              "description": "对于操作 2，查询矩阵 A 中指定子矩阵的最大值，并乘以序列 b 对应位置的值",
+              "formal": "\\max_{i=l}^r \\max_{j=x}^y (A_{i,j} \\times b_j)"
+            },
+            {
+              "name": "operation_limit",
+              "description": "所有修改操作在查询之前",
+              "formal": "所有操作 1 在所有操作 2 之前"
+            },
+            {
+              "name": "submatrix_transformation",
+              "description": "对于修改操作，保证 l = r，即只修改单个列",
+              "formal": "l = r"
+            },
+            {
+              "name": "random_position_constraint",
+              "description": "数据随机生成，包括操作参数和序列 b",
+              "formal": "参数和 b 序列在其限制范围内等概率随机"
+            },
+            {
+              "name": "constant_value_constraint",
+              "description": "序列 b 中所有元素均为 1",
+              "formal": "b_i = 1, \\forall i"
+            },
+            {
+              "name": "operation_limit",
+              "description": "修改操作出现不超过 q/4 次",
+              "formal": "修改操作次数 ≤ q/4"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "求子矩阵中元素与给定序列对应位置元素乘积的最大值"
+        }
+      }
+    ],
+    "description": "求子矩阵中元素与给定序列对应位置元素乘积的最大值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：矩阵中的子区间信息可以通过子区间的合并来计算，适用于线段树等数据结构",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：查询操作的结果可以通过子问题的最优解组合得到，适用于动态规划或分治法",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：矩阵中的子区间信息可以通过子区间的合并来计算，适用于线段树等数据结构",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：查询操作的结果可以通过子问题的最优解组合得到，适用于动态规划或分治法",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "修改操作中的值 v"
+      },
+      "M": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "序列 b 中的元素值"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_random_order_operations",
+      "allow_single_column_modification",
+      "allow_constant_b_sequence",
+      "allow_random_b_sequence",
+      "allow_large_number_of_modifications"
+    ]
+  }
+}

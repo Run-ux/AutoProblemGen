@@ -1,0 +1,162 @@
+{
+  "problem_id": "GYM104466F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "coverage",
+        "description": "使用给定的 2x1 砖和 1x1 砖覆盖整个 w x h 的区域，且 1x1 砖的数量有限",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "2x1 砖必须水平或垂直放置，相邻砖块之间不能有空隙",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "所有位置的高度之和等于 w * h",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "coverage",
+              "description": "使用给定的 2x1 砖和 1x1 砖覆盖整个 w x h 的区域，且 1x1 砖的数量有限"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "2x1 砖必须水平或垂直放置，相邻砖块之间不能有空隙"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "所有位置的高度之和等于 w * h"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种方案使得所有位置的高度达到给定的目标高度"
+        }
+      }
+    ],
+    "description": "判断是否存在一种方案使得所有位置的高度达到给定的目标高度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构造，即局部高度调整的最优方案可以推导出全局的高度调整方案。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，优先使用2x1砖块填充空缺，仅在必要时使用1x1砖块，这种局部最优选择能导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构造，即局部高度调整的最优方案可以推导出全局的高度调整方案。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，优先使用2x1砖块填充空缺，仅在必要时使用1x1砖块，这种局部最优选择能导致全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "w": {
+        "min": 1,
+        "max": 200000,
+        "description": "墙的宽度"
+      },
+      "h": {
+        "min": 1,
+        "max": 1000000,
+        "description": "墙的高度"
+      },
+      "h_i": {
+        "min": 0,
+        "max": 1000000,
+        "description": "当前高度数组中的每个元素值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_solutions",
+      "minimize_1x1_bricks",
+      "maximize_1x1_bricks"
+    ],
+    "structural_options": [
+      "allow_non_contiguous_heights",
+      "allow_variable_wall_dimensions",
+      "allow_negative_heights",
+      "allow_repeated_heights"
+    ]
+  }
+}

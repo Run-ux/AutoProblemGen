@@ -1,0 +1,158 @@
+{
+  "problem_id": "GYM100814A",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "unique_digits": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "unique_digits": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "permutation_constraint",
+        "description": "数字的每一位在重新排列后形成的新数字必须是原数字的一个排列",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "新形成的数字必须大于原数字，且如果新数字等于最大可能的排列，则游戏胜利",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "输入数字的每一位都是唯一的，即没有重复的数字",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "permutation_constraint",
+              "description": "数字的每一位在重新排列后形成的新数字必须是原数字的一个排列",
+              "formal": "new_number is a permutation of n"
+            },
+            {
+              "name": "ordering",
+              "description": "新形成的数字必须大于原数字，且如果新数字等于最大可能的排列，则游戏胜利",
+              "formal": "new_number > n and (new_number == max_permutation(n) -> win)"
+            },
+            {
+              "name": "distinctness",
+              "description": "输入数字的每一位都是唯一的，即没有重复的数字",
+              "formal": "all digits in n are unique"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "最大化在给定条件下达到最优解的概率"
+        }
+      }
+    ],
+    "description": "最大化在给定条件下达到最优解的概率"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。在这个问题中，计算一个数的所有排列中大于原数的概率可以分解为计算每个位置上数字的选择概率。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "symmetry",
+        "description": "排列不变性：对于给定的数字 n，其所有排列的概率分布是均匀的。这种均匀性保证了我们可以基于排列的性质进行概率计算。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。在这个问题中，计算一个数的所有排列中大于原数的概率可以分解为计算每个位置上数字的选择概率。",
+              "properties": {}
+            },
+            {
+              "name": "symmetry",
+              "description": "排列不变性：对于给定的数字 n，其所有排列的概率分布是均匀的。这种均匀性保证了我们可以基于排列的性质进行概率计算。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 100000,
+        "description": "测试用例的数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "目标数字 n 的值"
+      }
+    },
+    "objective_options": [
+      "maximize_probability",
+      "count_permutations",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_digits",
+      "allow_zero_leading_digit",
+      "multi_constraints"
+    ]
+  }
+}

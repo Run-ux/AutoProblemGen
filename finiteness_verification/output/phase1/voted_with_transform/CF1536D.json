@@ -1,0 +1,147 @@
+{
+  "problem_id": "CF1536D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "median_constraint",
+        "description": "数组 b 的每个元素 b_i 必须是某个数组 a 的前 2i-1 个元素的中位数",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "median_constraint",
+              "description": "数组 b 的每个元素 b_i 必须是某个数组 a 的前 2i-1 个元素的中位数",
+              "formal": "∀i, b_i = median(a_1, a_2, ..., a_{2i-1})"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一个数组，使得给定的数组是其所有奇数长度前缀的中位数序列"
+        }
+      }
+    ],
+    "description": "判断是否存在一个数组，使得给定的数组是其所有奇数长度前缀的中位数序列"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "数组b的元素在构造原数组a的过程中，满足单调性。即对于任意i，b_i是a_1, a_2, ..., a_{2i-1}的中位数，且b_i的值不会超过其前驱和后继的范围。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构建。具体来说，如果b是一个有效的OmkArray，则对于每个b_i，存在一个a使得b_i是a_1, a_2, ..., a_{2i-1}的中位数，并且这个a可以由更小的子问题递归地构建。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "数组b的元素在构造原数组a的过程中，满足单调性。即对于任意i，b_i是a_1, a_2, ..., a_{2i-1}的中位数，且b_i的值不会超过其前驱和后继的范围。",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构建。具体来说，如果b是一个有效的OmkArray，则对于每个b_i，存在一个a使得b_i是a_1, a_2, ..., a_{2i-1}的中位数，并且这个a可以由更小的子问题递归地构建。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t": {
+        "min": 1,
+        "max": 10000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 200000,
+        "description": "数组 b 的长度"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count"
+    ],
+    "structural_options": [
+      "allow_negative_values",
+      "allow_positive_values",
+      "allow_zero_values",
+      "allow_duplicates",
+      "require_unique_values",
+      "require_sorted_input",
+      "require_unsorted_input"
+    ]
+  }
+}

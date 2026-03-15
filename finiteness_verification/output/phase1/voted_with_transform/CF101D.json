@@ -1,0 +1,186 @@
+{
+  "problem_id": "CF101D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "图是树结构，即无环且连通",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个节点的度数不超过 n-1（树的性质）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "必须访问所有节点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "起始节点固定为 1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "random_position_constraint",
+        "description": "目标节点位置随机，等概率分布于其他 n-1 个节点中",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "图是树结构，即无环且连通"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个节点的度数不超过 n-1（树的性质）"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每条边最多使用两次"
+            },
+            {
+              "name": "connectivity",
+              "description": "必须访问所有节点"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "起始节点固定为 1"
+            },
+            {
+              "name": "random_position_constraint",
+              "description": "目标节点位置随机，等概率分布于其他 n-1 个节点中"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_probability",
+          "description": "最小化找到目标节点的期望时间"
+        }
+      }
+    ],
+    "description": "最小化找到目标节点的期望时间"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过计算每个子树的期望时间来求得整个树的期望时间。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从当前节点到其子节点的状态转移过程中，状态转移的一致性保证了算法的正确性。具体来说，每个节点的期望时间是基于其子节点的期望时间计算的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：在计算每个子树的期望时间时，不同子树之间的计算是相互独立的，不会互相影响。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过计算每个子树的期望时间来求得整个树的期望时间。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从当前节点到其子节点的状态转移过程中，状态转移的一致性保证了算法的正确性。具体来说，每个节点的期望时间是基于其子节点的期望时间计算的。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：在计算每个子树的期望时间时，不同子树之间的计算是相互独立的，不会互相影响。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 1000,
+        "description": "走廊的最大长度"
+      }
+    },
+    "objective_options": [
+      "minimize_expectation",
+      "count_paths",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_repeated_visits",
+      "fixed_treasure_position",
+      "multiple_treasures"
+    ]
+  }
+}

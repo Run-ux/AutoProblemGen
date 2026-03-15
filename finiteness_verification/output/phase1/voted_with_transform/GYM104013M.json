@@ -1,0 +1,156 @@
+{
+  "problem_id": "GYM104013M",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "ordering",
+        "description": "序列必须严格递增（从底到顶）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "相邻元素差值不超过 d",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "所有元素必须唯一",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "ordering",
+              "description": "序列必须严格递增（从底到顶）",
+              "formal": "对于所有 i, A[i] < A[i+1]"
+            },
+            {
+              "name": "range_bound",
+              "description": "相邻元素差值不超过 d",
+              "formal": "对于所有 i, A[i+1] - A[i] <= d"
+            },
+            {
+              "name": "distinctness",
+              "description": "所有元素必须唯一",
+              "formal": "对于所有 i != j, A[i] != A[j]"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一个整数d，使得按照给定策略可以保证所有卡片按递增顺序排列"
+        }
+      }
+    ],
+    "description": "判断是否存在一个整数d，使得按照给定策略可以保证所有卡片按递增顺序排列"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "堆顶值与当前玩家卡牌值之间的差值限制保证了堆的单调递增性质，确保每一步操作后堆顶值始终小于等于下一个要放置的卡牌值。",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构建。对于任意给定的d值，如果存在一种策略使得所有玩家都能按照规则成功出牌，则该d值为可行解；反之则不是。因此，寻找最小的可行d值可以视为一个具有最优子结构的问题。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "堆顶值与当前玩家卡牌值之间的差值限制保证了堆的单调递增性质，确保每一步操作后堆顶值始终小于等于下一个要放置的卡牌值。",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构建。对于任意给定的d值，如果存在一种策略使得所有玩家都能按照规则成功出牌，则该d值为可行解；反之则不是。因此，寻找最小的可行d值可以视为一个具有最优子结构的问题。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "d": {
+        "min": 0,
+        "max": 1000000000,
+        "description": "相邻元素差值的最大允许值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "minimize_d"
+    ],
+    "structural_options": [
+      "allow_non_distinct_values",
+      "allow_negative_values",
+      "multi_constraints"
+    ]
+  }
+}

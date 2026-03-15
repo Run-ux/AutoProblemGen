@@ -1,0 +1,150 @@
+{
+  "problem_id": "CF1473E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "path_constraint",
+        "description": "路径权重定义为路径上所有边的权重和减去最大边权重再加上最小边权重",
+        "confidence": "1/1"
+      },
+      {
+        "name": "connectivity",
+        "description": "图是连通的",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "path_constraint",
+              "description": "路径权重定义为路径上所有边的权重和减去最大边权重再加上最小边权重",
+              "formal": "weight(path) = Σ_{i=1}^{k} w_{e_i} - max_{i=1}^{k} w_{e_i} + min_{i=1}^{k} w_{e_i}"
+            },
+            {
+              "name": "connectivity",
+              "description": "图是连通的"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求从起点到其他各点的最小路径权重，其中路径权重定义为路径上所有边权之和减去路径上最大边权再加上路径上最小边权"
+        }
+      }
+    ],
+    "description": "求从起点到其他各点的最小路径权重，其中路径权重定义为路径上所有边权之和减去路径上最大边权再加上路径上最小边权"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：从起点到任意顶点的最短路径可以通过其前驱节点的最短路径推导得出",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：当前节点的最短路径值由其所有邻接节点的最短路径值加上边权调整后的值决定",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：从起点到任意顶点的最短路径可以通过其前驱节点的最短路径推导得出",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：当前节点的最短路径值由其所有邻接节点的最短路径值加上边权调整后的值决定",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "W_MAX": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "边权重的最大值"
+      },
+      "W_MIN": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "边权重的最小值"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "count_paths",
+      "decision_path_exists"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "disconnected_graph"
+    ]
+  }
+}

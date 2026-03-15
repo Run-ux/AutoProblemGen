@@ -1,0 +1,162 @@
+{
+  "problem_id": "GYM104454H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "connected": false,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "connected": false,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "degree_bound",
+        "description": "每个节点的度数（连接的道路数量）有限制，即每个城市最多只能有固定数量的产业和道路",
+        "confidence": "1/1"
+      },
+      {
+        "name": "pairwise_exclusion",
+        "description": "不同玩家在同一城市不能同时拥有产业，即每个城市的产业归属是唯一的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "每条道路的得分等于该道路连接的两个城市中所有玩家的产业总数",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "degree_bound",
+              "description": "每个节点的度数（连接的道路数量）有限制，即每个城市最多只能有固定数量的产业和道路"
+            },
+            {
+              "name": "pairwise_exclusion",
+              "description": "不同玩家在同一城市不能同时拥有产业，即每个城市的产业归属是唯一的"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "每条道路的得分等于该道路连接的两个城市中所有玩家的产业总数"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "计算每个玩家通过修建道路获得的总分值"
+        }
+      }
+    ],
+    "description": "计算每个玩家通过修建道路获得的总分值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个玩家的总分可以由其建造的每条道路的得分累加得到，而每条道路的得分又依赖于连接城市的产业数量",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：每条道路的得分是通过计算连接城市中的产业数量之和来确定的，这些产业数量可以在处理过程中通过前缀和等方法进行高效计算",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个玩家的总分可以由其建造的每条道路的得分累加得到，而每条道路的得分又依赖于连接城市的产业数量",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：每条道路的得分是通过计算连接城市中的产业数量之和来确定的，这些产业数量可以在处理过程中通过前缀和等方法进行高效计算",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 100000,
+        "description": "城市数量"
+      },
+      "M_k": {
+        "min": 1,
+        "max": 10000,
+        "description": "每个玩家建造的产业数量"
+      },
+      "G_k": {
+        "min": 1,
+        "max": 10000,
+        "description": "每个玩家建造的道路数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_duplicate_industries",
+      "multi_constraints"
+    ]
+  }
+}

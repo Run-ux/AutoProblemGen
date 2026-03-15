@@ -1,0 +1,173 @@
+{
+  "problem_id": "GYM102348A",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 5,
+            "max": 5
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 5,
+      "max": 5
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "frequency_bound",
+        "description": "每个元素的出现次数不超过给定上限（第一队球员收到黄牌次数不超过 k1，第二队球员收到黄牌次数不超过 k2）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "所有黄牌分配方案必须是总黄牌数 n 的子集分配（即黄牌总数固定为 n）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制（每个球员最多被罚下一次，且一旦被罚下就不能再收到黄牌）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "frequency_bound",
+              "description": "每个元素的出现次数不超过给定上限（第一队球员收到黄牌次数不超过 k1，第二队球员收到黄牌次数不超过 k2）",
+              "formal": "对于每个玩家 i, count(yellow_cards[i]) <= k1 (如果 i 属于第一队) 或 count(yellow_cards[i]) <= k2 (如果 i 属于第二队)"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "所有黄牌分配方案必须是总黄牌数 n 的子集分配（即黄牌总数固定为 n）",
+              "formal": "sum(yellow_cards) == n"
+            },
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制（每个球员最多被罚下一次，且一旦被罚下就不能再收到黄牌）",
+              "formal": "对于每个玩家 i, if count(yellow_cards[i]) >= k1 (如果 i 属于第一队) 或 count(yellow_cards[i]) >= k2 (如果 i 属于第二队), 则 player_i 不能再收到黄牌"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "min_max",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "min_max",
+          "description": "求在给定条件下，最小和最大可能的被移除元素数量"
+        }
+      }
+    ],
+    "description": "求在给定条件下，最小和最大可能的被移除元素数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即最小和最大被罚下场的球员数可以通过计算每个子问题（每张黄牌分配给哪个队的哪名球员）的最优解来确定。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：为了最大化或最小化被罚下场的球员数，可以采用一种局部最优策略，例如优先将黄牌分配给即将达到罚下条件的球员，或者尽可能分散黄牌以减少被罚下的人数。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即最小和最大被罚下场的球员数可以通过计算每个子问题（每张黄牌分配给哪个队的哪名球员）的最优解来确定。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：为了最大化或最小化被罚下场的球员数，可以采用一种局部最优策略，例如优先将黄牌分配给即将达到罚下条件的球员，或者尽可能分散黄牌以减少被罚下的人数。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "a1": {
+        "min": 1,
+        "max": 1000,
+        "description": "第一队的球员数量"
+      },
+      "a2": {
+        "min": 1,
+        "max": 1000,
+        "description": "第二队的球员数量"
+      },
+      "k1": {
+        "min": 1,
+        "max": 1000,
+        "description": "第一队球员被罚下所需的黄牌数量"
+      },
+      "k2": {
+        "min": 1,
+        "max": 1000,
+        "description": "第二队球员被罚下所需的黄牌数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 2000000,
+        "description": "比赛中显示的黄牌总数"
+      }
+    },
+    "objective_options": [
+      "min_max",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_equal_k_values",
+      "allow_zero_players",
+      "allow_unlimited_cards"
+    ]
+  }
+}

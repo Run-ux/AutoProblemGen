@@ -1,0 +1,178 @@
+{
+  "problem_id": "GYM100283B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "connectivity",
+        "description": "图必须连通（任意两个节点之间至少存在一条路径）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "对于每个节点，计算到其他所有节点的 mini-max 路径的成本和。mini-max 路径是指连接两个节点且路径上最大边权重最小的路径。",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "connectivity",
+              "description": "图必须连通（任意两个节点之间至少存在一条路径）"
+            },
+            {
+              "name": "path_constraint",
+              "description": "对于每个节点，计算到其他所有节点的 mini-max 路径的成本和。mini-max 路径是指连接两个节点且路径上最大边权重最小的路径。",
+              "formal": "对于每个节点 i, 计算 ∑_{j=1, j≠i}^N min_max_path_cost(i, j)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "min_max",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "min_max",
+          "description": "对于每个节点，求其到其他所有节点的最小瓶颈路径的成本之和"
+        }
+      }
+    ],
+    "description": "对于每个节点，求其到其他所有节点的最小瓶颈路径的成本之和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：从任意节点到其他所有节点的最小最大路径成本可以通过子问题的最优解组合得到",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着路径成本的增加，能够到达的节点集合单调不减",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：在处理不同路径时，可以将多个子路径的信息合并以计算整体路径的成本",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：从任意节点到其他所有节点的最小最大路径成本可以通过子问题的最优解组合得到",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着路径成本的增加，能够到达的节点集合单调不减",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：在处理不同路径时，可以将多个子路径的信息合并以计算整体路径的成本",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 50,
+        "description": "测试用例的数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 100000,
+        "description": "图中的节点数量"
+      },
+      "M": {
+        "min": "N - 1",
+        "max": 100000,
+        "description": "图中的边数量"
+      },
+      "C": {
+        "min": 0,
+        "max": 1000,
+        "description": "每条边的铺路成本"
+      }
+    },
+    "objective_options": [
+      "sum_of_min_max_path_costs",
+      "max_of_min_max_path_costs",
+      "min_of_min_max_path_costs",
+      "count_of_min_max_path_costs",
+      "decision_existence_of_min_max_path_costs"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_multiple_edges",
+      "disconnected_graph",
+      "directed_graph"
+    ]
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "problem_id": "P3648",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 10000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 10000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "partition",
+        "description": "序列必须被分成 k+1 个非空的块",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "每次操作选择两个相邻元素将块从中间分开，得到两个非空的块",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "每次操作后获得那两个新产生的块的元素和的乘积的分数",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "需要重复操作 k 次来得到 k+1 个块",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "partition",
+              "description": "序列必须被分成 k+1 个非空的块",
+              "formal": "分割点 s_1, s_2, ..., s_k，使得每个子序列 A[0:s_1], A[s_1+1:s_2], ..., A[s_k+1:n-1] 都非空"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "每次操作选择两个相邻元素将块从中间分开，得到两个非空的块",
+              "formal": "对于每个分割点 s_i，A[s_i] 和 A[s_i+1] 是相邻的，并且 A[0:s_i] 和 A[s_i+1:n-1] 都非空"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "每次操作后获得那两个新产生的块的元素和的乘积的分数",
+              "formal": "对于每个分割点 s_i，得分 = (sum(A[0:s_i]) * sum(A[s_i+1:n-1]))"
+            },
+            {
+              "name": "operation_limit",
+              "description": "需要重复操作 k 次来得到 k+1 个块",
+              "formal": "操作次数 k"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化分割序列后获得的总得分"
+        }
+      }
+    ],
+    "description": "最大化分割序列后获得的总得分"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即每次分割后的最大得分可以通过之前分割的最大得分计算得出",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：任意两个相邻块的元素和的乘积可以由这两个块的前缀和差值计算得出",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即每次分割后的最大得分可以通过之前分割的最大得分计算得出",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：任意两个相邻块的元素和的乘积可以由这两个块的前缀和差值计算得出",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 200,
+        "description": "分割次数，即需要将序列分成 K+1 个非空的块"
+      },
+      "N": {
+        "min": 2,
+        "max": 100000,
+        "description": "序列的长度"
+      },
+      "A_i": {
+        "min": 0,
+        "max": 10000,
+        "description": "序列中的每个元素值"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_negative_elements",
+      "allow_zero_elements",
+      "allow_duplicate_elements",
+      "multi_constraints"
+    ]
+  }
+}

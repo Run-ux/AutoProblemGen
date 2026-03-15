@@ -1,0 +1,162 @@
+{
+  "problem_id": "CF1034D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 300000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 300000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subset_constraint",
+        "description": "选择的子区间数量不超过 K",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "所选子区间的并集长度之和最大化",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subset_constraint",
+              "description": "选择的子区间数量不超过 K",
+              "formal": "|S| = k, S ⊆ {1, 2, ..., n}"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "所选子区间的并集长度之和最大化",
+              "formal": "maximize Σ_{[l, r] ∈ S} (length(∪_{i=l}^r [a_i, b_i]))"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化选取的k个区间集合的并集长度总和"
+        }
+      }
+    ],
+    "description": "最大化选取的k个区间集合的并集长度总和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即选择k个区间段的最大值可以由更小子区间的最大值组合而成",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：任意两个不相交区间的并集长度等于这两个区间长度之和；对于有重叠部分的区间，其并集长度可通过端点差值计算",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_mergeable",
+        "description": "区间可合并性：多个区间的并集信息可以通过这些区间的子区间信息合并得到，适用于处理区间覆盖与合并的问题",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即选择k个区间段的最大值可以由更小子区间的最大值组合而成",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：任意两个不相交区间的并集长度等于这两个区间长度之和；对于有重叠部分的区间，其并集长度可通过端点差值计算",
+              "properties": {}
+            },
+            {
+              "name": "interval_mergeable",
+              "description": "区间可合并性：多个区间的并集信息可以通过这些区间的子区间信息合并得到，适用于处理区间覆盖与合并的问题",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "需要选择的区间段数量"
+      },
+      "N": {
+        "min": 1,
+        "max": 300000,
+        "description": "原始区间的数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision_problem"
+    ],
+    "structural_options": [
+      "allow_overlapping_intervals",
+      "disallow_overlapping_intervals",
+      "allow_negative_intervals",
+      "disallow_negative_intervals",
+      "allow_repeated_intervals",
+      "disallow_repeated_intervals"
+    ]
+  }
+}

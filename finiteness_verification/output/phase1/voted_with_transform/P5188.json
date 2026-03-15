@@ -1,0 +1,181 @@
+{
+  "problem_id": "P5188",
+  "source": "luogu",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 1,
+            "max": 20
+          },
+          "value_range": {
+            "min": 1,
+            "max": 20
+          },
+          "properties": {
+            "weighted": true,
+            "connected": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 20
+    },
+    "value_range": {
+      "min": 1,
+      "max": 20
+    },
+    "properties": {
+      "weighted": true,
+      "connected": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "path_constraint",
+        "description": "路径长度不超过 T 分钟，且必须从起点 1 出发并返回起点 1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "路径中必须覆盖所有四种原材料（B, J, M, P）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "每条边上的操作次数限制为 1 或 2 次（买或不买材料）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "path_constraint",
+              "description": "路径长度不超过 T 分钟，且必须从起点 1 出发并返回起点 1",
+              "formal": "sum(path_length) <= T and path[0] == 1 and path[-1] == 1"
+            },
+            {
+              "name": "coverage",
+              "description": "路径中必须覆盖所有四种原材料（B, J, M, P）",
+              "formal": "set(ingredients_on_path) == {B, J, M, P}"
+            },
+            {
+              "name": "operation_limit",
+              "description": "每条边上的操作次数限制为 1 或 2 次（买或不买材料）",
+              "formal": "edge_time = 1 if not buy else 2"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的路径方案数"
+        }
+      }
+    ],
+    "description": "求满足条件的路径方案数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即从起点到任意节点的最短路径可以由更短路径的最优解组合而成。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在状态机中，当前状态和决策（是否购买材料）决定了下一个状态。状态转移函数保持一致性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：每个子问题（从一个节点到另一个节点的路径选择）的解决不受其他子问题的影响，可以独立求解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即从起点到任意节点的最短路径可以由更短路径的最优解组合而成。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在状态机中，当前状态和决策（是否购买材料）决定了下一个状态。状态转移函数保持一致性。",
+              "properties": {}
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：每个子问题（从一个节点到另一个节点的路径选择）的解决不受其他子问题的影响，可以独立求解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 100,
+        "description": "安娜可用的总时间（分钟）"
+      },
+      "N": {
+        "min": 1,
+        "max": 20,
+        "description": "路口的数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 40,
+        "description": "单向道路的数量"
+      },
+      "Modulo": {
+        "min": 1,
+        "max": 10000,
+        "description": "答案取模的数值"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_multiple_visits_to_same_node",
+      "allow_partial_coverage_of_ingredients",
+      "allow_different_start_and_end_nodes",
+      "allow_variable_operation_time_on_edges"
+    ]
+  }
+}

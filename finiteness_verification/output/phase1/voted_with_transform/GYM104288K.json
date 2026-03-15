@@ -1,0 +1,193 @@
+{
+  "problem_id": "GYM104288K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "tree",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "tree",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": -1000,
+            "max": 1000
+          },
+          "properties": {
+            "connected": true,
+            "height": {
+              "min": 1,
+              "max": 10
+            }
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": -1000,
+      "max": 1000
+    },
+    "properties": {
+      "connected": true,
+      "height": {
+        "min": 1,
+        "max": 10
+      }
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "输入数据构成一棵有根树，根节点为1，叶子节点表示初始输入元素",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_type",
+        "description": "每个内部节点进行的操作是基于其子节点的投票结果，将子节点的坐标加权求和生成新的坐标",
+        "confidence": "1/1"
+      },
+      {
+        "name": "attribute_constraint",
+        "description": "加权求和时，获胜子节点的权重为1，失败子节点的权重为-1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "最终输出的质量度量为欧几里得距离的平方（x^2 + y^2）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "树的高度不超过10",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "输入数据构成一棵有根树，根节点为1，叶子节点表示初始输入元素"
+            },
+            {
+              "name": "operation_type",
+              "description": "每个内部节点进行的操作是基于其子节点的投票结果，将子节点的坐标加权求和生成新的坐标"
+            },
+            {
+              "name": "attribute_constraint",
+              "description": "加权求和时，获胜子节点的权重为1，失败子节点的权重为-1"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "最终输出的质量度量为欧几里得距离的平方（x^2 + y^2）"
+            },
+            {
+              "name": "range_bound",
+              "description": "树的高度不超过10"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化树根节点处的欧几里得距离平方值"
+        }
+      }
+    ],
+    "description": "最大化树根节点处的欧几里得距离平方值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个节点的最优解由其子节点的最优解合成，最终根节点的最优解即为整个问题的最优解",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个内部节点的状态（x, y值）由其子节点的状态通过加权求和的方式确定，权重取决于投票结果",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个节点的最优解由其子节点的最优解合成，最终根节点的最优解即为整个问题的最优解",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个内部节点的状态（x, y值）由其子节点的状态通过加权求和的方式确定，权重取决于投票结果",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 0,
+        "max": 100,
+        "description": "每个内部节点的子节点数量"
+      },
+      "X_MAX": {
+        "min": 1,
+        "max": 1000,
+        "description": "输入坐标 x 的最大绝对值"
+      },
+      "Y_MAX": {
+        "min": 1,
+        "max": 1000,
+        "description": "输入坐标 y 的最大绝对值"
+      },
+      "TREE_HEIGHT": {
+        "min": 1,
+        "max": 10,
+        "description": "树的高度"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_coordinates",
+      "allow_zero_coordinates",
+      "allow_duplicate_input_memes",
+      "vary_tree_structure",
+      "vary_voting_weights"
+    ]
+  }
+}

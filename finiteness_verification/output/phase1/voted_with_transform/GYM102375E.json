@@ -1,0 +1,140 @@
+{
+  "problem_id": "GYM102375E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 97,
+            "max": 122
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 97,
+      "max": 122
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "state_transition",
+        "description": "状态转移约束：每个投票事件（Vote）必须在相应的提案事件（Add）之后发生",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "有序性约束：事件序列必须满足时间顺序，即每个提案事件（Add）和投票事件（Vote）的顺序不能颠倒",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "state_transition",
+              "description": "状态转移约束：每个投票事件（Vote）必须在相应的提案事件（Add）之后发生"
+            },
+            {
+              "name": "ordering",
+              "description": "有序性约束：事件序列必须满足时间顺序，即每个提案事件（Add）和投票事件（Vote）的顺序不能颠倒"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一种合法的事件顺序，使得给定的事件序列能够满足预设的规则"
+        }
+      }
+    ],
+    "description": "判断是否存在一种合法的事件顺序，使得给定的事件序列能够满足预设的规则"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "栈的入栈和出栈操作保持了事件的合法顺序，即每个投票事件前必须有对应的提案事件。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "事件序列满足拓扑序不变量，即对于每个投票事件，其对应的提案事件必定在其之前发生。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "栈的入栈和出栈操作保持了事件的合法顺序，即每个投票事件前必须有对应的提案事件。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "事件序列满足拓扑序不变量，即对于每个投票事件，其对应的提案事件必定在其之前发生。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 1000,
+        "description": "事件序列的长度"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_valid_sequences"
+    ],
+    "structural_options": [
+      "allow_duplicate_events",
+      "allow_multiple_votes_per_party",
+      "allow_out_of_order_votes"
+    ]
+  }
+}

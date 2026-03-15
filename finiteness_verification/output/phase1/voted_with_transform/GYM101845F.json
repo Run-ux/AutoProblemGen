@@ -1,0 +1,144 @@
+{
+  "problem_id": "GYM101845F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 26
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 1,
+      "max": 26
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "degree_bound",
+        "description": "每个节点的度数不超过 K（每个职业最多选择 K 个团队）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "每个团队必须属于一个特定的职业，且该职业是团队成员中人数最多的那个职业",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "degree_bound",
+              "description": "每个节点的度数不超过 K（每个职业最多选择 K 个团队）",
+              "formal": "∀v ∈ V, deg(v) ≤ k"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "每个团队必须属于一个特定的职业，且该职业是团队成员中人数最多的那个职业",
+              "formal": "∀T ∈ Teams, ∃c ∈ Careers, ∀c' ∈ Careers, |{m ∈ T | m ∈ c}| ≥ |{m ∈ T | m ∈ c'}|"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "最大化满足条件的团队数量"
+        }
+      }
+    ],
+    "description": "最大化满足条件的团队数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优解可以通过子问题的最优解组合得到，即每个子问题的解都是全局最优解的一部分",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择可以导致全局最优解，即每次选择当前最优的职业分配方案能够最终达到最大团队数量",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优解可以通过子问题的最优解组合得到，即每个子问题的解都是全局最优解的一部分",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择可以导致全局最优解，即每次选择当前最优的职业分配方案能够最终达到最大团队数量",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 1,
+        "max": 100,
+        "description": "每个职业最多允许的团队数量"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_multiple_careers_per_student",
+      "allow_variable_team_size",
+      "allow_empty_teams",
+      "allow_repeated_careers_in_teams"
+    ]
+  }
+}

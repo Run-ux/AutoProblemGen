@@ -1,0 +1,167 @@
+{
+  "problem_id": "CF103C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subset_constraint",
+        "description": "选取的子弹槽数量必须等于 k",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "在所有满足条件的子弹槽配置中，选择字典序最小的一个",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "选择子弹槽的位置以最小化第一个射击者被击中的概率",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subset_constraint",
+              "description": "选取的子弹槽数量必须等于 k",
+              "formal": "|S| = k"
+            },
+            {
+              "name": "ordering",
+              "description": "在所有满足条件的子弹槽配置中，选择字典序最小的一个",
+              "formal": "minimize S lexicographically"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "选择子弹槽的位置以最小化第一个射击者被击中的概率",
+              "formal": "minimize P(shoot on first turn)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_probability",
+          "description": "最小化第一个玩家失败的概率，并在所有方案中选择字典序最小的方案"
+        }
+      }
+    ],
+    "description": "最小化第一个玩家失败的概率，并在所有方案中选择字典序最小的方案"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即在选择子弹位置时，每一步的选择都基于当前状态下的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，选择当前状态下最优的子弹位置，以确保最终结果是最优且字典序最小的。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造，即在选择子弹位置时，每一步的选择都基于当前状态下的最优解。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，选择当前状态下最优的子弹位置，以确保最终结果是最优且字典序最小的。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 1,
+        "max": 1000000000000000000,
+        "description": "子弹槽数量"
+      },
+      "k": {
+        "min": 0,
+        "max": 1000000000000000000,
+        "description": "子弹数量"
+      },
+      "p": {
+        "min": 1,
+        "max": 1000,
+        "description": "查询次数"
+      }
+    },
+    "objective_options": [
+      "minimize_probability",
+      "maximize_probability",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_empty_slots",
+      "allow_full_slots",
+      "lexicographically_minimal_solution",
+      "lexicographically_maximal_solution",
+      "multiple_queries",
+      "single_query"
+    ]
+  }
+}

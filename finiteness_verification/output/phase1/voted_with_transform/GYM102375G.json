@@ -1,0 +1,176 @@
+{
+  "problem_id": "GYM102375G",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 3000000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 9
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 3000000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 9
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "divisibility",
+        "description": "在给定的进制下，字符串表示的数必须是合数（即有大于1且小于自身的正除数）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "range_bound",
+        "description": "进制B必须满足2 ≤ B ≤ 10^9",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "输入字符串不能以0开头",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "divisibility",
+              "description": "在给定的进制下，字符串表示的数必须是合数（即有大于1且小于自身的正除数）"
+            },
+            {
+              "name": "divisibility",
+              "description": "需要找到一个大于1且小于合数D的正整数X，使得X是D的因数"
+            },
+            {
+              "name": "range_bound",
+              "description": "进制B必须满足2 ≤ B ≤ 10^9"
+            },
+            {
+              "name": "divisibility",
+              "description": "因数X必须满足2 ≤ X ≤ 10^9"
+            },
+            {
+              "name": "exclusion",
+              "description": "输入字符串不能以0开头"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在满足条件的解，并在存在时构造一个解"
+        }
+      }
+    ],
+    "description": "判断是否存在满足条件的解，并在存在时构造一个解"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解组合得到，即在寻找合适的B和X时，可以基于更小规模的问题（较短的数字串）的解来构建当前问题的解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着基数B的增加，对应的数值D也单调递增。因此，可以通过调整B的值来搜索满足条件的最小B。",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "subproblem_independence",
+        "description": "子问题独立性：对于不同的基数B，其对应的数值D是相互独立的，这意味着每个B下的D计算不会受到其他B的影响。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解组合得到，即在寻找合适的B和X时，可以基于更小规模的问题（较短的数字串）的解来构建当前问题的解。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着基数B的增加，对应的数值D也单调递增。因此，可以通过调整B的值来搜索满足条件的最小B。",
+              "properties": {
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "subproblem_independence",
+              "description": "子问题独立性：对于不同的基数B，其对应的数值D是相互独立的，这意味着每个B下的D计算不会受到其他B的影响。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "B_max": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "基础进制的最大值"
+      },
+      "X_max": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "因数X的最大值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count"
+    ],
+    "structural_options": [
+      "allow_leading_zeros",
+      "multi_constraints"
+    ]
+  }
+}

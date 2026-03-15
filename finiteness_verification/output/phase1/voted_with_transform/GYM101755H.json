@@ -1,0 +1,171 @@
+{
+  "problem_id": "GYM101755H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 2,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 4
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 4
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "reachability_constraint",
+        "description": "从起点到终点必须存在一条路径，且路径上的所有节点在 d 步内不能到达任何怪物节点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distance_bound",
+        "description": "路径长度不超过 d 步时，怪物可以攻击到玩家",
+        "confidence": "1/1"
+      },
+      {
+        "name": "movement_constraint",
+        "description": "只能在网格上进行上下左右四个方向的移动",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "起点和终点各只有一个，并且都是空单元格",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "reachability_constraint",
+              "description": "从起点到终点必须存在一条路径，且路径上的所有节点在 d 步内不能到达任何怪物节点"
+            },
+            {
+              "name": "distance_bound",
+              "description": "路径长度不超过 d 步时，怪物可以攻击到玩家"
+            },
+            {
+              "name": "movement_constraint",
+              "description": "只能在网格上进行上下左右四个方向的移动"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "起点和终点各只有一个，并且都是空单元格"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求两点间最短路径长度，若无解则输出-1"
+        }
+      }
+    ],
+    "description": "求两点间最短路径长度，若无解则输出-1"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：从起点到终点的最短路径可以通过子路径的最优解组合而成",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个状态（即每个格子）的可达性及最短步数由其相邻状态决定",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：在无环图中，从起点到终点的路径可以按拓扑序进行遍历",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：从起点到终点的最短路径可以通过子路径的最优解组合而成",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个状态（即每个格子）的可达性及最短步数由其相邻状态决定",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：在无环图中，从起点到终点的路径可以按拓扑序进行遍历",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "d": {
+        "min": 0,
+        "max": 200000,
+        "description": "怪物的攻击范围，即在 d 步内可以到达玩家"
+      }
+    },
+    "objective_options": [
+      "minimize_length",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_diagonal_movement",
+      "multiple_start_nodes",
+      "multiple_finish_nodes",
+      "variable_monster_positions",
+      "variable_grid_size"
+    ]
+  }
+}

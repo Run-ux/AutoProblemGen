@@ -1,0 +1,177 @@
+{
+  "problem_id": "CF1681E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "connected": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "connected": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "connectivity",
+        "description": "图必须连通，即从任意一个单元格可以到达其他任意一个单元格",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "只能移动到相邻的单元格（上下左右），且不能跨层移动除非有门连接",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个层（除了第 n 层）有两个门，分别位于该层的顶部和右侧",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "需要找到从起点到终点的最短路径",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "connectivity",
+              "description": "图必须连通，即从任意一个单元格可以到达其他任意一个单元格"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "只能移动到相邻的单元格（上下左右），且不能跨层移动除非有门连接"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个层（除了第 n 层）有两个门，分别位于该层的顶部和右侧"
+            },
+            {
+              "name": "path_constraint",
+              "description": "需要找到从起点到终点的最短路径"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求两点间最短路径长度"
+        }
+      }
+    ],
+    "description": "求两点间最短路径长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：从一个层到另一个层的最短路径可以通过子问题的最优解组合得到",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从当前层到下一层的状态转移是确定且一致的，通过门的位置进行状态转移",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：层与层之间的依赖关系形成一个有向无环图（DAG），可以按照拓扑序处理",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：从一个层到另一个层的最短路径可以通过子问题的最优解组合得到",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从当前层到下一层的状态转移是确定且一致的，通过门的位置进行状态转移",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：层与层之间的依赖关系形成一个有向无环图（DAG），可以按照拓扑序处理",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 2,
+        "max": 100000,
+        "description": "迷宫的层数"
+      },
+      "m": {
+        "min": 1,
+        "max": 200000,
+        "description": "查询的数量"
+      }
+    },
+    "objective_options": [
+      "minimize_length",
+      "count_paths",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_diagonal_moves",
+      "variable_door_positions",
+      "multiple_doors_per_layer",
+      "bidirectional_doors",
+      "layer_connectivity_constraints"
+    ]
+  }
+}

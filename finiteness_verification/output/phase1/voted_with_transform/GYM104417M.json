@@ -1,0 +1,180 @@
+{
+  "problem_id": "GYM104417M",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 100000
+          },
+          "value_range": {
+            "min": -1000000000,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 100000
+    },
+    "value_range": {
+      "min": -1000000000,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "convexity",
+        "description": "多边形必须是凸的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "选择的三个顶点 a, b, c 必须是多边形 P 的子集，并且按逆时针顺序排列",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "从顶点 b 到顶点 c 之间必须有恰好 k 条边（不包括 a 作为端点）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "partition",
+        "description": "通过线段 ab 和 ac 切割多边形 P，形成的新多边形 Q 包含 ab, ac 和 b 到 c 之间的 k 条边",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "多边形 P 的顶点坐标必须唯一，没有两个顶点具有相同的坐标",
+        "confidence": "1/1"
+      },
+      {
+        "name": "collinearity_constraint",
+        "description": "允许三个顶点在同一条直线上",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "convexity",
+              "description": "多边形必须是凸的"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "选择的三个顶点 a, b, c 必须是多边形 P 的子集，并且按逆时针顺序排列"
+            },
+            {
+              "name": "degree_bound",
+              "description": "从顶点 b 到顶点 c 之间必须有恰好 k 条边（不包括 a 作为端点）"
+            },
+            {
+              "name": "partition",
+              "description": "通过线段 ab 和 ac 切割多边形 P，形成的新多边形 Q 包含 ab, ac 和 b 到 c 之间的 k 条边"
+            },
+            {
+              "name": "distinctness",
+              "description": "多边形 P 的顶点坐标必须唯一，没有两个顶点具有相同的坐标"
+            },
+            {
+              "name": "collinearity_constraint",
+              "description": "允许三个顶点在同一条直线上"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化由给定条件确定的多边形面积"
+        }
+      }
+    ],
+    "description": "最大化由给定条件确定的多边形面积"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "convexity",
+        "description": "凸性不变量：在凸多边形中，任意三点构成的三角形面积具有凸性性质，即局部最优解可以通过组合得到全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。具体来说，最大可能面积的多边形Q可以通过选择合适的顶点a, b, c来构造，这些顶点的选择依赖于子问题的最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "convexity",
+              "description": "凸性不变量：在凸多边形中，任意三点构成的三角形面积具有凸性性质，即局部最优解可以通过组合得到全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。具体来说，最大可能面积的多边形Q可以通过选择合适的顶点a, b, c来构造，这些顶点的选择依赖于子问题的最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 100000,
+        "description": "从顶点 b 到顶点 c 之间必须有恰好 k 条边（不包括 a 作为端点）"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_collinear_vertices",
+      "disallow_collinear_vertices",
+      "allow_repeated_vertices",
+      "disallow_repeated_vertices",
+      "allow_non_convex_polygons",
+      "disallow_non_convex_polygons"
+    ]
+  }
+}

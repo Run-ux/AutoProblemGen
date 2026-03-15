@@ -62,7 +62,7 @@ def build_system_prompt() -> str:
 """
 
 
-def build_user_prompt(problem: Dict[str, Any]) -> str:
+def build_user_prompt(problem: Dict[str, Any], schema: Dict[str, Any] | None = None) -> str:
     """
     构建用户提示词（题面内容）
     
@@ -72,6 +72,8 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
     Returns:
         格式化的用户提示词
     """
+    schema = schema or {}
+
     return f"""请分析以下题目的可变参数空间（Transform Space）：
 
 标题：{problem.get('title', 'N/A')}
@@ -87,6 +89,9 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
 
 约束条件：
 {problem.get('constraints', '')}
+
+已抽取的前四维 Schema（请把它视为硬约束与补充上下文）：
+{schema}
 
 ---
 
@@ -115,6 +120,7 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
 1. 如果题目中包含具体数字（如"长度为3的子串"），请将其抽象为参数（如 "Length_L"）。
 2. min/max 范围应基于常见算法竞赛的时间限制（1秒）和该类算法的通常复杂度估算。
 3. 如果没有显著的可变参数，numerical_parameters 可以为空。
+4. 前四维 Schema 中已有的输入结构、核心约束、目标函数和不变量优先级高于自然语言表述中的模糊信息，不要生成与它们冲突的 transform_space。
 """
 
 

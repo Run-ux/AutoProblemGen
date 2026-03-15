@@ -1,0 +1,163 @@
+{
+  "problem_id": "GYM101908F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "intersection",
+        "description": "选择的区间不能有重叠（时间范围不相交）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimization_objective",
+        "description": "最大化所选区间的权重和（即最大化歌曲数量总和）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "intersection",
+              "description": "选择的区间不能有重叠（时间范围不相交）",
+              "formal": "对于任意两个选定的区间 [i1, f1] 和 [i2, f2]，必须满足 f1 <= i2 或 f2 <= i1"
+            },
+            {
+              "name": "optimization_objective",
+              "description": "最大化所选区间的权重和（即最大化歌曲数量总和）",
+              "formal": "最大化 ∑ o_j，其中 o_j 是选定区间的权重"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化不重叠区间的选择权值和"
+        }
+      }
+    ],
+    "description": "最大化不重叠区间的选择权值和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即选择观看的演出集合的最优解可以由每个阶段的最优解组合而成。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过计算不相交区间的歌曲数量总和来确定最优解，即在不冲突的时间段内，不同演出的歌曲数量可以累加。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即选择观看的演出集合的最优解可以由每个阶段的最优解组合而成。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过计算不相交区间的歌曲数量总和来确定最优解，即在不冲突的时间段内，不同演出的歌曲数量可以累加。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 1,
+        "max": 10,
+        "description": "舞台的数量"
+      },
+      "M_i": {
+        "min": 1,
+        "max": 1000,
+        "description": "每个舞台上的演出数量"
+      },
+      "i_j": {
+        "min": 1,
+        "max": 86400,
+        "description": "演出的开始时间"
+      },
+      "f_j": {
+        "min": 2,
+        "max": 86400,
+        "description": "演出的结束时间"
+      },
+      "o_j": {
+        "min": 1,
+        "max": 1000,
+        "description": "用户之前听过的该歌手的歌曲数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_overlapping_intervals",
+      "allow_negative_weights",
+      "multi_constraints"
+    ]
+  }
+}

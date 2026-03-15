@@ -1,0 +1,237 @@
+{
+  "problem_id": "P13297",
+  "source": "luogu",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "cyclic_shift_constraint",
+        "description": "元素必须按照固定的循环顺序访问（如：团队中的玩家按固定顺序击球）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "reflection_constraint",
+        "description": "当元素到达边界时，如果特定条件满足则反弹，否则失败（如：球到达垂直边界时，如果对应的玩家在该位置则反弹，否则失败）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "optimal_play",
+        "description": "所有参与者都采取最优策略（如：所有玩家都以最优方式移动和击球）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "初始位置可以自由选择（如：玩家可以根据球的初始位置自由选择自己的初始位置）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "cyclic_shift_constraint",
+              "description": "元素必须按照固定的循环顺序访问（如：团队中的玩家按固定顺序击球）"
+            },
+            {
+              "name": "reflection_constraint",
+              "description": "当元素到达边界时，如果特定条件满足则反弹，否则失败（如：球到达垂直边界时，如果对应的玩家在该位置则反弹，否则失败）"
+            },
+            {
+              "name": "optimal_play",
+              "description": "所有参与者都采取最优策略（如：所有玩家都以最优方式移动和击球）"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "初始位置可以自由选择（如：玩家可以根据球的初始位置自由选择自己的初始位置）"
+            },
+            {
+              "name": "reflection_constraint",
+              "description": "反射角度等于入射角度（如：球碰到水平边界时，反射角度等于入射角度）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判定是否存在一个策略使得某一方能够获胜，并在能获胜的情况下，求出对方最多能反弹球的次数"
+        }
+      }
+    ],
+    "description": "判定是否存在一个策略使得某一方能够获胜，并在能获胜的情况下，求出对方最多能反弹球的次数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "球的运动方向和速度在每次碰撞后保持不变，仅改变方向。球在水平方向上的移动是单调的。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": false
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构建。每个玩家在最优策略下选择最佳位置以确保球能够被反弹。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移的一致性。球的位置和速度在每次碰撞后按照固定的规则进行更新。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "球员的击球顺序是固定的循环序列。每个团队的球员按照固定的顺序依次击球。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "球的运动方向和速度在每次碰撞后保持不变，仅改变方向。球在水平方向上的移动是单调的。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": false
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构建。每个玩家在最优策略下选择最佳位置以确保球能够被反弹。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移的一致性。球的位置和速度在每次碰撞后按照固定的规则进行更新。",
+              "properties": {}
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "球员的击球顺序是固定的循环序列。每个团队的球员按照固定的顺序依次击球。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "A": {
+        "min": 1,
+        "max": 1000,
+        "description": "场地的高度"
+      },
+      "B": {
+        "min": 1,
+        "max": 1000,
+        "description": "场地的宽度"
+      },
+      "N": {
+        "min": 1,
+        "max": 100,
+        "description": "左墙团队的玩家数量"
+      },
+      "M": {
+        "min": 1,
+        "max": 100,
+        "description": "右墙团队的玩家数量"
+      },
+      "V": {
+        "min": 1,
+        "max": 100,
+        "description": "左墙团队玩家的移动速度"
+      },
+      "W": {
+        "min": 1,
+        "max": 100,
+        "description": "右墙团队玩家的移动速度"
+      },
+      "Y": {
+        "min": 1,
+        "max": 999,
+        "description": "球的初始垂直位置"
+      },
+      "X": {
+        "min": 1,
+        "max": 999,
+        "description": "球的初始水平位置"
+      },
+      "V_Y": {
+        "min": -100,
+        "max": 100,
+        "description": "球的初始垂直速度"
+      },
+      "V_X": {
+        "min": -100,
+        "max": 100,
+        "description": "球的初始水平速度"
+      }
+    },
+    "objective_options": [
+      "decision",
+      "count"
+    ],
+    "structural_options": [
+      "allow_variable_team_sizes",
+      "allow_variable_paddle_speeds",
+      "allow_variable_initial_positions",
+      "allow_variable_initial_velocities",
+      "allow_variable_field_dimensions"
+    ]
+  }
+}

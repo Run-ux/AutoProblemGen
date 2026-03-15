@@ -1,0 +1,195 @@
+{
+  "problem_id": "GYM103069H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "资源总量有限制（气球和糖果的数量有限）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "consistency_constraint",
+        "description": "交易不可分割（每次交易必须完整进行）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "资源总量有限制（气球和糖果的数量有限）",
+              "formal": "n_b, n_c 为气球和糖果的初始数量，且在交易过程中不会增加"
+            },
+            {
+              "name": "consistency_constraint",
+              "description": "交易不可分割（每次交易必须完整进行）",
+              "formal": "每笔交易必须完整执行，不能部分执行"
+            },
+            {
+              "name": "operation_limit",
+              "description": "操作次数无限制（每种交易可以进行任意次）",
+              "formal": "每种交易可以进行 0 次或多次"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化最终的货币值"
+        }
+      }
+    ],
+    "description": "最大化最终的货币值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优解可以通过子问题的最优解组合得到，即通过不同交易顺序和次数的子问题来构建最终的最大收益",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "在每一步选择中，总是选择当前能带来最大收益的操作（如购买或出售），从而逐步逼近全局最优解",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移过程中，每次操作后的状态都由前一个状态和当前操作决定，并且这些状态转移满足一致性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优解可以通过子问题的最优解组合得到，即通过不同交易顺序和次数的子问题来构建最终的最大收益",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "在每一步选择中，总是选择当前能带来最大收益的操作（如购买或出售），从而逐步逼近全局最优解",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移过程中，每次操作后的状态都由前一个状态和当前操作决定，并且这些状态转移满足一致性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n_b": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "气球店中气球的数量"
+      },
+      "n_c": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "糖果店中糖果的数量"
+      },
+      "k_ab": {
+        "min": 1,
+        "max": 100,
+        "description": "用1 Au可以购买的气球数量"
+      },
+      "k_ba": {
+        "min": 1,
+        "max": 100,
+        "description": "卖出一个气球可以获得的Au数量"
+      },
+      "k_ac": {
+        "min": 1,
+        "max": 100,
+        "description": "用1 Au可以购买的糖果数量"
+      },
+      "k_ca": {
+        "min": 1,
+        "max": 100,
+        "description": "卖出一个糖果可以获得的Au数量"
+      },
+      "k_bc": {
+        "min": 1,
+        "max": 100,
+        "description": "用1个气球可以购买的糖果数量"
+      },
+      "k_cb": {
+        "min": 1,
+        "max": 100,
+        "description": "用1个糖果可以购买的气球数量"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_initial_au",
+      "allow_unlimited_supplies",
+      "allow_fractional_transactions",
+      "allow_negative_prices"
+    ]
+  }
+}

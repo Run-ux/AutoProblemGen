@@ -1,0 +1,152 @@
+{
+  "problem_id": "GYM104854B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": -10000000000000000,
+            "max": 10000000000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": -10000000000000000,
+      "max": 10000000000000000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻元素的难度值满足特定关系（后一个元素的难度值是前一个元素难度值的两倍）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "选取元素的美丽值之和最大化",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻元素的难度值满足特定关系（后一个元素的难度值是前一个元素难度值的两倍）",
+              "formal": "∀ i ∈ {2, …, k}: d(P_{i-1}) = ⌊d(P_i) / 2⌋"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "选取元素的美丽值之和最大化",
+              "formal": "maximize ∑ b(P_i) for selected problems P_i"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化满足条件的子序列的权值和"
+        }
+      }
+    ],
+    "description": "最大化满足条件的子序列的权值和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：当前问题的最优解可以通过子问题的最优解来构建，即每个难度级别的最优解可以由其前一个难度级别的最优解推导出来。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个难度级别到下一个难度级别的状态转移是确定的，且满足题目中的难度关系条件。",
+        "confidence": "1/1",
+        "properties": {
+          "transition_rule": "d(P_{i-1}) = floor(d(P_i) / 2)"
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：当前问题的最优解可以通过子问题的最优解来构建，即每个难度级别的最优解可以由其前一个难度级别的最优解推导出来。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个难度级别到下一个难度级别的状态转移是确定的，且满足题目中的难度关系条件。",
+              "properties": {
+                "transition_rule": "d(P_{i-1}) = floor(d(P_i) / 2)"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Difficulty_Ratio": {
+        "min": 2,
+        "max": 10,
+        "description": "相邻问题难度值的比例，原题中为2"
+      },
+      "Max_Difficulty": {
+        "min": 1000000,
+        "max": 10000000,
+        "description": "问题难度的最大值，原题中为10^6"
+      }
+    },
+    "objective_options": [
+      "maximize_beauty",
+      "count_valid_contests",
+      "decision_existence"
+    ],
+    "structural_options": [
+      "allow_negative_beauty",
+      "allow_repeated_difficulties",
+      "multi_constraints"
+    ]
+  }
+}

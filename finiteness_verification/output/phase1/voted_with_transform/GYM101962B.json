@@ -1,0 +1,172 @@
+{
+  "problem_id": "GYM101962B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 2000
+          },
+          "value_range": {
+            "min": 97,
+            "max": 122
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 2000
+    },
+    "value_range": {
+      "min": 97,
+      "max": 122
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_difference",
+        "description": "相邻节点取值不同（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "子串的颜色匹配约束，即子串中的字符必须与沙发的模板字符串 t 中的 0 和 1 对应的颜色一致",
+        "confidence": "1/1"
+      },
+      {
+        "name": "permutation_constraint",
+        "description": "沙发可以左右翻转放置，但每个位置只能计数一次",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_difference",
+              "description": "相邻节点取值不同（图着色约束）",
+              "formal": "对于所有 i, s[i] != s[i+1]"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "子串的颜色匹配约束，即子串中的字符必须与沙发的模板字符串 t 中的 0 和 1 对应的颜色一致",
+              "formal": "对于所有 i, j, 如果 t[j] == '0' 则 s[i+j] 必须是某种颜色 c1，如果 t[j] == '1' 则 s[i+j] 必须是另一种颜色 c2"
+            },
+            {
+              "name": "permutation_constraint",
+              "description": "沙发可以左右翻转放置，但每个位置只能计数一次",
+              "formal": "对于所有 i, 如果 s[i:i+m] 匹配 t 或者 s[i:i+m] 的反转匹配 t，则只计数一次"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足条件的子串数量"
+        }
+      }
+    ],
+    "description": "求满足条件的子串数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过前缀和计算子区间的颜色匹配情况，满足区间和可通过端点差值计算",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：滑动窗口右端点单调递增，左端点在满足条件时单调前进",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true,
+          "left_monotonic": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在滑动窗口移动过程中，维护当前窗口内的颜色匹配状态，并根据新加入和移出的元素更新状态",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过前缀和计算子区间的颜色匹配情况，满足区间和可通过端点差值计算",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：滑动窗口右端点单调递增，左端点在满足条件时单调前进",
+              "properties": {
+                "right_monotonic": true,
+                "left_monotonic": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在滑动窗口移动过程中，维护当前窗口内的颜色匹配状态，并根据新加入和移出的元素更新状态",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "m": {
+        "min": 1,
+        "max": 2000,
+        "description": "沙发的长度，即字符串 t 的长度"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_characters_in_s",
+      "allow_repeated_characters_in_t",
+      "allow_non_binary_t",
+      "allow_different_directions",
+      "allow_multiple_colors_for_zero_tiles",
+      "allow_multiple_colors_for_one_tiles"
+    ]
+  }
+}

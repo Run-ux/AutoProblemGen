@@ -1,0 +1,195 @@
+{
+  "problem_id": "GYM104871J",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 100
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "flow_constraint",
+        "description": "每个栈的容量有限，不能超过其最大容量",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "最终所有非空栈中的卡片从底到顶按从小到大的顺序排列",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_order",
+        "description": "前几个栈必须填满，紧接着的一个栈可以不满或为空，之后的所有栈必须为空",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制，移动卡片的操作次数不得超过 10^5 次",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "每次移动卡片时，源栈和目标栈不能相同",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "flow_constraint",
+              "description": "每个栈的容量有限，不能超过其最大容量",
+              "formal": "∀i, |S_i| ≤ C_i"
+            },
+            {
+              "name": "ordering",
+              "description": "最终所有非空栈中的卡片从底到顶按从小到大的顺序排列",
+              "formal": "∀i, S_i[0] < S_i[1] < ... < S_i[|S_i|-1]"
+            },
+            {
+              "name": "operation_order",
+              "description": "前几个栈必须填满，紧接着的一个栈可以不满或为空，之后的所有栈必须为空",
+              "formal": "∃j, ∀i < j, |S_i| = C_i 且 |S_j| < C_j 且 ∀i > j, |S_i| = 0"
+            },
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制，移动卡片的操作次数不得超过 10^5 次",
+              "formal": "操作次数 ≤ 10^5"
+            },
+            {
+              "name": "exclusion",
+              "description": "每次移动卡片时，源栈和目标栈不能相同",
+              "formal": "对于每次移动 (s, d), s ≠ d"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个满足特定条件的序列操作"
+        }
+      }
+    ],
+    "description": "构造一个满足特定条件的序列操作"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "在操作过程中，卡片的移动方向始终保持从一个栈顶到另一个栈顶，且目标栈的容量允许的情况下进行，确保了操作的单调性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解组合得到。具体来说，将卡片重新排列成有序状态的过程可以分解为多个子问题，每个子问题都是将部分卡片重新排列到正确的位置。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "每次操作后，系统的状态（即各个栈中的卡片分布）会按照一定的规则进行转移，并且这种转移是确定性的，不会导致系统进入无法解决的状态。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "在操作过程中，卡片的移动方向始终保持从一个栈顶到另一个栈顶，且目标栈的容量允许的情况下进行，确保了操作的单调性。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解组合得到。具体来说，将卡片重新排列成有序状态的过程可以分解为多个子问题，每个子问题都是将部分卡片重新排列到正确的位置。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "每次操作后，系统的状态（即各个栈中的卡片分布）会按照一定的规则进行转移，并且这种转移是确定性的，不会导致系统进入无法解决的状态。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 3,
+        "max": 100,
+        "description": "栈的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 100,
+        "description": "卡片的数量"
+      },
+      "C_i": {
+        "min": 1,
+        "max": 100,
+        "description": "每个栈的最大容量"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "count_moves",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_empty_stacks",
+      "allow_non_consecutive_cards",
+      "allow_variable_stack_capacities",
+      "allow_unfilled_final_stack"
+    ]
+  }
+}

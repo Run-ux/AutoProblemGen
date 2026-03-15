@@ -1,0 +1,172 @@
+{
+  "problem_id": "GYM103466B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点必须共享一条边（图着色约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "最短路径长度不变（路径约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "coverage",
+        "description": "覆盖整个棋盘（覆盖约束）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点必须共享一条边（图着色约束）",
+              "formal": "对于任意两个已涂色的块 u 和 v，存在一条路径 (u, v) 使得路径上的所有块都是已涂色的且相邻块共享一条边"
+            },
+            {
+              "name": "path_constraint",
+              "description": "最短路径长度不变（路径约束）",
+              "formal": "对于任意两个已涂色的块 u 和 v，涂色前后的最短路径长度保持不变"
+            },
+            {
+              "name": "coverage",
+              "description": "覆盖整个棋盘（覆盖约束）",
+              "formal": "最终所有块都被涂色"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的方案数（模10^9+7）"
+        }
+      }
+    ],
+    "description": "求满足条件的方案数（模10^9+7）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：整个棋盘的满意策略可以通过子棋盘的满意策略组合而成，且子问题的解不影响其他子问题的解。",
+        "confidence": "1/1",
+        "properties": {
+          "subproblem_independence": true
+        }
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个已涂白的格子移动到相邻未涂白的格子时，保证了路径的连通性和最短路径的不变性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：整个棋盘的满意策略可以通过子棋盘的满意策略组合而成，且子问题的解不影响其他子问题的解。",
+              "properties": {
+                "subproblem_independence": true
+              }
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个已涂白的格子移动到相邻未涂白的格子时，保证了路径的连通性和最短路径的不变性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 100000,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 1000000,
+        "description": "棋盘的长度（行数）"
+      },
+      "m": {
+        "min": 1,
+        "max": 1000000,
+        "description": "棋盘的宽度（列数）"
+      },
+      "Modulo": {
+        "min": 1,
+        "max": 1000000007,
+        "description": "结果取模的值"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_square_board",
+      "allow_diagonal_moves",
+      "allow_multiple_start_points",
+      "allow_partial_coverage"
+    ]
+  }
+}

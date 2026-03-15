@@ -1,0 +1,141 @@
+{
+  "problem_id": "GYM105427A",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 1
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 1
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "repetition",
+        "description": "序列中连续相同元素的最大长度不超过 K-1",
+        "confidence": "1/1"
+      },
+      {
+        "name": "frequency_bound",
+        "description": "序列中每个位置的值取决于前 K-1 个位置的值",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "repetition",
+              "description": "序列中连续相同元素的最大长度不超过 K-1",
+              "formal": "对于所有 i, s[i] == s[i+1] == ... == s[i+K-2] 且 s[i+K-1] != s[i]"
+            },
+            {
+              "name": "frequency_bound",
+              "description": "序列中每个位置的值取决于前 K-1 个位置的值",
+              "formal": "s[i] 的值由 s[i-K+1:i] 决定"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "计算字符串中满足特定条件的字符数量"
+        }
+      }
+    ],
+    "description": "计算字符串中满足特定条件的字符数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：当前状态由前K个状态决定，满足状态机DP的转移一致性",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构建，即N天的问题可以分解为N-1天的问题加上第N天的状态",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：当前状态由前K个状态决定，满足状态机DP的转移一致性",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构建，即N天的问题可以分解为N-1天的问题加上第N天的状态",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 2,
+        "max": 1000000000,
+        "description": "连续相同元素的最大长度"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repetition_greater_than_K",
+      "allow_variable_N"
+    ]
+  }
+}

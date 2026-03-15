@@ -1,0 +1,186 @@
+{
+  "problem_id": "GYM104014J",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "weighted": true,
+            "acyclic": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "weighted": true,
+      "acyclic": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "图中不存在环（无向或有向），确保路径不会重复访问同一个节点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "path_constraint",
+        "description": "从起点到终点存在一条路径，且路径上的每个节点只能访问一次",
+        "confidence": "1/1"
+      },
+      {
+        "name": "sum_constraint",
+        "description": "在每条路径上收集的蘑菇和浆果的总价值满足条件：蘑菇的总价值大于浆果的总价值",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "图中不存在环（无向或有向），确保路径不会重复访问同一个节点"
+            },
+            {
+              "name": "path_constraint",
+              "description": "从起点到终点存在一条路径，且路径上的每个节点只能访问一次"
+            },
+            {
+              "name": "sum_constraint",
+              "description": "在每条路径上收集的蘑菇和浆果的总价值满足条件：蘑菇的总价值大于浆果的总价值"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一条从起点到终点的路径，使得路径上某种权值的总和大于另一种权值的总和"
+        }
+      }
+    ],
+    "description": "判断是否存在一条从起点到终点的路径，使得路径上某种权值的总和大于另一种权值的总和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：路径的遍历顺序满足有向无环图（DAG）上的拓扑排序，确保从起点到终点的路径不会形成环。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：对于每个节点，其到达终点的最大收益可以通过其后继节点的最大收益来计算。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，选择当前局部最优解（即最大收益路径），以确保全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：路径的遍历顺序满足有向无环图（DAG）上的拓扑排序，确保从起点到终点的路径不会形成环。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：对于每个节点，其到达终点的最大收益可以通过其后继节点的最大收益来计算。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，选择当前局部最优解（即最大收益路径），以确保全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Q": {
+        "min": 1,
+        "max": 100000,
+        "description": "夏季天数，即询问的数量"
+      },
+      "a_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "每天蘑菇的单价"
+      },
+      "b_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "每天浆果的单价"
+      },
+      "s_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "每条路径上的蘑菇数量"
+      },
+      "w_i": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "每条路径上的浆果数量"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_paths",
+      "maximize_profit",
+      "minimize_profit"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_cycles",
+      "multiple_start_end_pairs",
+      "bidirectional_paths",
+      "variable_path_weights"
+    ]
+  }
+}

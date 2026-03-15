@@ -1,0 +1,185 @@
+{
+  "problem_id": "CF1633D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制（最多进行 k 次操作）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "transformation",
+        "description": "更新规则（选择一个元素 a_i 并增加其值为 a_i + floor(a_i / x)，其中 x > 0）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "linear_relation",
+        "description": "相等约束（最终数组 a 中的元素 a_i 必须等于目标数组 b 中的对应元素 b_i 才能获得 c_i 个金币）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制（最多进行 k 次操作）",
+              "formal": "0 <= k <= 10^6"
+            },
+            {
+              "name": "transformation",
+              "description": "更新规则（选择一个元素 a_i 并增加其值为 a_i + floor(a_i / x)，其中 x > 0）",
+              "formal": "a_i = a_i + floor(a_i / x), x > 0"
+            },
+            {
+              "name": "linear_relation",
+              "description": "相等约束（最终数组 a 中的元素 a_i 必须等于目标数组 b 中的对应元素 b_i 才能获得 c_i 个金币）",
+              "formal": "a_i == b_i -> gain c_i coins"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "最大化在不超过给定操作次数的情况下，通过一系列操作后与目标数组匹配的元素所对应的总收益"
+        }
+      }
+    ],
+    "description": "最大化在不超过给定操作次数的情况下，通过一系列操作后与目标数组匹配的元素所对应的总收益"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过选择合适的操作序列使得最终数组与目标数组匹配的数量最大化。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：每次选择当前情况下能够获得最大收益的操作（如增加某个元素使其更接近目标值），局部最优选择可以导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：在操作过程中，每个元素的值是单调递增的，不会出现减少的情况。",
+        "confidence": "1/1",
+        "properties": {
+          "value_monotonic": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过选择合适的操作序列使得最终数组与目标数组匹配的数量最大化。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：每次选择当前情况下能够获得最大收益的操作（如增加某个元素使其更接近目标值），局部最优选择可以导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：在操作过程中，每个元素的值是单调递增的，不会出现减少的情况。",
+              "properties": {
+                "value_monotonic": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "K": {
+        "min": 0,
+        "max": 1000000,
+        "description": "最大操作次数"
+      },
+      "N": {
+        "min": 1,
+        "max": 1000,
+        "description": "数组大小"
+      },
+      "B_MAX": {
+        "min": 1,
+        "max": 1000,
+        "description": "目标数组 b 中元素的最大值"
+      },
+      "C_MAX": {
+        "min": 1,
+        "max": 1000000,
+        "description": "每个匹配元素对应的金币数的最大值"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_initial_values_other_than_one",
+      "allow_negative_x",
+      "allow_non_integer_x",
+      "allow_repeated_operations_on_same_index",
+      "multi_constraints"
+    ]
+  }
+}

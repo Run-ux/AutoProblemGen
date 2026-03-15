@@ -1,0 +1,142 @@
+{
+  "problem_id": "GYM105216F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "constant_value_constraint",
+        "description": "选取的元素值不超过给定阈值（选择的奖品价值不超过 John 的得分）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "constant_value_constraint",
+              "description": "选取的元素值不超过给定阈值（选择的奖品价值不超过 John 的得分）",
+              "formal": "v_i <= p"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_value",
+          "description": "在给定的数组中，找到小于等于给定值的最大元素"
+        }
+      }
+    ],
+    "description": "在给定的数组中，找到小于等于给定值的最大元素"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "搜索区间单调缩小，通过二分查找的方式逐步逼近最优解",
+        "confidence": "1/1",
+        "properties": {
+          "search_interval_monotonic": true
+        }
+      },
+      {
+        "name": "greedy_choice",
+        "description": "局部最优选择导致全局最优，即选择不超过给定限制的最大值",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "搜索区间单调缩小，通过二分查找的方式逐步逼近最优解",
+              "properties": {
+                "search_interval_monotonic": true
+              }
+            },
+            {
+              "name": "greedy_choice",
+              "description": "局部最优选择导致全局最优，即选择不超过给定限制的最大值",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "p": {
+        "min": 1,
+        "max": 1000,
+        "description": "John 在游戏中获得的分数，用于限制可选奖品的价值"
+      },
+      "v_i": {
+        "min": 1,
+        "max": 1000,
+        "description": "每个奖品的价值，必须小于等于 John 的分数 p"
+      }
+    },
+    "objective_options": [
+      "maximize_value",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_duplicates",
+      "sorted_input",
+      "unsorted_input"
+    ]
+  }
+}

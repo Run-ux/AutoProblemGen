@@ -1,0 +1,159 @@
+{
+  "problem_id": "GYM105085G",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "submatrix_transformation",
+        "description": "在2xM网格中，每次操作可以选择一个格子，将其值减1，并将其两个对角邻居的值各加1。操作只能在对角邻居都在网格内时进行。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "constant_value_constraint",
+        "description": "目标是使所有格子的值同时等于给定的整数值V。",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "submatrix_transformation",
+              "description": "在2xM网格中，每次操作可以选择一个格子，将其值减1，并将其两个对角邻居的值各加1。操作只能在对角邻居都在网格内时进行。",
+              "formal": "对于每个操作 (i, j)，执行 grid[i][j] -= 1, grid[i+1][j+1] += 1, grid[i-1][j-1] += 1（如果对角邻居存在）"
+            },
+            {
+              "name": "constant_value_constraint",
+              "description": "目标是使所有格子的值同时等于给定的整数值V。",
+              "formal": "最终状态：∀ (i, j) ∈ grid, grid[i][j] = V"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_count",
+          "description": "求满足条件的最小操作次数"
+        }
+      }
+    ],
+    "description": "求满足条件的最小操作次数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的最优解来构建，即通过解决较小规模的问题来逐步解决整个问题。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：在状态机或动态规划中，状态之间的转移具有一致性，即当前状态可以由前一个或多个状态通过固定的规则推导出来。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：区间的值可以通过端点差值计算，即区间的和可以通过其端点的前缀和相减得到。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的最优解来构建，即通过解决较小规模的问题来逐步解决整个问题。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：在状态机或动态规划中，状态之间的转移具有一致性，即当前状态可以由前一个或多个状态通过固定的规则推导出来。",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：区间的值可以通过端点差值计算，即区间的和可以通过其端点的前缀和相减得到。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "M": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "2xM网格中的列数"
+      },
+      "V": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "所有格子最终需要达到的值"
+      }
+    },
+    "objective_options": [
+      "minimize_count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_negative_values",
+      "allow_non_integer_values",
+      "allow_different_initial_values",
+      "allow_variable_grid_size"
+    ]
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "problem_id": "GYM102219E",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 50
+          },
+          "value_range": {
+            "min": 1,
+            "max": 5
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 50
+    },
+    "value_range": {
+      "min": 1,
+      "max": 5
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "sum_constraint",
+        "description": "选取元素的权重和应尽可能接近给定的目标值（分配时间）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "选取的元素顺序必须与输入序列中的顺序一致",
+        "confidence": "1/1"
+      },
+      {
+        "name": "minimize_idle_time",
+        "description": "未使用的总时间应尽可能短",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "sum_constraint",
+              "description": "选取元素的权重和应尽可能接近给定的目标值（分配时间）",
+              "formal": "sum(selected_events) ≈ T"
+            },
+            {
+              "name": "ordering",
+              "description": "选取的元素顺序必须与输入序列中的顺序一致",
+              "formal": "selected_events[i] appears before selected_events[j] in the input if i < j"
+            },
+            {
+              "name": "minimize_idle_time",
+              "description": "未使用的总时间应尽可能短",
+              "formal": "minimize(T - sum(selected_events))"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "最小化未被选择时间段的总长度"
+        }
+      }
+    ],
+    "description": "最小化未被选择时间段的总长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即选择事件的最优方案可以由更小时间范围内的最优方案递推得出。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，优先选择当前情况下最优（最早出现且最接近剩余时间）的事件，最终能够得到全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即选择事件的最优方案可以由更小时间范围内的最优方案递推得出。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，优先选择当前情况下最优（最早出现且最接近剩余时间）的事件，最终能够得到全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "T": {
+        "min": 1,
+        "max": 1000,
+        "description": "分配给大厅使用的时间（小时）"
+      },
+      "N": {
+        "min": 1,
+        "max": 50,
+        "description": "事件的数量"
+      },
+      "Event_Duration_Max": {
+        "min": 1,
+        "max": 100,
+        "description": "单个事件的最大持续时间（小时）"
+      }
+    },
+    "objective_options": [
+      "minimize_idle_time",
+      "maximize_selected_events",
+      "count_possible_solutions",
+      "decision_existence_of_solution"
+    ],
+    "structural_options": [
+      "allow_negative_durations",
+      "allow_zero_durations",
+      "allow_repeated_durations",
+      "multi_constraints_on_event_durations"
+    ]
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "problem_id": "GYM100814K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 9
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 9
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "divisibility",
+        "description": "子串必须能被给定的素数整除（无余数）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "计算字符串 s 的所有子串",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "divisibility",
+              "description": "子串必须能被给定的素数整除（无余数）",
+              "formal": "∀ substring s[i:j] of s, s[i:j] % p == 0"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "计算字符串 s 的所有子串",
+              "formal": "s = a / b (first n digits), find all substrings of s"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "求满足条件的子串数量"
+        }
+      }
+    ],
+    "description": "求满足条件的子串数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过前缀和计算任意子区间的和，进而判断其是否能被 p 整除",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解组合得到，即每个子串的整除性质可以由更小子串的整除性质推导",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过前缀和计算任意子区间的和，进而判断其是否能被 p 整除",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解组合得到，即每个子串的整除性质可以由更小子串的整除性质推导",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 1,
+        "max": 1000000,
+        "description": "字符串 s 的长度，即 a / b 的前 n 位"
+      },
+      "p": {
+        "min": 2,
+        "max": 200,
+        "description": "素数 p，用于判断子串是否能被整除"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_fractional_digits",
+      "allow_repeating_substrings",
+      "multi_constraints"
+    ]
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "problem_id": "CF1105D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "two_dimensional_array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "two_dimensional_array",
+          "length": {
+            "min": 1,
+            "max": 1000
+          },
+          "value_range": {
+            "min": -1,
+            "max": 9
+          },
+          "properties": {
+            "inferred": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000
+    },
+    "value_range": {
+      "min": -1,
+      "max": 9
+    },
+    "properties": {
+      "inferred": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "adjacency_relation",
+        "description": "相邻节点的扩展必须在指定步数内可达且不经过障碍或已被其他玩家占据的节点",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "每个节点只能被一个玩家占据，不能同时属于多个玩家",
+        "confidence": "1/1"
+      },
+      {
+        "name": "state_transition",
+        "description": "每轮游戏中，玩家依次进行扩展操作，直到所有玩家都无法再进行扩展为止",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "adjacency_relation",
+              "description": "相邻节点的扩展必须在指定步数内可达且不经过障碍或已被其他玩家占据的节点"
+            },
+            {
+              "name": "exclusion",
+              "description": "每个节点只能被一个玩家占据，不能同时属于多个玩家"
+            },
+            {
+              "name": "state_transition",
+              "description": "每轮游戏中，玩家依次进行扩展操作，直到所有玩家都无法再进行扩展为止"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_count",
+          "description": "最大化每个玩家控制的格子数量"
+        }
+      }
+    ],
+    "description": "最大化每个玩家控制的格子数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个玩家的城堡在每一轮扩展后，新的状态由前一轮的状态和扩展规则决定。扩展过程中的状态转移是确定且一致的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：最终每个玩家控制的格子数量是由每一轮扩展过程中局部最优解（即每次扩展到的所有可达空格）累积而成的。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：每个玩家控制的格子数量在整个游戏过程中单调递增，直到无法再扩展为止。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": false,
+          "right_monotonic": false,
+          "window_shrinkable": false
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个玩家的城堡在每一轮扩展后，新的状态由前一轮的状态和扩展规则决定。扩展过程中的状态转移是确定且一致的。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：最终每个玩家控制的格子数量是由每一轮扩展过程中局部最优解（即每次扩展到的所有可达空格）累积而成的。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：每个玩家控制的格子数量在整个游戏过程中单调递增，直到无法再扩展为止。",
+              "properties": {
+                "left_monotonic": false,
+                "right_monotonic": false,
+                "window_shrinkable": false
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "p": {
+        "min": 1,
+        "max": 9,
+        "description": "玩家数量"
+      },
+      "s_i": {
+        "min": 1,
+        "max": 1000,
+        "description": "每个玩家的扩展速度"
+      }
+    },
+    "objective_options": [
+      "maximize_count",
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_blocked_cells",
+      "allow_multiple_castles_per_player",
+      "allow_empty_grid",
+      "allow_variable_expansion_speeds"
+    ]
+  }
+}

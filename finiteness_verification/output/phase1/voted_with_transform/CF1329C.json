@@ -1,0 +1,187 @@
+{
+  "problem_id": "CF1329C",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1048575
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1048575
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1048575
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1048575
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "数组中的所有元素必须是唯一的（去重约束）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "ordering",
+        "description": "数组必须满足最大堆的性质，即对于任意 1 < i < 2^h，a[i] < a[⌊i/2⌋]",
+        "confidence": "1/1"
+      },
+      {
+        "name": "subset_constraint",
+        "description": "最终保留的元素必须位于数组的前 2^g-1 个位置",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "必须执行 2^h - 2^g 次删除操作以减少堆的高度",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "数组中的所有元素必须是唯一的（去重约束）",
+              "formal": "|distinct(a[1:n])| = n"
+            },
+            {
+              "name": "ordering",
+              "description": "数组必须满足最大堆的性质，即对于任意 1 < i < 2^h，a[i] < a[⌊i/2⌋]",
+              "formal": "∀ 1 < i < 2^h, a[i] < a[⌊i/2⌋]"
+            },
+            {
+              "name": "subset_constraint",
+              "description": "最终保留的元素必须位于数组的前 2^g-1 个位置",
+              "formal": "a[1:2^g-1] ⊆ a[1:2^h-1]"
+            },
+            {
+              "name": "operation_limit",
+              "description": "必须执行 2^h - 2^g 次删除操作以减少堆的高度",
+              "formal": "number of operations = 2^h - 2^g"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "最小化剩余元素的总和"
+        }
+      }
+    ],
+    "description": "最小化剩余元素的总和"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "priority_queue_invariant",
+        "description": "堆结构不变量：在操作过程中，剩余元素始终满足最大堆的性质，即每个节点的值大于或等于其子节点的值。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。具体来说，在减少堆高度的过程中，每次选择删除的元素都是为了使得最终剩余元素的和最小化。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：每次选择删除的元素都是当前情况下最优的选择，即选择删除后能使得剩余元素和最小化的元素。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "priority_queue_invariant",
+              "description": "堆结构不变量：在操作过程中，剩余元素始终满足最大堆的性质，即每个节点的值大于或等于其子节点的值。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解来构造。具体来说，在减少堆高度的过程中，每次选择删除的元素都是为了使得最终剩余元素的和最小化。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：每次选择删除的元素都是当前情况下最优的选择，即选择删除后能使得剩余元素和最小化的元素。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "h": {
+        "min": 2,
+        "max": 20,
+        "description": "初始堆的高度"
+      },
+      "g": {
+        "min": 1,
+        "max": 19,
+        "description": "目标堆的高度，必须小于 h"
+      },
+      "t": {
+        "min": 1,
+        "max": 70000,
+        "description": "测试用例的数量"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "maximize_value",
+      "count_solutions",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_distinct_elements",
+      "allow_negative_numbers",
+      "allow_zero_values",
+      "vary_heap_type_to_min_heap",
+      "vary_heap_property_to_custom_ordering"
+    ]
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "problem_id": "GYM105444K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 9
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 1000000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 9
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "no_carry_operation",
+        "description": "通过一系列操作，使得两个数在标准加法算法中不会产生进位",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "每次操作只能对一个数加1，另一个数减1，直到其中一个数变为0",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "no_carry_operation",
+              "description": "通过一系列操作，使得两个数在标准加法算法中不会产生进位"
+            },
+            {
+              "name": "operation_limit",
+              "description": "每次操作只能对一个数加1，另一个数减1，直到其中一个数变为0"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_count",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_count",
+          "description": "求最小操作次数，使得两个数相加时不会产生进位"
+        }
+      }
+    ],
+    "description": "求最小操作次数，使得两个数相加时不会产生进位"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "在每次操作中，两个数的总和保持不变，且其中一个数单调递增，另一个数单调递减。",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": false
+        }
+      },
+      {
+        "name": "greedy_choice",
+        "description": "每次选择对一个数加1同时对另一个数减1的操作，使得最终两数相加时不会产生进位，这种局部最优选择能导致全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "问题的最优解可以通过子问题的最优解来构造。具体来说，每一步操作后的状态可以看作是一个子问题，其最优解是整个问题最优解的一部分。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "在每次操作中，两个数的总和保持不变，且其中一个数单调递增，另一个数单调递减。",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": false
+              }
+            },
+            {
+              "name": "greedy_choice",
+              "description": "每次选择对一个数加1同时对另一个数减1的操作，使得最终两数相加时不会产生进位，这种局部最优选择能导致全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "问题的最优解可以通过子问题的最优解来构造。具体来说，每一步操作后的状态可以看作是一个子问题，其最优解是整个问题最优解的一部分。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Max_Digit": {
+        "min": 1,
+        "max": 9,
+        "description": "每个数字的最大值，即每个数位上的最大可能值"
+      },
+      "Max_Length": {
+        "min": 1,
+        "max": 1000000,
+        "description": "输入整数的最大长度（位数）"
+      }
+    },
+    "objective_options": [
+      "minimize_count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_zero_digits",
+      "allow_leading_zeros",
+      "multi_constraints"
+    ]
+  }
+}

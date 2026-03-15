@@ -1,0 +1,202 @@
+{
+  "problem_id": "GYM104596B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 20
+          },
+          "properties": {
+            "connected": true,
+            "weighted": true,
+            "directed": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 1000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 20
+    },
+    "properties": {
+      "connected": true,
+      "weighted": true,
+      "directed": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "geometric_angle_constraint",
+        "description": "在每个节点处，从一条边进入后，只能转向特定角度范围内的其他边（例如，只能转90度或更小的角度）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distance_cost_constraint",
+        "description": "每条边的旅行时间可能因方向不同而不同",
+        "confidence": "1/1"
+      },
+      {
+        "name": "reverse_ordering_constraint",
+        "description": "不允许在任何节点进行180度转弯（即U-turn）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "fixed_start_node",
+        "description": "起点和终点必须是同一个节点（即生物站）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "geometric_angle_constraint",
+              "description": "在每个节点处，从一条边进入后，只能转向特定角度范围内的其他边（例如，只能转90度或更小的角度）"
+            },
+            {
+              "name": "distance_cost_constraint",
+              "description": "每条边的旅行时间可能因方向不同而不同"
+            },
+            {
+              "name": "reverse_ordering_constraint",
+              "description": "不允许在任何节点进行180度转弯（即U-turn）"
+            },
+            {
+              "name": "fixed_start_node",
+              "description": "起点和终点必须是同一个节点（即生物站）"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "minimize_value",
+          "description": "求从起点出发到达指定点再返回起点的最短路径长度"
+        }
+      }
+    ],
+    "description": "求从起点出发到达指定点再返回起点的最短路径长度"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，适用于动态规划方法求解最短路径问题。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：从一个状态到另一个状态的转移是基于当前状态和允许的转向角度限制，确保了状态机的一致性。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "flow_conservation",
+        "description": "流守恒：在每个节点（除了起点和终点），流入的流量等于流出的流量，保证了路径的连通性和合法性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，适用于动态规划方法求解最短路径问题。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：从一个状态到另一个状态的转移是基于当前状态和允许的转向角度限制，确保了状态机的一致性。",
+              "properties": {}
+            },
+            {
+              "name": "flow_conservation",
+              "description": "流守恒：在每个节点（除了起点和终点），流入的流量等于流出的流量，保证了路径的连通性和合法性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 2,
+        "max": 1000,
+        "description": "节点数量"
+      },
+      "d": {
+        "min": 2,
+        "max": 1000,
+        "description": "目标节点编号"
+      },
+      "alpha1": {
+        "min": 1,
+        "max": 180,
+        "description": "允许的最小转向角度"
+      },
+      "alpha2": {
+        "min": 1,
+        "max": 180,
+        "description": "允许的最大转向角度"
+      },
+      "m": {
+        "min": 1,
+        "max": 5,
+        "description": "每个节点连接的道路数量"
+      },
+      "t_i": {
+        "min": 1,
+        "max": 20,
+        "description": "每条道路的旅行时间"
+      }
+    },
+    "objective_options": [
+      "minimize_value",
+      "decision",
+      "count_paths"
+    ],
+    "structural_options": [
+      "allow_negative_weights",
+      "allow_self_loops",
+      "allow_parallel_edges",
+      "allow_180_degree_turns",
+      "variable_start_node",
+      "multi_constraints"
+    ]
+  }
+}

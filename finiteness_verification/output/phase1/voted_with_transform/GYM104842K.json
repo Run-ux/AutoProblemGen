@@ -1,0 +1,164 @@
+{
+  "problem_id": "GYM104842K",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "weighted_undirected_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "weighted_undirected_graph",
+          "length": {
+            "min": 2,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {
+            "connected": true,
+            "weighted": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 2,
+      "max": 200000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 200000
+    },
+    "properties": {
+      "connected": true,
+      "weighted": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "acyclicity",
+        "description": "图结构为树（无环连通图）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "degree_bound",
+        "description": "每个节点最多选择一条出边作为免费道路",
+        "confidence": "1/1"
+      },
+      {
+        "name": "minimize_max_min_difference",
+        "description": "最小化所有路径中最大路径费用",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "acyclicity",
+              "description": "图结构为树（无环连通图）"
+            },
+            {
+              "name": "degree_bound",
+              "description": "每个节点最多选择一条出边作为免费道路"
+            },
+            {
+              "name": "minimize_max_min_difference",
+              "description": "最小化所有路径中最大路径费用"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "min_max",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "min_max",
+          "description": "最小化所有路径中最大费用"
+        }
+      }
+    ],
+    "description": "最小化所有路径中最大费用"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过选择每个城市的一条免费道路来最小化最大总费用。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，选择当前最优的道路作为免费道路，可以逐步构建全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "acyclic_connected_graph",
+        "description": "树结构不变量：输入的图是一个无环连通图（树），因此任何两个节点之间的路径是唯一的，这保证了算法的有效性。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的最优解可以通过子问题的最优解组合得到，即通过选择每个城市的一条免费道路来最小化最大总费用。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，选择当前最优的道路作为免费道路，可以逐步构建全局最优解。",
+              "properties": {}
+            },
+            {
+              "name": "acyclic_connected_graph",
+              "description": "树结构不变量：输入的图是一个无环连通图（树），因此任何两个节点之间的路径是唯一的，这保证了算法的有效性。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Toll_Cost": {
+        "min": 1,
+        "max": 10,
+        "description": "每条道路的通行费用"
+      }
+    },
+    "objective_options": [
+      "minimize_max_toll",
+      "count_free_roads",
+      "decision_possible_within_limit"
+    ],
+    "structural_options": [
+      "allow_non_tree_graphs",
+      "allow_multiple_free_roads_per_city",
+      "allow_negative_tolls",
+      "allow_variable_toll_costs"
+    ]
+  }
+}

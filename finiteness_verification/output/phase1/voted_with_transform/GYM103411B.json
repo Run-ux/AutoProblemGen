@@ -1,0 +1,162 @@
+{
+  "problem_id": "GYM103411B",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 4,
+            "max": 4
+          },
+          "value_range": {
+            "min": 0,
+            "max": 9
+          },
+          "properties": {
+            "inferred": true,
+            "excluded_values": [
+              1
+            ]
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 4,
+      "max": 4
+    },
+    "value_range": {
+      "min": 0,
+      "max": 9
+    },
+    "properties": {
+      "inferred": true,
+      "excluded_values": [
+        1
+      ]
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "exclusion",
+        "description": "数字序列中不能包含特定的数字（本题中为1）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "product_constraint",
+        "description": "数字序列与其每一位数字相乘的结果必须等于给定的数n",
+        "confidence": "1/1"
+      },
+      {
+        "name": "distinctness",
+        "description": "解码结果必须是唯一的，否则输出错误信息",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "exclusion",
+              "description": "数字序列中不能包含特定的数字（本题中为1）",
+              "formal": "∀i, digit[i] ≠ 1"
+            },
+            {
+              "name": "product_constraint",
+              "description": "数字序列与其每一位数字相乘的结果必须等于给定的数n",
+              "formal": "∃digits such that n = digits * (digits[0] * digits[1] * digits[2] * digits[3])"
+            },
+            {
+              "name": "distinctness",
+              "description": "解码结果必须是唯一的，否则输出错误信息",
+              "formal": "if multiple solutions exist, output 'ERROR'"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一个四位数，使得该数与其每一位数字的乘积等于给定的数"
+        }
+      }
+    ],
+    "description": "判断是否存在一个四位数，使得该数与其每一位数字的乘积等于给定的数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：问题的解可以通过子问题的解来构造，即如果一个四位数 n 是某个四位数 m 与其每一位数字相乘的结果，则 m 的每一位数字的选择可以独立考虑，并且每个选择都应满足不使用数字 1 的约束。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "pattern_preservation",
+        "description": "数字排除不变量：在生成可能的四位数时，始终排除数字 1，确保所有候选解都不包含该数字。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：问题的解可以通过子问题的解来构造，即如果一个四位数 n 是某个四位数 m 与其每一位数字相乘的结果，则 m 的每一位数字的选择可以独立考虑，并且每个选择都应满足不使用数字 1 的约束。",
+              "properties": {}
+            },
+            {
+              "name": "pattern_preservation",
+              "description": "数字排除不变量：在生成可能的四位数时，始终排除数字 1，确保所有候选解都不包含该数字。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Length_L": {
+        "min": 4,
+        "max": 4,
+        "description": "四位数的长度"
+      },
+      "Excluded_Digit": {
+        "min": 0,
+        "max": 9,
+        "description": "被排除的数字（本题中为1）"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count"
+    ],
+    "structural_options": [
+      "allow_exclusion_digit_change",
+      "allow_length_change"
+    ]
+  }
+}

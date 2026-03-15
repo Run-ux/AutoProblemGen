@@ -1,0 +1,148 @@
+{
+  "problem_id": "GYM106073F",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "state_transition",
+        "description": "状态转移约束：机器人在执行命令时，有50%的概率正确执行当前命令，50%的概率执行另一个命令。",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "操作次数限制：每个命令的参数X_i必须在1到N之间。",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "state_transition",
+              "description": "状态转移约束：机器人在执行命令时，有50%的概率正确执行当前命令，50%的概率执行另一个命令。",
+              "formal": "P(correct_command) = 0.5, P(wrong_command) = 0.5"
+            },
+            {
+              "name": "operation_limit",
+              "description": "操作次数限制：每个命令的参数X_i必须在1到N之间。",
+              "formal": "1 ≤ X_i ≤ N"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_probability",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "maximize_probability",
+          "description": "求每个节点的期望值"
+        }
+      }
+    ],
+    "description": "求每个节点的期望值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：系统状态（当前桌子和订单数量）根据命令进行更新，且更新规则一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "expectation_linearity",
+        "description": "期望值可加性：每个命令对最终结果的贡献可以独立计算并累加。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：系统状态（当前桌子和订单数量）根据命令进行更新，且更新规则一致。",
+              "properties": {}
+            },
+            {
+              "name": "expectation_linearity",
+              "description": "期望值可加性：每个命令对最终结果的贡献可以独立计算并累加。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "P": {
+        "min": 0,
+        "max": 1,
+        "description": "机器人正确执行当前命令的概率"
+      },
+      "Modulo": {
+        "min": 1,
+        "max": 1000000007,
+        "description": "模数，用于计算结果的模逆"
+      }
+    },
+    "objective_options": [
+      "expected_value_per_table",
+      "decision_threshold",
+      "sum_of_expected_values"
+    ],
+    "structural_options": [
+      "allow_out_of_range_Xi",
+      "allow_negative_Xi",
+      "allow_duplicate_Xi"
+    ]
+  }
+}

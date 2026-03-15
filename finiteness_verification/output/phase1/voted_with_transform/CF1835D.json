@@ -1,0 +1,150 @@
+{
+  "problem_id": "CF1835D",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "weighted": false,
+            "directed": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "weighted": false,
+      "directed": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "path_constraint",
+        "description": "存在从节点 x 到节点 y 的路径，且路径长度为 k",
+        "confidence": "1/1"
+      },
+      {
+        "name": "cycle_count_constraint",
+        "description": "存在一个长度为 2k 的环，即从某个节点出发经过 k 小时到达另一个节点再返回原节点",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "path_constraint",
+              "description": "存在从节点 x 到节点 y 的路径，且路径长度为 k",
+              "formal": "∃ path(x, y) with length = k"
+            },
+            {
+              "name": "path_constraint",
+              "description": "存在从节点 y 到节点 x 的路径，且路径长度为 k",
+              "formal": "∃ path(y, x) with length = k"
+            },
+            {
+              "name": "cycle_count_constraint",
+              "description": "存在一个长度为 2k 的环，即从某个节点出发经过 k 小时到达另一个节点再返回原节点",
+              "formal": "∃ cycle of length 2k"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求满足条件的路径对或单个路径的数量"
+        }
+      }
+    ],
+    "description": "求满足条件的路径对或单个路径的数量"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "topological_order",
+        "description": "在有向无环图（DAG）中，节点的拓扑序决定了路径的存在性。对于任意两个节点x和y，如果存在从x到y的路径，则x在拓扑序中先于y。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "cycle_invariant",
+        "description": "在有向图中，如果存在长度为k的路径从x到y，并且也存在长度为k的路径从y到x，则x和y之间必然存在一个长度为k的环。这个环的性质在整个算法过程中保持不变。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "topological_order",
+              "description": "在有向无环图（DAG）中，节点的拓扑序决定了路径的存在性。对于任意两个节点x和y，如果存在从x到y的路径，则x在拓扑序中先于y。",
+              "properties": {}
+            },
+            {
+              "name": "cycle_invariant",
+              "description": "在有向图中，如果存在长度为k的路径从x到y，并且也存在长度为k的路径从y到x，则x和y之间必然存在一个长度为k的环。这个环的性质在整个算法过程中保持不变。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "k": {
+        "min": 1,
+        "max": 100000,
+        "description": "从一个星球到另一个星球所需的时间（小时）"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_self_loops",
+      "allow_multiple_wormholes_between_same_planets",
+      "require_both_paths",
+      "require_single_path"
+    ]
+  }
+}

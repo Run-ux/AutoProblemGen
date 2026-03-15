@@ -1,0 +1,162 @@
+{
+  "problem_id": "GYM100460H",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 97,
+            "max": 122
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 97,
+      "max": 122
+    },
+    "properties": {
+      "ordered": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subsequence_constraint",
+        "description": "序列中存在一个特定的子序列（如 desmond）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "operation_limit",
+        "description": "操作次数有限制，最多进行 m 次操作",
+        "confidence": "1/1"
+      },
+      {
+        "name": "adjacency_relation",
+        "description": "相邻星座的变化是独立的，每次只改变一个星座的形态",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subsequence_constraint",
+              "description": "序列中存在一个特定的子序列（如 desmond）",
+              "formal": "∃ i, s[i:i+7] = 'desmond'"
+            },
+            {
+              "name": "operation_limit",
+              "description": "操作次数有限制，最多进行 m 次操作",
+              "formal": "m ≤ 10^5"
+            },
+            {
+              "name": "adjacency_relation",
+              "description": "相邻星座的变化是独立的，每次只改变一个星座的形态",
+              "formal": "∀ j, 1 ≤ a_j ≤ n"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在满足条件的子序列，并在存在时输出最小的操作次数"
+        }
+      }
+    ],
+    "description": "判断是否存在满足条件的子序列，并在存在时输出最小的操作次数"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每次星座变化后，当前窗口内的字母序列状态可以由前一个状态通过单个字符的替换得到。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "monotonicity",
+        "description": "单调性：随着星座的变化次数增加，找到目标子串“desmond”的机会不会减少，即一旦出现过目标子串，则后续任何时刻都可能存在该子串。",
+        "confidence": "1/1",
+        "properties": {
+          "right_monotonic": true
+        }
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每次星座变化后，当前窗口内的字母序列状态可以由前一个状态通过单个字符的替换得到。",
+              "properties": {}
+            },
+            {
+              "name": "monotonicity",
+              "description": "单调性：随着星座的变化次数增加，找到目标子串“desmond”的机会不会减少，即一旦出现过目标子串，则后续任何时刻都可能存在该子串。",
+              "properties": {
+                "right_monotonic": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Length_L": {
+        "min": 1,
+        "max": 26,
+        "description": "目标子序列的长度（如 'desmond' 的长度为 7）"
+      },
+      "M": {
+        "min": 1,
+        "max": 100000,
+        "description": "星座变化的最大次数"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "count_operations",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_characters",
+      "allow_any_subsequence",
+      "multi_constraints"
+    ]
+  }
+}

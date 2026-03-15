@@ -1,0 +1,158 @@
+{
+  "problem_id": "GYM105327I",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000
+          },
+          "properties": {}
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000
+    },
+    "properties": {}
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "subset_constraint",
+        "description": "选取的元素集合必须是给定集合的子集（即，每个食物的成分必须是给定成分的子集）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "exclusion",
+        "description": "选取的元素集合不能包含某些禁止的元素（即，每个人的食物组合不能包含其过敏的成分）",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "subset_constraint",
+              "description": "选取的元素集合必须是给定集合的子集（即，每个食物的成分必须是给定成分的子集）",
+              "formal": "∀i, V_i ⊆ P, 其中 P 是所有基本成分的集合"
+            },
+            {
+              "name": "exclusion",
+              "description": "选取的元素集合不能包含某些禁止的元素（即，每个人的食物组合不能包含其过敏的成分）",
+              "formal": "∀i, ∀j, (V_i ∩ X_j) = ∅, 其中 X_j 是第 j 个人的过敏成分集合"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "计算满足条件的组合数（常取模）"
+        }
+      }
+    ],
+    "description": "计算满足条件的组合数（常取模）"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个食物的可组合性取决于其成分与过敏源的独立匹配情况，整体解由各独立成分的解合成。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "prime_factorization_ordering",
+        "description": "质因数分解不变量：每种食物和每个人的过敏源都可以唯一地分解为一组质数及其幂次，这种分解方式在算法执行过程中保持不变。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个食物的可组合性取决于其成分与过敏源的独立匹配情况，整体解由各独立成分的解合成。",
+              "properties": {}
+            },
+            {
+              "name": "prime_factorization_ordering",
+              "description": "质因数分解不变量：每种食物和每个人的过敏源都可以唯一地分解为一组质数及其幂次，这种分解方式在算法执行过程中保持不变。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "Modulo": {
+        "min": 1000000007,
+        "max": 1000000007,
+        "description": "答案取模的模数，通常为 10^9 + 7"
+      },
+      "N": {
+        "min": 1,
+        "max": 100000,
+        "description": "食物的数量"
+      },
+      "Q": {
+        "min": 1,
+        "max": 100000,
+        "description": "顾客的数量"
+      },
+      "V_i": {
+        "min": 1,
+        "max": 1000000,
+        "description": "每个食物的编号"
+      },
+      "X_i": {
+        "min": 1,
+        "max": 1000000,
+        "description": "每个顾客的过敏源编号"
+      }
+    },
+    "objective_options": [
+      "count",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_repeated_ingredients",
+      "allow_negative_numbers",
+      "multi_constraints"
+    ]
+  }
+}

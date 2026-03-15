@@ -1,0 +1,174 @@
+{
+  "problem_id": "GYM106252L",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "directed_graph",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "directed_graph",
+          "length": {
+            "min": 3,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 3
+          },
+          "properties": {
+            "ordered": true,
+            "connected": true,
+            "weighted": false,
+            "directed": true
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 0,
+      "max": 3
+    },
+    "properties": {
+      "ordered": true,
+      "connected": true,
+      "weighted": false,
+      "directed": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "distinctness",
+        "description": "输入节点的状态中必须包含至少一次 R、G 和 B，* 可以出现任意次数（包括零次）",
+        "confidence": "1/1"
+      },
+      {
+        "name": "acyclicity",
+        "description": "内部节点构成的图必须是无环的",
+        "confidence": "1/1"
+      },
+      {
+        "name": "report_generation_constraint",
+        "description": "输出节点的状态必须是输入节点中第三个不同颜色状态（忽略 *），即在 R、G 和 B 中，输出的是第一次出现位置最靠后的那个颜色",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "distinctness",
+              "description": "输入节点的状态中必须包含至少一次 R、G 和 B，* 可以出现任意次数（包括零次）"
+            },
+            {
+              "name": "acyclicity",
+              "description": "内部节点构成的图必须是无环的"
+            },
+            {
+              "name": "report_generation_constraint",
+              "description": "输出节点的状态必须是输入节点中第三个不同颜色状态（忽略 *），即在 R、G 和 B 中，输出的是第一次出现位置最靠后的那个颜色"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "construction",
+          "description": "构造一个满足特定逻辑功能的有向无环图"
+        }
+      }
+    ],
+    "description": "构造一个满足特定逻辑功能的有向无环图"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个内部节点的状态由其前驱节点的状态决定，最终输出节点的状态依赖于所有输入节点的状态组合。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "state_transition",
+        "description": "状态转移不变量：每个内部节点根据其类型（'&' 或 '|'）和前驱节点的状态进行状态转移，确保整个图的计算过程一致。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "topological_order",
+        "description": "拓扑序不变量：整个计算图是一个有向无环图（DAG），节点的计算顺序遵循拓扑排序，确保每个节点在计算时其前驱节点的状态已经确定。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个内部节点的状态由其前驱节点的状态决定，最终输出节点的状态依赖于所有输入节点的状态组合。",
+              "properties": {}
+            },
+            {
+              "name": "state_transition",
+              "description": "状态转移不变量：每个内部节点根据其类型（'&' 或 '|'）和前驱节点的状态进行状态转移，确保整个图的计算过程一致。",
+              "properties": {}
+            },
+            {
+              "name": "topological_order",
+              "description": "拓扑序不变量：整个计算图是一个有向无环图（DAG），节点的计算顺序遵循拓扑排序，确保每个节点在计算时其前驱节点的状态已经确定。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "n": {
+        "min": 3,
+        "max": 100000,
+        "description": "输入节点的数量"
+      },
+      "m": {
+        "min": 1,
+        "max": 600000,
+        "description": "内部节点的数量，最多为 6 * n"
+      }
+    },
+    "objective_options": [
+      "construction",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_any_number_of_star_inputs",
+      "require_all_colors_in_input",
+      "output_third_distinct_color",
+      "output_first_distinct_color",
+      "output_second_distinct_color",
+      "output_last_distinct_color"
+    ]
+  }
+}

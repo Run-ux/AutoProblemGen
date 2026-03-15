@@ -1,0 +1,166 @@
+{
+  "problem_id": "GYM105427D",
+  "source": "icpc_gym",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 3
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 3,
+      "max": 3
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "probability_distribution",
+        "description": "选择的元素（骰子）必须保证在某种策略下获胜的概率至少为 1/2",
+        "confidence": "1/1"
+      },
+      {
+        "name": "pairwise_exclusion",
+        "description": "两个元素（骰子）的值相同时，需要重新选择直到不同",
+        "confidence": "1/1"
+      },
+      {
+        "name": "maximum_value_constraint",
+        "description": "比较两个元素（骰子）的值，较大者获胜",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "probability_distribution",
+              "description": "选择的元素（骰子）必须保证在某种策略下获胜的概率至少为 1/2"
+            },
+            {
+              "name": "pairwise_exclusion",
+              "description": "两个元素（骰子）的值相同时，需要重新选择直到不同"
+            },
+            {
+              "name": "maximum_value_constraint",
+              "description": "比较两个元素（骰子）的值，较大者获胜"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "feasibility",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "feasibility",
+          "description": "判断是否存在一个选项，使得选择该选项后满足给定的概率条件"
+        }
+      }
+    ],
+    "description": "判断是否存在一个选项，使得选择该选项后满足给定的概率条件"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：选择一个骰子的最优策略可以通过比较每个骰子与其他两个骰子的胜率来确定，且该策略可以分解为更小的子问题。",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "greedy_choice",
+        "description": "贪心选择性质：在每一步选择中，选择当前情况下胜率最高的骰子作为局部最优解，最终能够保证全局最优解。",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：选择一个骰子的最优策略可以通过比较每个骰子与其他两个骰子的胜率来确定，且该策略可以分解为更小的子问题。",
+              "properties": {}
+            },
+            {
+              "name": "greedy_choice",
+              "description": "贪心选择性质：在每一步选择中，选择当前情况下胜率最高的骰子作为局部最优解，最终能够保证全局最优解。",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "N": {
+        "min": 2,
+        "max": 10,
+        "description": "骰子的数量"
+      },
+      "Sides": {
+        "min": 4,
+        "max": 20,
+        "description": "每个骰子的面数"
+      },
+      "Value_Range": {
+        "min": 1,
+        "max": 1000,
+        "description": "每个骰子面上的数值范围"
+      },
+      "Win_Probability_Threshold": {
+        "min": 0.5,
+        "max": 0.9,
+        "description": "获胜概率的阈值"
+      }
+    },
+    "objective_options": [
+      "feasibility",
+      "maximize_win_probability",
+      "minimize_dice_index"
+    ],
+    "structural_options": [
+      "allow_identical_dice",
+      "allow_non_uniform_dice",
+      "allow_negative_values",
+      "multi_constraints"
+    ]
+  }
+}

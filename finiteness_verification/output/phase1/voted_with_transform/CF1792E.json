@@ -1,0 +1,175 @@
+{
+  "problem_id": "CF1792E",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": false
+          }
+        }
+      }
+    ],
+    "length": {
+      "min": 1,
+      "max": 10
+    },
+    "value_range": {
+      "min": 1,
+      "max": 1000000000
+    },
+    "properties": {
+      "ordered": false
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "frequency_bound",
+        "description": "每个因数 d 在 n×n 乘法表中至少出现一次，且记录其最小行索引",
+        "confidence": "1/1"
+      },
+      {
+        "name": "modular_arithmetic",
+        "description": "所有符合条件的因数的最小行索引进行异或操作",
+        "confidence": "1/1"
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "constraints": [
+            {
+              "name": "frequency_bound",
+              "description": "每个因数 d 在 n×n 乘法表中至少出现一次，且记录其最小行索引"
+            },
+            {
+              "name": "modular_arithmetic",
+              "description": "所有符合条件的因数的最小行索引进行异或操作"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "objective": {
+    "type": "enumeration",
+    "confidence": "1/1",
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "type": "enumeration",
+          "description": "求给定整数的所有因子中，出现在指定大小的乘法表中的因子数量及其在表中出现的最小行索引的异或值"
+        }
+      }
+    ],
+    "description": "求给定整数的所有因子中，出现在指定大小的乘法表中的因子数量及其在表中出现的最小行索引的异或值"
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "双指针左右端点单调前进，用于遍历所有可能的乘积对 (i, j) 以检查是否为 m 的因子",
+        "confidence": "1/1",
+        "properties": {
+          "left_monotonic": true,
+          "right_monotonic": true
+        }
+      },
+      {
+        "name": "optimal_substructure",
+        "description": "最优子结构：每个因子 d 的最小行索引可以通过其因子分解的最优解组合得出",
+        "confidence": "1/1",
+        "properties": {}
+      },
+      {
+        "name": "interval_additivity",
+        "description": "区间可加性：通过前缀和或类似方法快速计算特定范围内的乘积和，以判断因子的存在性",
+        "confidence": "1/1",
+        "properties": {}
+      }
+    ],
+    "all_rounds": [
+      {
+        "round": 1,
+        "status": "success",
+        "result": {
+          "invariants": [
+            {
+              "name": "monotonicity",
+              "description": "双指针左右端点单调前进，用于遍历所有可能的乘积对 (i, j) 以检查是否为 m 的因子",
+              "properties": {
+                "left_monotonic": true,
+                "right_monotonic": true
+              }
+            },
+            {
+              "name": "optimal_substructure",
+              "description": "最优子结构：每个因子 d 的最小行索引可以通过其因子分解的最优解组合得出",
+              "properties": {}
+            },
+            {
+              "name": "interval_additivity",
+              "description": "区间可加性：通过前缀和或类似方法快速计算特定范围内的乘积和，以判断因子的存在性",
+              "properties": {}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "transform_space": {
+    "numerical_parameters": {
+      "t": {
+        "min": 1,
+        "max": 10,
+        "description": "测试用例的数量"
+      },
+      "n": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "乘法表的大小"
+      },
+      "m1": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "整数 m 的第一个因子"
+      },
+      "m2": {
+        "min": 1,
+        "max": 1000000000,
+        "description": "整数 m 的第二个因子"
+      }
+    },
+    "objective_options": [
+      "count_and_xor",
+      "count_only",
+      "xor_only",
+      "decision"
+    ],
+    "structural_options": [
+      "allow_non_square_table",
+      "allow_negative_factors",
+      "allow_repeated_factors",
+      "multi_constraints"
+    ]
+  }
+}
