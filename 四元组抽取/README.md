@@ -24,7 +24,9 @@
 - `core_constraints.name` 优先复用规范词表；存在明确语义缺口时允许新建抽象标签，具体题目限制写入 `description`、`formal` 与可选 `source_sections`。
 - `objective.type` 统一到目标词表，可选扩展 `target` 与 `requires_solution`。
 - `invariant` 只保留可由代码或题面支撑的稳定维护性质，不把算法范式直接当作不变量标签；优先复用规范词表，存在明确语义缺口时允许新建抽象标签；有代码时以代码为主证据，无充分证据时允许返回空数组。
-- 四个维度的 system prompt 都加入科研定义与标签判别边界，用于压缩标签漂移并提高单轮抽取一致性。
+- `label_vocab.py` 中的预设标签描述已经扩展为可直接放入 prompt 的判定说明，覆盖适用场景与常见排除边界。
+- 四个维度的 system prompt 都加入科研定义、规范标签说明与标签判别边界，用于压缩标签漂移并提高单轮抽取一致性。
+- `input_structure` 额外把 `properties` 可复用键的语义说明注入 system prompt，降低把题目情境词误写成性质键的概率。
 - `prompt_normalize` 接收结构化原始条目，而不是裸标签字符串。Embedding 归一化入口保持不变，结构化信息只用于 LLM 归一化阶段。
 
 ## 主流程
@@ -48,6 +50,29 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
 ```
 
 `normalized\` 目录中的文件就是最终可消费结果。
+
+## 完整流程
+
+1. 读取题目 schema JSON。
+   `extract.py` 接收单个文件或目录，随后调用 `problem_schema.py` 读取并校验题目数据。
+2. 执行统一预处理。
+   预处理会保留完整 `description`，切分 `input`、`output`、`constraints` 分节，把 `limits` 合并进 `constraints`，并在存在 `reference_solution.code` 时补出 `standard_solution_code`。
+3. 进行四维独立抽取。
+   抽取阶段固定处理 `input_structure`、`core_constraints`、`objective`、`invariant` 四个维度。四个维度都会看到标题、题面全文、Input 分节、Output 分节、Constraints 分节。`invariant` 维额外把标准解法代码作为高优先级证据。
+4. 写出单轮原始结果。
+   每题每维调用一次模型，结果写入 `output/<run>/raw/{problem_id}_{dimension}.json`。每个文件包含 `problem_id`、`source`、`dimension`、`result`、`status`。
+5. 聚合同题四个维度。
+   `normalize.py` 读取 `raw/` 下的所有文件，按 `problem_id` 组装成单题对象。缺失维度保留默认失败状态，重复文件只保留首个文件。
+6. 加载并刷新标签注册表。
+   归一化阶段会先读取 `output/<run>/label_registry/` 中的已有注册表，再把 `label_vocab.py` 中的预设标签写入内存，作为本轮规范标签集合。
+7. 执行 embedding 归一化。
+   对每个维度，先提取原始标签名，与注册表中的规范标签名做 embedding 相似度比较。达到阈值的条目直接映射到已有规范标签。
+8. 执行 LLM 归一化。
+   embedding 未解决的条目进入 LLM 归一化。prompt 会同时提供维度策略、已有标签列表和结构化原始条目。`input_structure` 与 `objective` 采用强归并，`core_constraints` 与 `invariant` 采用半开放归并。模型返回映射关系和可能的新标签定义。
+9. 回写归一化结果与标签注册表。
+   归一化只统一标签字段。`input_structure` 与 `objective` 主要更新 `type`，`core_constraints` 与 `invariant` 主要更新每项的 `name`。新标签和别名会同步写回 `label_registry/<dimension>.json`。
+10. 生成最终四元组结果。
+    四个维度全部归一化完成后，系统会生成 `output/<run>/normalized/{problem_id}.json`。该文件只保留最终消费所需字段：`problem_id`、`source`、`input_structure`、`core_constraints`、`objective`、`invariant`。抽取失败的维度会落成默认空结构，例如 `objective.type=null`、`core_constraints.constraints=[]`。
 
 ## 验证
 
@@ -83,7 +108,7 @@ python -m unittest test_normalize.py
   - `QWEN_MODEL`：通用对话模型默认值。抽取阶段默认读取它，归一化阶段也会把它作为后备值。
   - `QWEN_EXTRACT_MODEL`：只覆盖抽取阶段模型。
   - `QWEN_NORMALIZE_MODEL`：只覆盖归一化阶段模型。未设置时默认 `qwen-flash`。
-  - `QWEN_EMBEDDING_MODEL`：覆盖 embedding 模型，默认 `text-embedding-v3`。
+  - `QWEN_EMBEDDING_MODEL`：覆盖 embedding 模型，默认 `text-embedding-v4`。
 - 可直接执行 [scripts/set_qwen_env.ps1](/D:/AutoProblemGen/四元组抽取/scripts/set_qwen_env.ps1) 写入环境变量：
 
 ```powershell

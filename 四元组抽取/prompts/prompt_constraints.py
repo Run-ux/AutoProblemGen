@@ -7,14 +7,18 @@ from typing import TYPE_CHECKING
 try:
     from ..label_vocab import (
         CONSTRAINT_SOURCE_SECTIONS,
+        CORE_CONSTRAINT_SPECS,
         CORE_CONSTRAINT_LABELS,
+        build_label_reference,
     )
     from ..problem_schema import prepare_problem_record
     from .prompt_sections import build_problem_context
 except ImportError:
     from label_vocab import (
         CONSTRAINT_SOURCE_SECTIONS,
+        CORE_CONSTRAINT_SPECS,
         CORE_CONSTRAINT_LABELS,
+        build_label_reference,
     )
     from problem_schema import prepare_problem_record
     from prompts.prompt_sections import build_problem_context
@@ -28,6 +32,7 @@ CORE_CONSTRAINT_NAMES = [name for name, _ in CORE_CONSTRAINT_LABELS]
 
 def build_system_prompt() -> str:
     preferred_names = ", ".join(CORE_CONSTRAINT_NAMES)
+    constraint_reference = build_label_reference(CORE_CONSTRAINT_SPECS)
     return f"""你是编程竞赛题目约束条件分析专家。
 
 你的任务是从题目全文中抽取核心语义约束。
@@ -43,6 +48,9 @@ def build_system_prompt() -> str:
 3. 若现有词表无法准确覆盖当前题目的约束语义，允许创建新的抽象标签。
 4. 新标签必须使用小写英文加下划线格式，并保持算法术语风格。
 5. 不得把题目情境词直接写进 name 或 source_sections。
+
+规范标签说明：
+{constraint_reference}
 
 证据优先级：
 1. 题面全文中的任务描述

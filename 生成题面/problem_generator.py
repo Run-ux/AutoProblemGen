@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import re
 from typing import Any
@@ -261,8 +262,9 @@ class ProblemGenerator:
     def _validate_rule_commitments(self, problem: GeneratedProblem, plan: VariantPlan) -> list[str]:
         if not plan.applied_rule:
             return []
-        handler = get_rule_handler({"id": plan.applied_rule, "handler": plan.applied_rule})
-        outcome = handler.validate_problem(problem=problem, plan=plan)
+        rule = copy.deepcopy(plan.rule_snapshot) if plan.rule_snapshot else {"id": plan.applied_rule, "handler": plan.applied_rule}
+        handler = get_rule_handler(rule)
+        outcome = handler.validate_problem(client=self.client, problem=problem, plan=plan)
         if outcome.events:
             plan.validation_trace.extend(dataclass_to_dict(event) for event in outcome.events)
         return list(outcome.errors)

@@ -7,25 +7,29 @@
       "min": 1,
       "max": 200000
     },
-    "value_range": null,
+    "value_range": {
+      "min": null,
+      "max": null
+    },
     "properties": {
       "multiple_test_cases": true
-    }
+    },
+    "components": []
   },
   "core_constraints": {
     "constraints": [
       {
-        "name": "distance_bound",
-        "description": "A fixed positive integer d is chosen before movement begins, and every jump must cover a distance of at most d cells.",
-        "formal": "\\forall \\text{ jumps } (u \\to v), |u - v| \\le d",
+        "name": "state_transition",
+        "description": "青蛙在当前格子的跳跃方向受该位置字符严格限制:字符为 'L' 时只能向左跳至编号更小的格子,字符为 'R' 时只能向右跳至编号更大的格子；起点 0 仅允许向右跳跃。",
+        "formal": "若当前位置为 i (1≤i≤n),s_i='L' ⇒ 下一位置 j < i；s_i='R' ⇒ j > i。起点 0 ⇒ j > 0。",
         "source_sections": [
           "description"
         ]
       },
       {
-        "name": "state_transition",
-        "description": "The valid target range for a jump is strictly determined by the character at the current cell: 'L' permits jumps only to the left within distance d, 'R' permits jumps only to the right within distance d, and the starting cell 0 only permits right jumps.",
-        "formal": "s_i = \\text{'L'} \\implies v \\in [\\max(0, i-d), i-1]; \\quad s_i = \\text{'R'} \\implies v \\in [i+1, \\min(n+1, i+d)]; \\quad i=0 \\implies v \\in [1, \\min(n+1, d)]",
+        "name": "distance_bound",
+        "description": "青蛙在跳跃前选定固定步长上限 d,任意单次跳跃的起点与终点索引差的绝对值不得超过 d。",
+        "formal": "∀ 跳跃步骤 (u, v), |u - v| ≤ d",
         "source_sections": [
           "description"
         ]
@@ -34,18 +38,19 @@
   },
   "objective": {
     "type": "minimize_value",
-    "description": "最小化保证青蛙能够从起点到达终点所需的最大单次跳跃距离",
+    "description": "最小化保证青蛙能够从起点到达终点所需的最小最大单次跳跃距离",
     "target": "max_jump_distance",
     "requires_solution": false
   },
   "invariant": {
     "invariants": [
       {
-        "name": "monotonicity",
-        "description": "青蛙能否到达终点的可行性关于跳跃距离 d 具有单调非减性质,且最小可行 d 严格由字符串中连续 'L' 段的最大长度（即相邻 'R' 或边界间的最大间隔）决定。标准解法通过按 'R' 分割字符串并取最大片段长度加一,直接计算该单调下界,体现了答案由局部瓶颈单调约束的稳定性质。",
+        "name": "bottleneck_constraint",
+        "description": "最小可行跳跃距离由字符串中最长连续 'L' 段的长度唯一决定。由于 'L' 位置只能向左跳跃,无法作为向右推进的有效落脚点,青蛙必须从上一个 'R'（或起点）直接跨越到下一个 'R'（或终点）。因此,任意两个相邻有效落脚点之间的最大间隔构成了跳跃上限 d 的硬性下界。算法通过按 'R' 分割字符串并取最大片段长度加 1,直接计算该瓶颈值。",
         "properties": {
-          "monotonic_feasibility": true,
-          "threshold_equals_max_gap_plus_one": true
+          "gap_definition": "consecutive_L_segments_between_R_or_boundaries",
+          "feasibility_threshold": "d = max_gap_length + 1",
+          "computation_method": "split_on_R_and_max_length"
         },
         "evidence_source": "solution_code"
       }

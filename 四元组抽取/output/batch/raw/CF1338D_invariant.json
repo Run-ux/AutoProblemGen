@@ -6,12 +6,21 @@
     "invariants": [
       {
         "name": "state_transition",
-        "description": "The algorithm maintains two DP states per node representing the maximum nested sequence length for paths within its subtree, distinguished by whether the path endpoint at the node can be extended to its parent. Transitions combine optimal child paths with degree-based node weights, preserving optimal substructure and enabling correct bottom-up aggregation.",
+        "description": "The algorithm maintains two DP states per node representing the maximum chain length within its subtree under distinct extendability conditions. These states are updated via fixed recurrence relations that aggregate child results and apply local degree-based offsets, ensuring the semantic definition of each state remains invariant throughout the traversal.",
         "properties": {
-          "state_classification": "extendable_vs_non_extendable",
-          "weight_contribution": "internal_nodes_add_deg_minus_2_endpoints_add_1",
-          "transition_rule": "dp[u][0] = max(dp[v]) + max(deg(u)-2, 0); dp[u][1] = max(dp[v][0]) + 1",
-          "merge_logic": "global_maximum_updated_by_combining_two_downward_paths_at_node_with_degree_adjusted_weights"
+          "state_dimension": 2,
+          "transition_mechanism": "iterative_max_aggregation",
+          "local_adjustment": "degree_dependent_offset"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "dependency_order",
+        "description": "The computation strictly follows a post-order evaluation sequence, ensuring all child subtree states are fully resolved before any parent state is computed. This enforces a stable bottom-up data flow where state transitions rely exclusively on finalized subproblem results.",
+        "properties": {
+          "traversal_type": "post_order",
+          "evaluation_direction": "bottom_up",
+          "dependency_constraint": "child_resolution_precedes_parent_computation"
         },
         "evidence_source": "solution_code"
       }

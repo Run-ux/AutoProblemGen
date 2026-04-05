@@ -62,6 +62,7 @@ def _assert_prompt_sections(user_prompt: str, problem: Dict[str, Any], include_c
 def _assert_system_prompt_sections(system_prompt: str) -> None:
     assert "科研定义：" in system_prompt, "system_prompt 缺少科研定义"
     assert "判别边界：" in system_prompt, "system_prompt 缺少判别边界"
+    assert "规范标签说明：" in system_prompt, "system_prompt 缺少规范标签说明"
 
 
 def _assert_input_structure_schema(schema: Dict[str, Any]) -> None:
@@ -120,6 +121,7 @@ def verify_dimension(
 
     if dimension.startswith("I"):
         _assert_input_structure_schema(schema)
+        assert "性质键说明：" in system_prompt, "input_structure system_prompt 缺少性质键说明"
     elif dimension.startswith("C"):
         _assert_constraints_schema(schema)
     elif dimension.startswith("O"):

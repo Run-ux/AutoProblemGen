@@ -5,15 +5,13 @@
   "result": {
     "invariants": [
       {
-        "name": "exchange_argument",
-        "description": "由于各边除2操作的收益相互独立且单次收益随边权减小而单调递减,全局最优策略等价于每次选取当前收益最大的操作。通过交换论证可知,将任意非最大收益操作替换为当前最大收益操作,在相同步数下不会降低总权值削减量,从而保证达到目标阈值S的步数最少。",
-        "properties": {},
-        "evidence_source": "solution_code"
-      },
-      {
-        "name": "monotonicity",
-        "description": "任意边权连续执行向下取整除2操作时,其单次操作对根叶路径总权值的削减量呈单调不增趋势；算法维护的候选削减量集合始终按降序排列,确保循环推进方向与收益递减规律一致。",
-        "properties": {},
+        "name": "additivity",
+        "description": "根到所有叶子的路径权重总和可严格分解为每条边的权重与其子树叶子数量的乘积之和。每次除以2的操作对总和的削减量仅由该边当前权重和固定的叶子覆盖数决定,各边贡献相互独立且可线性累加,使得全局最优操作序列可通过持续选取当前最大边际削减量贪心累积得到。",
+        "properties": {
+          "objective_decomposition": "total_path_sum = Σ_{e∈E} (weight_e * leaf_count_e)",
+          "independent_marginal_gain": "reduction_e = (weight_e - floor(weight_e / 2)) * leaf_count_e",
+          "cumulative_update": "current_sum = initial_sum - Σ(selected_reductions)"
+        },
         "evidence_source": "solution_code"
       }
     ]

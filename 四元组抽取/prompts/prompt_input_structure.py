@@ -6,15 +6,21 @@ from typing import TYPE_CHECKING
 
 try:
     from ..label_vocab import (
+        INPUT_STRUCTURE_PROPERTY_SPECS,
         INPUT_STRUCTURE_PROPERTY_KEYS,
+        INPUT_STRUCTURE_TYPE_SPECS,
         INPUT_STRUCTURE_TYPE_LABELS,
+        build_label_reference,
     )
     from ..problem_schema import prepare_problem_record
     from .prompt_sections import build_problem_context
 except ImportError:
     from label_vocab import (
+        INPUT_STRUCTURE_PROPERTY_SPECS,
         INPUT_STRUCTURE_PROPERTY_KEYS,
+        INPUT_STRUCTURE_TYPE_SPECS,
         INPUT_STRUCTURE_TYPE_LABELS,
+        build_label_reference,
     )
     from problem_schema import prepare_problem_record
     from prompts.prompt_sections import build_problem_context
@@ -29,6 +35,8 @@ MAIN_TYPES = [name for name, _ in INPUT_STRUCTURE_TYPE_LABELS]
 def build_system_prompt() -> str:
     controlled_types = ", ".join(MAIN_TYPES)
     property_keys = ", ".join(INPUT_STRUCTURE_PROPERTY_KEYS)
+    type_reference = build_label_reference(INPUT_STRUCTURE_TYPE_SPECS)
+    property_reference = build_label_reference(INPUT_STRUCTURE_PROPERTY_SPECS)
     return f"""你是编程竞赛题目输入结构分析专家。
 
 你的任务是抽取题目的主输入结构、长度范围、值域范围和稳定性质，并在需要时补充 components。
@@ -43,6 +51,12 @@ def build_system_prompt() -> str:
 2. type 必须优先复用规范主类型词表：{controlled_types}。
 3. 不得把题目情境词直接写进 type、properties 的键名或 components 的 role 与 type。
 
+规范标签说明：
+{type_reference}
+
+性质键说明：
+{property_reference}
+
 证据优先级：
 1. Input 分节
 2. Constraints 分节
@@ -54,7 +68,7 @@ def build_system_prompt() -> str:
 - type 只写主结构类名，不承载 weighted_undirected_graph 这类复合标签。
 - 标量输入也是合法主结构。单个 int、long long 这类整数标量统一写 integer；单个 double、float 这类实数标量统一写 float；单个字符写 char；明确的布尔标记写 boolean。
 - 固定位置、固定 arity 的 pair 或 tuple 统一写 tuple。
-- directed、weighted、connected、rooted、ordered、sorted、distinct、permutation、cyclic、multiple_test_cases、online_queries 这类修饰信息写入 properties。
+- directed、weighted、connected、rooted、simple、acyclic、ordered、sorted、distinct、permutation、multiple_test_cases、online_queries 这类修饰信息写入 properties。
 - 推荐复用的 properties 键为：{property_keys}。
 - 题面没有明确证据时，length.min、length.max、value_range.min、value_range.max 写 null。
 - 未识别到的性质不要补写。
@@ -72,6 +86,8 @@ def build_system_prompt() -> str:
 - 普通序列、排列、集合元素列表、多重集合元素列表与查询列表，若都以线性条目形式给出，主类型统一写 array。
 - set 不单列为主类型。若输入本质上是按线性条目给出的集合或多重集合，仍写 array，再用 ordered=false 与 distinct=true 或 false 表达语义。
 - 题面明确要求输入是排列时，写 properties.permutation=true。
+- 题面明确说明无重边、无自环或 simple graph 时，写 properties.simple=true。
+- 题面明确说明不存在环时，写 properties.acyclic=true。
 - 题面明确强调无序成员关系时，写 ordered=false，并用 distinct=true 或 false 区分集合与多重集合语义。
 - 查询流若只是附属组件，放入 components；若题目依赖在线处理，补写 online_queries=true。
 """
@@ -152,7 +168,7 @@ INPUT_STRUCTURE_SCHEMA = {
         },
         "properties": {
             "type": "object",
-            "description": "稳定性质，推荐复用 directed、weighted、connected、rooted、ordered、sorted、distinct、permutation、cyclic、multiple_test_cases、online_queries",
+            "description": "稳定性质，推荐复用 directed、weighted、connected、rooted、simple、acyclic、ordered、sorted、distinct、permutation、multiple_test_cases、online_queries",
             "properties": {
                 key: {"type": "boolean"}
                 for key in INPUT_STRUCTURE_PROPERTY_KEYS

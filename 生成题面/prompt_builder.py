@@ -68,6 +68,118 @@ def build_eligibility_user_prompt(
     )
 
 
+def build_rule_plan_validation_system_prompt() -> str:
+    return """你是一名算法竞赛规则规划审查官。
+
+你的任务是只针对单条规则，审查一个规划结果是否兑现了该规则的专属语义合同。
+
+硬性要求：
+1. 你一次只审查一条规则，不要比较其它规则。
+2. 通用代码级硬门槛已经由系统处理，你只负责规则专属语义合同。
+3. 如果证据不足，默认返回 `fail`。
+4. 不要替规划结果补设定，也不要发明新四元组。
+5. 判断必须基于给定 `review_role`、`review_brief`、规则声明、source schema、candidate schema 与规划 payload。
+6. 输出必须是严格 JSON，不要输出 Markdown。
+7. JSON 只能包含规定字段，不能添加额外键。
+
+返回格式：
+{
+  "status": "pass|fail",
+  "reason_code": string,
+  "message": string,
+  "errors": string[],
+  "evidence": string
+}
+"""
+
+
+def build_rule_plan_validation_user_prompt(
+    *,
+    mode: str,
+    review_role: str,
+    review_brief: str,
+    rule: dict[str, Any],
+    source_schema: dict[str, Any],
+    candidate_schema: dict[str, Any],
+    changed_axes: list[str],
+    planner_payload: dict[str, Any],
+) -> str:
+    payload = {
+        "review_type": "rule_plan_validation",
+        "mode": mode,
+        "review_role": review_role,
+        "review_brief": review_brief,
+        "rule_under_review": _rule_review_excerpt(rule),
+        "source_schema": source_schema,
+        "candidate_schema": candidate_schema,
+        "changed_axes": changed_axes,
+        "planner_payload": planner_payload,
+    }
+    return (
+        "请审查该规划是否兑现规则专属合同。"
+        "\n要求：\n"
+        "- `message` 直接概括结论，不要泛泛而谈。\n"
+        "- `errors` 只写真正构成拒绝的规则专属问题；通过时返回空数组。\n"
+        "- `evidence` 必须引用给定 payload、schema 或规则声明中的具体内容。\n"
+        "- 如果不能确认已经兑现规则专属合同，返回 `fail`。\n\n"
+        f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
+    )
+
+
+def build_rule_problem_validation_system_prompt() -> str:
+    return """你是一名算法竞赛题面规则审查官。
+
+你的任务是只针对单条规则，审查一份生成后的题面是否兑现了该规则的专属输出责任、失败语义与核心承诺。
+
+硬性要求：
+1. 你一次只审查一条规则，不要比较其它规则。
+2. 通用结构校验已经由系统处理，你只负责规则专属语义合同。
+3. 如果证据不足，默认返回 `fail`。
+4. 不要替题面补设定，也不要假定未写出的语义已经成立。
+5. 判断必须基于给定 `review_role`、`review_brief`、规则声明、计划摘要、实例化 schema 和题面内容。
+6. 输出必须是严格 JSON，不要输出 Markdown。
+7. JSON 只能包含规定字段，不能添加额外键。
+
+返回格式：
+{
+  "status": "pass|fail",
+  "reason_code": string,
+  "message": string,
+  "errors": string[],
+  "evidence": string
+}
+"""
+
+
+def build_rule_problem_validation_user_prompt(
+    *,
+    mode: str,
+    review_role: str,
+    review_brief: str,
+    rule: dict[str, Any],
+    plan_context: dict[str, Any],
+    generated_problem: dict[str, Any],
+) -> str:
+    payload = {
+        "review_type": "rule_problem_validation",
+        "mode": mode,
+        "review_role": review_role,
+        "review_brief": review_brief,
+        "rule_under_review": _rule_review_excerpt(rule),
+        "plan_context": plan_context,
+        "generated_problem": generated_problem,
+    }
+    return (
+        "请审查该题面是否兑现规则专属合同。"
+        "\n要求：\n"
+        "- `message` 直接概括结论，不要泛泛而谈。\n"
+        "- `errors` 只写真正构成拒绝的规则专属问题；通过时返回空数组。\n"
+        "- `evidence` 必须引用题面、实例化 schema、规划摘要或规则声明中的具体内容。\n"
+        "- 如果题面没有把关键语义写清楚，返回 `fail`。\n\n"
+        f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
+    )
+
+
 def build_rule_selection_system_prompt() -> str:
     return """你是一名算法竞赛出题规则选择器。你的任务不是直接规划新题，而是先阅读 schema、原题参考和候选规则，从中选出最适合当前种子题的那一条规则。
 
@@ -329,3 +441,25 @@ def _build_sample_shape_hint(schema: dict[str, Any]) -> str:
             "不要把多行输入压成一行，不要包含 Markdown 标记、HTML 片段或异常引号。"
         )
     return "样例输入必须严格匹配题目定义，使用纯文本，不要输出 Markdown 标记或 HTML 片段。"
+
+
+def _rule_review_excerpt(rule: dict[str, Any]) -> dict[str, Any]:
+    keys = (
+        "id",
+        "family",
+        "summary",
+        "audit_tags",
+        "required_axis_changes",
+        "core_transformation",
+        "validation_contract",
+        "planner_output_contract",
+        "allowed_helpers",
+        "forbidden_helpers",
+        "examples",
+        "failure_templates",
+    )
+    return {
+        key: value
+        for key, value in ((key, rule.get(key)) for key in keys)
+        if value not in (None, "", [], {})
+    }

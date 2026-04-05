@@ -14,30 +14,36 @@
     "properties": {
       "online_queries": true
     },
-    "components": []
+    "components": [
+      {
+        "role": "parameters",
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": 1,
+          "max": 400000
+        },
+        "properties": {}
+      }
+    ]
   },
   "core_constraints": {
     "constraints": [
       {
-        "name": "operation_type",
-        "description": "Each operation allows increasing or decreasing any array element by exactly a fixed positive integer x. Any number of operations can be performed on any element.",
-        "formal": "a_i := a_i + x or a_i := a_i - x",
+        "name": "divisibility",
+        "description": "每个数组元素只能通过增加或减少固定整数 x 进行变换,因此元素在变换过程中模 x 的余数保持不变,只能被重映射到与其初始值同余的非负整数集合中。",
+        "formal": "a_i' ≡ y_j (mod x)",
         "source_sections": [
           "description"
         ]
       },
       {
         "name": "range_bound",
-        "description": "Array elements are strictly prohibited from becoming negative during or after any sequence of operations.",
-        "formal": "a_i >= 0",
-        "source_sections": [
-          "description"
-        ]
-      },
-      {
-        "name": "modular_arithmetic",
-        "description": "Since elements can only be modified by multiples of x, the residue of each element modulo x is invariant. An initial value y can only be transformed into a target value v if v ≡ y (mod x) and v ≥ 0.",
-        "formal": "v ≡ y (mod x) ∧ v ≥ 0",
+        "description": "经过任意次合法操作后,数组中的所有元素值必须保持为非负整数。",
+        "formal": "a_i' ≥ 0",
         "source_sections": [
           "description"
         ]
@@ -46,7 +52,7 @@
   },
   "objective": {
     "type": "maximize_value",
-    "description": "最大化数组的最小缺失非负整数",
+    "description": "Maximize the minimum excluded non-negative integer of an array after each incremental update, where elements can be adjusted by integer multiples of a fixed value.",
     "target": "mex",
     "requires_solution": false
   },
@@ -54,19 +60,19 @@
     "invariants": [
       {
         "name": "monotonicity",
-        "description": "The maximum achievable MEX is monotonically non-decreasing across queries. Since each query only adds a new element and existing elements can be shifted by multiples of x without changing their residue class, the set of formable integers only expands, ensuring the smallest unformable integer never decreases.",
+        "description": "The constructible prefix length is non-decreasing across updates. The algorithm maintains a forward-only pointer that advances sequentially as long as the required resource count for the current position is available, never retreating.",
         "properties": {
-          "advancement_direction": "non_decreasing",
-          "target_entity": "answer_boundary"
+          "pointer_behavior": "strictly_non_decreasing",
+          "advancement_trigger": "positive_count_in_target_slot"
         },
         "evidence_source": "solution_code"
       },
       {
-        "name": "state_transition",
-        "description": "The algorithm maintains a frequency counter for each residue class modulo x. The state transitions deterministically by incrementing the counter corresponding to the new element's residue, then repeatedly consuming counts in cyclic order to advance the answer boundary until a required residue is unavailable.",
+        "name": "equivalence_class",
+        "description": "The permitted arithmetic operations preserve values modulo a fixed integer. The algorithm partitions elements into disjoint classes based on this modulus and maintains a frequency count per class, enabling deterministic greedy allocation to sequential positions.",
         "properties": {
-          "state_structure": "cyclic_residue_frequency_array",
-          "transition_pattern": "increment_then_consume_while_available"
+          "partition_key": "remainder_modulo_fixed_base",
+          "state_structure": "frequency_vector_per_class"
         },
         "evidence_source": "solution_code"
       }

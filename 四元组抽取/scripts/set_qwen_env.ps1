@@ -5,7 +5,7 @@ param(
     [string]$ApiKeyName = "DASHSCOPE_API_KEY",
     [string]$ExtractModel = "qwen3.6-plus",
     [string]$NormalizeModel = "qwen3.6-plus",
-    [string]$EmbeddingModel = "text-embedding-v3",
+    [string]$EmbeddingModel = "text-embedding-v4",
     [switch]$PersistUser
 )
 

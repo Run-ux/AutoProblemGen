@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from normalize import (
+    LabelRegistry,
     apply_mapping_to_result,
     build_final_problem_output,
     extract_raw_entries_for_dimension,
@@ -26,6 +27,13 @@ def write_json(path: Path, data: dict) -> None:
 
 
 class NormalizeHelpersTests(unittest.TestCase):
+    def test_register_can_refresh_predefined_description(self) -> None:
+        registry = LabelRegistry("objective")
+        registry.register("decision", "旧描述")
+        registry.register("decision", "新描述", overwrite_description=True)
+
+        self.assertEqual(registry.labels["decision"].description, "新描述")
+
     def test_extract_raw_entries_use_stable_entry_ids(self) -> None:
         problem_dimension = {
             "status": "success",

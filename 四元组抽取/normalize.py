@@ -107,8 +107,15 @@ class LabelRegistry:
     def get_canonical_names(self) -> List[str]:
         return sorted(self.labels.keys())
 
-    def register(self, name: str, description: str) -> None:
+    def register(
+        self,
+        name: str,
+        description: str,
+        overwrite_description: bool = False,
+    ) -> None:
         if name in self.labels:
+            if overwrite_description:
+                self.labels[name].description = description
             return
         self.labels[name] = LabelEntry(name=name, description=description)
 
@@ -588,7 +595,7 @@ def normalize_all_problems(
         reg = LabelRegistry(dim)
         reg.load(registry_path)
         for name, description in PREDEFINED_LABELS.get(dim, []):
-            reg.register(name, description)
+            reg.register(name, description, overwrite_description=True)
         registries[dim] = reg
 
     try:

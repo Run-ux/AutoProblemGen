@@ -43,6 +43,7 @@ OBJECTIVE_TYPES = {name for name, _ in OBJECTIVE_LABELS}
 def _assert_system_prompt_sections(system_prompt: str) -> None:
     assert "科研定义：" in system_prompt, "system_prompt 缺少科研定义"
     assert "判别边界：" in system_prompt, "system_prompt 缺少判别边界"
+    assert "规范标签说明：" in system_prompt, "system_prompt 缺少规范标签说明"
 
 
 def _assert_prompt_sections(user_prompt: str, problem: Dict[str, Any], include_code: bool) -> None:
@@ -116,6 +117,8 @@ def test_dimension(
     system_prompt = build_sys()
     user_prompt = build_usr(problem)
     _assert_system_prompt_sections(system_prompt)
+    if dimension.startswith("I"):
+        assert "性质键说明：" in system_prompt, "input_structure system_prompt 缺少性质键说明"
     _assert_prompt_sections(user_prompt, problem, include_code=dimension.startswith("V"))
 
     result = client.chat_json(system_prompt, user_prompt)

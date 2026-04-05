@@ -179,7 +179,10 @@ class SingleSeedExtensionTests(unittest.TestCase):
         self.assertEqual(plan.planning_status, "ok")
         self.assertEqual(plan.applied_rule, "construct_or_obstruction")
         self.assertIn("construct_or_obstruction", plan.rule_selection_reason)
-        self.assertEqual(client.calls, ["select", "plan:construct_or_obstruction"])
+        self.assertEqual(
+            client.calls,
+            ["select", "plan:construct_or_obstruction", "plan_review:construct_or_obstruction"],
+        )
 
     def test_rule_selection_falls_back_to_next_ranked_rule(self) -> None:
         client = FakePlannerClient(
@@ -214,7 +217,15 @@ class SingleSeedExtensionTests(unittest.TestCase):
         self.assertEqual(plan.planning_status, "ok")
         self.assertEqual(plan.applied_rule, "existence_to_counting")
         self.assertEqual(plan.rejected_candidates[0]["rule_id"], "construct_or_obstruction")
-        self.assertEqual(client.calls, ["select", "plan:construct_or_obstruction", "plan:existence_to_counting"])
+        self.assertEqual(
+            client.calls,
+            [
+                "select",
+                "plan:construct_or_obstruction",
+                "plan:existence_to_counting",
+                "plan_review:existence_to_counting",
+            ],
+        )
 
     def test_rule_selection_can_fail_before_planning(self) -> None:
         client = FakePlannerClient(
@@ -344,7 +355,18 @@ class SameFamilyFusionTests(unittest.TestCase):
             )
         }
         planner = VariantPlanner(
-            client=FakePlannerClient(responses),
+            client=FakePlannerClient(
+                responses,
+                plan_review_responses={
+                    "interlocked_constraints": make_rule_review_payload(
+                        status="fail",
+                        reason_code="interlocked_constraints_missing",
+                        message="共享主核论证不完整。",
+                        errors=["缺少反串联论证或消融论证。"],
+                        evidence="payload 中 why_not_sequential_composition 为空，fusion_ablation.without_seed_b 为空。",
+                    )
+                },
+            ),
             rulebook=self.rulebook,
             seed=17,
         )
@@ -366,6 +388,9 @@ class SameFamilyFusionTests(unittest.TestCase):
 
 
 class RuleHandlerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.rulebook = RuleBook.load(GEN_DIR / "planning_rules.json")
+
     def test_rule_handlers_can_reject_ineligible_inputs(self) -> None:
         canonical_handler = get_rule_handler({"id": "canonical_witness", "handler": "canonical_witness"})
         canonical_client = FakePlannerClient(
@@ -432,6 +457,97 @@ class RuleHandlerTests(unittest.TestCase):
         )
         self.assertFalse(fusion_result.accepted)
 
+    def test_rule_specific_plan_validation_uses_llm_reviews(self) -> None:
+        for rule_id in (
+            "canonical_witness",
+            "construct_or_obstruction",
+            "existence_to_counting",
+            "minimum_guarantee_under_perturbation",
+            "interlocked_constraints",
+            "shared_core_objective_upgrade",
+        ):
+            with self.subTest(rule_id=rule_id):
+                mode = "same_family_fusion" if rule_id in {"interlocked_constraints", "shared_core_objective_upgrade"} else "single_seed_extension"
+                rule = self.rulebook.rule(mode, rule_id)
+                payload = make_same_family_payload(rule_id) if mode == "same_family_fusion" else make_single_payload(rule_id)
+                handler = get_rule_handler(rule)
+                pass_client = FakePlannerClient(
+                    responses={},
+                    plan_review_responses={
+                        rule_id: make_rule_review_payload(
+                            status="pass",
+                            reason_code="ok",
+                            message=f"{rule_id} 规划专属审查通过。",
+                            evidence="规划 payload 已兑现规则专属合同。",
+                        )
+                    },
+                )
+                outcome = handler.validate_plan(
+                    client=pass_client,
+                    mode=mode,
+                    rule=rule,
+                    payload=payload,
+                    source_schema=make_schema(problem_id="SRC"),
+                    candidate_schema=payload["instantiated_schema"],
+                    changed_axes=payload["difference_plan"]["changed_axes"],
+                    global_constraints={"allow_helper_moves": True},
+                )
+                self.assertTrue(outcome.accepted)
+                self.assertIn(f"plan_review:{rule_id}", pass_client.calls)
+
+                fail_client = FakePlannerClient(
+                    responses={},
+                    plan_review_responses={
+                        rule_id: make_rule_review_payload(
+                            status="fail",
+                            reason_code=f"{rule_id}_contract_missing",
+                            message=f"{rule_id} 规划没有兑现专属合同。",
+                            errors=[f"{rule_id} 缺少关键规则承诺。"],
+                            evidence="规则专属审查发现规划承诺不足。",
+                        )
+                    },
+                )
+                failed = handler.validate_plan(
+                    client=fail_client,
+                    mode=mode,
+                    rule=rule,
+                    payload=payload,
+                    source_schema=make_schema(problem_id="SRC"),
+                    candidate_schema=payload["instantiated_schema"],
+                    changed_axes=payload["difference_plan"]["changed_axes"],
+                    global_constraints={"allow_helper_moves": True},
+                )
+                self.assertFalse(failed.accepted)
+                self.assertEqual(failed.reason_code, f"{rule_id}_contract_missing")
+                self.assertIn(f"plan_review:{rule_id}", fail_client.calls)
+
+    def test_rule_specific_plan_validation_short_circuits_before_llm_review(self) -> None:
+        rule = self.rulebook.rule("single_seed_extension", "canonical_witness")
+        payload = make_single_payload("canonical_witness")
+        payload.pop("algorithmic_delta_claim")
+        handler = get_rule_handler(rule)
+        client = FakePlannerClient(
+            responses={},
+            plan_review_responses={
+                "canonical_witness": make_rule_review_payload(
+                    status="pass",
+                    evidence="不会被调用。",
+                )
+            },
+        )
+        outcome = handler.validate_plan(
+            client=client,
+            mode="single_seed_extension",
+            rule=rule,
+            payload=payload,
+            source_schema=make_schema(problem_id="SRC"),
+            candidate_schema=payload["instantiated_schema"],
+            changed_axes=payload["difference_plan"]["changed_axes"],
+            global_constraints={"allow_helper_moves": True},
+        )
+        self.assertFalse(outcome.accepted)
+        self.assertNotIn("plan_review:canonical_witness", client.calls)
+
     def test_rule_specific_problem_validation_rejects_missing_commitments(self) -> None:
         base_problem = GeneratedProblem(
             title="题目",
@@ -451,16 +567,41 @@ class RuleHandlerTests(unittest.TestCase):
             "shared_core_objective_upgrade",
         ):
             with self.subTest(rule_id=rule_id):
+                client = FakePlannerClient(
+                    responses={},
+                    problem_review_responses={
+                        rule_id: make_rule_review_payload(
+                            status="fail",
+                            reason_code=f"{rule_id}_not_materialized",
+                            message=f"{rule_id} 题面没有兑现专属承诺。",
+                            errors=[f"{rule_id} 题面缺少关键规则语义。"],
+                            evidence="题面文本没有兑现规划中的规则承诺。",
+                        )
+                    },
+                )
                 handler = get_rule_handler({"id": rule_id, "handler": rule_id})
-                outcome = handler.validate_problem(problem=base_problem, plan=make_validation_plan(rule_id))
+                outcome = handler.validate_problem(client=client, problem=base_problem, plan=make_validation_plan(rule_id))
                 self.assertFalse(outcome.accepted)
+                self.assertIn(f"problem_review:{rule_id}", client.calls)
 
     def test_rule_specific_problem_validation_accepts_matching_commitments(self) -> None:
         for rule_id, problem in make_valid_problem_cases().items():
             with self.subTest(rule_id=rule_id):
+                client = FakePlannerClient(
+                    responses={},
+                    problem_review_responses={
+                        rule_id: make_rule_review_payload(
+                            status="pass",
+                            reason_code="ok",
+                            message=f"{rule_id} 题面专属审查通过。",
+                            evidence="题面文本已经兑现规划中的规则承诺。",
+                        )
+                    },
+                )
                 handler = get_rule_handler({"id": rule_id, "handler": rule_id})
-                outcome = handler.validate_problem(problem=problem, plan=make_validation_plan(rule_id))
+                outcome = handler.validate_problem(client=client, problem=problem, plan=make_validation_plan(rule_id))
                 self.assertTrue(outcome.accepted)
+                self.assertIn(f"problem_review:{rule_id}", client.calls)
 
 
 class PipelineArtifactTests(unittest.TestCase):
@@ -680,10 +821,14 @@ class FakePlannerClient:
         responses: dict[str, dict],
         selection_response: dict | None = None,
         eligibility_responses: dict[str, dict] | None = None,
+        plan_review_responses: dict[str, dict] | None = None,
+        problem_review_responses: dict[str, dict] | None = None,
     ) -> None:
         self.responses = copy.deepcopy(responses)
         self.selection_response = copy.deepcopy(selection_response)
         self.eligibility_responses = copy.deepcopy(eligibility_responses or {})
+        self.plan_review_responses = copy.deepcopy(plan_review_responses or {})
+        self.problem_review_responses = copy.deepcopy(problem_review_responses or {})
         self.calls: list[str] = []
 
     def chat_json(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> dict:
@@ -694,6 +839,24 @@ class FakePlannerClient:
             if rule_id:
                 return make_eligibility_payload(rule_id)
             raise AssertionError(f"无法从资格审查 prompt 中匹配规则。prompt={user_prompt}")
+
+        if '"review_type": "rule_plan_validation"' in user_prompt:
+            rule_id = _extract_rule_under_review_id(user_prompt)
+            if not rule_id:
+                raise AssertionError(f"无法从规划审查 prompt 中匹配规则。prompt={user_prompt}")
+            self.calls.append(f"plan_review:{rule_id}")
+            if rule_id in self.plan_review_responses:
+                return copy.deepcopy(self.plan_review_responses[rule_id])
+            return make_rule_review_payload(status="pass", evidence=f"{rule_id} 规划默认通过规则专属审查。")
+
+        if '"review_type": "rule_problem_validation"' in user_prompt:
+            rule_id = _extract_rule_under_review_id(user_prompt)
+            if not rule_id:
+                raise AssertionError(f"无法从题面审查 prompt 中匹配规则。prompt={user_prompt}")
+            self.calls.append(f"problem_review:{rule_id}")
+            if rule_id in self.problem_review_responses:
+                return copy.deepcopy(self.problem_review_responses[rule_id])
+            return make_rule_review_payload(status="pass", evidence=f"{rule_id} 题面默认通过规则专属审查。")
 
         if '"available_rules"' in user_prompt:
             self.calls.append("select")
@@ -819,6 +982,23 @@ def make_eligibility_payload(
         "risk_tags": list(risk_tags or []),
         "evidence": evidence,
         "feedback": feedback,
+    }
+
+
+def make_rule_review_payload(
+    *,
+    status: str = "pass",
+    reason_code: str = "ok",
+    message: str = "规则专属审查通过。",
+    errors: list[str] | None = None,
+    evidence: str = "规则专属审查已引用具体证据。",
+) -> dict:
+    return {
+        "status": status,
+        "reason_code": reason_code,
+        "message": message,
+        "errors": list(errors or []),
+        "evidence": evidence,
     }
 
 

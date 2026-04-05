@@ -5,21 +5,22 @@
   "result": {
     "invariants": [
       {
-        "name": "path_xor_invariance",
-        "description": "The pairwise zero-XOR condition implies that the XOR sum from a fixed root to every terminal node must be identical. This reduces the global constraint to a uniform path property, enabling depth-based analysis.",
-        "properties": {},
-        "evidence_source": "both"
-      },
-      {
-        "name": "parity_based_minimization",
-        "description": "The minimum number of distinct values is strictly determined by the parity distribution of terminal node depths. Uniform parity allows a single value; mixed parity requires at least three due to alternating cancellation properties along paths.",
-        "properties": {},
+        "name": "equivalence_class",
+        "description": "算法以任意非叶节点为根,将所有叶子节点按到根的路径长度奇偶性划分为两个等价类。最小不同权值数仅由这两个等价类是否同时非空决定,若同时存在则最小值为3,否则为1。",
+        "properties": {
+          "partition_basis": "depth_mod_2",
+          "min_f_condition": "both_parity_classes_non_empty"
+        },
         "evidence_source": "solution_code"
       },
       {
-        "name": "sibling_edge_equality",
-        "description": "Edges from a common parent to multiple terminal children must share identical values to preserve the root-to-terminal XOR invariant. Each additional terminal sibling linearly reduces the maximum possible distinct value count.",
-        "properties": {},
+        "name": "conservation",
+        "description": "任意两叶子间路径异或和恒为零的守恒条件,强制共享同一父节点的多个叶子边权必须相等。算法通过统计此类父节点产生的冗余约束数量,从总边数中线性扣减得到最大不同权值数。",
+        "properties": {
+          "invariant_relation": "xor_path_sum_zero",
+          "constraint_implication": "sibling_leaf_edges_equal",
+          "max_f_calculation": "total_edges_minus_sibling_leaf_constraints"
+        },
         "evidence_source": "solution_code"
       }
     ]

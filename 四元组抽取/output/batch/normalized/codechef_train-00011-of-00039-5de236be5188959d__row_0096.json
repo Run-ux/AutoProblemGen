@@ -20,17 +20,26 @@
     "constraints": [
       {
         "name": "state_transition",
-        "description": "每次操作必须严格选取当前 idlis 数量的最大值 P 与最小值 Q 对应的两人,计算转移量 R = ceil((P - Q) / 2) 并将 R 个 idlis 从最大值持有者转移至最小值持有者。该状态转移过程持续执行,直至所有学生 idlis 数量相等；若过程无法收敛至均分状态（如陷入循环）则判定为不可行。",
-        "formal": "A[i] = max(A), A[j] = min(A), R = \\lceil (A[i] - A[j]) / 2 \\rceil, A[i] \\leftarrow A[i] - R, A[j] \\leftarrow A[j] + R",
+        "description": "定义了资源重分配的状态转移规则:每次迭代必须严格选取当前最大值与最小值持有者,并按 R = ceil((max_val - min_val) / 2) 的数量从最大值者向最小值者转移。",
+        "formal": "P = max(A), Q = min(A), R = ceil((P - Q) / 2); A[i_max] -= R, A[i_min] += R",
         "source_sections": [
           "description"
+        ]
+      },
+      {
+        "name": "divisibility",
+        "description": "初始资源总和必须能被学生人数 N 整除,否则无法通过给定操作达成均分状态,判定为不可行并输出 -1。",
+        "formal": "sum(A) % N == 0",
+        "source_sections": [
+          "description",
+          "output"
         ]
       }
     ]
   },
   "objective": {
-    "type": "minimize_value",
-    "description": "计算通过指定 redistribution 规则使所有元素相等所需的操作步数,若无法达成则判定为不可行",
+    "type": "value_computation",
+    "description": "计算按照固定规则进行数值转移直至所有元素相等所需的操作步数,若无法达成则返回-1",
     "target": "steps",
     "requires_solution": false
   },
@@ -38,29 +47,21 @@
     "invariants": [
       {
         "name": "monotonicity",
-        "description": "双指针分别维护当前值域中的最小值和最大值索引。在循环推进过程中,最小值指针单调不减,最大值指针单调不增,二者严格向目标均值收敛,从而保证算法在有限步内终止并避免全量数组模拟。",
+        "description": "算法使用双指针分别维护当前值域中的最小值与最大值位置。模拟过程中左指针单调递增、右指针单调递减,两者单向收敛至目标均值,确保值域扫描无回溯且过程必然终止。",
         "properties": {
-          "min_pointer_direction": "non_decreasing",
-          "max_pointer_direction": "non_increasing",
-          "convergence_condition": "pointers meet at target average"
+          "left_ptr_non_decreasing": true,
+          "right_ptr_non_increasing": true,
+          "convergence_to_mean": true
         },
         "evidence_source": "solution_code"
       },
       {
-        "name": "flow_conservation",
-        "description": "每次转移操作仅重新分配现有资源,不改变全局总量。该守恒性质是判断能否均分的充要条件,也是频率数组在状态更新时保持加权和不变的数学基础。",
+        "name": "conservation",
+        "description": "整个变换过程严格保持元素总和守恒。算法通过初始整除性检查判定可行性,并在每次状态转移中维持移出与移入数量相等,使得全局总量不变,最终所有元素必然汇聚于算术平均值。",
         "properties": {
-          "conserved_metric": "weighted sum of value frequencies",
-          "feasibility_check": "total sum divisible by N"
-        },
-        "evidence_source": "both"
-      },
-      {
-        "name": "state_transition",
-        "description": "频率数组的状态转移严格遵循极值平均化规则。每次操作将最小值和最大值各消耗一个计数,并在其算术平均位置增加对应计数,确保频率结构始终精确刻画当前多集合的分布状态。",
-        "properties": {
-          "update_rule": "decrement counts at extremes, increment counts at averaged positions",
-          "state_representation": "frequency array of current values"
+          "global_sum_invariant": true,
+          "step_net_change_zero": true,
+          "feasibility_check": "sum_mod_n_equals_zero"
         },
         "evidence_source": "solution_code"
       }

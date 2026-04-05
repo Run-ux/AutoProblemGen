@@ -6,29 +6,21 @@
     "invariants": [
       {
         "name": "monotonicity",
-        "description": "双指针分别维护当前值域中的最小值和最大值索引。在循环推进过程中,最小值指针单调不减,最大值指针单调不增,二者严格向目标均值收敛,从而保证算法在有限步内终止并避免全量数组模拟。",
+        "description": "算法使用双指针分别维护当前值域中的最小值与最大值位置。模拟过程中左指针单调递增、右指针单调递减,两者单向收敛至目标均值,确保值域扫描无回溯且过程必然终止。",
         "properties": {
-          "min_pointer_direction": "non_decreasing",
-          "max_pointer_direction": "non_increasing",
-          "convergence_condition": "pointers meet at target average"
+          "left_ptr_non_decreasing": true,
+          "right_ptr_non_increasing": true,
+          "convergence_to_mean": true
         },
         "evidence_source": "solution_code"
       },
       {
-        "name": "flow_conservation",
-        "description": "每次转移操作仅重新分配现有资源,不改变全局总量。该守恒性质是判断能否均分的充要条件,也是频率数组在状态更新时保持加权和不变的数学基础。",
+        "name": "conservation",
+        "description": "整个变换过程严格保持元素总和守恒。算法通过初始整除性检查判定可行性,并在每次状态转移中维持移出与移入数量相等,使得全局总量不变,最终所有元素必然汇聚于算术平均值。",
         "properties": {
-          "conserved_metric": "weighted sum of value frequencies",
-          "feasibility_check": "total sum divisible by N"
-        },
-        "evidence_source": "both"
-      },
-      {
-        "name": "state_transition",
-        "description": "频率数组的状态转移严格遵循极值平均化规则。每次操作将最小值和最大值各消耗一个计数,并在其算术平均位置增加对应计数,确保频率结构始终精确刻画当前多集合的分布状态。",
-        "properties": {
-          "update_rule": "decrement counts at extremes, increment counts at averaged positions",
-          "state_representation": "frequency array of current values"
+          "global_sum_invariant": true,
+          "step_net_change_zero": true,
+          "feasibility_check": "sum_mod_n_equals_zero"
         },
         "evidence_source": "solution_code"
       }

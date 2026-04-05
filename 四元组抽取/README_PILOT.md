@@ -6,7 +6,7 @@
 $env:DASHSCOPE_API_KEY = "your-api-key-here"
 $env:QWEN_EXTRACT_MODEL = "qwen-max"
 $env:QWEN_NORMALIZE_MODEL = "qwen-flash"
-$env:QWEN_EMBEDDING_MODEL = "text-embedding-v3"
+$env:QWEN_EMBEDDING_MODEL = "text-embedding-v4"
 ```
 
 也可以直接执行 [scripts/set_qwen_env.ps1](/D:/AutoProblemGen/四元组抽取/scripts/set_qwen_env.ps1)：

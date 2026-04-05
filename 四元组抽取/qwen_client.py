@@ -28,8 +28,8 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CHAT_MODEL = "qwen-max"
-DEFAULT_EMBEDDING_MODEL = "text-embedding-v3"
+DEFAULT_CHAT_MODEL = "qwen3.6-plus"
+DEFAULT_EMBEDDING_MODEL = "text-embedding-v4"
 
 
 @dataclass

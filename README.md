@@ -203,8 +203,8 @@ phase1 的标签集合
   -> schema_preparer 归一化为四元组
   -> rule_handlers 发起单规则资格审查
   -> variant_planner 排序并依次尝试前几条候选规则
-  -> 通过代码级规则校验后实例化新四元组
-  -> problem_generator 让模型输出严格 JSON，并继续执行规则专属题面校验
+  -> 通过代码级通用硬门槛和规则专属 LLM 规划审查后实例化新四元组
+  -> problem_generator 让模型输出严格 JSON，并继续执行规则专属 LLM 题面审查
   -> markdown_renderer 渲染为题面 Markdown
   -> pipeline 保存 markdown、artifact、过程报告
 ```

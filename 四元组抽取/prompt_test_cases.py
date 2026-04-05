@@ -12,8 +12,8 @@ CATEGORY_ORDER = [
     "single_array",
     "graph",
     "tree_queries",
-    "feasibility",
-    "enumeration",
+    "decision",
+    "counting",
     "no_solution_code",
 ]
 
@@ -22,8 +22,8 @@ CATEGORY_LABELS = {
     "single_array": "单数组题",
     "graph": "图题",
     "tree_queries": "树加查询题",
-    "feasibility": "判定题",
-    "enumeration": "计数题",
+    "decision": "判定题",
+    "counting": "计数题",
     "no_solution_code": "无标准解法代码题",
 }
 
@@ -90,13 +90,13 @@ def _is_tree_queries(problem: dict) -> bool:
     return "tree" in candidates and ("query" in text or "queries" in text)
 
 
-def _is_feasibility(problem: dict) -> bool:
+def _is_decision(problem: dict) -> bool:
     heuristic_profile = problem.get("heuristic_profile")
     text = _full_text(problem)
     objective_type = ""
     if isinstance(heuristic_profile, dict):
         objective_type = str(heuristic_profile.get("objective_type", "")).lower()
-    feasibility_markers = [
+    decision_markers = [
         "whether",
         "is it possible",
         "possible",
@@ -104,10 +104,12 @@ def _is_feasibility(problem: dict) -> bool:
         "exists",
         "exist",
     ]
-    return objective_type == "decision" or any(marker in text for marker in feasibility_markers)
+    return objective_type in {"decision", "feasibility"} or any(
+        marker in text for marker in decision_markers
+    )
 
 
-def _is_enumeration(problem: dict) -> bool:
+def _is_counting(problem: dict) -> bool:
     heuristic_profile = problem.get("heuristic_profile")
     text = _full_text(problem)
     objective_type = ""
@@ -119,7 +121,9 @@ def _is_enumeration(problem: dict) -> bool:
         "count",
         "ways",
     ]
-    return objective_type == "count" or any(marker in text for marker in count_markers)
+    return objective_type in {"count", "counting", "enumeration"} or any(
+        marker in text for marker in count_markers
+    )
 
 
 def _is_no_solution_code(problem: dict) -> bool:
@@ -130,8 +134,8 @@ MATCHERS: Dict[str, Callable[[dict], bool]] = {
     "single_array": _is_single_array,
     "graph": _is_graph,
     "tree_queries": _is_tree_queries,
-    "feasibility": _is_feasibility,
-    "enumeration": _is_enumeration,
+    "decision": _is_decision,
+    "counting": _is_counting,
     "no_solution_code": _is_no_solution_code,
 }
 

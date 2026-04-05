@@ -4,21 +4,36 @@ import copy
 from typing import Any
 
 from models import AuditTraceEvent, GeneratedProblem, RuleSelectionResult, RuleValidationOutcome, VariantPlan
-from prompt_builder import build_eligibility_system_prompt, build_eligibility_user_prompt
+from prompt_builder import (
+    build_eligibility_system_prompt,
+    build_eligibility_user_prompt,
+    build_rule_plan_validation_system_prompt,
+    build_rule_plan_validation_user_prompt,
+    build_rule_problem_validation_system_prompt,
+    build_rule_problem_validation_user_prompt,
+)
 from qwen_client import QwenClient
 from rulebook import normalize_rule_id
+from schema_tools import dataclass_to_dict
 
 
 def get_rule_handler(rule: dict[str, Any]) -> "RuleHandler":
     handler_id = normalize_rule_id(rule.get("handler", "") or rule.get("id", ""))
     handler_cls = _RULE_HANDLER_REGISTRY.get(handler_id, GenericRuleHandler)
-    return handler_cls(rule_id=normalize_rule_id(rule.get("id", "")), handler_name=handler_id)
+    return handler_cls(
+        rule_id=normalize_rule_id(rule.get("id", "")),
+        handler_name=handler_id,
+        rule=rule,
+    )
 
 
 class RuleHandler:
-    def __init__(self, *, rule_id: str, handler_name: str) -> None:
+    _REVIEW_KEYS = {"status", "reason_code", "message", "errors", "evidence"}
+
+    def __init__(self, *, rule_id: str, handler_name: str, rule: dict[str, Any] | None = None) -> None:
         self.rule_id = normalize_rule_id(rule_id)
         self.handler_name = normalize_rule_id(handler_name or rule_id)
+        self.rule = copy.deepcopy(rule or {})
 
     def check_eligibility(
         self,
@@ -78,9 +93,22 @@ class RuleHandler:
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名保守的规则资格审查官，只在证据充分时才放行。"
 
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名规则规划审查官，重点判断规划是否真正兑现该规则的专属语义合同。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "检查规划是否把规则要求的新输出责任、失败语义与主求解义务写进实例化后的四元组。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名题面规则审查官，重点判断题面是否兑现该规则的专属语义合同。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "检查题面是否把规则要求的新输出责任、失败语义与核心承诺清楚写出。"
+
     def validate_plan(
         self,
         *,
+        client: QwenClient,
         mode: str,
         rule: dict[str, Any],
         payload: dict[str, Any],
@@ -92,6 +120,7 @@ class RuleHandler:
         errors: list[str] = []
         events: list[AuditTraceEvent] = []
 
+        # 先检查规则声明的输出合同，避免缺字段时把问题误判成更抽象的语义失败。
         required_fields = list(rule.get("planner_output_contract", {}).get("required_fields", []))
         missing_fields = [field for field in required_fields if not _payload_has_value(payload, field)]
         if missing_fields:
@@ -151,6 +180,8 @@ class RuleHandler:
                 )
             )
 
+        # 这组硬判据负责拦住浅改规划：没有新输出责任、主目标没变、主状态没变、
+        # 或者仍然可以直接套用原解的候选都会在这里被拒绝。
         semantic_checks = [
             (
                 "new_output_object_missing",
@@ -174,20 +205,30 @@ class RuleHandler:
             ),
         ]
         for reason_code, message, passed in semantic_checks:
-            outcome = "pass" if passed else "fail"
             events.append(
                 _event(
                     stage="plan_validation",
                     rule_id=self.rule_id,
-                    outcome=outcome,
+                    outcome="pass" if passed else "fail",
                     reason_code=reason_code,
-                    message=message if not passed else "语义硬判据通过。",
+                    message="语义硬判据通过。" if passed else message,
                 )
             )
             if not passed:
                 errors.append(message)
 
-        specific = self._validate_specific_plan(
+        if errors:
+            reason_code = _first_failure_reason_code(events) or "rule_plan_validation_failed"
+            return RuleValidationOutcome(
+                accepted=False,
+                errors=errors,
+                events=events,
+                reason_code=reason_code,
+                message="；".join(errors),
+            )
+
+        return self._validate_specific_plan(
+            client=client,
             mode=mode,
             rule=rule,
             payload=payload,
@@ -195,39 +236,21 @@ class RuleHandler:
             candidate_schema=candidate_schema,
             changed_axes=changed_axes,
         )
-        errors.extend(specific.errors)
-        events.extend(specific.events)
-        return RuleValidationOutcome(
-            accepted=not errors,
-            errors=errors,
-            events=events,
-            reason_code=specific.reason_code,
-            message=specific.message,
-        )
 
     def validate_problem(
         self,
         *,
+        client: QwenClient,
         problem: GeneratedProblem,
         plan: VariantPlan,
     ) -> RuleValidationOutcome:
-        return self._validate_specific_problem(problem=problem, plan=plan)
-
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        return True, "eligible", "规则满足基础资格条件。", [], 0.5
+        rule = copy.deepcopy(self.rule) if self.rule else {"id": self.rule_id, "handler": self.handler_name}
+        return self._validate_specific_problem(client=client, problem=problem, plan=plan, rule=rule)
 
     def _validate_specific_plan(
         self,
         *,
+        client: QwenClient,
         mode: str,
         rule: dict[str, Any],
         payload: dict[str, Any],
@@ -235,15 +258,234 @@ class RuleHandler:
         candidate_schema: dict[str, Any],
         changed_axes: list[str],
     ) -> RuleValidationOutcome:
-        return RuleValidationOutcome(accepted=True)
+        review_role = self.plan_review_role(mode=mode, rule=rule)
+        review_brief = self.plan_review_brief(mode=mode, rule=rule)
+        return self._run_validation_review(
+            client=client,
+            stage="plan_validation",
+            review_role=review_role,
+            review_brief=review_brief,
+            default_reason_code=f"{self.rule_id}_plan_review_failed",
+            system_prompt=build_rule_plan_validation_system_prompt(),
+            user_prompt=build_rule_plan_validation_user_prompt(
+                mode=mode,
+                review_role=review_role,
+                review_brief=review_brief,
+                rule=rule,
+                source_schema=source_schema,
+                candidate_schema=candidate_schema,
+                changed_axes=changed_axes,
+                planner_payload=payload,
+            ),
+        )
 
     def _validate_specific_problem(
         self,
         *,
+        client: QwenClient,
         problem: GeneratedProblem,
         plan: VariantPlan,
+        rule: dict[str, Any],
     ) -> RuleValidationOutcome:
-        return RuleValidationOutcome(accepted=True)
+        review_role = self.problem_review_role(plan=plan, rule=rule)
+        review_brief = self.problem_review_brief(plan=plan, rule=rule)
+        plan_context = {
+            "mode": plan.mode,
+            "applied_rule": plan.applied_rule,
+            "objective": copy.deepcopy(plan.objective),
+            "difference_plan": dataclass_to_dict(plan.difference_plan),
+            "algorithmic_delta_claim": copy.deepcopy(plan.algorithmic_delta_claim),
+            "shared_core_summary": plan.shared_core_summary,
+            "shared_core_anchors": copy.deepcopy(plan.shared_core_anchors),
+            "seed_contributions": copy.deepcopy(plan.seed_contributions),
+            "fusion_ablation": copy.deepcopy(plan.fusion_ablation),
+            "instantiated_schema": dataclass_to_dict(plan.instantiated_schema_snapshot),
+        }
+        return self._run_validation_review(
+            client=client,
+            stage="problem_validation",
+            review_role=review_role,
+            review_brief=review_brief,
+            default_reason_code=f"{self.rule_id}_problem_review_failed",
+            system_prompt=build_rule_problem_validation_system_prompt(),
+            user_prompt=build_rule_problem_validation_user_prompt(
+                mode=plan.mode,
+                review_role=review_role,
+                review_brief=review_brief,
+                rule=rule,
+                plan_context=plan_context,
+                generated_problem=dataclass_to_dict(problem),
+            ),
+        )
+
+    def _run_validation_review(
+        self,
+        *,
+        client: QwenClient,
+        stage: str,
+        review_role: str,
+        review_brief: str,
+        default_reason_code: str,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> RuleValidationOutcome:
+        payload = client.chat_json(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=0.05,
+        )
+        return self._review_payload_to_outcome(
+            stage=stage,
+            payload=payload,
+            review_role=review_role,
+            review_brief=review_brief,
+            default_reason_code=default_reason_code,
+        )
+
+    def _review_payload_to_outcome(
+        self,
+        *,
+        stage: str,
+        payload: dict[str, Any],
+        review_role: str,
+        review_brief: str,
+        default_reason_code: str,
+    ) -> RuleValidationOutcome:
+        unexpected_keys = sorted(key for key in payload if key not in self._REVIEW_KEYS)
+        if unexpected_keys:
+            return self._invalid_review_outcome(
+                stage=stage,
+                review_role=review_role,
+                review_brief=review_brief,
+                message="规则专属审查返回了未声明字段：" + ", ".join(unexpected_keys) + "。",
+                payload=payload,
+            )
+
+        missing_keys = sorted(key for key in self._REVIEW_KEYS if key not in payload)
+        if missing_keys:
+            return self._invalid_review_outcome(
+                stage=stage,
+                review_role=review_role,
+                review_brief=review_brief,
+                message="规则专属审查缺少必要字段：" + ", ".join(missing_keys) + "。",
+                payload=payload,
+            )
+
+        status = str(payload.get("status", "")).strip().lower()
+        reason_code = str(payload.get("reason_code", "")).strip()
+        message = str(payload.get("message", "")).strip()
+        evidence = str(payload.get("evidence", "")).strip()
+        errors_raw = payload.get("errors", [])
+        if not isinstance(errors_raw, list):
+            return self._invalid_review_outcome(
+                stage=stage,
+                review_role=review_role,
+                review_brief=review_brief,
+                message="规则专属审查的 errors 字段不是字符串数组。",
+                payload=payload,
+            )
+        errors = [str(item).strip() for item in errors_raw if str(item).strip()]
+
+        if status == "pass":
+            if errors:
+                return self._invalid_review_outcome(
+                    stage=stage,
+                    review_role=review_role,
+                    review_brief=review_brief,
+                    message="规则专属审查同时返回了 pass 状态和错误列表。",
+                    payload=payload,
+                )
+            return RuleValidationOutcome(
+                accepted=True,
+                events=[
+                    _event(
+                        stage=stage,
+                        rule_id=self.rule_id,
+                        outcome="pass",
+                        reason_code=reason_code or "ok",
+                        message=message or "规则专属 LLM 审查通过。",
+                        details={
+                            "review_role": review_role,
+                            "review_brief": review_brief,
+                            "evidence": evidence,
+                        },
+                    )
+                ],
+                reason_code=reason_code or "ok",
+                message=message or "规则专属 LLM 审查通过。",
+            )
+
+        if status != "fail":
+            return self._invalid_review_outcome(
+                stage=stage,
+                review_role=review_role,
+                review_brief=review_brief,
+                message="规则专属审查返回了无效状态：" + (status or "<empty>") + "。",
+                payload=payload,
+            )
+
+        if not errors and not message:
+            return self._invalid_review_outcome(
+                stage=stage,
+                review_role=review_role,
+                review_brief=review_brief,
+                message="规则专属审查返回 fail，但没有给出可读原因。",
+                payload=payload,
+            )
+
+        final_errors = errors or [message]
+        final_message = message or "；".join(final_errors)
+        final_reason_code = reason_code or default_reason_code
+        return RuleValidationOutcome(
+            accepted=False,
+            errors=final_errors,
+            events=[
+                _event(
+                    stage=stage,
+                    rule_id=self.rule_id,
+                    outcome="fail",
+                    reason_code=final_reason_code,
+                    message=final_message,
+                    details={
+                        "review_role": review_role,
+                        "review_brief": review_brief,
+                        "evidence": evidence,
+                    },
+                )
+            ],
+            reason_code=final_reason_code,
+            message=final_message,
+        )
+
+    def _invalid_review_outcome(
+        self,
+        *,
+        stage: str,
+        review_role: str,
+        review_brief: str,
+        message: str,
+        payload: dict[str, Any],
+    ) -> RuleValidationOutcome:
+        return RuleValidationOutcome(
+            accepted=False,
+            errors=[message],
+            events=[
+                _event(
+                    stage=stage,
+                    rule_id=self.rule_id,
+                    outcome="fail",
+                    reason_code="llm_review_invalid",
+                    message=message,
+                    details={
+                        "review_role": review_role,
+                        "review_brief": review_brief,
+                        "raw_payload": copy.deepcopy(payload),
+                    },
+                )
+            ],
+            reason_code="llm_review_invalid",
+            message=message,
+        )
 
 
 class GenericRuleHandler(RuleHandler):
@@ -254,317 +496,106 @@ class CanonicalWitnessHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。"
 
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        source_schema = _primary_schema(schema_context)
-        objective_text = _objective_text(source_schema)
-        output_text = " ".join(str(ref.get("output_summary", "")) for ref in original_refs)
-        if _text_has_any(objective_text + " " + output_text, _CONSTRUCT_TOKENS | _WITNESS_TOKENS):
-            return False, "already_constructive", "种子题已经带有明显的构造或 witness 输出责任。", ["low_novelty"], 0.0
-        return True, "eligible", "种子题仍有把答案升级为规范构造的空间。", ["requires_output_contract"], 0.72
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名规范解规划审查官，重点确认规划是否真正把输出责任升级为可比较、可校验的规范解。"
 
-    def _validate_specific_plan(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        payload: dict[str, Any],
-        source_schema: dict[str, Any],
-        candidate_schema: dict[str, Any],
-        changed_axes: list[str],
-    ) -> RuleValidationOutcome:
-        combined = _schema_text(candidate_schema) + " " + str(payload.get("anti_shallow_rationale", ""))
-        errors: list[str] = []
-        if not _text_has_any(combined, {"规范", "canonical", "字典序", "witness", "见证"}):
-            errors.append("canonical_witness 缺少规范解或规范性约束定义。")
-        return _outcome_from_errors(self.rule_id, "plan_validation", "canonical_witness_missing", errors)
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否明确了规范解的定义、比较口径与校验方式，并且规范性会改变主要求解责任。"
 
-    def _validate_specific_problem(
-        self,
-        *,
-        problem: GeneratedProblem,
-        plan: VariantPlan,
-    ) -> RuleValidationOutcome:
-        combined = _problem_text(problem)
-        errors: list[str] = []
-        if not _text_has_any(combined, {"规范", "字典序", "canonical", "witness", "见证"}):
-            errors.append("题面没有明确说明规范解、witness 或字典序规则。")
-        if not _text_has_any(combined, {"输出一个", "构造", "方案"}):
-            errors.append("题面没有明确要求输出一个可校验的构造方案。")
-        return _outcome_from_errors(self.rule_id, "problem_validation", "canonical_witness_not_materialized", errors)
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名规范解题面审查官，重点确认题面是否要求输出一个规范且可检查的构造。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否写清规范解、字典序或统一比较规则，并要求输出一个可校验的构造方案。"
 
 
 class ConstructOrObstructionHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。"
 
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        source_schema = _primary_schema(schema_context)
-        if _text_has_any(_objective_text(source_schema), {"count", "计数"}):
-            return False, "counting_seed", "计数种子题通常不适合直接扩成 obstruction 证据输出。", ["semantic_mismatch"], 0.0
-        return True, "eligible", "种子题仍可引入可局部校验的冲突证据。", ["certificate_design"], 0.69
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名阻碍证据规划审查官，重点确认规划是否同时定义了解分支和可局部检查的失败证据。"
 
-    def _validate_specific_plan(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        payload: dict[str, Any],
-        source_schema: dict[str, Any],
-        candidate_schema: dict[str, Any],
-        changed_axes: list[str],
-    ) -> RuleValidationOutcome:
-        combined = _schema_text(candidate_schema) + " " + str(payload.get("core_transformation_summary", ""))
-        errors: list[str] = []
-        if not _text_has_any(combined, {"证书", "certificate", "阻碍", "obstruction", "冲突", "conflict"}):
-            errors.append("construct_or_obstruction 缺少可局部检查的阻碍证据定义。")
-        return _outcome_from_errors(self.rule_id, "plan_validation", "obstruction_missing", errors)
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否把无解分支写成可直接检查的局部阻碍证据，而不是解释性说明。"
 
-    def _validate_specific_problem(
-        self,
-        *,
-        problem: GeneratedProblem,
-        plan: VariantPlan,
-    ) -> RuleValidationOutcome:
-        combined = _problem_text(problem)
-        errors: list[str] = []
-        if not _text_has_any(combined, {"无解", "证书", "阻碍", "obstruction", "冲突", "conflict"}):
-            errors.append("题面没有明确失败输出或阻碍证据语义。")
-        return _outcome_from_errors(self.rule_id, "problem_validation", "obstruction_not_materialized", errors)
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名阻碍证据题面审查官，重点确认题面是否写清失败输出和证据的检查语义。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求在无解时输出一个可局部检查的冲突证据，而不是仅仅解释为什么无解。"
 
 
 class ExistenceToCountingHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。"
 
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        source_schema = _primary_schema(schema_context)
-        if _text_has_any(_objective_text(source_schema), {"count", "计数"}):
-            return False, "already_counting", "种子题本身已经是计数目标。", ["low_novelty"], 0.0
-        return True, "eligible", "种子题仍可升级为对象明确的计数任务。", ["deduplication_needed"], 0.7
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。"
 
-    def _validate_specific_plan(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        payload: dict[str, Any],
-        source_schema: dict[str, Any],
-        candidate_schema: dict[str, Any],
-        changed_axes: list[str],
-    ) -> RuleValidationOutcome:
-        objective_text = _objective_text(candidate_schema)
-        combined = _schema_text(candidate_schema) + " " + str(payload.get("core_transformation_summary", ""))
-        errors: list[str] = []
-        if not _text_has_any(objective_text, {"count", "计数", "方案数"}):
-            errors.append("existence_to_counting 没有把目标改成计数。")
-        if not _text_has_any(combined, {"去重", "distinct", "不同", "等价", "模", "mod", "有限"}):
-            errors.append("existence_to_counting 缺少去重规则、有限性说明或取模约定。")
-        return _outcome_from_errors(self.rule_id, "plan_validation", "counting_contract_missing", errors)
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。"
 
-    def _validate_specific_problem(
-        self,
-        *,
-        problem: GeneratedProblem,
-        plan: VariantPlan,
-    ) -> RuleValidationOutcome:
-        combined = _problem_text(problem)
-        errors: list[str] = []
-        if not _text_has_any(combined, {"方案数", "个数", "count", "计数"}):
-            errors.append("题面没有明确输出计数结果。")
-        if not _text_has_any(combined, {"模", "mod", "不同", "distinct", "等价"}):
-            errors.append("题面没有明确去重规则或取模约定。")
-        return _outcome_from_errors(self.rule_id, "problem_validation", "counting_not_materialized", errors)
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。"
 
 
 class MinimumGuaranteeUnderPerturbationHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。"
 
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        source_schema = _primary_schema(schema_context)
-        source_text = _schema_text(source_schema)
-        has_variability = (
-            bool(source_schema.get("input_structure", {}).get("properties"))
-            or bool(source_schema.get("core_constraints", {}).get("constraints", []))
-            or bool(source_schema.get("invariant", {}).get("invariants", []))
-            or _text_has_any(
-                source_text,
-                {"顺序", "资源", "波动", "扰动", "选择", "不确定", "ordered", "resource"},
-            )
-        )
-        if not has_variability:
-            return False, "missing_variability_source", "种子题没有足够清晰的原生扰动来源。", ["semantic_mismatch"], 0.0
-        return True, "eligible", "种子题存在可以放大的原生扰动来源。", ["worst_case_reasoning"], 0.68
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名保底优化规划审查官，重点确认规划是否把目标升级为真实的最坏情形保底优化。"
 
-    def _validate_specific_plan(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        payload: dict[str, Any],
-        source_schema: dict[str, Any],
-        candidate_schema: dict[str, Any],
-        changed_axes: list[str],
-    ) -> RuleValidationOutcome:
-        objective_text = _objective_text(candidate_schema)
-        combined = _schema_text(candidate_schema) + " " + str(payload.get("core_transformation_summary", ""))
-        errors: list[str] = []
-        if not _text_has_any(objective_text, {"min", "max", "最小", "最大", "保底", "guarantee"}):
-            errors.append("minimum_guarantee_under_perturbation 没有把目标改成保底型优化。")
-        if not _text_has_any(combined, {"最坏", "任意", "保底", "worst", "guarantee", "扰动"}):
-            errors.append("minimum_guarantee_under_perturbation 缺少最坏情形或扰动模型说明。")
-        return _outcome_from_errors(self.rule_id, "plan_validation", "guarantee_contract_missing", errors)
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否给出了来源于原题语义的扰动模型，并把保底目标和强化不变量写进四元组。"
 
-    def _validate_specific_problem(
-        self,
-        *,
-        problem: GeneratedProblem,
-        plan: VariantPlan,
-    ) -> RuleValidationOutcome:
-        combined = _problem_text(problem)
-        errors: list[str] = []
-        if not _text_has_any(combined, {"保证", "最坏", "任意", "保底", "worst", "guarantee"}):
-            errors.append("题面没有明确最坏情形或保底语义。")
-        return _outcome_from_errors(self.rule_id, "problem_validation", "guarantee_not_materialized", errors)
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名保底优化题面审查官，重点确认题面是否清楚表达最坏情形或任意扰动下的保底语义。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否写清扰动来源、最坏情况语义，以及要求求出最小保底值或等价的鲁棒目标。"
 
 
 class InterlockedConstraintsHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名共享主核融合审查官，重点判断两题是否真的共享同一个状态核，并能形成互锁约束。"
 
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        seed_a = schema_context.get("seed_a_schema", {})
-        seed_b = schema_context.get("seed_b_schema", {})
-        if seed_a.get("input_structure", {}).get("type") != seed_b.get("input_structure", {}).get("type"):
-            return False, "shared_core_missing", "两题的输入主核类型不一致，难以形成稳定共享主核。", ["shared_core_risk"], 0.0
-        return True, "eligible", "两题在输入主核上具有形成互锁约束的基础。", ["fusion_complexity"], 0.76
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名互锁融合规划审查官，重点确认规划是否让两题义务在同一共享主核上同步承压。"
 
-    def _validate_specific_plan(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        payload: dict[str, Any],
-        source_schema: dict[str, Any],
-        candidate_schema: dict[str, Any],
-        changed_axes: list[str],
-    ) -> RuleValidationOutcome:
-        errors = _same_family_core_errors(payload, changed_axes, required_axes={"C", "V"})
-        return _outcome_from_errors(self.rule_id, "plan_validation", "interlocked_constraints_missing", errors)
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否明确共享主核、双向不可删贡献、反串联论证与消融论证，而且互锁约束进入核心求解过程。"
 
-    def _validate_specific_problem(
-        self,
-        *,
-        problem: GeneratedProblem,
-        plan: VariantPlan,
-    ) -> RuleValidationOutcome:
-        combined = _problem_text(problem)
-        errors: list[str] = []
-        if not _text_has_any(combined, {"同时", "同一", "互锁", "共享", "同步", "simultaneous", "shared"}):
-            errors.append("题面没有明确双义务在同一状态过程中同时起作用。")
-        return _outcome_from_errors(self.rule_id, "problem_validation", "interlocked_not_materialized", errors)
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名互锁融合题面审查官，重点确认题面是否写清双义务在同一状态过程中同时生效。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否体现共享主核、同步承压和不可拆分的双重义务，而不是前后串联两个子任务。"
 
 
 class SharedCoreObjectiveUpgradeHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名共享主核升级审查官，重点判断共享主核是否足以承担更强的新目标。"
 
-    def _check_specific_eligibility(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        schema_context: dict[str, Any],
-        original_refs: list[dict[str, Any]],
-        global_constraints: dict[str, Any],
-        global_redlines: list[str],
-    ) -> tuple[bool, str, str, list[str], float]:
-        seed_a = schema_context.get("seed_a_schema", {})
-        seed_b = schema_context.get("seed_b_schema", {})
-        if seed_a.get("input_structure", {}).get("type") != seed_b.get("input_structure", {}).get("type"):
-            return False, "shared_core_missing", "两题的输入主核类型不一致，无法稳定抬高共享目标。", ["shared_core_risk"], 0.0
-        return True, "eligible", "两题拥有可承载更强目标的共享主核。", ["objective_upgrade_risk"], 0.74
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名共享主核升级规划审查官，重点确认规划是否在共享主核上承载了更强的新目标。"
 
-    def _validate_specific_plan(
-        self,
-        *,
-        mode: str,
-        rule: dict[str, Any],
-        payload: dict[str, Any],
-        source_schema: dict[str, Any],
-        candidate_schema: dict[str, Any],
-        changed_axes: list[str],
-    ) -> RuleValidationOutcome:
-        errors = _same_family_core_errors(payload, changed_axes, required_axes={"O"})
-        source_objective = normalize_rule_id(source_schema.get("objective", {}).get("type", ""))
-        candidate_objective = normalize_rule_id(candidate_schema.get("objective", {}).get("type", ""))
-        if source_objective == candidate_objective:
-            errors.append("shared_core_objective_upgrade 没有改变共享主核上的主目标。")
-        return _outcome_from_errors(self.rule_id, "plan_validation", "objective_upgrade_missing", errors)
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否保留共享主核与双向不可删贡献，同时把主目标升级到更强层级，而不是保留原目标后附加包装。"
 
-    def _validate_specific_problem(
-        self,
-        *,
-        problem: GeneratedProblem,
-        plan: VariantPlan,
-    ) -> RuleValidationOutcome:
-        combined = _problem_text(problem)
-        errors: list[str] = []
-        objective_type = str(plan.objective.get("type", "")).lower()
-        if "count" in objective_type and not _text_has_any(combined, {"计数", "方案数", "count"}):
-            errors.append("题面没有体现升级后的计数目标。")
-        if any(token in objective_type for token in ("construct", "witness")) and not _text_has_any(
-            combined, {"构造", "规范", "witness", "输出一个"}
-        ):
-            errors.append("题面没有体现升级后的构造目标。")
-        if not _text_has_any(combined, {"共享", "同一", "同时", "shared", "simultaneous"}):
-            errors.append("题面没有说明更强目标仍作用在共享主核上。")
-        return _outcome_from_errors(self.rule_id, "problem_validation", "objective_upgrade_not_materialized", errors)
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名共享主核升级题面审查官，重点确认题面是否兑现了共享主核上的升级目标。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        objective_type = str(plan.objective.get("type", "")).strip() or "unknown"
+        return (
+            "确认题面是否明确写出升级后的主目标，"
+            f"当前规划目标类型为 {objective_type}，并且该目标仍然作用在同一共享状态核上。"
+        )
 
 
 def selection_result_to_event(result: RuleSelectionResult) -> AuditTraceEvent:
@@ -580,61 +611,6 @@ def selection_result_to_event(result: RuleSelectionResult) -> AuditTraceEvent:
             "risk_tags": list(result.risk_tags),
             **copy.deepcopy(result.details),
         },
-    )
-
-
-def _same_family_core_errors(payload: dict[str, Any], changed_axes: list[str], required_axes: set[str]) -> list[str]:
-    errors: list[str] = []
-    shared_core_summary = str(payload.get("shared_core_summary", "")).strip()
-    anchors = payload.get("shared_core_anchors", {})
-    fusion_ablation = payload.get("fusion_ablation", {})
-    if not shared_core_summary:
-        errors.append("same_family 规则缺少 shared_core_summary。")
-    if not all(str(anchors.get(key, "")).strip() for key in ("shared_state", "shared_transition", "shared_decision_basis")):
-        errors.append("same_family 规则缺少完整的 shared_core_anchors。")
-    if not str(payload.get("seed_a_indispensable_obligation", "")).strip():
-        errors.append("same_family 规则缺少 seed_a 不可删贡献。")
-    if not str(payload.get("seed_b_indispensable_obligation", "")).strip():
-        errors.append("same_family 规则缺少 seed_b 不可删贡献。")
-    if not str(payload.get("why_not_sequential_composition", "")).strip():
-        errors.append("same_family 规则缺少反串联论证。")
-    if not str(fusion_ablation.get("without_seed_a", "")).strip():
-        errors.append("same_family 规则缺少 without_seed_a 消融论证。")
-    if not str(fusion_ablation.get("without_seed_b", "")).strip():
-        errors.append("same_family 规则缺少 without_seed_b 消融论证。")
-    if not required_axes.issubset(set(changed_axes)):
-        errors.append("same_family 规则没有落地所需的核心变化轴。")
-    return errors
-
-
-def _outcome_from_errors(rule_id: str, stage: str, reason_code: str, errors: list[str]) -> RuleValidationOutcome:
-    if not errors:
-        return RuleValidationOutcome(
-            accepted=True,
-            events=[
-                _event(
-                    stage=stage,
-                    rule_id=rule_id,
-                    outcome="pass",
-                    reason_code="ok",
-                    message="规则专属校验通过。",
-                )
-            ],
-        )
-    return RuleValidationOutcome(
-        accepted=False,
-        errors=errors,
-        events=[
-            _event(
-                stage=stage,
-                rule_id=rule_id,
-                outcome="fail",
-                reason_code=reason_code,
-                message="；".join(errors),
-            )
-        ],
-        reason_code=reason_code,
-        message="；".join(errors),
     )
 
 
@@ -668,40 +644,16 @@ def _payload_has_value(payload: dict[str, Any], field: str) -> bool:
     return True
 
 
-def _primary_schema(schema_context: dict[str, Any]) -> dict[str, Any]:
-    for key in ("seed_schema", "original_schema", "seed_a_schema"):
-        if isinstance(schema_context.get(key), dict):
-            return schema_context[key]
-    return {}
+def _first_failure_reason_code(events: list[AuditTraceEvent]) -> str:
+    for event in events:
+        if event.outcome == "fail" and event.reason_code:
+            return event.reason_code
+    return ""
 
 
 def _objective_text(schema: dict[str, Any]) -> str:
     objective = schema.get("objective", {})
     return " ".join(str(objective.get(key, "")) for key in ("type", "description"))
-
-
-def _schema_text(schema: dict[str, Any]) -> str:
-    parts = [_objective_text(schema)]
-    for item in schema.get("core_constraints", {}).get("constraints", []):
-        parts.append(str(item.get("name", "")))
-        parts.append(str(item.get("description", "")))
-    for item in schema.get("invariant", {}).get("invariants", []):
-        parts.append(str(item.get("name", "")))
-        parts.append(str(item.get("description", "")))
-    return " ".join(parts)
-
-
-def _problem_text(problem: GeneratedProblem) -> str:
-    return "\n".join(
-        [
-            problem.title,
-            problem.description,
-            problem.input_format,
-            problem.output_format,
-            "\n".join(problem.constraints),
-            problem.notes,
-        ]
-    ).lower()
 
 
 def _text_has_any(text: str, tokens: set[str]) -> bool:
@@ -741,7 +693,10 @@ def _has_new_output_object(source_schema: dict[str, Any], candidate_schema: dict
     ):
         return True
     signal_tokens = _CONSTRUCT_TOKENS | _WITNESS_TOKENS | {"计数", "count", "证书", "certificate", "保底", "guarantee"}
-    return _text_has_any(candidate_text, signal_tokens - {token for token in signal_tokens if token.lower() in source_text.lower()})
+    return _text_has_any(
+        candidate_text,
+        signal_tokens - {token for token in signal_tokens if token.lower() in source_text.lower()},
+    )
 
 
 def _has_main_goal_change(source_schema: dict[str, Any], candidate_schema: dict[str, Any], payload: dict[str, Any]) -> bool:
@@ -774,6 +729,7 @@ def _has_reuse_barrier(payload: dict[str, Any]) -> bool:
 _CONSTRUCT_TOKENS = {"construct", "构造", "输出一个"}
 _WITNESS_TOKENS = {"witness", "见证", "证据", "规范", "canonical", "字典序"}
 
+# 与 planning_rules.json 的 handler 字段保持一一对应。
 _RULE_HANDLER_REGISTRY = {
     "canonical_witness": CanonicalWitnessHandler,
     "construct_or_obstruction": ConstructOrObstructionHandler,

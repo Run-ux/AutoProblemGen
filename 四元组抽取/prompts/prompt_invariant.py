@@ -7,14 +7,18 @@ from typing import TYPE_CHECKING
 try:
     from ..label_vocab import (
         INVARIANT_EVIDENCE_SOURCES,
+        INVARIANT_SPECS,
         INVARIANT_LABELS,
+        build_label_reference,
     )
     from ..problem_schema import prepare_problem_record
     from .prompt_sections import build_problem_context
 except ImportError:
     from label_vocab import (
         INVARIANT_EVIDENCE_SOURCES,
+        INVARIANT_SPECS,
         INVARIANT_LABELS,
+        build_label_reference,
     )
     from problem_schema import prepare_problem_record
     from prompts.prompt_sections import build_problem_context
@@ -33,6 +37,7 @@ INVARIANT_NAMES = [name for name, _ in INVARIANT_LABELS]
 
 def build_system_prompt() -> str:
     invariant_names = ", ".join(INVARIANT_NAMES)
+    invariant_reference = build_label_reference(INVARIANT_SPECS)
     return f"""你是编程竞赛算法不变量分析专家。
 
 你的任务是抽取标准解法对应的关键算法不变量。
@@ -49,6 +54,9 @@ def build_system_prompt() -> str:
 3. 若现有词表无法准确覆盖当前题目的关键稳定性质，允许创建新的抽象标签。
 4. 新标签必须使用小写英文加下划线格式，并保持算法术语风格。
 5. 不得把题目情境词直接写进 name、properties 的键名或 evidence_source。
+
+规范标签说明：
+{invariant_reference}
 
 证据优先级：
 1. 标准解法代码
@@ -69,9 +77,12 @@ def build_system_prompt() -> str:
 判别边界：
 - monotonicity 用于指针、边界、答案下界或决策前沿沿单一方向推进的性质。
 - state_transition 用于状态定义与转移关系构成的稳定维护规律。
+- additivity 用于目标量、代价或摘要可以按分块分解并相加的性质。
+- mergeability 用于局部摘要、区间摘要或子结果可以稳定合并的性质。
+- dependency_order 用于节点、状态或子问题必须按依赖先后处理的稳定顺序。
+- conservation 用于流量守恒、质量守恒、计数平衡或等价的净变化守恒关系。
+- dominance 用于某类状态、决策或候选被另一类稳定支配后可以安全丢弃。
 - exchange_argument 只在替换某个局部选择后仍能保持可行性或最优性时使用。
-- flow_conservation 用于流量守恒、质量守恒或等价的平衡关系。
-- interval_additivity 与 interval_mergeable 只在区间量可以分解或合并时使用。
 - 最优子结构、贪心选择或分治范式若无法落实为稳定维护关系，不单列为不变量标签，应写入 description。
 """
 

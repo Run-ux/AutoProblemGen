@@ -13,14 +13,13 @@
     },
     "properties": {
       "multiple_test_cases": true
-    },
-    "components": []
+    }
   },
   "core_constraints": {
     "constraints": [
       {
         "name": "range_bound",
-        "description": "For each participant with a required maximum score s, the chosen ladder height h must satisfy Euler's totient function φ(h) ≥ s.",
+        "description": "对于每位参与者给定的最高得分要求 s,所选梯子的高度 h 必须满足其欧拉函数值 φ(h) ≥ s。",
         "formal": "∀i, φ(h_i) ≥ s_i",
         "source_sections": [
           "description"
@@ -30,17 +29,17 @@
   },
   "objective": {
     "type": "minimize_value",
-    "description": "最小化满足所有参与者得分阈值要求的总成本",
+    "description": "Minimize the total cost of ladders such that each participant's ladder score meets or exceeds their required threshold.",
     "target": "total_cost",
     "requires_solution": false
   },
   "invariant": {
     "invariants": [
       {
-        "name": "monotonicity",
-        "description": "The minimal cost required to satisfy a given score threshold forms a strictly non-decreasing sequence. The solution precomputes this sequence of candidate costs in sorted order and relies on its monotonic property to correctly apply binary search for resolving each query independently.",
+        "name": "additivity",
+        "description": "The global minimum expenditure is the direct sum of independently minimized costs for each participant. Since ladder assignments are isolated per player and the total cost function is linear, the optimal solution decomposes into solving each participant's requirement separately and aggregating the results.",
         "properties": {},
-        "evidence_source": "both"
+        "evidence_source": "solution_code"
       }
     ]
   }

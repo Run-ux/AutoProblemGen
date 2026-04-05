@@ -5,21 +5,11 @@
   "result": {
     "constraints": [
       {
-        "name": "operation_type",
-        "description": "Specifies the four allowed activity types and their deterministic laddu accrual rules: CONTEST_WON yields 300 + max(0, 20 - rank), TOP_CONTRIBUTOR yields 300, BUG_FOUND yields severity points, and CONTEST_HOSTED yields 50.",
-        "formal": "accrual(type, param) = {300 + max(0, 20 - rank) if type == CONTEST_WON; 300 if type == TOP_CONTRIBUTOR; severity if type == BUG_FOUND; 50 if type == CONTEST_HOSTED}",
-        "source_sections": [
-          "description",
-          "input"
-        ]
-      },
-      {
         "name": "range_bound",
-        "description": "Each monthly redemption must consume at least a fixed threshold of laddus (200 for origin 'INDIAN', 400 for 'NON_INDIAN'), restricting the maximum number of feasible redemptions to floor(total_accrued / threshold).",
-        "formal": "max_months = floor(total_laddus / threshold), threshold = (origin == 'INDIAN' ? 200 : 400)",
+        "description": "每次兑换（checkout）所需的最小laddus数量根据用户来源地设定为固定下界（INDIAN为200,NON_INDIAN为400）,累计总额中不足该下界的余数无法兑换,直接决定合法兑换的最大月数。",
+        "formal": "threshold = (origin == \"INDIAN\" ? 200 : 400); max_months = floor(total_laddus / threshold)",
         "source_sections": [
-          "description",
-          "output"
+          "description"
         ]
       }
     ]

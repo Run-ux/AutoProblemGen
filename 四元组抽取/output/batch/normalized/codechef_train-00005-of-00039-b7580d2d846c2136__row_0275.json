@@ -4,12 +4,12 @@
   "input_structure": {
     "type": "composite",
     "length": {
-      "min": 1,
-      "max": 100000
+      "min": null,
+      "max": null
     },
     "value_range": {
-      "min": 1,
-      "max": 1000000000
+      "min": null,
+      "max": null
     },
     "properties": {},
     "components": [
@@ -18,26 +18,30 @@
         "type": "array",
         "length": {
           "min": 1,
-          "max": 100000
+          "max": 99999
         },
         "value_range": {
           "min": 1,
-          "max": 1000000000
+          "max": 999999999
         },
-        "properties": {}
+        "properties": {
+          "ordered": true
+        }
       },
       {
-        "role": "queries",
+        "role": "query_list",
         "type": "array",
         "length": {
           "min": 1,
-          "max": 100000
+          "max": 99999
         },
         "value_range": {
-          "min": 0,
+          "min": null,
           "max": null
         },
-        "properties": {}
+        "properties": {
+          "ordered": true
+        }
       }
     ]
   },
@@ -45,12 +49,19 @@
     "constraints": []
   },
   "objective": {
-    "type": "maximize_value",
-    "description": "计算查询区间内最大值与最小值的差值",
-    "target": "difference",
+    "type": "value_computation",
+    "description": "计算指定查询区间内最大值与最小值的差值",
+    "target": "max_min_difference",
     "requires_solution": false
   },
   "invariant": {
-    "invariants": []
+    "invariants": [
+      {
+        "name": "idempotency",
+        "description": "区间最值差计算是确定性纯函数,对相同边界重复查询不会改变输出结果。算法依赖该幂等性质维护查询缓存,确保相同区间请求直接复用已计算值,避免重复扫描子数组。",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
   }
 }

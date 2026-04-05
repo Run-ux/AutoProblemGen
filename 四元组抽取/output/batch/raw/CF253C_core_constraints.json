@@ -6,19 +6,10 @@
     "constraints": [
       {
         "name": "state_transition",
-        "description": "光标位置转移严格遵循四种方向键规则:左右移动在行内增减列号,触及行首或行尾时按键无效；上下移动尝试保持列号不变,若目标行长度不足以容纳该列号则自动截断至该行末尾,处于首行或末行时按对应方向键无效。",
-        "formal": "Next(r, c, dir) = { (r, max(1, c-1)) if dir=L; (r, min(c+1, a_r+1)) if dir=R; (r-1, min(c, a_{r-1}+1)) if dir=U & r>1; (r+1, min(c, a_{r+1}+1)) if dir=D & r<n; (r, c) otherwise }",
+        "description": "光标移动严格受限于四种按键（Up, Down, Left, Right）定义的转移规则:左右移动受当前行首尾位置限制；上下移动优先保持列位置不变,若目标行长度不足则自动移至该行末尾,且在首行按Up或末行按Down时位置保持不变。",
+        "formal": "状态空间为合法坐标对 (r, c),转移函数 δ(key, r, c) → (r', c') 由题面给定的边界与行长度条件唯一确定。",
         "source_sections": [
           "description"
-        ]
-      },
-      {
-        "name": "range_bound",
-        "description": "光标在第 r 行的合法列坐标 c 受限于该行字符数,必须满足 1 ≤ c ≤ a_r + 1。",
-        "formal": "∀r ∈ [1, n], c ∈ [1, a_r + 1]",
-        "source_sections": [
-          "description",
-          "input"
         ]
       }
     ]

@@ -15,6 +15,7 @@
       "rooted": true,
       "weighted": true,
       "connected": true,
+      "acyclic": true,
       "multiple_test_cases": true
     },
     "components": []
@@ -22,47 +23,48 @@
   "core_constraints": {
     "constraints": [
       {
-        "name": "operation_type",
-        "description": "The only permissible modification is to repeatedly select any edge and apply floor division by 2 to its weight. Each application on a specific edge consumes a cost equal to that edge's predefined cost value.",
-        "formal": "w_i := \\lfloor w_i / 2 \\rfloor",
-        "source_sections": [
-          "description"
-        ]
-      },
-      {
         "name": "sum_constraint",
-        "description": "The aggregate sum of the path weights from the root to all leaf nodes must be bounded above by a given value S.",
+        "description": "最终状态下,所有从根节点到叶子节点的路径权重之和不得超过给定阈值 S。",
         "formal": "\\sum_{v \\in \\text{leaves}} w(\\text{root}, v) \\le S",
         "source_sections": [
           "description",
           "output"
+        ]
+      },
+      {
+        "name": "operation_type",
+        "description": "允许的唯一修改操作是选择任意一条边,将其权重替换为向下取整的一半,每次操作需支付该边对应的固定代价 c_i。",
+        "formal": "w_i := \\lfloor w_i / 2 \\rfloor, \\text{cost} += c_i",
+        "source_sections": [
+          "description"
         ]
       }
     ]
   },
   "objective": {
     "type": "minimize_value",
-    "description": "Minimize the total operation cost to satisfy an upper bound constraint on the aggregate path weight sum.",
-    "target": "cost",
+    "description": "最小化满足根到叶路径权重和上限约束的总操作代价",
+    "target": "total_cost",
     "requires_solution": false
   },
   "invariant": {
     "invariants": [
       {
-        "name": "monotonicity",
-        "description": "随着代价为1的操作次数增加,为达到目标总减少量所需的代价为2的操作次数单调不增。该性质保证双指针扫描过程中决策边界仅单向推进,从而在线性时间内完成最优操作组合的枚举。",
+        "name": "additivity",
+        "description": "根到所有叶子路径的总权重缩减量严格等于各次独立减半操作所贡献缩减量的代数和。该可加性使得所有潜在操作收益可被独立计算、按代价分类收集,并通过前缀和累加快速评估任意操作组合的总缩减效果。",
         "properties": {
-          "prefix_sum_non_decreasing": true,
-          "two_pointer_unidirectional_movement": true
+          "reduction_decomposable": true,
+          "prefix_sum_cumulative": true
         },
         "evidence_source": "solution_code"
       },
       {
-        "name": "exchange_argument",
-        "description": "同类代价的每次操作带来的路径权值减少量具有边际递减特性。在固定同类操作次数时,优先选择减少量更大的操作可保证最优性,且将已选较小减少量替换为未选较大减少量不会破坏可行性或最优性,支撑降序排序与前缀和贪心策略。",
+        "name": "monotonicity",
+        "description": "单条边连续执行减半操作的单次收益随操作次数增加单调不增；按收益降序排列后的前缀和序列严格单调递增。算法依赖该单调性质,利用双指针单向推进即可在枚举一类操作次数时,快速确定满足总缩减阈值所需的另一类操作最小次数。",
         "properties": {
-          "marginal_gain_diminishing": true,
-          "greedy_swap_preserves_optimality": true
+          "single_edge_gain_non_increasing": true,
+          "cumulative_gain_monotonic": true,
+          "two_pointer_unidirectional": true
         },
         "evidence_source": "solution_code"
       }

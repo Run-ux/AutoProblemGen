@@ -17,7 +17,7 @@
     "components": [
       {
         "role": "n",
-        "type": "other",
+        "type": "integer",
         "length": {
           "min": null,
           "max": null
@@ -30,7 +30,7 @@
       },
       {
         "role": "m",
-        "type": "other",
+        "type": "integer",
         "length": {
           "min": null,
           "max": null
@@ -47,46 +47,34 @@
     "constraints": [
       {
         "name": "permutation_constraint",
-        "description": "The sequence in which soldiers occupy the N spots must be a permutation of the set {1, 2, ..., N}.",
-        "formal": "P ∈ S_N",
-        "source_sections": [
-          "description"
-        ]
-      },
-      {
-        "name": "adjacency_relation",
-        "description": "Each newly placed soldier establishes connections only with the nearest already occupied position to the left (or the left tower at position 0) and to the right (or the right tower at position N+1).",
-        "formal": "For spot x at step k, edges connect to L(x) = max({y < x} ∩ (S ∪ {0})) and R(x) = min({z > x} ∩ (S ∪ {N+1}))",
+        "description": "士兵占据N个位置的顺序必须由{1, 2, ..., N}的一个排列P唯一确定,即每个位置恰好被安排一次,且放置先后次序严格对应排列P的索引顺序。",
+        "formal": "P \\text{ is a permutation of } \\{1, 2, \\dots, N\\}",
         "source_sections": [
           "description"
         ]
       },
       {
         "name": "sum_constraint",
-        "description": "The total length of wires consumed by all connections formed during the placement process must not exceed the given wire budget M.",
-        "formal": "∑_{i=1}^{N} (|p_i - L_i| + |R_i - p_i|) ≤ M",
+        "description": "按照排列P的顺序依次放置士兵时,每次新士兵与左右两侧最近已放置士兵或边界塔建立连接所需的线缆长度总和不得超过初始提供的线缆总长M。",
+        "formal": "\\sum_{i=1}^{N} \\text{wire\\_length}(P, i) \\le M",
         "source_sections": [
-          "description",
-          "output"
+          "description"
         ]
       }
     ]
   },
   "objective": {
     "type": "minimize_value",
-    "description": "Minimize the unused wire length given a fixed total supply and sequence-dependent connection costs.",
+    "description": "Minimize the length of unused wire by selecting an optimal permutation of spot occupation order.",
     "target": "unused_wire_length",
     "requires_solution": false
   },
   "invariant": {
     "invariants": [
       {
-        "name": "value_contiguity",
-        "description": "对于固定的N,所有合法排列对应的总连线长度取值集合构成一个连续的整数区间。该性质稳定约束了目标函数的值域结构,使得算法无需搜索具体排列或进行动态规划,仅通过预计算的区间上下界与输入M进行大小比较即可直接得出最小剩余线长或判定不可行。",
-        "properties": {
-          "value_range_structure": "contiguous_integer_interval",
-          "decision_logic": "bounds_comparison"
-        },
+        "name": "achievable_interval",
+        "description": "对于固定的 N,所有合法排列产生的总用线长度集合构成一个连续的整数区间。解法依赖该性质,仅需预计算并存储每个 N 对应的区间端点（最小值与最大值）,即可通过常数时间的边界比较直接判定给定 M 的可行性与最小剩余长度。",
+        "properties": {},
         "evidence_source": "solution_code"
       }
     ]

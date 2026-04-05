@@ -101,6 +101,7 @@ class VariantPlan:
     selection_trace: list[dict[str, Any]] = field(default_factory=list)
     validation_trace: list[dict[str, Any]] = field(default_factory=list)
     candidate_attempts: list[dict[str, Any]] = field(default_factory=list)
+    rule_snapshot: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

@@ -6,10 +6,19 @@
     "constraints": [
       {
         "name": "state_transition",
-        "description": "每次操作必须严格选取当前 idlis 数量的最大值 P 与最小值 Q 对应的两人,计算转移量 R = ceil((P - Q) / 2) 并将 R 个 idlis 从最大值持有者转移至最小值持有者。该状态转移过程持续执行,直至所有学生 idlis 数量相等；若过程无法收敛至均分状态（如陷入循环）则判定为不可行。",
-        "formal": "A[i] = max(A), A[j] = min(A), R = \\lceil (A[i] - A[j]) / 2 \\rceil, A[i] \\leftarrow A[i] - R, A[j] \\leftarrow A[j] + R",
+        "description": "定义了资源重分配的状态转移规则:每次迭代必须严格选取当前最大值与最小值持有者,并按 R = ceil((max_val - min_val) / 2) 的数量从最大值者向最小值者转移。",
+        "formal": "P = max(A), Q = min(A), R = ceil((P - Q) / 2); A[i_max] -= R, A[i_min] += R",
         "source_sections": [
           "description"
+        ]
+      },
+      {
+        "name": "divisibility",
+        "description": "初始资源总和必须能被学生人数 N 整除,否则无法通过给定操作达成均分状态,判定为不可行并输出 -1。",
+        "formal": "sum(A) % N == 0",
+        "source_sections": [
+          "description",
+          "output"
         ]
       }
     ]

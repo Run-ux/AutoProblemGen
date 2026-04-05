@@ -610,7 +610,9 @@ class VariantPlanner:
             )
 
         handler = get_rule_handler(rule)
+        # 通用门槛通过后，再把规划结果交给规则专属 validate_plan 做语义合同校验。
         outcome = handler.validate_plan(
+            client=self.client,
             mode=mode,
             rule=rule,
             payload=payload,
@@ -661,6 +663,7 @@ class VariantPlanner:
                 "without_seed_b": str(payload.get("fusion_ablation", {}).get("without_seed_b", "")),
             },
             "auxiliary_moves": [str(item) for item in payload.get("auxiliary_moves", []) if str(item).strip()],
+            "rule_snapshot": copy.deepcopy(rule),
         }
         return True, normalized, "", _serialize_events(trace), ""
 
@@ -733,6 +736,7 @@ class VariantPlanner:
                 selection_trace=list(selection_trace or []),
                 validation_trace=list(validation_trace or []),
                 candidate_attempts=list(candidate_attempts or []),
+                rule_snapshot={},
             )
 
         selected = selected_plan
@@ -775,6 +779,7 @@ class VariantPlanner:
             selection_trace=list(selection_trace or []),
             validation_trace=list(validation_trace or []),
             candidate_attempts=list(candidate_attempts or []),
+            rule_snapshot=copy.deepcopy(selected.get("rule_snapshot", {})),
         )
 
     def _select_theme(self, rng: random.Random, theme_id: str | None) -> Theme:

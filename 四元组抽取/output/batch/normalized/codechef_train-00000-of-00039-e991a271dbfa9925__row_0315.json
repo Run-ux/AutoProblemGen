@@ -2,10 +2,10 @@
   "problem_id": "codechef_train-00000-of-00039-e991a271dbfa9925__row_0315",
   "source": "codechef",
   "input_structure": {
-    "type": "array",
+    "type": "composite",
     "length": {
-      "min": 1,
-      "max": 100
+      "min": null,
+      "max": null
     },
     "value_range": {
       "min": null,
@@ -14,46 +14,59 @@
     "properties": {
       "multiple_test_cases": true
     },
-    "components": []
+    "components": [
+      {
+        "role": "case_config",
+        "type": "tuple",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      {
+        "role": "activity_log",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
   },
   "core_constraints": {
     "constraints": [
       {
-        "name": "operation_type",
-        "description": "Specifies the four allowed activity types and their deterministic laddu accrual rules: CONTEST_WON yields 300 + max(0, 20 - rank), TOP_CONTRIBUTOR yields 300, BUG_FOUND yields severity points, and CONTEST_HOSTED yields 50.",
-        "formal": "accrual(type, param) = {300 + max(0, 20 - rank) if type == CONTEST_WON; 300 if type == TOP_CONTRIBUTOR; severity if type == BUG_FOUND; 50 if type == CONTEST_HOSTED}",
-        "source_sections": [
-          "description",
-          "input"
-        ]
-      },
-      {
         "name": "range_bound",
-        "description": "Each monthly redemption must consume at least a fixed threshold of laddus (200 for origin 'INDIAN', 400 for 'NON_INDIAN'), restricting the maximum number of feasible redemptions to floor(total_accrued / threshold).",
-        "formal": "max_months = floor(total_laddus / threshold), threshold = (origin == 'INDIAN' ? 200 : 400)",
+        "description": "每次兑换（checkout）所需的最小laddus数量根据用户来源地设定为固定下界（INDIAN为200,NON_INDIAN为400）,累计总额中不足该下界的余数无法兑换,直接决定合法兑换的最大月数。",
+        "formal": "threshold = (origin == \"INDIAN\" ? 200 : 400); max_months = floor(total_laddus / threshold)",
         "source_sections": [
-          "description",
-          "output"
+          "description"
         ]
       }
     ]
   },
   "objective": {
-    "type": "maximize_count",
-    "description": "计算在固定月度兑换阈值下,总积分可覆盖的最大月数",
+    "type": "value_computation",
+    "description": "根据活动记录计算累计积分,并按固定兑换门槛计算可兑换的月数",
     "target": "months",
     "requires_solution": false
   },
   "invariant": {
     "invariants": [
       {
-        "name": "state_transition",
-        "description": "算法在顺序遍历活动记录时,持续维护一个累加器状态,该状态始终等于已处理活动所获积分的总和。每次状态转移严格依据活动类型与参数按确定规则增加对应分值,保证累加过程的确定性与无后效性,最终通过固定阈值的整除运算推导结果。",
-        "properties": {
-          "state_definition": "prefix_sum_of_scores",
-          "transition_rule": "additive_update",
-          "termination_mapping": "floor_division_by_threshold"
-        },
+        "name": "additivity",
+        "description": "总积分由各项独立活动的得分累加而成,各活动贡献相互独立且可线性叠加,最终答案仅依赖于累加总和与固定兑换阈值的整除关系。",
+        "properties": {},
         "evidence_source": "solution_code"
       }
     ]
