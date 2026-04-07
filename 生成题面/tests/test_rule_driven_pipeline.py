@@ -20,6 +20,7 @@ from problem_generator import ProblemGenerator
 from rule_handlers import get_rule_handler
 from rulebook import RuleBook
 from schema_preparer import SchemaPreparer
+from schema_tools import compute_schema_distance
 from variant_planner import VariantPlanner
 
 
@@ -71,6 +72,104 @@ class SchemaPreparerTests(unittest.TestCase):
             set(prepared),
             {"problem_id", "source", "input_structure", "core_constraints", "objective", "invariant"},
         )
+
+
+class SchemaDistanceTests(unittest.TestCase):
+    def test_identical_schema_distance_is_zero(self) -> None:
+        schema = make_schema(problem_id="IDENTICAL")
+        distance = compute_schema_distance(schema, copy.deepcopy(schema), embedding_client=StubEmbeddingClient())
+
+        self.assertEqual(distance["distance_version"], "v2")
+        self.assertEqual(distance["backend"], "embedding")
+        self.assertAlmostEqual(distance["total"], 0.0, places=4)
+        self.assertEqual(distance["axis_scores"], {"I": 0.0, "C": 0.0, "O": 0.0, "V": 0.0})
+
+    def test_semantically_similar_constraint_rewrite_stays_below_jaccard_style_penalty(self) -> None:
+        left = make_schema(problem_id="LEFT")
+        right = make_schema(problem_id="RIGHT")
+        right["core_constraints"]["constraints"] = [
+            {"name": "base_constraint", "description": "必须选择一个满足基础条件的候选。"}
+        ]
+        embedding_client = StubEmbeddingClient(
+            {
+                "需要满足基础选择约束。": [1.0, 0.0, 0.0],
+                "必须选择一个满足基础条件的候选。": [0.96, 0.04, 0.0],
+            }
+        )
+
+        distance = compute_schema_distance(left, right, embedding_client=embedding_client)
+
+        self.assertLess(distance["axis_scores"]["C"], 0.5)
+        self.assertEqual(distance["backend"], "embedding")
+
+    def test_objective_count_shift_is_larger_than_small_description_rewrite(self) -> None:
+        base = make_schema(problem_id="BASE")
+        count_variant = make_schema(problem_id="COUNT", objective_type="count")
+        count_variant["objective"]["description"] = "统计所有合法方案数。"
+        rewrite_variant = make_schema(problem_id="REWRITE")
+        rewrite_variant["objective"]["description"] = "判断是否能找到任意合法方案。"
+
+        embedding_client = StubEmbeddingClient(
+            {
+                "判断是否存在合法方案。": [1.0, 0.0, 0.0],
+                "判断是否能找到任意合法方案。": [0.97, 0.03, 0.0],
+                "统计所有合法方案数。": [0.1, 0.95, 0.0],
+                "determine whether any valid solution exists": [1.0, 0.0, 0.0],
+                "count all valid solutions": [0.0, 1.0, 0.0],
+            }
+        )
+
+        count_distance = compute_schema_distance(base, count_variant, embedding_client=embedding_client)
+        rewrite_distance = compute_schema_distance(base, rewrite_variant, embedding_client=embedding_client)
+
+        self.assertGreater(count_distance["axis_scores"]["O"], rewrite_distance["axis_scores"]["O"])
+
+    def test_tree_to_graph_shift_is_smaller_than_array_to_graph(self) -> None:
+        base = make_schema(problem_id="BASE")
+        tree_variant = copy.deepcopy(base)
+        tree_variant["input_structure"]["type"] = "tree"
+        graph_variant = copy.deepcopy(base)
+        graph_variant["input_structure"]["type"] = "graph"
+
+        embedding_client = StubEmbeddingClient(
+            {
+                "array": [1.0, 0.0, 0.0],
+                "tree": [0.0, 1.0, 0.0],
+                "graph": [0.0, 0.85, 0.15],
+            }
+        )
+        tree_to_graph = compute_schema_distance(tree_variant, graph_variant, embedding_client=embedding_client)
+        array_to_graph = compute_schema_distance(base, graph_variant, embedding_client=embedding_client)
+
+        self.assertLess(tree_to_graph["axis_scores"]["I"], array_to_graph["axis_scores"]["I"])
+
+    def test_constraint_distance_increases_when_extra_core_constraint_is_added(self) -> None:
+        base = make_schema(problem_id="BASE")
+        one_extra = copy.deepcopy(base)
+        one_extra["core_constraints"]["constraints"].append(
+            {"name": "capacity_guard", "description": "总容量不能超过给定上界。"}
+        )
+        two_extra = copy.deepcopy(one_extra)
+        two_extra["core_constraints"]["constraints"].append(
+            {"name": "conflict_guard", "description": "任意冲突元素不能同时出现。"}
+        )
+
+        embedding_client = StubEmbeddingClient()
+        one_extra_distance = compute_schema_distance(base, one_extra, embedding_client=embedding_client)
+        two_extra_distance = compute_schema_distance(base, two_extra, embedding_client=embedding_client)
+
+        self.assertGreater(two_extra_distance["axis_scores"]["C"], one_extra_distance["axis_scores"]["C"])
+
+    def test_embedding_failure_falls_back_to_lexical_backend(self) -> None:
+        left = make_schema(problem_id="LEFT")
+        right = copy.deepcopy(left)
+        right["objective"]["description"] = "判断是否能找到任意合法方案。"
+
+        distance = compute_schema_distance(left, right, embedding_client=FailingEmbeddingClient())
+
+        self.assertEqual(distance["backend"], "lexical_fallback")
+        self.assertIn("axis_scores", distance)
+        self.assertIn("components", distance)
 
 
 class SingleSeedExtensionTests(unittest.TestCase):
@@ -661,7 +760,7 @@ class PipelineArtifactTests(unittest.TestCase):
             difference_plan=difference_plan,
             instantiated_schema_snapshot=instantiated_schema,
             predicted_schema_distance=0.44,
-            distance_breakdown={"I": 0.0, "C": 0.6, "O": 0.6, "V": 0.4, "total": 0.44},
+            distance_breakdown=make_distance_breakdown(i=0.0, c=0.6, o=0.6, v=0.4, total=0.44),
             changed_axes_realized=["C", "O", "V"],
             applied_rule="interlocked_constraints",
             rejected_candidates=[{"rule_id": "shared_core_objective_upgrade", "status": "difference_insufficient", "reason": "新目标退化为后处理。"}],
@@ -744,8 +843,13 @@ class PipelineArtifactTests(unittest.TestCase):
         self.assertEqual(artifact["generated_problem"]["status"], "ok")
         self.assertEqual(
             set(artifact["distance_breakdown"]),
-            {"I", "C", "O", "V", "total"},
+            {"distance_version", "backend", "total", "axis_scores", "components"},
         )
+        self.assertEqual(
+            set(artifact["distance_breakdown"]["axis_scores"]),
+            {"I", "C", "O", "V"},
+        )
+        self.assertIn("objective_text_distance", artifact["distance_breakdown"]["components"])
         for key in (
             "numerical_parameters",
             "structural_options",
@@ -815,6 +919,41 @@ class CliAndDocumentationTests(unittest.TestCase):
         self.assertIn("validate_problem", rules_doc)
 
 
+class StubEmbeddingClient:
+    def __init__(self, overrides: dict[str, list[float]] | None = None) -> None:
+        self.embedding_model = "stub-embedding-v1"
+        self.distance_cache_path = None
+        self.overrides = {_normalize_embedding_text(key): list(value) for key, value in dict(overrides or {}).items()}
+
+    def embed_texts(
+        self,
+        texts: list[str],
+        model: str | None = None,
+        dimensions: int | None = None,
+    ) -> list[list[float]]:
+        return [self._vector_for_text(text) for text in texts]
+
+    def _vector_for_text(self, text: str) -> list[float]:
+        normalized = _normalize_embedding_text(text)
+        if normalized in self.overrides:
+            return list(self.overrides[normalized])
+        return _toy_embedding(normalized)
+
+
+class FailingEmbeddingClient:
+    def __init__(self) -> None:
+        self.embedding_model = "failing-embedding-v1"
+        self.distance_cache_path = None
+
+    def embed_texts(
+        self,
+        texts: list[str],
+        model: str | None = None,
+        dimensions: int | None = None,
+    ) -> list[list[float]]:
+        raise RuntimeError("embedding service unavailable")
+
+
 class FakePlannerClient:
     def __init__(
         self,
@@ -830,6 +969,8 @@ class FakePlannerClient:
         self.plan_review_responses = copy.deepcopy(plan_review_responses or {})
         self.problem_review_responses = copy.deepcopy(problem_review_responses or {})
         self.calls: list[str] = []
+        self.embedding_model = "stub-embedding-v1"
+        self.distance_cache_path = None
 
     def chat_json(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> dict:
         if '"review_type": "eligibility"' in user_prompt:
@@ -874,6 +1015,14 @@ class FakePlannerClient:
                 self.calls.append(f"plan:{rule_id}")
                 return copy.deepcopy(payload)
         raise AssertionError(f"无法从 prompt 中匹配规则。prompt={user_prompt}")
+
+    def embed_texts(
+        self,
+        texts: list[str],
+        model: str | None = None,
+        dimensions: int | None = None,
+    ) -> list[list[float]]:
+        return [_toy_embedding(_normalize_embedding_text(text)) for text in texts]
 
 
 class FixedPlanPlanner:
@@ -1005,6 +1154,45 @@ def make_rule_review_payload(
 def _extract_rule_under_review_id(user_prompt: str) -> str:
     match = re.search(r'"rule_under_review"\s*:\s*{\s*"id"\s*:\s*"([^"]+)"', user_prompt, re.DOTALL)
     return match.group(1) if match else ""
+
+
+def _normalize_embedding_text(text: str) -> str:
+    return " ".join(str(text).strip().lower().split())
+
+
+def _toy_embedding(text: str) -> list[float]:
+    tokens = re.findall(r"[a-z0-9_]+|[\u4e00-\u9fff]+", text)
+    features = [
+        1.0 if any(token in {"decision", "判断", "存在", "合法"} for token in tokens) else 0.0,
+        1.0 if any(token in {"count", "统计", "counting"} for token in tokens) else 0.0,
+        1.0 if any(token in {"construct", "构造", "witness"} for token in tokens) else 0.0,
+        1.0 if any(token in {"minimize", "minimum", "最小", "保底"} for token in tokens) else 0.0,
+        1.0 if any(token in {"array", "数组"} for token in tokens) else 0.0,
+        1.0 if any(token in {"tree", "树"} for token in tokens) else 0.0,
+        1.0 if any(token in {"graph", "图"} for token in tokens) else 0.0,
+        1.0 if any(token in {"constraint", "约束", "义务"} for token in tokens) else 0.0,
+        1.0 if any(token in {"invariant", "不变量"} for token in tokens) else 0.0,
+        ((sum(ord(char) for char in text) % 17) + 1) / 100.0,
+        ((len(text) % 13) + 1) / 100.0,
+    ]
+    norm = sum(value * value for value in features) ** 0.5 or 1.0
+    return [value / norm for value in features]
+
+
+def make_distance_breakdown(*, i: float, c: float, o: float, v: float, total: float, backend: str = "embedding") -> dict:
+    return {
+        "distance_version": "v2",
+        "backend": backend,
+        "total": total,
+        "axis_scores": {"I": i, "C": c, "O": o, "V": v},
+        "components": {
+            "input_tree_distance": i,
+            "constraint_match_distance": c,
+            "objective_type_distance": o,
+            "objective_text_distance": o,
+            "invariant_match_distance": v,
+        },
+    }
 
 
 def make_single_payload(rule_id: str) -> dict:
@@ -1210,7 +1398,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         ),
         instantiated_schema_snapshot=instantiated_schema,
         predicted_schema_distance=0.45,
-        distance_breakdown={"I": 0.0, "C": 0.5, "O": 0.8, "V": 0.4, "total": 0.45},
+        distance_breakdown=make_distance_breakdown(i=0.0, c=0.5, o=0.8, v=0.4, total=0.45),
         changed_axes_realized=["C", "O", "V"],
         applied_rule=rule_id,
         algorithmic_delta_claim={

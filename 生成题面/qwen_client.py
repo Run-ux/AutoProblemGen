@@ -4,19 +4,32 @@ import json
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
+
+from config import DEFAULT_DISTANCE_CACHE_DIR, DEFAULT_EMBEDDING_MODEL
 
 
 class QwenClient:
-    def __init__(self, api_key: str, model: str, base_url: str, timeout_s: int = 180):
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        base_url: str,
+        timeout_s: int = 180,
+        embedding_model: str = DEFAULT_EMBEDDING_MODEL,
+        distance_cache_path: Path | None = None,
+    ):
         if not api_key:
             raise RuntimeError(
                 "缺少 API Key，请在生成题面/.env 中设置 DASHSCOPE_API_KEY 或 QWEN_API_KEY。"
             )
         self.api_key = api_key
         self.model = model
+        self.embedding_model = embedding_model
         self.base_url = base_url.rstrip("/")
         self.timeout_s = timeout_s
+        self.distance_cache_path = distance_cache_path or (DEFAULT_DISTANCE_CACHE_DIR / "schema_distance_embeddings.json")
 
     def chat_json(
         self,
@@ -26,10 +39,6 @@ class QwenClient:
         max_retries: int = 3,
     ) -> dict[str, Any]:
         url = f"{self.base_url}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
         payload = {
             "model": self.model,
             "messages": [
@@ -38,6 +47,58 @@ class QwenClient:
             ],
             "temperature": temperature,
             "response_format": {"type": "json_object"},
+        }
+        raw = self._post_json(url=url, payload=payload, max_retries=max_retries)
+        content = json.loads(raw)["choices"][0]["message"]["content"]
+        return _extract_json_object(content)
+
+    def embed_texts(
+        self,
+        texts: list[str],
+        model: str | None = None,
+        dimensions: int | None = None,
+        max_retries: int = 3,
+    ) -> list[list[float]]:
+        if not texts:
+            return []
+
+        payload: dict[str, Any] = {
+            "model": model or self.embedding_model,
+            "input": texts,
+        }
+        if dimensions is not None:
+            payload["dimensions"] = dimensions
+
+        url = f"{self.base_url}/embeddings"
+        raw = self._post_json(url=url, payload=payload, max_retries=max_retries)
+        data = json.loads(raw).get("data", [])
+        if not isinstance(data, list):
+            raise RuntimeError("Embedding 接口返回结构异常，缺少 data 列表。")
+
+        ordered: list[tuple[int, list[float]]] = []
+        for index, item in enumerate(data):
+            if not isinstance(item, dict) or not isinstance(item.get("embedding"), list):
+                raise RuntimeError("Embedding 接口返回结构异常，缺少 embedding 向量。")
+            raw_index = item.get("index")
+            vector_index = raw_index if isinstance(raw_index, int) else index
+            ordered.append((vector_index, [float(value) for value in item["embedding"]]))
+
+        ordered.sort(key=lambda item: item[0])
+        vectors = [vector for _, vector in ordered]
+        if len(vectors) != len(texts):
+            raise RuntimeError("Embedding 返回数量与请求文本数量不一致。")
+        return vectors
+
+    def _post_json(
+        self,
+        *,
+        url: str,
+        payload: dict[str, Any],
+        max_retries: int,
+    ) -> str:
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
         }
 
         last_error: Exception | None = None
@@ -50,9 +111,7 @@ class QwenClient:
                     method="POST",
                 )
                 with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    raw = response.read().decode("utf-8")
-                content = json.loads(raw)["choices"][0]["message"]["content"]
-                return _extract_json_object(content)
+                    return response.read().decode("utf-8")
             except (urllib.error.URLError, urllib.error.HTTPError, KeyError, ValueError) as exc:
                 last_error = exc
                 time.sleep(1.5 * attempt)

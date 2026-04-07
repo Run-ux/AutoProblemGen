@@ -546,8 +546,13 @@ class VariantPlanner:
             )
             return False, {}, "instantiated_schema 缺失或结构不完整。", _serialize_events(trace), "schema_incomplete"
 
-        distance = compute_schema_distance(source_schema, instantiated_schema)
-        changed_axes = compute_changed_axes(source_schema, instantiated_schema)
+        distance = compute_schema_distance(source_schema, instantiated_schema, embedding_client=self.client)
+        changed_axes = compute_changed_axes(
+            source_schema,
+            instantiated_schema,
+            embedding_client=self.client,
+            distance=distance,
+        )
         declared_axes = {str(item) for item in payload.get("difference_plan", {}).get("changed_axes", []) if str(item).strip()}
         if declared_axes and declared_axes != set(changed_axes):
             trace.append(
@@ -724,7 +729,19 @@ class VariantPlanner:
                 difference_plan=difference_plan,
                 instantiated_schema_snapshot=fallback_schema,
                 predicted_schema_distance=0.0,
-                distance_breakdown={"I": 0.0, "C": 0.0, "O": 0.0, "V": 0.0, "total": 0.0},
+                distance_breakdown={
+                    "distance_version": "v2",
+                    "backend": "lexical_fallback",
+                    "total": 0.0,
+                    "axis_scores": {"I": 0.0, "C": 0.0, "O": 0.0, "V": 0.0},
+                    "components": {
+                        "input_tree_distance": 0.0,
+                        "constraint_match_distance": 0.0,
+                        "objective_type_distance": 0.0,
+                        "objective_text_distance": 0.0,
+                        "invariant_match_distance": 0.0,
+                    },
+                },
                 changed_axes_realized=[],
                 applied_rule=applied_rule,
                 rejected_candidates=rejected_candidates,

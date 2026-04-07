@@ -20,6 +20,7 @@ DEFAULT_PREPARED_SCHEMA_DIR = BASE_DIR / "prepared_schemas"
 DEFAULT_RULE_FILE = BASE_DIR / "planning_rules.json"
 
 DEFAULT_MODEL = get_env_value("QWEN_MODEL", "qwen3.5-plus")
+DEFAULT_EMBEDDING_MODEL = get_env_value("QWEN_EMBEDDING_MODEL", "text-embedding-v4")
 DEFAULT_BASE_URL = get_env_value(
     "QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
@@ -27,3 +28,4 @@ DEFAULT_API_KEY = get_env_value("QWEN_API_KEY") or get_env_value("DASHSCOPE_API_
 
 DEFAULT_VARIANTS = 1
 DEFAULT_TEMPERATURE = 0.2
+DEFAULT_DISTANCE_CACHE_DIR = BASE_DIR / ".cache"

@@ -358,9 +358,7 @@ class GenerationPipeline:
             f"- predicted_schema_distance: {plan.predicted_schema_distance}",
             "- changed_axes_realized: " + (", ".join(plan.changed_axes_realized) or "无"),
             "- distance_breakdown: "
-            + ", ".join(
-                f"{name}={value}" for name, value in _normalize_distance_breakdown(plan.distance_breakdown).items()
-            ),
+            + json.dumps(_normalize_distance_breakdown(plan.distance_breakdown), ensure_ascii=False),
             f"- difference_plan_summary: {plan.difference_plan.summary or '无'}",
             f"- difference_plan_rationale: {plan.difference_plan.rationale or '无'}",
         ]
@@ -619,15 +617,35 @@ def _canonical_mode(mode: str) -> str:
     return normalize_mode_name(mode)
 
 
-def _normalize_distance_breakdown(distance_breakdown: dict[str, float]) -> dict[str, float]:
-    normalized = {
-        "I": round(float(distance_breakdown.get("I", 0.0)), 4),
-        "C": round(float(distance_breakdown.get("C", 0.0)), 4),
-        "O": round(float(distance_breakdown.get("O", 0.0)), 4),
-        "V": round(float(distance_breakdown.get("V", 0.0)), 4),
+def _normalize_distance_breakdown(distance_breakdown: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(distance_breakdown, dict):
+        return {
+            "distance_version": "v2",
+            "backend": "lexical_fallback",
+            "total": 0.0,
+            "axis_scores": {"I": 0.0, "C": 0.0, "O": 0.0, "V": 0.0},
+            "components": {
+                "input_tree_distance": 0.0,
+                "constraint_match_distance": 0.0,
+                "objective_type_distance": 0.0,
+                "objective_text_distance": 0.0,
+                "invariant_match_distance": 0.0,
+            },
+        }
+
+    return {
+        "distance_version": str(distance_breakdown.get("distance_version", "v2")),
+        "backend": str(distance_breakdown.get("backend", "lexical_fallback")),
         "total": round(float(distance_breakdown.get("total", 0.0)), 4),
+        "axis_scores": {
+            axis: round(float(distance_breakdown.get("axis_scores", {}).get(axis, 0.0)), 4)
+            for axis in ("I", "C", "O", "V")
+        },
+        "components": {
+            key: round(float(value), 4)
+            for key, value in dict(distance_breakdown.get("components", {})).items()
+        },
     }
-    return normalized
 
 
 def _slugify(text: str) -> str:

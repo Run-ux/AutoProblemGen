@@ -7,6 +7,7 @@ from config import (
     DEFAULT_API_KEY,
     DEFAULT_ARTIFACT_DIR,
     DEFAULT_BASE_URL,
+    DEFAULT_EMBEDDING_MODEL,
     DEFAULT_MODEL,
     DEFAULT_OUTPUT_DIR,
     DEFAULT_PREPARED_SCHEMA_DIR,
@@ -67,6 +68,7 @@ def main() -> None:
         api_key=DEFAULT_API_KEY,
         model=DEFAULT_MODEL,
         base_url=DEFAULT_BASE_URL,
+        embedding_model=DEFAULT_EMBEDDING_MODEL,
     )
     rulebook = RuleBook.load(args.rule_file)
 

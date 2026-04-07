@@ -84,7 +84,7 @@ class VariantPlan:
     difference_plan: DifferencePlan
     instantiated_schema_snapshot: InstantiatedSchema
     predicted_schema_distance: float
-    distance_breakdown: dict[str, float]
+    distance_breakdown: dict[str, Any]
     changed_axes_realized: list[str]
     applied_rule: str
     rejected_candidates: list[dict[str, Any]] = field(default_factory=list)

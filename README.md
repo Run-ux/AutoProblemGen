@@ -219,7 +219,7 @@ phase1 的标签集合
 这个目录的方案思想有三个关键点：
 
 1. 创新来源是规则选择加 planner，并把变化直接落实到实例化四元组。
-2. 差异控制只计算四轴距离 `I/C/O/V`，artifact 会显式记录 `distance_breakdown`、`changed_axes_realized` 与 `difference_plan`。
+2. 差异控制仍围绕四轴 `I/C/O/V` 展开，但 `distance_breakdown` 已升级为结构化距离：顶层包含 `distance_version`、`backend`、`total`、`axis_scores`、`components`，artifact 会继续显式记录 `changed_axes_realized` 与 `difference_plan`。
 3. artifact 还会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_selection_reason`、`rejected_candidates`、`algorithmic_delta_claim`，以及 `rule_version`、`selection_trace`、`validation_trace`、`candidate_attempts`。
 
 因此它不是一个“让模型编题”的脚本，而是一个“规则驱动的四元组生成管线”。
