@@ -5,12 +5,12 @@
   "result": {
     "invariants": [
       {
-        "name": "max_gap",
-        "description": "最小可行跳跃距离由字符串中最长连续 'L' 段的长度唯一决定。由于 'L' 位置只能向左跳跃,无法作为向右推进的有效落脚点,青蛙必须从上一个 'R'（或起点）直接跨越到下一个 'R'（或终点）。因此,任意两个相邻有效落脚点之间的最大间隔构成了跳跃上限 d 的硬性下界。算法通过按 'R' 分割字符串并取最大片段长度加 1,直接计算该瓶颈值。",
+        "name": "max_gap_constraint",
+        "description": "青蛙向右推进时只能以 'R' 字符位置（含起点 0 与终点 n+1）作为有效落脚点,连续的 'L' 区域无法提供向右的支撑。因此,任意可行跳跃方案必须单次跨越所有连续 'L' 段,最小跳跃距离 d 严格由最长连续 'L' 段的长度加 1 决定。该最大间隙性质在字符串结构中稳定存在,并直接约束全局最优解。",
         "properties": {
-          "gap_definition": "consecutive_L_segments_between_R_or_boundaries",
-          "feasibility_threshold": "d = max_gap_length + 1",
-          "computation_method": "split_on_R_and_max_length"
+          "safe_landing_positions": "起点 0、所有 'R' 索引、终点 n+1",
+          "gap_definition": "相邻安全落脚点之间连续 'L' 字符的数量",
+          "bottleneck_rule": "最小可行 d 等于所有 gap 的最大值加 1"
         },
         "evidence_source": "solution_code"
       }

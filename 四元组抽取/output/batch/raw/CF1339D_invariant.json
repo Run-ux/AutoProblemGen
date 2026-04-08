@@ -6,20 +6,19 @@
     "invariants": [
       {
         "name": "equivalence_class",
-        "description": "叶子节点根据到任意非叶根节点的路径长度奇偶性被严格划分为两个等价类。算法在遍历过程中稳定维护该奇偶分类的计数状态,若两类均存在叶子,则任意两叶子间路径长度奇偶性不同,导致无法仅用单一权值满足异或为零条件,从而确定最小不同权值数下界为3；否则为1。",
+        "description": "叶子节点到根节点的路径深度奇偶性构成稳定的划分依据。该奇偶类决定了全局边权能否统一赋值为单一值以满足任意叶子对路径异或为零的条件；若叶子跨越两个奇偶类,则最小不同权值数被严格约束为三。",
         "properties": {
-          "partition_basis": "path_length_parity",
-          "decision_condition": "both_classes_nonempty"
+          "partition_basis": "depth_parity_mod_2",
+          "decision_threshold": "single_class_implies_1_else_3"
         },
         "evidence_source": "solution_code"
       },
       {
-        "name": "additivity",
-        "description": "最大不同权值数的求解可分解为各节点局部约束贡献的独立累加。初始将总边数视为理论最大值,对于任意节点,若其拥有多个直接相连的叶子子节点,则这些边必须赋予相同权值以满足对应叶子路径异或为零的约束。该约束导致的权值种类减少量在整棵树上具有可加性,算法通过遍历累减局部冗余得到全局上界。",
+        "name": "mergeability",
+        "description": "共享同一父节点的多个叶子边在异或路径约束下具备可合并性。将这些边分配相同权值不会破坏全局叶子对路径异或条件,且能通过固定规则稳定减少不同权值总数,算法在遍历过程中局部统计并累加该合并收益。",
         "properties": {
-          "local_constraint": "sibling_leaf_edges_equality",
-          "reduction_formula": "leaf_child_count_minus_one",
-          "aggregation_type": "global_sum_of_local_reductions"
+          "merge_scope": "sibling_leaf_edges",
+          "reduction_rule": "decrement_by_k_minus_1"
         },
         "evidence_source": "solution_code"
       }

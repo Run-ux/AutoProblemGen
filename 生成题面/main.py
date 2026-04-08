@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import json
+import sys
 from pathlib import Path
 
 from config import (
@@ -62,8 +64,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    _emit_progress("[main] 开始校验命令行参数。")
     _validate_args(parser, args)
+    target_problem_ids = _target_problem_ids(args)
+    batch_source_dir = Path(args.source_dir) if _is_batch_run(args) else None
+    _emit_progress(
+        f"[main] 参数校验完成；mode={args.mode}；target_problem_count={len(target_problem_ids)}。"
+    )
 
+    _emit_progress("[main] 初始化模型客户端与规则文件。")
     client = QwenClient(
         api_key=DEFAULT_API_KEY,
         model=DEFAULT_MODEL,
@@ -72,12 +81,14 @@ def main() -> None:
     )
     rulebook = RuleBook.load(args.rule_file)
 
+    _emit_progress("[main] 开始归一化 schema。")
     prepared_source_dir = SchemaPreparer(
         source_dir=Path(args.source_dir),
         cache_dir=Path(args.prepared_schema_dir),
     ).prepare(
-        problem_ids=_target_problem_ids(args),
+        problem_ids=target_problem_ids,
     )
+    _emit_progress(f"[main] schema 归一化完成；prepared_dir={prepared_source_dir}")
 
     pipeline = GenerationPipeline(
         raw_source_dir=Path(args.source_dir),
@@ -87,23 +98,32 @@ def main() -> None:
         report_dir=Path(args.report_dir),
         generator=ProblemGenerator(client=client, temperature=args.temperature),
         planner=VariantPlanner(client=client, rulebook=rulebook, seed=args.seed),
+        progress_writer=_emit_progress,
     )
 
+    _emit_progress("[main] 进入生成流水线。")
     pipeline.run(
         mode=args.mode,
-        problem_ids=args.problem_ids,
+        problem_ids=target_problem_ids,
         variants=args.variants,
         theme_id=args.theme,
         seed_a=args.seed_a,
         seed_b=args.seed_b,
         allowed_rule_ids=_normalize_rule_overrides(args.rule_override),
+        batch_source_dir=batch_source_dir,
     )
+    _emit_progress("[main] 流水线执行完成。")
 
 
 def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
     if args.mode == "single":
         if args.seed_a or args.seed_b:
             parser.error("single 模式不接受 --seed-a 或 --seed-b。")
+        if _is_batch_run(args):
+            try:
+                _load_batch_problem_ids(Path(args.source_dir))
+            except ValueError as exc:
+                parser.error(str(exc))
         return
 
     if not args.seed_a or not args.seed_b:
@@ -115,7 +135,49 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
 def _target_problem_ids(args: argparse.Namespace) -> list[str]:
     if args.mode == "same_family":
         return [str(args.seed_a), str(args.seed_b)]
-    return list(args.problem_ids)
+    return _resolve_single_problem_ids(Path(args.source_dir), list(args.problem_ids))
+
+
+def _is_batch_run(args: argparse.Namespace) -> bool:
+    return args.mode == "single" and not args.problem_ids
+
+
+def _resolve_single_problem_ids(source_dir: Path, explicit_problem_ids: list[str]) -> list[str]:
+    if explicit_problem_ids:
+        return list(explicit_problem_ids)
+    return _load_batch_problem_ids(source_dir)
+
+
+def _load_batch_problem_ids(source_dir: Path) -> list[str]:
+    if not source_dir.exists():
+        raise ValueError(f"批量模式下 source-dir 不存在：{source_dir}")
+    if not source_dir.is_dir():
+        raise ValueError(f"批量模式下 source-dir 不是目录：{source_dir}")
+
+    schema_paths = sorted(source_dir.glob("*.json"))
+    if not schema_paths:
+        raise ValueError(f"批量模式下 source-dir 中没有 schema 文件：{source_dir}")
+
+    problem_ids: list[str] = []
+    for path in schema_paths:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"批量模式读取 schema 失败：{path}；{exc.msg}") from exc
+
+        if not isinstance(payload, dict):
+            raise ValueError(f"批量模式要求 schema 顶层是 JSON 对象：{path}")
+
+        problem_id = str(payload.get("problem_id", "")).strip()
+        if not problem_id:
+            raise ValueError(f"批量模式要求每个 schema 文件显式提供 problem_id：{path}")
+        if problem_id != path.stem:
+            raise ValueError(
+                "批量模式要求 schema 的 problem_id 与文件名一致："
+                f"{path}；文件名={path.stem}；problem_id={problem_id}"
+            )
+        problem_ids.append(problem_id)
+    return problem_ids
 
 
 def _normalize_rule_overrides(values: list[str]) -> set[str] | None:
@@ -126,6 +188,19 @@ def _normalize_rule_overrides(values: list[str]) -> set[str] | None:
             if token and token not in normalized:
                 normalized.append(token)
     return set(normalized) if normalized else None
+
+
+def _emit_progress(message: str) -> None:
+    text = f"{message}\n"
+    stream = sys.stdout
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    buffer = getattr(stream, "buffer", None)
+    if buffer is not None:
+        buffer.write(text.encode(encoding, errors="replace"))
+        buffer.flush()
+        return
+    stream.write(text.encode(encoding, errors="replace").decode(encoding, errors="replace"))
+    stream.flush()
 
 
 if __name__ == "__main__":

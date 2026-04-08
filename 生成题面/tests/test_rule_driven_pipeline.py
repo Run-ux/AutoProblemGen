@@ -14,7 +14,7 @@ GEN_DIR = ROOT / "生成题面"
 if str(GEN_DIR) not in sys.path:
     sys.path.insert(0, str(GEN_DIR))
 
-from main import _normalize_rule_overrides, _validate_args, build_parser
+from main import _load_batch_problem_ids, _normalize_rule_overrides, _target_problem_ids, _validate_args, build_parser
 from models import DifferencePlan, GeneratedProblem, InstantiatedSchema, Theme, VariantPlan
 from pipeline import GenerationPipeline
 from problem_generator import ProblemGenerator
@@ -1121,6 +1121,146 @@ class PipelineArtifactTests(unittest.TestCase):
             self.assertNotIn(key, report_text)
 
 
+class BatchPipelineTests(unittest.TestCase):
+    def test_single_run_emits_progress_messages(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            source_dir = temp / "schemas"
+            output_dir = temp / "output"
+            artifact_dir = temp / "artifacts"
+            report_dir = temp / "reports"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "A.json").write_text(
+                json.dumps(make_schema(problem_id="A"), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            messages: list[str] = []
+
+            pipeline = GenerationPipeline(
+                raw_source_dir=source_dir,
+                source_dir=source_dir,
+                output_dir=output_dir,
+                artifact_dir=artifact_dir,
+                report_dir=report_dir,
+                generator=FakeGenerator(),
+                planner=ProblemAwarePlanner(),
+                problem_repository=FakeProblemRepository(),
+                progress_writer=messages.append,
+            )
+            pipeline.run(
+                mode="single",
+                problem_ids=["A"],
+                variants=1,
+                theme_id="campus_ops",
+            )
+
+        joined = "\n".join(messages)
+        self.assertIn("[single] 开始生成", joined)
+        self.assertIn("[problem] A：读取 schema 与原题信息。", joined)
+        self.assertIn("[problem] A：variant 1 进入规划。", joined)
+        self.assertIn("[problem] A：variant 1 进入题面生成。", joined)
+        self.assertIn("[problem] A：variant 1 写入产物。", joined)
+        self.assertIn("[problem] A：完成。report=", joined)
+
+    def test_batch_single_run_writes_summary_outputs_in_sorted_order(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            source_dir = temp / "schemas"
+            output_dir = temp / "output"
+            artifact_dir = temp / "artifacts"
+            report_dir = temp / "reports"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            for problem_id in ("B", "A"):
+                (source_dir / f"{problem_id}.json").write_text(
+                    json.dumps(make_schema(problem_id=problem_id), ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+
+            pipeline = GenerationPipeline(
+                raw_source_dir=source_dir,
+                source_dir=source_dir,
+                output_dir=output_dir,
+                artifact_dir=artifact_dir,
+                report_dir=report_dir,
+                generator=FakeGenerator(),
+                planner=ProblemAwarePlanner(),
+                problem_repository=FakeProblemRepository(),
+            )
+            records = pipeline.run(
+                mode="single",
+                problem_ids=["A", "B"],
+                variants=1,
+                theme_id="campus_ops",
+                batch_source_dir=source_dir,
+            )
+
+            batch_artifacts = sorted(artifact_dir.glob("batch_*.json"))
+            batch_reports = sorted(report_dir.glob("batch_*.md"))
+            self.assertEqual(len(batch_artifacts), 1)
+            self.assertEqual(len(batch_reports), 1)
+            batch_payload = json.loads(batch_artifacts[0].read_text(encoding="utf-8"))
+            batch_report_text = batch_reports[0].read_text(encoding="utf-8")
+            for record in records:
+                self.assertIn("batch_artifact_path", record)
+                self.assertIn("batch_report_path", record)
+                self.assertTrue(Path(record["batch_artifact_path"]).exists())
+                self.assertTrue(Path(record["batch_report_path"]).exists())
+
+        self.assertEqual(batch_payload["status"], "completed")
+        self.assertEqual(batch_payload["task_order"], ["A", "B"])
+        self.assertEqual(batch_payload["completed_count"], 2)
+        self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B"])
+        self.assertIn("### 1. A", batch_report_text)
+        self.assertIn("### 2. B", batch_report_text)
+
+    def test_batch_single_run_stops_on_first_failure_and_persists_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            source_dir = temp / "schemas"
+            output_dir = temp / "output"
+            artifact_dir = temp / "artifacts"
+            report_dir = temp / "reports"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            for problem_id in ("A", "B", "C"):
+                (source_dir / f"{problem_id}.json").write_text(
+                    json.dumps(make_schema(problem_id=problem_id), ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+
+            pipeline = GenerationPipeline(
+                raw_source_dir=source_dir,
+                source_dir=source_dir,
+                output_dir=output_dir,
+                artifact_dir=artifact_dir,
+                report_dir=report_dir,
+                generator=FailingOnProblemGenerator(fail_problem_id="B"),
+                planner=ProblemAwarePlanner(),
+                problem_repository=FakeProblemRepository(),
+            )
+            with self.assertRaisesRegex(RuntimeError, "B 生成失败"):
+                pipeline.run(
+                    mode="single",
+                    problem_ids=["A", "B", "C"],
+                    variants=1,
+                    theme_id="campus_ops",
+                    batch_source_dir=source_dir,
+                )
+
+            batch_artifacts = sorted(artifact_dir.glob("batch_*.json"))
+            batch_reports = sorted(report_dir.glob("batch_*.md"))
+            self.assertEqual(len(batch_artifacts), 1)
+            self.assertEqual(len(batch_reports), 1)
+            batch_payload = json.loads(batch_artifacts[0].read_text(encoding="utf-8"))
+            markdown_paths = sorted(path.name for path in output_dir.glob("*.md"))
+
+        self.assertEqual(batch_payload["status"], "failed")
+        self.assertEqual(batch_payload["completed_count"], 1)
+        self.assertEqual(batch_payload["failed_problem_id"], "B")
+        self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B"])
+        self.assertEqual(len(markdown_paths), 1)
+        self.assertTrue(markdown_paths[0].startswith("A_v1_campus_ops_"))
+
+
 class CliAndDocumentationTests(unittest.TestCase):
     def test_cli_supports_single_and_same_family_with_rule_override(self) -> None:
         parser = build_parser()
@@ -1150,6 +1290,54 @@ class CliAndDocumentationTests(unittest.TestCase):
             {"interlocked_constraints", "shared_core_objective_upgrade"},
         )
 
+    def test_batch_source_dir_resolves_sorted_problem_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            source_dir = Path(tempdir) / "schemas"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            for problem_id in ("B", "A"):
+                (source_dir / f"{problem_id}.json").write_text(
+                    json.dumps(make_schema(problem_id=problem_id), ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+
+            args = build_parser().parse_args(["--mode", "single", "--source-dir", str(source_dir)])
+            self.assertEqual(_load_batch_problem_ids(source_dir), ["A", "B"])
+            self.assertEqual(_target_problem_ids(args), ["A", "B"])
+
+    def test_batch_source_dir_rejects_empty_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            source_dir = Path(tempdir) / "schemas"
+            source_dir.mkdir(parents=True, exist_ok=True)
+
+            with self.assertRaisesRegex(ValueError, "没有 schema 文件"):
+                _load_batch_problem_ids(source_dir)
+
+    def test_batch_source_dir_rejects_problem_id_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            source_dir = Path(tempdir) / "schemas"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "A.json").write_text(
+                json.dumps(make_schema(problem_id="WRONG"), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "problem_id 与文件名一致"):
+                _load_batch_problem_ids(source_dir)
+
+    def test_batch_source_dir_rejects_missing_problem_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            source_dir = Path(tempdir) / "schemas"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            payload = make_schema(problem_id="A")
+            payload.pop("problem_id")
+            (source_dir / "A.json").write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "显式提供 problem_id"):
+                _load_batch_problem_ids(source_dir)
+
     def test_readmes_describe_rule_driven_four_tuple_flow(self) -> None:
         generator_readme = (GEN_DIR / "README.md").read_text(encoding="utf-8")
         rules_doc = (GEN_DIR / "RULES.md").read_text(encoding="utf-8")
@@ -1161,6 +1349,7 @@ class CliAndDocumentationTests(unittest.TestCase):
             self.assertIn("single_seed_extension", text)
             self.assertIn("same_family_fusion", text)
             self.assertIn("selection_trace", text)
+            self.assertIn("batch_", text)
             self.assertNotIn("distance_breakdown.T", text)
         self.assertNotIn("transform_space", generator_readme)
         self.assertNotIn("instantiated_parameters", generator_readme)
@@ -1303,6 +1492,17 @@ class FakeGenerator:
         )
 
 
+class FailingOnProblemGenerator(FakeGenerator):
+    def __init__(self, fail_problem_id: str) -> None:
+        self.fail_problem_id = fail_problem_id
+
+    def generate(self, schema_context: dict, plan: VariantPlan, original_problems: list[dict] | None = None) -> GeneratedProblem:
+        current_problem_id = str(schema_context.get("seed_schema", {}).get("problem_id", ""))
+        if current_problem_id == self.fail_problem_id:
+            raise RuntimeError(f"{current_problem_id} 生成失败")
+        return super().generate(schema_context, plan, original_problems)
+
+
 class FakeProblemRepository:
     def get_problem(self, source: str, problem_id: str) -> dict:
         return {
@@ -1316,6 +1516,20 @@ class FakeProblemRepository:
             "tags": ["dp"],
             "difficulty": "Medium",
         }
+
+
+class ProblemAwarePlanner:
+    def build_plan(self, **kwargs: dict) -> VariantPlan:
+        prepared_schema = dict(kwargs.get("prepared_schema", {}))
+        source_problem_id = str(prepared_schema.get("problem_id", "unknown"))
+        variant_index = int(kwargs.get("variant_index", 1))
+        plan = copy.deepcopy(make_validation_plan("canonical_witness"))
+        plan.problem_id = f"{source_problem_id}_GEN"
+        plan.variant_index = variant_index
+        plan.source_problem_ids = [source_problem_id]
+        plan.instantiated_schema_snapshot.problem_id = f"{source_problem_id}_GEN"
+        plan.seed = 20260409
+        return plan
 
 
 def _extract_readme_section(text: str, start_marker: str, end_marker: str) -> str:

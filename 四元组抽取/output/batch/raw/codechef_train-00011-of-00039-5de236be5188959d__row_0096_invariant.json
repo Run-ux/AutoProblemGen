@@ -5,22 +5,20 @@
   "result": {
     "invariants": [
       {
-        "name": "monotonicity",
-        "description": "算法使用双指针分别维护当前值域中的最小值与最大值位置。模拟过程中左指针单调递增、右指针单调递减,两者单向收敛至目标均值,确保值域扫描无回溯且过程必然终止。",
+        "name": "conservation",
+        "description": "The total sum of values across all elements remains strictly constant throughout the redistribution process. Each operation transfers a quantity between the current maximum and minimum elements while preserving their pairwise sum. This invariant is used to verify initial feasibility and guarantees that the process converges to a uniform distribution if the total sum is divisible by the count.",
         "properties": {
-          "left_ptr_non_decreasing": true,
-          "right_ptr_non_increasing": true,
-          "convergence_to_mean": true
+          "global_sum_constant": true,
+          "pairwise_sum_preservation": true
         },
-        "evidence_source": "solution_code"
+        "evidence_source": "both"
       },
       {
-        "name": "conservation",
-        "description": "整个变换过程严格保持元素总和守恒。算法通过初始整除性检查判定可行性,并在每次状态转移中维持移出与移入数量相等,使得全局总量不变,最终所有元素必然汇聚于算术平均值。",
+        "name": "monotonicity",
+        "description": "The pointers tracking the current minimum and maximum values in the frequency representation move strictly inward without backtracking. The minimum index only increments and the maximum index only decrements, ensuring that each value bucket is processed at most once as an extremum and enabling efficient simulation.",
         "properties": {
-          "global_sum_invariant": true,
-          "step_net_change_zero": true,
-          "feasibility_check": "sum_mod_n_equals_zero"
+          "min_index_monotonic_increase": true,
+          "max_index_monotonic_decrease": true
         },
         "evidence_source": "solution_code"
       }

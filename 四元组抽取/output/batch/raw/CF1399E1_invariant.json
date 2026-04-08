@@ -6,11 +6,19 @@
     "invariants": [
       {
         "name": "additivity",
-        "description": "根到所有叶子的路径权重总和可严格分解为每条边的权重与其子树叶子数量的乘积之和。每次除以2的操作对总和的削减量仅由该边当前权重和固定的叶子覆盖数决定,各边贡献相互独立且可线性累加,使得全局最优操作序列可通过持续选取当前最大边际削减量贪心累积得到。",
+        "description": "全局路径权重总和可严格分解为各边权重与其覆盖叶子数量乘积的累加和。算法通过独立维护每条边的贡献值,并在每次操作后仅扣除该边的边际收益来更新全局总和,避免重复计算。",
         "properties": {
-          "objective_decomposition": "total_path_sum = Σ_{e∈E} (weight_e * leaf_count_e)",
-          "independent_marginal_gain": "reduction_e = (weight_e - floor(weight_e / 2)) * leaf_count_e",
-          "cumulative_update": "current_sum = initial_sum - Σ(selected_reductions)"
+          "cost_decomposition": "total_cost = Σ (unit_weight * coverage_count)",
+          "delta_update": "total_cost -= current_reduction"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "exchange_argument",
+        "description": "贪心策略的正确性建立在局部决策的可替换性上:任意时刻选择当前边际收益最大的候选项执行操作,其结果不会劣于选择其他候选项,次优决策可通过交换操作顺序融入最优解序列而不破坏全局最优性。",
+        "properties": {
+          "priority_criterion": "select_maximum_immediate_reduction",
+          "sequence_exchangeability": "operation_order_by_reduction_preserves_optimality"
         },
         "evidence_source": "solution_code"
       }

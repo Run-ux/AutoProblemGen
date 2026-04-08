@@ -6,20 +6,28 @@
     "invariants": [
       {
         "name": "additivity",
-        "description": "根到所有叶子路径的总权重缩减量严格等于各次独立减半操作所贡献缩减量的代数和。该可加性使得所有潜在操作收益可被独立计算、按代价分类收集,并通过前缀和累加快速评估任意操作组合的总缩减效果。",
+        "description": "目标函数（根到所有叶子路径权值和）的总减少量等于各次边权减半操作所产生减少量的线性累加。该性质允许将全局达标条件拆解为两类不同代价操作的独立贡献之和,从而支持枚举一类操作数量并组合验证另一类的策略。",
         "properties": {
-          "reduction_decomposable": true,
-          "prefix_sum_cumulative": true
+          "contribution_independence": true,
+          "linear_sum_feasibility": true
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "exchange_argument",
+        "description": "在固定某类代价（1或2）的操作次数时,最优解必然由该代价下所有可能操作中单次减少量最大的若干个组成。同代价下将已选较小减少量替换为未选较大减少量可严格提升总收益且不改变总代价,故按降序选取构成稳定最优子集。",
+        "properties": {
+          "optimal_subset_by_magnitude": true,
+          "same_cost_swap_validity": true
         },
         "evidence_source": "solution_code"
       },
       {
         "name": "monotonicity",
-        "description": "单条边连续执行减半操作的单次收益随操作次数增加单调不增；按收益降序排列后的前缀和序列严格单调递增。算法依赖该单调性质,利用双指针单向推进即可在枚举一类操作次数时,快速确定满足总缩减阈值所需的另一类操作最小次数。",
+        "description": "两类操作的累计减少量前缀和均随操作次数单调不减。由此导出满足目标减少量所需的最小第二类操作数量随第一类操作数量增加而单调不增,该单调关系支撑双指针单向推进扫描的正确性与线性复杂度。",
         "properties": {
-          "single_edge_gain_non_increasing": true,
-          "cumulative_gain_monotonic": true,
-          "two_pointer_unidirectional": true
+          "prefix_sum_non_decreasing": true,
+          "feasible_boundary_monotone": true
         },
         "evidence_source": "solution_code"
       }

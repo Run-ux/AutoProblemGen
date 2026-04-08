@@ -6,14 +6,20 @@
     "invariants": [
       {
         "name": "monotonicity",
-        "description": "算法在图遍历过程中按权值从大到小的顺序依次分配,持续维护沿遍历路径先访问节点权值不小于后访问节点权值的单调性质。该性质保证树中每条边的最小值恒由后访问的端点决定,从而精确控制各边贡献的来源与次数。",
-        "properties": {},
+        "description": "算法按树遍历顺序降序分配权值,严格维持父节点权值不小于子节点权值的单调关系,使得每条边的贡献稳定等于子节点权值。",
+        "properties": {
+          "value_order_along_edges": "parent_value >= child_value",
+          "edge_min_identity": "edge_value == child_value"
+        },
         "evidence_source": "solution_code"
       },
       {
         "name": "additivity",
-        "description": "目标得分可严格分解为各边最小值的独立求和。构造方案利用单调分配性质确保除首个分配节点外的其余节点权值各自恰好作为一条边的最小值被累加一次,使得最优解稳定等于输入数组排序后前 N-1 小元素之和。",
-        "properties": {},
+        "description": "在满足父子权值单调性的前提下,全局得分可线性分解为所有非根节点权值之和,进而等价于输入数列中最大 N-1 个数的累加和。",
+        "properties": {
+          "score_linear_decomposition": "sum_edge_mins == sum_vertex_values - root_value",
+          "closed_form_maximum": "max_score == sum(c) - min(c)"
+        },
         "evidence_source": "solution_code"
       }
     ]

@@ -5,7 +5,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from markdown_renderer import render_problem_markdown
 from models import VariantPlan
@@ -32,6 +32,7 @@ class GenerationPipeline:
         generator: ProblemGenerator,
         planner: VariantPlanner,
         problem_repository: ProblemRepository | None = None,
+        progress_writer: Callable[[str], None] | None = None,
     ):
         self.raw_loader = SchemaLoader(raw_source_dir)
         self.loader = SchemaLoader(source_dir)
@@ -41,6 +42,7 @@ class GenerationPipeline:
         self.generator = generator
         self.planner = planner
         self.problem_repository = problem_repository or ProblemRepository()
+        self.progress_writer = progress_writer or _default_progress_writer
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.artifact_dir.mkdir(parents=True, exist_ok=True)
         self.report_dir.mkdir(parents=True, exist_ok=True)
@@ -55,6 +57,7 @@ class GenerationPipeline:
         seed_a: str | None = None,
         seed_b: str | None = None,
         allowed_rule_ids: set[str] | None = None,
+        batch_source_dir: Path | None = None,
     ) -> list[dict[str, Any]]:
         canonical_mode = _canonical_mode(mode)
         if canonical_mode == "single_seed_extension":
@@ -63,6 +66,7 @@ class GenerationPipeline:
                 variants=variants,
                 theme_id=theme_id,
                 allowed_rule_ids=allowed_rule_ids,
+                batch_source_dir=batch_source_dir,
             )
         return self._run_same_family(
             seed_a=seed_a,
@@ -79,60 +83,160 @@ class GenerationPipeline:
         variants: int,
         theme_id: str | None,
         allowed_rule_ids: set[str] | None,
+        batch_source_dir: Path | None,
     ) -> list[dict[str, Any]]:
         target_problem_ids = list(problem_ids) or self.loader.list_problem_ids()
         records: list[dict[str, Any]] = []
-
-        for problem_id in target_problem_ids:
-            original_schema = self.raw_loader.load(problem_id)
-            prepared_schema = self.loader.load(problem_id)
-            original_problem = self._safe_get_problem(prepared_schema, problem_id)
-            report_sections = self._build_single_report_header(
-                problem_id=problem_id,
-                original_problem=original_problem,
-                original_schema=original_schema,
-                prepared_schema=prepared_schema,
-            )
-
-            problem_records: list[dict[str, Any]] = []
-            for variant_index in range(1, variants + 1):
-                plan = self.planner.build_plan(
-                    mode="single_seed_extension",
-                    variant_index=variant_index,
-                    theme_id=theme_id,
-                    original_schema=original_schema,
-                    prepared_schema=prepared_schema,
-                    original_problem=original_problem,
-                    allowed_rule_ids=allowed_rule_ids,
-                )
-                stem = self._build_stem(plan.source_problem_ids, plan.variant_index, plan.theme.theme_id)
-                generated = self.generator.generate(
-                    {"seed_schema": prepared_schema},
-                    plan,
-                    original_problems=[item for item in [original_problem] if item],
-                )
-                markdown = render_problem_markdown(generated, plan)
-                record = self._save_outputs(
-                    stem=stem,
-                    plan=plan,
-                    payload=generated.__dict__,
-                    markdown=markdown,
-                )
-                records.append(record)
-                problem_records.append(record)
-                report_sections.extend(
-                    self._build_variant_report_sections(
-                        plan=plan,
-                        record=record,
-                        generated=generated.__dict__,
+        if batch_source_dir is None:
+            self._emit_progress(f"[single] 开始生成，共 {len(target_problem_ids)} 题。")
+            for problem_id in target_problem_ids:
+                records.extend(
+                    self._run_single_problem(
+                        problem_id=problem_id,
+                        variants=variants,
+                        theme_id=theme_id,
+                        allowed_rule_ids=allowed_rule_ids,
                     )
                 )
+            self._emit_progress(f"[single] 全部完成，共生成 {len(records)} 个产物。")
+            return records
 
-            report_path = self._write_problem_report(problem_id, report_sections)
-            for record in problem_records:
-                record["report_path"] = str(report_path)
+        batch_started_at = datetime.now()
+        batch_stem = self._build_batch_stem(batch_started_at)
+        batch_items: list[dict[str, Any]] = []
+        self._emit_progress(
+            f"[batch] 开始批量生成，共 {len(target_problem_ids)} 题；source_dir={batch_source_dir}"
+        )
 
+        for order, problem_id in enumerate(target_problem_ids, start=1):
+            try:
+                self._emit_progress(
+                    f"[batch] 第 {order}/{len(target_problem_ids)} 题：{problem_id}"
+                )
+                problem_records = self._run_single_problem(
+                    problem_id=problem_id,
+                    variants=variants,
+                    theme_id=theme_id,
+                    allowed_rule_ids=allowed_rule_ids,
+                )
+            except Exception as exc:
+                batch_items.append(
+                    {
+                        "order": order,
+                        "problem_id": problem_id,
+                        "status": "failed",
+                        "error_reason": str(exc),
+                        "variant_records": [],
+                    }
+                )
+                self._write_batch_summary(
+                    stem=batch_stem,
+                    started_at=batch_started_at,
+                    finished_at=datetime.now(),
+                    source_dir=batch_source_dir,
+                    target_problem_ids=target_problem_ids,
+                    batch_items=batch_items,
+                )
+                self._emit_progress(f"[batch] {problem_id} 失败：{exc}")
+                raise
+
+            records.extend(problem_records)
+            batch_items.append(
+                {
+                    "order": order,
+                    "problem_id": problem_id,
+                    "status": "completed",
+                    "error_reason": "",
+                    "variant_records": problem_records,
+                }
+            )
+            self._emit_progress(
+                f"[batch] {problem_id} 完成，生成 {len(problem_records)} 个产物。"
+            )
+
+        batch_paths = self._write_batch_summary(
+            stem=batch_stem,
+            started_at=batch_started_at,
+            finished_at=datetime.now(),
+            source_dir=batch_source_dir,
+            target_problem_ids=target_problem_ids,
+            batch_items=batch_items,
+        )
+        for record in records:
+            record["batch_artifact_path"] = str(batch_paths["artifact_path"])
+            record["batch_report_path"] = str(batch_paths["report_path"])
+        self._emit_progress(
+            f"[batch] 全部完成；batch_artifact={batch_paths['artifact_path']}；batch_report={batch_paths['report_path']}"
+        )
         return records
+
+    def _run_single_problem(
+        self,
+        *,
+        problem_id: str,
+        variants: int,
+        theme_id: str | None,
+        allowed_rule_ids: set[str] | None,
+    ) -> list[dict[str, Any]]:
+        self._emit_progress(f"[problem] {problem_id}：读取 schema 与原题信息。")
+        original_schema = self.raw_loader.load(problem_id)
+        prepared_schema = self.loader.load(problem_id)
+        original_problem = self._safe_get_problem(prepared_schema, problem_id)
+        report_sections = self._build_single_report_header(
+            problem_id=problem_id,
+            original_problem=original_problem,
+            original_schema=original_schema,
+            prepared_schema=prepared_schema,
+        )
+
+        problem_records: list[dict[str, Any]] = []
+        for variant_index in range(1, variants + 1):
+            self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 进入规划。")
+            plan = self.planner.build_plan(
+                mode="single_seed_extension",
+                variant_index=variant_index,
+                theme_id=theme_id,
+                original_schema=original_schema,
+                prepared_schema=prepared_schema,
+                original_problem=original_problem,
+                allowed_rule_ids=allowed_rule_ids,
+            )
+            stem = self._build_stem(plan.source_problem_ids, plan.variant_index, plan.theme.theme_id)
+            self._emit_progress(
+                f"[problem] {problem_id}：variant {variant_index} 规划完成，规则={plan.applied_rule or '无'}。"
+            )
+            self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 进入题面生成。")
+            generated = self.generator.generate(
+                {"seed_schema": prepared_schema},
+                plan,
+                original_problems=[item for item in [original_problem] if item],
+            )
+            self._emit_progress(
+                f"[problem] {problem_id}：variant {variant_index} 生成完成，status={generated.status}。"
+            )
+            markdown = render_problem_markdown(generated, plan)
+            self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 写入产物。")
+            record = self._save_outputs(
+                stem=stem,
+                plan=plan,
+                payload=generated.__dict__,
+                markdown=markdown,
+            )
+            problem_records.append(record)
+            report_sections.extend(
+                self._build_variant_report_sections(
+                    plan=plan,
+                    record=record,
+                    generated=generated.__dict__,
+                )
+            )
+
+        self._emit_progress(f"[problem] {problem_id}：写入过程报告。")
+        report_path = self._write_problem_report(problem_id, report_sections)
+        for record in problem_records:
+            record["report_path"] = str(report_path)
+        self._emit_progress(f"[problem] {problem_id}：完成。report={report_path}")
+        return problem_records
 
     def _run_same_family(
         self,
@@ -410,6 +514,46 @@ class GenerationPipeline:
         report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
         return report_path
 
+    def _write_batch_summary(
+        self,
+        *,
+        stem: str,
+        started_at: datetime,
+        finished_at: datetime,
+        source_dir: Path,
+        target_problem_ids: list[str],
+        batch_items: list[dict[str, Any]],
+    ) -> dict[str, Path]:
+        artifact_path = self.artifact_dir / f"{stem}.json"
+        report_path = self.report_dir / f"{stem}.md"
+        failed_item = next((item for item in batch_items if item.get("status") == "failed"), None)
+        summary_payload = {
+            "batch_id": stem,
+            "mode": "single_seed_extension",
+            "source_dir": str(source_dir),
+            "task_order": list(target_problem_ids),
+            "task_count": len(target_problem_ids),
+            "completed_count": sum(1 for item in batch_items if item.get("status") == "completed"),
+            "status": "failed" if failed_item else "completed",
+            "failed_problem_id": failed_item.get("problem_id", "") if failed_item else "",
+            "failed_reason": failed_item.get("error_reason", "") if failed_item else "",
+            "started_at": started_at.isoformat(timespec="seconds"),
+            "finished_at": finished_at.isoformat(timespec="seconds"),
+            "items": batch_items,
+        }
+        artifact_path.write_text(
+            json.dumps(summary_payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        report_path.write_text(
+            "\n".join(self._build_batch_report_lines(summary_payload)).rstrip() + "\n",
+            encoding="utf-8",
+        )
+        return {
+            "artifact_path": artifact_path,
+            "report_path": report_path,
+        }
+
     def _safe_get_problem(
         self,
         schema: dict[str, Any],
@@ -427,6 +571,55 @@ class GenerationPipeline:
         base = "__".join(_slugify(problem_id) for problem_id in source_problem_ids if problem_id)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"{base}_v{variant_index}_{theme_id}_{timestamp}"
+
+    def _build_batch_stem(self, started_at: datetime) -> str:
+        return f"batch_{started_at.strftime('%Y%m%d_%H%M%S')}"
+
+    def _build_batch_report_lines(self, summary_payload: dict[str, Any]) -> list[str]:
+        lines = [
+            "# 批量生成过程说明",
+            "",
+            "## 运行概览",
+            f"- batch_id: {summary_payload.get('batch_id', '')}",
+            f"- mode: {summary_payload.get('mode', '')}",
+            f"- source_dir: {summary_payload.get('source_dir', '')}",
+            f"- task_count: {summary_payload.get('task_count', 0)}",
+            f"- completed_count: {summary_payload.get('completed_count', 0)}",
+            f"- status: {summary_payload.get('status', '')}",
+            f"- started_at: {summary_payload.get('started_at', '')}",
+            f"- finished_at: {summary_payload.get('finished_at', '')}",
+            f"- failed_problem_id: {summary_payload.get('failed_problem_id', '') or '无'}",
+            f"- failed_reason: {summary_payload.get('failed_reason', '') or '无'}",
+            "",
+            "## 任务列表",
+        ]
+        for item in summary_payload.get("items", []):
+            lines.extend(
+                [
+                    "",
+                    f"### {item.get('order', '')}. {item.get('problem_id', '')}",
+                    f"- status: {item.get('status', '')}",
+                    f"- error_reason: {item.get('error_reason', '') or '无'}",
+                ]
+            )
+            variant_records = item.get("variant_records", [])
+            if not variant_records:
+                lines.append("- variant_records: 无")
+                continue
+            lines.append("- variant_records:")
+            for record in variant_records:
+                lines.append(
+                    "  - "
+                    + f"variant_index={record.get('variant_index', '')}; "
+                    + f"generated_status={record.get('generated_status', '')}; "
+                    + f"markdown_path={record.get('markdown_path', '')}; "
+                    + f"artifact_path={record.get('artifact_path', '')}; "
+                    + f"report_path={record.get('report_path', '') or '无'}"
+                )
+        return lines
+
+    def _emit_progress(self, message: str) -> None:
+        self.progress_writer(message)
 
     def _render_problem_reference(self, problem: dict[str, Any] | None) -> list[str]:
         if not problem:
@@ -663,3 +856,16 @@ def _normalize_distance_breakdown(distance_breakdown: dict[str, Any]) -> dict[st
 def _slugify(text: str) -> str:
     cleaned = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in str(text))
     return cleaned.strip("_") or "variant"
+
+
+def _default_progress_writer(message: str) -> None:
+    text = f"{message}\n"
+    stream = sys.stdout
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    buffer = getattr(stream, "buffer", None)
+    if buffer is not None:
+        buffer.write(text.encode(encoding, errors="replace"))
+        buffer.flush()
+        return
+    stream.write(text.encode(encoding, errors="replace").decode(encoding, errors="replace"))
+    stream.flush()

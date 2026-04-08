@@ -5,20 +5,11 @@
   "result": {
     "constraints": [
       {
-        "name": "state_transition",
-        "description": "定义了资源重分配的状态转移规则:每次迭代必须严格选取当前最大值与最小值持有者,并按 R = ceil((max_val - min_val) / 2) 的数量从最大值者向最小值者转移。",
-        "formal": "P = max(A), Q = min(A), R = ceil((P - Q) / 2); A[i_max] -= R, A[i_min] += R",
+        "name": "operation_type",
+        "description": "每次 redistribution 步骤必须严格选择当前 idli 数量最多和最少的两人（若存在多个极值则任选其一）,计算转移量 R = ceil((P - Q) / 2),并将 R 个 idli 从最多者转移给最少者；该过程持续进行直至所有元素值相等或判定无法收敛。",
+        "formal": "while max(A) != min(A): P = max(A), Q = min(A), R = ceil((P - Q) / 2), A[max_idx] -= R, A[min_idx] += R",
         "source_sections": [
           "description"
-        ]
-      },
-      {
-        "name": "divisibility",
-        "description": "初始资源总和必须能被学生人数 N 整除,否则无法通过给定操作达成均分状态,判定为不可行并输出 -1。",
-        "formal": "sum(A) % N == 0",
-        "source_sections": [
-          "description",
-          "output"
         ]
       }
     ]

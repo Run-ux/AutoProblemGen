@@ -19,7 +19,7 @@ DEFAULT_REPORT_DIR = BASE_DIR / "reports"
 DEFAULT_PREPARED_SCHEMA_DIR = BASE_DIR / "prepared_schemas"
 DEFAULT_RULE_FILE = BASE_DIR / "planning_rules.json"
 
-DEFAULT_MODEL = get_env_value("QWEN_MODEL", "qwen3.5-plus")
+DEFAULT_MODEL = get_env_value("QWEN_MODEL", "qwen3.6-plus")
 DEFAULT_EMBEDDING_MODEL = get_env_value("QWEN_EMBEDDING_MODEL", "text-embedding-v4")
 DEFAULT_BASE_URL = get_env_value(
     "QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"

@@ -6,14 +6,13 @@
     "invariants": [
       {
         "name": "monotonicity",
-        "description": "算法在迭代过程中持续维护集合最大元素的单调非增性质。每次选取当前最大值并沿父节点方向（整除2）回溯,直到遇到集合内已有元素或到达根节点。该单向推进过程保证目标函数（集合最大值）不断下降,且一旦无法继续减小即达到全局最优。",
-        "properties": {},
-        "evidence_source": "solution_code"
-      },
-      {
-        "name": "state_transition",
-        "description": "算法状态始终定义为包含n个不同正整数的集合,且每个元素均为初始输入集合中某元素的祖先。状态转移通过移除当前最大值并插入其最高非冲突祖先完成,该转移在全过程中保持状态语义一致,确保任意中间状态均可生成原集合。",
-        "properties": {},
+        "description": "算法在每次迭代中固定选取当前集合的最大元素,并沿二叉树父节点方向（整除2）连续下探,直至找到首个未出现在集合中的祖先位置进行替换。该策略保证集合的最大元素值在整个执行过程中单调不增,且每次有效替换均使优化目标严格下降或推进至不可再降的边界,从而确保最终结果满足最小化最大值的要求。",
+        "properties": {
+          "max_element_trend": "non_increasing",
+          "selection_policy": "always_current_maximum",
+          "replacement_rule": "deepest_unoccupied_ancestor",
+          "termination_condition": "ancestor_hits_zero_or_all_ancestors_occupied"
+        },
         "evidence_source": "solution_code"
       }
     ]

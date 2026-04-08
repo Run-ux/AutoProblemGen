@@ -6,21 +6,14 @@
     "invariants": [
       {
         "name": "equivalence_class",
-        "description": "算法以任意非叶节点为根,将所有叶子节点按到根的路径长度奇偶性划分为两个等价类。最小不同权值数仅由这两个等价类是否同时非空决定,若同时存在则最小值为3,否则为1。",
-        "properties": {
-          "partition_basis": "depth_mod_2",
-          "min_f_condition": "both_parity_classes_non_empty"
-        },
+        "description": "叶子节点按到任意选定根节点的距离奇偶性被划分为等价类。算法在DFS过程中持续统计各奇偶类的叶子数量,利用该划分性质判定最小不同权值数:当且仅当所有叶子属于同一奇偶类时答案为1,否则为3。",
+        "properties": {},
         "evidence_source": "solution_code"
       },
       {
         "name": "conservation",
-        "description": "任意两叶子间路径异或和恒为零的守恒条件,强制共享同一父节点的多个叶子边权必须相等。算法通过统计此类父节点产生的冗余约束数量,从总边数中线性扣减得到最大不同权值数。",
-        "properties": {
-          "invariant_relation": "xor_path_sum_zero",
-          "constraint_implication": "sibling_leaf_edges_equal",
-          "max_f_calculation": "total_edges_minus_sibling_leaf_constraints"
-        },
+        "description": "任意两叶子路径异或和为0等价于从固定根到所有叶子的路径异或前缀和保持恒定。该守恒性质在树结构上强制要求共享同一父节点的多个叶子边必须赋予相同权值,算法据此在遍历过程中对理论最大值进行确定性扣减。",
+        "properties": {},
         "evidence_source": "solution_code"
       }
     ]

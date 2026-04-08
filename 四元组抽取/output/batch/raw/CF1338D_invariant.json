@@ -6,22 +6,14 @@
     "invariants": [
       {
         "name": "state_transition",
-        "description": "The algorithm maintains two DP states per node representing the maximum chain length within its subtree under distinct extendability conditions. These states are updated via fixed recurrence relations that aggregate child results and apply local degree-based offsets, ensuring the semantic definition of each state remains invariant throughout the traversal.",
-        "properties": {
-          "state_dimension": 2,
-          "transition_mechanism": "iterative_max_aggregation",
-          "local_adjustment": "degree_dependent_offset"
-        },
+        "description": "算法为每个节点维护两个状态值,分别对应该节点在嵌套序列中作为端点或中间节点时的子树最大长度。状态转移通过子节点状态的最大值聚合与当前节点度数偏移修正完成,并在合并不同子树状态时更新全局最优解。状态定义与转移规则在自底向上计算过程中保持严格一致。",
+        "properties": {},
         "evidence_source": "solution_code"
       },
       {
         "name": "dependency_order",
-        "description": "The computation strictly follows a post-order evaluation sequence, ensuring all child subtree states are fully resolved before any parent state is computed. This enforces a stable bottom-up data flow where state transitions rely exclusively on finalized subproblem results.",
-        "properties": {
-          "traversal_type": "post_order",
-          "evaluation_direction": "bottom_up",
-          "dependency_constraint": "child_resolution_precedes_parent_computation"
-        },
+        "description": "状态计算严格遵循树的后序遍历依赖关系。算法通过显式构建遍历栈并逆序迭代,保证任意节点的所有子节点状态均在父节点状态计算前完全收敛,消除循环依赖并满足树形DP的推进顺序。",
+        "properties": {},
         "evidence_source": "solution_code"
       }
     ]

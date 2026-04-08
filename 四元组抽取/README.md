@@ -52,6 +52,36 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
 
 `normalized\` 目录中的文件就是最终可消费结果。
 
+## CLI 参数
+
+### `extract.py`
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `--input` | `str` | 是 | 无 | 输入单题 schema JSON 文件，或包含多个 schema JSON 的目录 |
+| `--output` | `str` | 是 | 无 | 输出目录路径，如 `output/pilot/` |
+| `--resume` | 开关 | 否 | 关闭 | 断点续传，跳过已存在的文件 |
+| `--log-level` | `str` | 否 | `INFO` | 日志级别，可选 `DEBUG`、`INFO`、`WARNING`、`ERROR` |
+| `--temperature` | `float` | 否 | `0.4` | LLM 采样温度，归一化阶段固定使用 `0.2` |
+
+### `normalize.py`
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `--input` | `str` | 是 | 无 | 原始抽取结果目录，如 `output/pilot/raw/` |
+| `--output` | `str` | 是 | 无 | 归一化输出目录，如 `output/pilot/normalized/` |
+| `--log-level` | `str` | 否 | `INFO` | 日志级别，可选 `DEBUG`、`INFO`、`WARNING`、`ERROR` |
+| `--embedding-threshold` | `float` | 否 | `0.85` | 向量相似度阈值 |
+
+### `sample.py`
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `--source-dir` | `str` | 否 | `DEFAULT_SOURCE_DIR` | 源 schema 目录 |
+| `--data-dir` | `str` | 否 | `DEFAULT_DATA_DIR` | 输出 data 目录 |
+| `--phase1-size` | `int` | 否 | `300` | phase1 样本量，不足时复制全部 |
+| `--pilot-size` | `int` | 否 | `50` | pilot 样本量，不足时复制全部 |
+
 ## 完整流程
 
 1. 读取题目 schema JSON。

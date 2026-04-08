@@ -194,7 +194,7 @@ phase1 的标签集合
 - `problem_generator.py`：根据实例化四元组生成结构化题目
 - `pipeline.py`：把规划、生成、渲染、落盘串起来
 - `markdown_renderer.py`：把结构化结果渲染成 OJ 风格 Markdown
-- `prepared_schemas/`、`artifacts/`、`output/`、`reports/`：各阶段产物
+- `prepared_schemas/`、`artifacts/`、`output/`、`reports/`：各阶段产物，其中目录批量生成会额外写出 `batch_*.json` 与 `batch_*.md`
 
 这里的完整流程是：
 
@@ -208,6 +208,10 @@ phase1 的标签集合
   -> markdown_renderer 渲染为题面 Markdown
   -> pipeline 保存 markdown、artifact、过程报告
 ```
+
+`single` 模式省略 `--problem-ids` 时，会把 `--source-dir` 当前层级下的全部 schema JSON 视为一批任务，按文件名字典序逐个执行。批量模式要求文件内 `problem_id` 与文件名一致；任一任务报错后整批立即停止，但已成功落盘的结果会保留，整批汇总会写入 `batch_*.json` 与 `batch_*.md`。
+
+运行时控制台会输出阶段提示，覆盖参数校验、schema 归一化、进入流水线、当前题、variant 规划、题面生成、产物写入与批量结束状态。
 
 当前只启用两个模式：
 
