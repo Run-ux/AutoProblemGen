@@ -43,7 +43,6 @@
 
 - `id`
 - `summary`
-- `semantic_purpose`
 - `must_realize_in`
 - `target_axes`
 - `innovation_role`
@@ -52,6 +51,8 @@
 - `redlines`
 
 规则一旦被选中，planner 必须在 `applied_helpers` 中完整回填该规则声明的全部 helper，不能遗漏，也不能新增未声明 helper。
+
+已启用规则的 `required_axis_changes.must_change` 必须与全部 helper 的 `target_axes` 并集完全一致。只要 helper 是全量强制应用，这个并集就代表规则的实际硬合同。
 
 ## Handler 合同
 

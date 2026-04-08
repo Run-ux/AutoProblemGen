@@ -47,7 +47,6 @@ def _normalize_helper_entry(helper: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Rule helper missing id")
     normalized["id"] = helper_id
     normalized["summary"] = str(normalized.get("summary", "")).strip()
-    normalized["semantic_purpose"] = str(normalized.get("semantic_purpose", "")).strip()
     normalized["innovation_role"] = str(normalized.get("innovation_role", "")).strip()
     normalized["difficulty_role"] = str(normalized.get("difficulty_role", "")).strip()
     normalized["must_realize_in"] = [
@@ -74,7 +73,6 @@ def _normalize_helper_entry(helper: dict[str, Any]) -> dict[str, Any]:
         field_name
         for field_name, present in (
             ("summary", bool(normalized["summary"])),
-            ("semantic_purpose", bool(normalized["semantic_purpose"])),
             ("must_realize_in", bool(normalized["must_realize_in"])),
             ("target_axes", bool(normalized["target_axes"])),
             ("innovation_role", bool(normalized["innovation_role"])),
@@ -115,6 +113,12 @@ def _normalize_rule_entry(rule: dict[str, Any], *, mode_defaults: dict[str, Any]
     normalized["family"] = str(normalized.get("family", "")).strip()
     normalized["handler"] = normalize_rule_id(normalized.get("handler", ""))
     normalized["audit_tags"] = [str(item).strip() for item in normalized.get("audit_tags", []) if str(item).strip()]
+    must_change: list[str] = []
+    for axis in normalized.get("required_axis_changes", {}).get("must_change", []):
+        normalized_axis = str(axis).strip()
+        if normalized_axis and normalized_axis not in must_change:
+            must_change.append(normalized_axis)
+    normalized["required_axis_changes"] = {"must_change": must_change}
     helpers = [
         _normalize_helper_entry(helper)
         for helper in normalized.get("helpers", [])
@@ -149,6 +153,21 @@ def _normalize_rule_entry(rule: dict[str, Any], *, mode_defaults: dict[str, Any]
         if missing_fields:
             raise ValueError(
                 f"Rule {normalized['id'] or '<unknown>'} missing required execution fields: {', '.join(missing_fields)}"
+            )
+        helper_axes = {
+            str(axis).strip()
+            for helper in helpers
+            for axis in helper.get("target_axes", [])
+            if str(axis).strip()
+        }
+        if set(must_change) != helper_axes:
+            raise ValueError(
+                "Rule "
+                + (normalized["id"] or "<unknown>")
+                + " must_change must match helper target axes: declared="
+                + ", ".join(sorted(must_change))
+                + " helper_union="
+                + ", ".join(sorted(helper_axes))
             )
     return normalized
 

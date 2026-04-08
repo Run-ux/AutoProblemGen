@@ -114,6 +114,16 @@ class RuleBookTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate helper ids"):
                 RuleBook.load(rule_path)
 
+    def test_rulebook_rejects_must_change_helper_axis_mismatch(self) -> None:
+        base_payload = json.loads((GEN_DIR / "planning_rules.json").read_text(encoding="utf-8"))
+        base_payload["modes"]["single_seed_extension"]["rules"][0]["required_axis_changes"]["must_change"] = ["O", "V"]
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            rule_path = Path(tempdir) / "rules.json"
+            rule_path.write_text(json.dumps(base_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "must_change must match helper target axes"):
+                RuleBook.load(rule_path)
+
     def test_rulebook_inherits_mode_level_planner_output_contract(self) -> None:
         rulebook = RuleBook.load(GEN_DIR / "planning_rules.json")
 
@@ -171,13 +181,6 @@ class RuleBookTests(unittest.TestCase):
                 "custom_field",
             ],
         )
-
-    def test_rulebook_normalizes_helper_semantic_purpose(self) -> None:
-        rulebook = RuleBook.load(GEN_DIR / "planning_rules.json")
-
-        helper = rulebook.rule("single_seed_extension", "canonical_witness")["helpers"][0]
-        self.assertIn("semantic_purpose", helper)
-        self.assertTrue(helper["semantic_purpose"])
 
     def test_rulebook_rejects_missing_required_execution_fields(self) -> None:
         base_payload = json.loads((GEN_DIR / "planning_rules.json").read_text(encoding="utf-8"))
@@ -799,6 +802,38 @@ class RuleHandlerTests(unittest.TestCase):
         )
         self.assertFalse(outcome.accepted)
         self.assertNotIn("plan_review:canonical_witness", client.calls)
+
+    def test_interlocked_constraints_plan_validation_allows_objective_axis_to_stay_unchanged(self) -> None:
+        rule = self.rulebook.rule("same_family_fusion", "interlocked_constraints")
+        payload = make_same_family_payload("interlocked_constraints")
+        handler = get_rule_handler(rule)
+        client = FakePlannerClient(
+            responses={},
+            plan_review_responses={
+                "interlocked_constraints": make_rule_review_payload(
+                    status="pass",
+                    reason_code="ok",
+                    message="interlocked_constraints 规划专属审查通过。",
+                    evidence="共享主核、同步承压与反串联语义已经成立。",
+                )
+            },
+        )
+        outcome = handler.validate_plan(
+            client=client,
+            mode="same_family_fusion",
+            rule=rule,
+            payload=payload,
+            source_schema=make_schema(problem_id="SRC"),
+            candidate_schema=payload["instantiated_schema"],
+            changed_axes=payload["difference_plan"]["changed_axes"],
+            global_constraints={"allow_helper_moves": True},
+        )
+        self.assertIn("C", payload["difference_plan"]["changed_axes"])
+        self.assertIn("V", payload["difference_plan"]["changed_axes"])
+        self.assertNotIn("O", payload["difference_plan"]["changed_axes"])
+        self.assertEqual(payload["instantiated_schema"]["objective"]["type"], "decision")
+        self.assertTrue(outcome.accepted)
+        self.assertIn("plan_review:interlocked_constraints", client.calls)
 
     def test_rule_plan_validation_rejects_missing_or_extra_helpers(self) -> None:
         rule = self.rulebook.rule("single_seed_extension", "canonical_witness")
@@ -1492,6 +1527,12 @@ def make_single_payload(rule_id: str) -> dict:
 
 
 def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) -> dict:
+    changed_axes = ["I", "C", "V"] if rule_id == "interlocked_constraints" else ["C", "O", "V"]
+    objective = (
+        {"type": "decision", "description": "判断是否存在合法方案。"}
+        if rule_id == "interlocked_constraints"
+        else {"type": "construction", "description": "输出共享主核下的规范构造。"}
+    )
     payload = {
         "status": "ok",
         "error_reason": "",
@@ -1499,7 +1540,7 @@ def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) 
         "eligibility_reason": "两个种子题共享稳定主核。",
         "core_transformation_summary": "共享主核承受更强的新义务。",
         "difference_plan": {
-            "changed_axes": ["C", "O", "V"],
+            "changed_axes": changed_axes,
             "rationale": "共享主核上叠加双向不可删义务。",
             "summary": "通过单主核和反串联硬门槛。",
         },
@@ -1518,7 +1559,7 @@ def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) 
                     {"name": f"{rule_id}_constraint", "description": f"{rule_id} 让双义务在同一状态过程中互锁。"}
                 ]
             },
-            "objective": {"type": "construction", "description": "输出共享主核下的规范构造。"},
+            "objective": objective,
             "invariant": {
                 "invariants": [
                     {"name": "base_invariant", "description": "基础不变量保持成立。"},
@@ -1551,7 +1592,20 @@ def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) 
         },
     }
     if rule_id == "interlocked_constraints":
-        payload["instantiated_schema"]["objective"] = {"type": "counting", "description": "统计共享主核下的合法方案数。"}
+        payload["instantiated_schema"]["input_structure"] = {
+            "type": "array",
+            "length": {"min": 4, "max": 8},
+            "value_range": {"min": 0, "max": 50},
+            "properties": {"ordered": True, "segmented": True, "capacity_indexed": True},
+        }
+        payload["instantiated_schema"]["core_constraints"]["constraints"] = [
+            {"name": "capacity_lock", "description": "每一步状态转移都必须同时满足共享容量配额。"},
+            {"name": "conflict_lock", "description": "同一步转移中被冲突关系绑定的对象不能共同进入合法状态。"},
+        ]
+        payload["instantiated_schema"]["invariant"]["invariants"] = [
+            {"name": "shared_pressure", "description": "任一可达状态都同时承受容量与冲突两类义务。"},
+            {"name": "non_sequential_core", "description": "任何合法状态都不能拆成先满足一题再满足另一题的串联过程。"},
+        ]
     if drop_fields:
         for field in drop_fields:
             if field == "why_not_sequential_composition":
@@ -1586,11 +1640,21 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         theme={"id": "campus_ops", "name": "校园运营"},
         difficulty="Hard",
     )
+    if rule_id == "interlocked_constraints":
+        instantiated_schema.input_structure = {
+            "type": "array",
+            "length": {"min": 4, "max": 8},
+            "value_range": {"min": 0, "max": 50},
+            "properties": {"ordered": True, "segmented": True, "capacity_indexed": True},
+        }
+        instantiated_schema.objective = {"type": "decision", "description": "判断是否存在合法方案。"}
     objective = instantiated_schema.objective
     if rule_id == "existence_to_counting":
         objective = {"type": "counting", "description": "统计所有合法方案数。"}
     elif rule_id == "minimum_guarantee_under_perturbation":
         objective = {"type": "minimize_value", "description": "求最小保底阈值。"}
+    elif rule_id == "interlocked_constraints":
+        objective = {"type": "decision", "description": "判断是否存在合法方案。"}
     return VariantPlan(
         problem_id=instantiated_schema.problem_id,
         variant_index=1,
@@ -1606,7 +1670,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         invariant_summary=["基础不变量。"],
         difference_plan=DifferencePlan(
             target_distance_band={"min": 0.35, "max": 0.60},
-            changed_axes=["C", "O", "V"],
+            changed_axes=["I", "C", "V"] if rule_id == "interlocked_constraints" else ["C", "O", "V"],
             same_family_allowed=True,
             forbidden_reuse=["A"],
             rationale="测试",
@@ -1614,9 +1678,15 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
             mode="same_family_fusion" if "interlocked" in rule_id or "shared_core" in rule_id else "single_seed_extension",
         ),
         instantiated_schema_snapshot=instantiated_schema,
-        predicted_schema_distance=0.45,
-        distance_breakdown=make_distance_breakdown(i=0.0, c=0.5, o=0.8, v=0.4, total=0.45),
-        changed_axes_realized=["C", "O", "V"],
+        predicted_schema_distance=0.37 if rule_id == "interlocked_constraints" else 0.45,
+        distance_breakdown=make_distance_breakdown(
+            i=0.25 if rule_id == "interlocked_constraints" else 0.0,
+            c=0.5,
+            o=0.0 if rule_id == "interlocked_constraints" else 0.8,
+            v=0.4,
+            total=0.37 if rule_id == "interlocked_constraints" else 0.45,
+        ),
+        changed_axes_realized=["I", "C", "V"] if rule_id == "interlocked_constraints" else ["C", "O", "V"],
         applied_rule=rule_id,
         algorithmic_delta_claim={
             "seed_solver_core": "基础判定",
@@ -1656,12 +1726,12 @@ def make_valid_problem_cases() -> dict[str, GeneratedProblem]:
         ),
         "construct_or_obstruction": GeneratedProblem(
             title="构造或证书",
-            description="若存在合法解，输出一个构造；否则输出一个可局部检查的冲突证书。",
+            description="若存在合法解，输出一个构造；否则输出一个来自主约束不可兼容关系的可局部检查冲突证书。",
             input_format="输入三行。",
             output_format="输出构造或 obstruction 证书。",
             constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
             samples=[{"input": "1\n2\n3", "output": "OK", "explanation": "样例。"}, {"input": "3\n2\n1", "output": "FAIL", "explanation": "样例。"}],
-            notes="无解时必须给出证书。",
+            notes="无解时必须给出由主约束直接定义的结构化证书。",
         ),
         "existence_to_counting": GeneratedProblem(
             title="计数任务",
@@ -1685,10 +1755,10 @@ def make_valid_problem_cases() -> dict[str, GeneratedProblem]:
             title="共享主核互锁",
             description="两个义务在同一共享状态过程中同时起作用，任何一步都必须同步满足容量与冲突要求。",
             input_format="输入三行。",
-            output_format="输出合法方案数。",
+            output_format="若存在合法状态输出 Yes，否则输出 No。",
             constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
-            samples=[{"input": "1\n2\n3", "output": "2", "explanation": "样例。"}, {"input": "3\n2\n1", "output": "1", "explanation": "样例。"}],
-            notes="这是一个共享主核上的 simultaneous 约束问题。",
+            samples=[{"input": "1\n2\n3", "output": "Yes", "explanation": "样例。"}, {"input": "3\n2\n1", "output": "No", "explanation": "样例。"}],
+            notes="双义务必须在同一状态过程中同步承压，不能拆成前后两个子任务。",
         ),
         "shared_core_objective_upgrade": GeneratedProblem(
             title="共享主核升级",

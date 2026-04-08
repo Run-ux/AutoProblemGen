@@ -291,28 +291,35 @@ class RuleHandler:
 
         # 这组硬判据负责拦住浅改规划：没有新输出责任、主目标没变、主状态没变、
         # 或者仍然可以直接套用原解的候选都会在这里被拒绝。
-        semantic_checks = [
-            (
-                "new_output_object_missing",
-                "规划结果没有形成新的输出对象或新的输出责任。",
-                _has_new_output_object(source_schema, candidate_schema),
-            ),
-            (
-                "main_goal_unchanged",
-                "规划结果没有改变主求解目标。",
-                _has_main_goal_change(source_schema, candidate_schema, payload),
-            ),
-            (
-                "main_state_unchanged",
-                "规划结果没有改变主状态演化。",
-                _has_main_state_change(source_schema, candidate_schema, changed_axes),
-            ),
-            (
-                "reuse_risk_high",
-                "规划结果没有提供足够清晰的原解复用阻断理由。",
-                _has_reuse_barrier(payload),
-            ),
-        ]
+        semantic_checks = []
+        required_axes = {str(axis).strip() for axis in rule.get("required_axis_changes", {}).get("must_change", []) if str(axis).strip()}
+        if "O" in required_axes:
+            semantic_checks.append(
+                (
+                    "new_output_object_missing",
+                    "规划结果没有形成新的输出对象或新的输出责任。",
+                    _has_new_output_object(source_schema, candidate_schema),
+                )
+            )
+        semantic_checks.extend(
+            [
+                (
+                    "main_goal_unchanged",
+                    "规划结果没有改变主求解目标。",
+                    _has_main_goal_change(source_schema, candidate_schema, payload),
+                ),
+                (
+                    "main_state_unchanged",
+                    "规划结果没有改变主状态演化。",
+                    _has_main_state_change(source_schema, candidate_schema, changed_axes),
+                ),
+                (
+                    "reuse_risk_high",
+                    "规划结果没有提供足够清晰的原解复用阻断理由。",
+                    _has_reuse_barrier(payload),
+                ),
+            ]
+        )
         for reason_code, message, passed in semantic_checks:
             events.append(
                 _event(

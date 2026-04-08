@@ -117,7 +117,9 @@ python main.py --mode single --problem-ids CF25E --rule-override canonical_witne
 
 `handler` 会映射到 `rule_handlers.py` 里的实现。规则文件中的声明只有在对应 handler 中有执行逻辑时才真正生效。
 
-`helpers` 采用 rule 级结构化定义。每条已启用规则都必须声明自己的全部 helper。planner 选中该规则后，必须在 `applied_helpers` 中逐条兑现这些 helper，不能只选其中一部分。helper 当前使用 `semantic_purpose` 描述其稳定语义，不再使用条件口吻字段。
+`helpers` 采用 rule 级结构化定义。每条已启用规则都必须声明自己的全部 helper。planner 选中该规则后，必须在 `applied_helpers` 中逐条兑现这些 helper，不能只选其中一部分。helper 的稳定语义由 `summary` 承担。
+
+已启用规则的 `required_axis_changes.must_change` 必须与该规则全部 helper 的 `target_axes` 并集完全一致。在 helper 全量强制应用的前提下，这个并集就是规则的实际硬合同。
 
 `validation_contract` 当前仍主要服务规则专属 LLM 审查，不参与代码级硬校验。代码级硬校验目前集中在 required fields、helper 全量兑现、变化轴门槛和通用结构门槛。
 
