@@ -185,7 +185,6 @@ phase1 的标签集合
 核心文件包括：
 
 - `main.py`：命令行入口，显式要求 `mode`
-- `schema_preparer.py`：做四元组归一化
 - `planning_rules.json`：规则与红线
 - `rulebook.py`：规则文件读取与模式、规则开关
 - `rule_handlers.py`：规则资格审查接入、规划校验、题面校验与审计事件
@@ -194,13 +193,12 @@ phase1 的标签集合
 - `problem_generator.py`：根据实例化四元组生成结构化题目
 - `pipeline.py`：把规划、生成、渲染、落盘串起来
 - `markdown_renderer.py`：把结构化结果渲染成 OJ 风格 Markdown
-- `prepared_schemas/`、`artifacts/`、`output/`、`reports/`：各阶段产物，其中目录批量生成会额外写出 `batch_*.json` 与 `batch_*.md`
+- `artifacts/`、`output/`、`reports/`：各阶段产物
 
 这里的完整流程是：
 
 ```text
 读取 voted schema
-  -> schema_preparer 归一化为四元组
   -> rule_handlers 发起单规则资格审查
   -> variant_planner 排序并依次尝试前几条候选规则
   -> 通过代码级通用硬门槛和规则专属 LLM 规划审查后实例化新四元组
@@ -208,10 +206,6 @@ phase1 的标签集合
   -> markdown_renderer 渲染为题面 Markdown
   -> pipeline 保存 markdown、artifact、过程报告
 ```
-
-`single` 模式省略 `--problem-ids` 时，会把 `--source-dir` 当前层级下的全部 schema JSON 视为一批任务，按文件名字典序逐个执行。批量模式要求文件内 `problem_id` 与文件名一致；单题报错后会在整批汇总中记为失败，随后继续执行后续任务，已成功落盘的结果会保留，整批汇总会写入 `batch_*.json` 与 `batch_*.md`。
-
-运行时控制台会输出阶段提示，覆盖参数校验、schema 归一化、进入流水线、当前题、variant 规划、题面生成、产物写入与批量结束状态。
 
 当前只启用两个模式：
 
@@ -224,7 +218,7 @@ phase1 的标签集合
 
 1. 创新来源是规则选择加 planner，并把变化直接落实到实例化四元组。
 2. 差异控制仍围绕四轴 `I/C/O/V` 展开，但 `distance_breakdown` 已升级为结构化距离：顶层包含 `distance_version`、`backend`、`total`、`axis_scores`、`components`，artifact 会继续显式记录 `changed_axes_realized` 与 `difference_plan`。
-3. artifact 还会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_selection_reason`、`rejected_candidates`、`algorithmic_delta_claim`、`applied_helpers`，以及 `rule_version`、`selection_trace`、`validation_trace`、`candidate_attempts`。
+3. artifact 还会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_selection_reason`、`rejected_candidates`、`algorithmic_delta_claim`、`applied_helpers`，以及 `rule_version`、`selection_trace`、`validation_trace`、`candidate_attempts`。批量运行还会额外写出 `batch_*.json` 和 `batch_*.md` 汇总。
 
 ### Schema Distance V2 各维度计算方法
 
@@ -298,7 +292,7 @@ total = 0.25 * I + 0.30 * C + 0.25 * O + 0.20 * V
 
 ## 6. `题目质量评价`
 
-这是当前主线的后验评估模块，直接消费 `生成题面/artifacts/*.json`，结合原题、原始 schema、归一化后的 schema 和生成题面做综合评估。
+这是当前主线的后验评估模块，直接消费 `生成题面/artifacts/*.json`，结合原题、源 schema 和生成题面做综合评估。
 
 目录内部的关键组成包括：
 
@@ -312,7 +306,7 @@ total = 0.25 * I + 0.30 * C + 0.25 * O + 0.20 * V
 它的完整流程是：
 
 ```text
-读取 original schema / prepared schema / artifact / 可选 markdown
+读取 source schema / artifact / 可选 markdown
   -> 恢复 difference plan 与 instantiated schema
   -> 做 hard checks
   -> 评估题面完整性、可读性、样例质量、跨段一致性

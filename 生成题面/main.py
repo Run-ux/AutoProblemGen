@@ -12,7 +12,6 @@ from config import (
     DEFAULT_EMBEDDING_MODEL,
     DEFAULT_MODEL,
     DEFAULT_OUTPUT_DIR,
-    DEFAULT_PREPARED_SCHEMA_DIR,
     DEFAULT_REPORT_DIR,
     DEFAULT_RULE_FILE,
     DEFAULT_SOURCE_DIR,
@@ -24,7 +23,6 @@ from pipeline import GenerationPipeline
 from problem_generator import ProblemGenerator
 from qwen_client import QwenClient
 from rulebook import RuleBook, normalize_rule_id
-from schema_preparer import SchemaPreparer
 from variant_planner import THEMES, VariantPlanner
 
 
@@ -42,11 +40,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--variants", type=int, default=DEFAULT_VARIANTS, help="每次运行生成多少个变体")
     parser.add_argument("--theme", choices=[theme.theme_id for theme in THEMES], help="固定主题")
     parser.add_argument("--source-dir", default=str(DEFAULT_SOURCE_DIR), help="Schema JSON 目录")
-    parser.add_argument(
-        "--prepared-schema-dir",
-        default=str(DEFAULT_PREPARED_SCHEMA_DIR),
-        help="归一化后的 schema 缓存目录",
-    )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Markdown 输出目录")
     parser.add_argument("--artifact-dir", default=str(DEFAULT_ARTIFACT_DIR), help="结构化产物目录")
     parser.add_argument("--report-dir", default=str(DEFAULT_REPORT_DIR), help="过程说明 Markdown 输出目录")
@@ -84,18 +77,8 @@ def main() -> None:
     )
     rulebook = RuleBook.load(args.rule_file)
 
-    _emit_progress("[main] 开始归一化 schema。")
-    prepared_source_dir = SchemaPreparer(
-        source_dir=Path(args.source_dir),
-        cache_dir=Path(args.prepared_schema_dir),
-    ).prepare(
-        problem_ids=target_problem_ids,
-    )
-    _emit_progress(f"[main] schema 归一化完成；prepared_dir={prepared_source_dir}")
-
     pipeline = GenerationPipeline(
-        raw_source_dir=Path(args.source_dir),
-        source_dir=prepared_source_dir,
+        source_dir=Path(args.source_dir),
         output_dir=Path(args.output_dir),
         artifact_dir=Path(args.artifact_dir),
         report_dir=Path(args.report_dir),

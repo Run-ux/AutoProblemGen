@@ -15,8 +15,7 @@ REPORTS_MD_DIR = PROJECT_DIR / "reports" / "md"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="题目质量与反换皮评估器")
-    parser.add_argument("--original-schema", required=True, help="原始 schema 路径")
-    parser.add_argument("--prepared-schema", required=True, help="补全/变换空间 schema 路径")
+    parser.add_argument("--schema", required=True, help="源 schema 路径")
     parser.add_argument("--artifact", required=True, help="生成题面的 artifact 路径")
     parser.add_argument("--markdown", help="生成题面的 Markdown 路径")
     parser.add_argument("--original-problem", help="可选：原题 JSON 覆盖路径")
@@ -32,8 +31,7 @@ def main() -> None:
 
     evaluator = ProblemEvaluator(enable_llm=not args.disable_llm)
     report = evaluator.evaluate_problem(
-        original_schema_path=args.original_schema,
-        prepared_schema_path=args.prepared_schema,
+        schema_path=args.schema,
         artifact_path=args.artifact,
         markdown_path=args.markdown,
         original_problem_override=args.original_problem,

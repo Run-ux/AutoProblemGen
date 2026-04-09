@@ -416,7 +416,7 @@ class RuleHandler:
             "seed_contributions": copy.deepcopy(plan.seed_contributions),
             "fusion_ablation": copy.deepcopy(plan.fusion_ablation),
             "applied_helpers": copy.deepcopy(plan.applied_helpers),
-            "instantiated_schema": dataclass_to_dict(plan.instantiated_schema_snapshot),
+            "new_schema": dataclass_to_dict(plan.new_schema_snapshot),
         }
         return self._run_validation_review(
             client=client,

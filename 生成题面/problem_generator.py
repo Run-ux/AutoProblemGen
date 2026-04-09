@@ -77,7 +77,7 @@ class ProblemGenerator:
         )
         last_errors: list[str] = []
         base_temperature = min(self.temperature, 0.3)
-        instantiated_schema = dataclass_to_dict(plan.instantiated_schema_snapshot)
+        new_schema = dataclass_to_dict(plan.new_schema_snapshot)
 
         for attempt in range(1, self.max_validation_attempts + 1):
             payload = self.client.chat_json(
@@ -88,8 +88,8 @@ class ProblemGenerator:
             problem = self._normalize_payload(payload, plan)
             if problem.status in {"schema_insufficient", "difference_insufficient"}:
                 return problem
-            self._repair_problem(problem, instantiated_schema)
-            errors = self._validate_problem(problem, instantiated_schema, plan, original_problems or [])
+            self._repair_problem(problem, new_schema)
+            errors = self._validate_problem(problem, new_schema, plan, original_problems or [])
             if not errors:
                 return problem
 
@@ -172,7 +172,7 @@ class ProblemGenerator:
         )
         if expected_sample_lines is not None and declared_line_count is not None and declared_line_count != expected_sample_lines:
             errors.append(
-                f"题面声明的输入项数量为 {declared_line_count}，但实例化 schema 要求为 {expected_sample_lines}。"
+                f"题面声明的输入项数量为 {declared_line_count}，但 new_schema 要求为 {expected_sample_lines}。"
             )
 
         for index, sample in enumerate(problem.samples, start=1):
@@ -250,9 +250,9 @@ class ProblemGenerator:
         errors: list[str] = []
         properties = schema.get("input_structure", {}).get("properties", {}) or {}
         if properties.get("ordered") and not any(token in combined for token in ("顺序", "依次", "in order")):
-            errors.append("实例化 schema 带有顺序语义，但题面没有明确说明顺序约束。")
+            errors.append("new_schema 带有顺序语义，但题面没有明确说明顺序约束。")
         if properties.get("cyclic") and not any(token in combined for token in ("循环", "首尾相接", "环", "cyclic")):
-            errors.append("实例化 schema 带有循环语义，但题面没有明确说明循环语义。")
+            errors.append("new_schema 带有循环语义，但题面没有明确说明循环语义。")
         return errors
 
     def _validate_rule_commitments(self, problem: GeneratedProblem, plan: VariantPlan) -> list[str]:

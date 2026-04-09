@@ -17,10 +17,8 @@ from finiteness_verification.problem_repository import ProblemRepository
 from config import DEFAULT_API_KEY, DEFAULT_BASE_URL, DEFAULT_MODEL
 from qwen_client import QwenClient
 from schema_tools import (
-    build_instantiated_schema,
     compute_changed_axes,
     compute_schema_distance,
-    dataclass_to_dict,
 )
 
 from .judges import ProblemQualityJudge, SourceDivergenceJudge
@@ -36,35 +34,32 @@ class ProblemEvaluator:
 
     def evaluate_problem(
         self,
-        original_schema_path: str | Path,
-        prepared_schema_path: str | Path,
+        schema_path: str | Path,
         artifact_path: str | Path,
         markdown_path: str | Path | None = None,
         original_problem_override: dict[str, Any] | str | Path | None = None,
     ) -> dict[str, Any]:
-        original_schema = self._load_json(original_schema_path)
-        prepared_schema = self._load_json(prepared_schema_path)
+        source_schema = self._load_json(schema_path)
         artifact = self._load_json(artifact_path)
         generated_problem = artifact.get("generated_problem", {})
 
         original_problem = self._resolve_original_problem(
-            prepared_schema=prepared_schema,
+            source_schema=source_schema,
             original_problem_override=original_problem_override,
         )
         instantiated_schema, difference_plan, legacy_warnings = self._normalize_artifact(
-            prepared_schema=prepared_schema,
-            original_schema=original_schema,
+            source_schema=source_schema,
             artifact=artifact,
         )
 
-        schema_distance_breakdown = compute_schema_distance(original_schema, instantiated_schema)
-        changed_axes_realized = compute_changed_axes(original_schema, instantiated_schema)
+        schema_distance_breakdown = compute_schema_distance(source_schema, instantiated_schema)
+        changed_axes_realized = compute_changed_axes(source_schema, instantiated_schema)
         if not difference_plan.get("changed_axes"):
             difference_plan["changed_axes"] = changed_axes_realized
 
         hard_checks = self._run_hard_checks(
             original_problem=original_problem,
-            original_schema=original_schema,
+            original_schema=source_schema,
             instantiated_schema=instantiated_schema,
             difference_plan=difference_plan,
             generated_problem=generated_problem,
@@ -81,7 +76,7 @@ class ProblemEvaluator:
         )
         divergence_result = self._evaluate_divergence(
             original_problem=original_problem,
-            original_schema=original_schema,
+            original_schema=source_schema,
             instantiated_schema=instantiated_schema,
             generated_problem=generated_problem,
             hard_checks=hard_check_dicts,
@@ -133,8 +128,7 @@ class ProblemEvaluator:
             suggested_revisions=suggested_revisions,
             snapshots={
                 "paths": {
-                    "original_schema_path": str(Path(original_schema_path)),
-                    "prepared_schema_path": str(Path(prepared_schema_path)),
+                    "schema_path": str(Path(schema_path)),
                     "artifact_path": str(Path(artifact_path)),
                     "markdown_path": str(Path(markdown_path)) if markdown_path else "",
                 },
@@ -163,7 +157,7 @@ class ProblemEvaluator:
 
     def _resolve_original_problem(
         self,
-        prepared_schema: dict[str, Any],
+        source_schema: dict[str, Any],
         original_problem_override: dict[str, Any] | str | Path | None,
     ) -> dict[str, Any] | None:
         if isinstance(original_problem_override, dict):
@@ -173,39 +167,29 @@ class ProblemEvaluator:
 
         try:
             return self.problem_repository.get_problem(
-                source=prepared_schema.get("source", ""),
-                problem_id=prepared_schema.get("problem_id", ""),
+                source=source_schema.get("source", ""),
+                problem_id=source_schema.get("problem_id", ""),
             )
         except Exception:
             return None
 
     def _normalize_artifact(
         self,
-        prepared_schema: dict[str, Any],
-        original_schema: dict[str, Any],
+        source_schema: dict[str, Any],
         artifact: dict[str, Any],
     ) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
         warnings: list[str] = []
         instantiated_schema = artifact.get("instantiated_schema_snapshot")
         if not instantiated_schema:
             warnings.append("artifact 缺少 instantiated_schema_snapshot，已按 legacy 规则回填。")
-            instantiated_schema = dataclass_to_dict(
-                build_instantiated_schema(
-                    schema=prepared_schema,
-                    objective=artifact.get("objective", prepared_schema.get("objective", {})),
-                    numerical_parameters=artifact.get("numerical_parameters", {}),
-                    structural_options=artifact.get("structural_options", []),
-                    theme=artifact.get("theme", {}),
-                    difficulty=artifact.get("difficulty", ""),
-                )
-            )
+            instantiated_schema = _build_legacy_instantiated_schema(source_schema, artifact)
 
         difference_plan = artifact.get("difference_plan")
         if not difference_plan:
             warnings.append("artifact 缺少 difference_plan，已按 legacy 规则推断。")
             difference_plan = {
                 "target_distance_band": {"min": 0.35, "max": 0.60},
-                "changed_axes": compute_changed_axes(original_schema, instantiated_schema),
+                "changed_axes": compute_changed_axes(source_schema, instantiated_schema),
                 "same_family_allowed": True,
                 "forbidden_reuse": [],
                 "rationale": "Legacy artifact without persisted difference_plan.",
@@ -679,6 +663,22 @@ class ProblemEvaluator:
         ):
             return "revise_quality"
         return "pass"
+
+
+def _build_legacy_instantiated_schema(source_schema: dict[str, Any], artifact: dict[str, Any]) -> dict[str, Any]:
+    instantiated_schema = json.loads(json.dumps(source_schema, ensure_ascii=False))
+    instantiated_schema["objective"] = artifact.get("objective", source_schema.get("objective", {}))
+    theme = artifact.get("theme")
+    difficulty = artifact.get("difficulty", "")
+    if theme:
+        instantiated_schema["theme"] = theme
+    if difficulty:
+        instantiated_schema["difficulty"] = difficulty
+    if artifact.get("numerical_parameters"):
+        instantiated_schema["instantiated_parameters"] = artifact["numerical_parameters"]
+    if artifact.get("structural_options"):
+        instantiated_schema["selected_structural_options"] = artifact["structural_options"]
+    return instantiated_schema
 
 
 def _infer_expected_sample_lines(schema: dict[str, Any]) -> int | None:

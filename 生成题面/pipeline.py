@@ -24,7 +24,6 @@ from finiteness_verification.problem_repository import ProblemRepository
 class GenerationPipeline:
     def __init__(
         self,
-        raw_source_dir: Path,
         source_dir: Path,
         output_dir: Path,
         artifact_dir: Path,
@@ -34,7 +33,6 @@ class GenerationPipeline:
         problem_repository: ProblemRepository | None = None,
         progress_writer: Callable[[str], None] | None = None,
     ):
-        self.raw_loader = SchemaLoader(raw_source_dir)
         self.loader = SchemaLoader(source_dir)
         self.output_dir = output_dir
         self.artifact_dir = artifact_dir
@@ -156,10 +154,7 @@ class GenerationPipeline:
         )
         for record in records:
             record["batch_artifact_path"] = str(batch_paths["artifact_path"])
-            record["batch_report_path"] = str(batch_paths["report_path"])
-        self._emit_progress(
-            f"[batch] 全部完成；batch_artifact={batch_paths['artifact_path']}；batch_report={batch_paths['report_path']}"
-        )
+        self._emit_progress(f"[batch] 全部完成；batch_artifact={batch_paths['artifact_path']}")
         return records
 
     def _run_single_problem(
@@ -171,15 +166,9 @@ class GenerationPipeline:
         allowed_rule_ids: set[str] | None,
     ) -> list[dict[str, Any]]:
         self._emit_progress(f"[problem] {problem_id}：读取 schema 与原题信息。")
-        original_schema = self.raw_loader.load(problem_id)
-        prepared_schema = self.loader.load(problem_id)
-        original_problem = self._safe_get_problem(prepared_schema, problem_id)
-        report_sections = self._build_single_report_header(
-            problem_id=problem_id,
-            original_problem=original_problem,
-            original_schema=original_schema,
-            prepared_schema=prepared_schema,
-        )
+        seed_schema = self.loader.load(problem_id)
+        original_problem = self._safe_get_problem(seed_schema, problem_id)
+        report_sections = self._build_single_report_header(problem_id=problem_id)
 
         problem_records: list[dict[str, Any]] = []
         for variant_index in range(1, variants + 1):
@@ -188,8 +177,7 @@ class GenerationPipeline:
                 mode="single_seed_extension",
                 variant_index=variant_index,
                 theme_id=theme_id,
-                original_schema=original_schema,
-                prepared_schema=prepared_schema,
+                seed_schema=seed_schema,
                 original_problem=original_problem,
                 allowed_rule_ids=allowed_rule_ids,
             )
@@ -199,7 +187,7 @@ class GenerationPipeline:
             )
             self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 进入题面生成。")
             generated = self.generator.generate(
-                {"seed_schema": prepared_schema},
+                {"seed_schema": seed_schema},
                 plan,
                 original_problems=[item for item in [original_problem] if item],
             )
@@ -216,7 +204,9 @@ class GenerationPipeline:
             )
             problem_records.append(record)
             report_sections.extend(
-                self._build_variant_report_sections(
+                self._build_single_variant_report_sections(
+                    problem_id=problem_id,
+                    seed_schema=seed_schema,
                     plan=plan,
                     record=record,
                     generated=generated.__dict__,
@@ -242,12 +232,10 @@ class GenerationPipeline:
         if not seed_a or not seed_b:
             raise ValueError("same_family_fusion 模式必须显式提供 seed_a 和 seed_b。")
 
-        original_schema_a = self.raw_loader.load(seed_a)
-        original_schema_b = self.raw_loader.load(seed_b)
-        prepared_schema_a = self.loader.load(seed_a)
-        prepared_schema_b = self.loader.load(seed_b)
-        original_problem_a = self._safe_get_problem(prepared_schema_a, seed_a)
-        original_problem_b = self._safe_get_problem(prepared_schema_b, seed_b)
+        seed_schema_a = self.loader.load(seed_a)
+        seed_schema_b = self.loader.load(seed_b)
+        original_problem_a = self._safe_get_problem(seed_schema_a, seed_a)
+        original_problem_b = self._safe_get_problem(seed_schema_b, seed_b)
 
         report_key = f"{seed_a}__{seed_b}"
         report_sections = self._build_same_family_report_header(
@@ -255,10 +243,8 @@ class GenerationPipeline:
             seed_b=seed_b,
             original_problem_a=original_problem_a,
             original_problem_b=original_problem_b,
-            original_schema_a=original_schema_a,
-            original_schema_b=original_schema_b,
-            prepared_schema_a=prepared_schema_a,
-            prepared_schema_b=prepared_schema_b,
+            seed_schema_a=seed_schema_a,
+            seed_schema_b=seed_schema_b,
         )
 
         records: list[dict[str, Any]] = []
@@ -267,10 +253,8 @@ class GenerationPipeline:
                 mode="same_family_fusion",
                 variant_index=variant_index,
                 theme_id=theme_id,
-                seed_a_schema=prepared_schema_a,
-                seed_b_schema=prepared_schema_b,
-                seed_a_original_schema=original_schema_a,
-                seed_b_original_schema=original_schema_b,
+                seed_a_schema=seed_schema_a,
+                seed_b_schema=seed_schema_b,
                 seed_a_problem=original_problem_a or {},
                 seed_b_problem=original_problem_b or {},
                 allowed_rule_ids=allowed_rule_ids,
@@ -278,8 +262,8 @@ class GenerationPipeline:
             stem = self._build_stem(plan.source_problem_ids, plan.variant_index, plan.theme.theme_id)
             generated = self.generator.generate(
                 {
-                    "seed_a_schema": prepared_schema_a,
-                    "seed_b_schema": prepared_schema_b,
+                    "seed_a_schema": seed_schema_a,
+                    "seed_b_schema": seed_schema_b,
                 },
                 plan,
                 original_problems=[item for item in [original_problem_a, original_problem_b] if item],
@@ -333,10 +317,11 @@ class GenerationPipeline:
             "changed_axes_realized": list(plan.changed_axes_realized),
             "objective": plan.objective,
             "rule_selection_reason": plan.rule_selection_reason,
-            "instantiated_schema_snapshot": asdict(plan.instantiated_schema_snapshot),
+            "new_schema_snapshot": asdict(plan.new_schema_snapshot),
             "applied_rule": plan.applied_rule,
             "rejected_candidates": plan.rejected_candidates,
             "algorithmic_delta_claim": plan.algorithmic_delta_claim,
+            "anti_shallow_rationale": plan.anti_shallow_rationale,
             "shared_core_summary": plan.shared_core_summary,
             "shared_core_anchors": plan.shared_core_anchors,
             "seed_contributions": plan.seed_contributions,
@@ -371,27 +356,176 @@ class GenerationPipeline:
         self,
         *,
         problem_id: str,
-        original_problem: dict[str, Any] | None,
-        original_schema: dict[str, Any],
-        prepared_schema: dict[str, Any],
     ) -> list[str]:
         return [
-            f"# {problem_id} 生成过程说明",
-            "",
-            "## 运行模式",
-            "- mode: single_seed_extension",
-            f"- seed_problem_ids: {problem_id}",
-            "",
-            "## 原题信息",
-            *self._render_problem_reference(original_problem),
-            "",
-            "## 原始四元组摘要",
-            *self._render_schema_summary(original_schema),
-            "",
-            "## 归一化四元组摘要",
-            *self._render_schema_summary(prepared_schema),
+            f"# {problem_id} 生成报告",
             "",
         ]
+
+    def _build_single_variant_report_sections(
+        self,
+        *,
+        problem_id: str,
+        seed_schema: dict[str, Any],
+        plan: VariantPlan,
+        record: dict[str, Any],
+        generated: dict[str, Any],
+    ) -> list[str]:
+        status = str(generated.get("status", "ok") or "ok")
+        lines = [f"## Variant {plan.variant_index}", ""]
+        if status == "ok":
+            lines.extend(
+                self._build_single_success_report_sections(
+                    problem_id=problem_id,
+                    seed_schema=seed_schema,
+                    plan=plan,
+                    record=record,
+                    generated=generated,
+                )
+            )
+        else:
+            lines.extend(
+                self._build_single_failure_report_sections(
+                    seed_schema=seed_schema,
+                    plan=plan,
+                    record=record,
+                    generated=generated,
+                )
+            )
+        lines.append("")
+        return lines
+
+    def _build_single_success_report_sections(
+        self,
+        *,
+        problem_id: str,
+        seed_schema: dict[str, Any],
+        plan: VariantPlan,
+        record: dict[str, Any],
+        generated: dict[str, Any],
+    ) -> list[str]:
+        lines = [
+            "### 生成结论",
+            f"- status: {generated.get('status', 'ok')}",
+            f"- title: {generated.get('title', '') or '无'}",
+            f"- applied_rule: {plan.applied_rule or '无'}",
+            f"- theme: {plan.theme.theme_id} / {plan.theme.name}",
+            f"- predicted_schema_distance: {plan.predicted_schema_distance}",
+            "",
+            "### 核心判断",
+            f"- changed_axes_realized: {', '.join(plan.changed_axes_realized) or '无'}",
+            f"- difference_summary: {plan.difference_plan.summary or '无'}",
+            f"- rule_selection_reason: {plan.rule_selection_reason or '无'}",
+            f"- anti_shallow_rationale: {plan.anti_shallow_rationale or '无'}",
+            "",
+            "### 四元组对比",
+            "",
+            "#### 输入结构",
+            *self._render_markdown_table(
+                headers=["项目", "原题", "新题", "变化判断"],
+                rows=self._build_input_structure_compare_rows(
+                    seed_schema.get("input_structure", {}),
+                    asdict(plan.new_schema_snapshot).get("input_structure", {}),
+                ),
+            ),
+            "",
+            "#### 核心约束",
+            *self._render_markdown_table(
+                headers=["项目", "原题", "新题", "变化判断"],
+                rows=self._build_named_item_compare_rows(
+                    seed_schema.get("core_constraints", {}).get("constraints", []),
+                    asdict(plan.new_schema_snapshot).get("core_constraints", {}).get("constraints", []),
+                    label_prefix="约束",
+                ),
+            ),
+            "",
+            "#### 求解目标",
+            *self._render_markdown_table(
+                headers=["项目", "原题", "新题", "变化判断"],
+                rows=self._build_objective_compare_rows(
+                    seed_schema.get("objective", {}),
+                    asdict(plan.new_schema_snapshot).get("objective", {}),
+                ),
+            ),
+            "",
+            "#### 关键不变量",
+            *self._render_markdown_table(
+                headers=["项目", "原题", "新题", "变化判断"],
+                rows=self._build_named_item_compare_rows(
+                    seed_schema.get("invariant", {}).get("invariants", []),
+                    asdict(plan.new_schema_snapshot).get("invariant", {}).get("invariants", []),
+                    label_prefix="不变量",
+                ),
+            ),
+            "",
+            "### 解法变化",
+            f"- seed_solver_core: {plan.algorithmic_delta_claim.get('seed_solver_core', '') or '无'}",
+            f"- new_solver_core: {plan.algorithmic_delta_claim.get('new_solver_core', '') or '无'}",
+            f"- new_proof_obligation: {plan.algorithmic_delta_claim.get('new_proof_obligation', '') or '无'}",
+            "",
+            "### 输出产物",
+            f"- markdown_path: {record['markdown_path']}",
+            f"- artifact_path: {record['artifact_path']}",
+        ]
+        return lines
+
+    def _build_single_failure_report_sections(
+        self,
+        *,
+        seed_schema: dict[str, Any],
+        plan: VariantPlan,
+        record: dict[str, Any],
+        generated: dict[str, Any],
+    ) -> list[str]:
+        failure_reason = (
+            generated.get("error_reason")
+            or plan.planning_error_reason
+            or plan.difference_plan.rationale
+            or "无"
+        )
+        feedback = generated.get("feedback") or plan.planning_feedback or "无"
+        lines = [
+            "### 生成结论",
+            f"- status: {generated.get('status', 'ok')}",
+            f"- applied_rule: {plan.applied_rule or '无'}",
+            f"- theme: {plan.theme.theme_id} / {plan.theme.name}",
+            f"- planning_status: {plan.planning_status or '无'}",
+            f"- predicted_schema_distance: {plan.predicted_schema_distance}",
+            "",
+            "### 失败原因",
+            f"- error_reason: {failure_reason}",
+            f"- feedback: {feedback}",
+            "",
+            "### 原题四元组",
+            "#### 输入结构",
+            *self._render_readable_input_structure(seed_schema.get("input_structure", {})),
+            "",
+            "#### 核心约束",
+            *self._render_readable_named_items(
+                seed_schema.get("core_constraints", {}).get("constraints", []),
+                empty_text="- 无",
+            ),
+            "",
+            "#### 求解目标",
+            *self._render_readable_objective(seed_schema.get("objective", {})),
+            "",
+            "#### 关键不变量",
+            *self._render_readable_named_items(
+                seed_schema.get("invariant", {}).get("invariants", []),
+                empty_text="- 无",
+            ),
+            "",
+            "### 候选规则结论",
+            *self._render_candidate_outcome_summary(plan),
+            "",
+            "### 建议方向",
+            f"- {feedback}",
+            "",
+            "### 输出产物",
+            f"- markdown_path: {record['markdown_path']}",
+            f"- artifact_path: {record['artifact_path']}",
+        ]
+        return lines
 
     def _build_same_family_report_header(
         self,
@@ -400,10 +534,8 @@ class GenerationPipeline:
         seed_b: str,
         original_problem_a: dict[str, Any] | None,
         original_problem_b: dict[str, Any] | None,
-        original_schema_a: dict[str, Any],
-        original_schema_b: dict[str, Any],
-        prepared_schema_a: dict[str, Any],
-        prepared_schema_b: dict[str, Any],
+        seed_schema_a: dict[str, Any],
+        seed_schema_b: dict[str, Any],
     ) -> list[str]:
         return [
             f"# {seed_a}__{seed_b} 生成过程说明",
@@ -415,20 +547,14 @@ class GenerationPipeline:
             "## 种子题 A",
             *self._render_problem_reference(original_problem_a),
             "",
-            "### 原始四元组",
-            *self._render_schema_summary(original_schema_a),
-            "",
-            "### 归一化四元组",
-            *self._render_schema_summary(prepared_schema_a),
+            "### 四元组摘要",
+            *self._render_schema_summary(seed_schema_a),
             "",
             "## 种子题 B",
             *self._render_problem_reference(original_problem_b),
             "",
-            "### 原始四元组",
-            *self._render_schema_summary(original_schema_b),
-            "",
-            "### 归一化四元组",
-            *self._render_schema_summary(prepared_schema_b),
+            "### 四元组摘要",
+            *self._render_schema_summary(seed_schema_b),
             "",
         ]
 
@@ -487,7 +613,7 @@ class GenerationPipeline:
             [
                 "",
                 "### 实例化四元组",
-                *self._render_instantiated_schema(plan),
+                *self._render_new_schema(plan),
                 "",
                 "### 生成结果",
                 f"- generated_status: {generated.get('status', 'ok')}",
@@ -517,7 +643,6 @@ class GenerationPipeline:
         batch_items: list[dict[str, Any]],
     ) -> dict[str, Path]:
         artifact_path = self.artifact_dir / f"{stem}.json"
-        report_path = self.report_dir / f"{stem}.md"
         failed_item = next((item for item in batch_items if item.get("status") == "failed"), None)
         summary_payload = {
             "batch_id": stem,
@@ -538,14 +663,7 @@ class GenerationPipeline:
             json.dumps(summary_payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
-        report_path.write_text(
-            "\n".join(self._build_batch_report_lines(summary_payload)).rstrip() + "\n",
-            encoding="utf-8",
-        )
-        return {
-            "artifact_path": artifact_path,
-            "report_path": report_path,
-        }
+        return {"artifact_path": artifact_path}
 
     def _safe_get_problem(
         self,
@@ -567,50 +685,6 @@ class GenerationPipeline:
 
     def _build_batch_stem(self, started_at: datetime) -> str:
         return f"batch_{started_at.strftime('%Y%m%d_%H%M%S')}"
-
-    def _build_batch_report_lines(self, summary_payload: dict[str, Any]) -> list[str]:
-        lines = [
-            "# 批量生成过程说明",
-            "",
-            "## 运行概览",
-            f"- batch_id: {summary_payload.get('batch_id', '')}",
-            f"- mode: {summary_payload.get('mode', '')}",
-            f"- source_dir: {summary_payload.get('source_dir', '')}",
-            f"- task_count: {summary_payload.get('task_count', 0)}",
-            f"- completed_count: {summary_payload.get('completed_count', 0)}",
-            f"- failed_count: {summary_payload.get('failed_count', 0)}",
-            f"- status: {summary_payload.get('status', '')}",
-            f"- started_at: {summary_payload.get('started_at', '')}",
-            f"- finished_at: {summary_payload.get('finished_at', '')}",
-            f"- failed_problem_id: {summary_payload.get('failed_problem_id', '') or '无'}",
-            f"- failed_reason: {summary_payload.get('failed_reason', '') or '无'}",
-            "",
-            "## 任务列表",
-        ]
-        for item in summary_payload.get("items", []):
-            lines.extend(
-                [
-                    "",
-                    f"### {item.get('order', '')}. {item.get('problem_id', '')}",
-                    f"- status: {item.get('status', '')}",
-                    f"- error_reason: {item.get('error_reason', '') or '无'}",
-                ]
-            )
-            variant_records = item.get("variant_records", [])
-            if not variant_records:
-                lines.append("- variant_records: 无")
-                continue
-            lines.append("- variant_records:")
-            for record in variant_records:
-                lines.append(
-                    "  - "
-                    + f"variant_index={record.get('variant_index', '')}; "
-                    + f"generated_status={record.get('generated_status', '')}; "
-                    + f"markdown_path={record.get('markdown_path', '')}; "
-                    + f"artifact_path={record.get('artifact_path', '')}; "
-                    + f"report_path={record.get('report_path', '') or '无'}"
-                )
-        return lines
 
     def _emit_progress(self, message: str) -> None:
         self.progress_writer(message)
@@ -751,8 +825,8 @@ class GenerationPipeline:
                 )
         return lines
 
-    def _render_instantiated_schema(self, plan: VariantPlan) -> list[str]:
-        snapshot = asdict(plan.instantiated_schema_snapshot)
+    def _render_new_schema(self, plan: VariantPlan) -> list[str]:
+        snapshot = asdict(plan.new_schema_snapshot)
         return [
             f"- problem_id: {snapshot.get('problem_id', '')}",
             f"- source: {snapshot.get('source', '')}",
@@ -770,6 +844,229 @@ class GenerationPipeline:
                 empty_text="  - 无",
             ),
         ]
+
+    def _render_markdown_table(
+        self,
+        *,
+        headers: list[str],
+        rows: list[list[str]],
+    ) -> list[str]:
+        safe_rows = rows or [["无", "无", "无", "无"]]
+        lines = [
+            "| " + " | ".join(headers) + " |",
+            "| " + " | ".join(["---"] * len(headers)) + " |",
+        ]
+        for row in safe_rows:
+            lines.append("| " + " | ".join(self._escape_markdown_cell(item) for item in row) + " |")
+        return lines
+
+    def _build_input_structure_compare_rows(
+        self,
+        source: dict[str, Any],
+        target: dict[str, Any],
+    ) -> list[list[str]]:
+        source_type = str(source.get("type", "") or "无")
+        target_type = str(target.get("type", "") or "无")
+        source_length = self._format_range(source.get("length", {}), empty_text="无")
+        target_length = self._format_range(target.get("length", {}), empty_text="无")
+        source_value_range = self._format_range(
+            source.get("value_range", {}),
+            none_text="无显式数值范围",
+            empty_text="无显式数值范围",
+        )
+        target_value_range = self._format_range(
+            target.get("value_range", {}),
+            none_text="无显式数值范围",
+            empty_text="无显式数值范围",
+        )
+        source_properties = self._format_properties(source.get("properties", {}))
+        target_properties = self._format_properties(target.get("properties", {}))
+        return [
+            ["类型", source_type, target_type, self._compare_report_values(source_type, target_type)],
+            ["规模范围", source_length, target_length, self._compare_report_values(source_length, target_length)],
+            ["数值范围", source_value_range, target_value_range, self._compare_report_values(source_value_range, target_value_range)],
+            ["结构性质", source_properties, target_properties, self._compare_report_values(source_properties, target_properties)],
+        ]
+
+    def _build_named_item_compare_rows(
+        self,
+        source_items: list[dict[str, Any]],
+        target_items: list[dict[str, Any]],
+        *,
+        label_prefix: str,
+    ) -> list[list[str]]:
+        row_count = max(len(source_items), len(target_items), 1)
+        rows: list[list[str]] = []
+        for index in range(row_count):
+            source_item = source_items[index] if index < len(source_items) else {}
+            target_item = target_items[index] if index < len(target_items) else {}
+            label = (
+                str(source_item.get("name", "") or target_item.get("name", "")).strip()
+                or f"{label_prefix}{index + 1}"
+            )
+            source_text = self._format_named_item(source_item)
+            target_text = self._format_named_item(target_item)
+            rows.append(
+                [
+                    label,
+                    source_text,
+                    target_text,
+                    self._compare_report_values(source_text, target_text),
+                ]
+            )
+        return rows
+
+    def _build_objective_compare_rows(
+        self,
+        source: dict[str, Any],
+        target: dict[str, Any],
+    ) -> list[list[str]]:
+        source_type = str(source.get("type", "") or "无")
+        target_type = str(target.get("type", "") or "无")
+        source_description = str(source.get("description", "") or "无")
+        target_description = str(target.get("description", "") or "无")
+        source_solution = self._format_boolean_flag(source.get("requires_solution"))
+        target_solution = self._format_boolean_flag(target.get("requires_solution"))
+        return [
+            ["目标类型", source_type, target_type, self._compare_report_values(source_type, target_type)],
+            ["目标描述", source_description, target_description, self._compare_report_values(source_description, target_description)],
+            ["输出责任", source_solution, target_solution, self._compare_report_values(source_solution, target_solution)],
+        ]
+
+    def _render_readable_input_structure(self, input_structure: dict[str, Any]) -> list[str]:
+        return [
+            f"- 类型：{input_structure.get('type', '') or '无'}",
+            f"- 规模范围：{self._format_range(input_structure.get('length', {}), empty_text='无')}",
+            "- 数值范围："
+            + self._format_range(
+                input_structure.get("value_range", {}),
+                none_text="无显式数值范围",
+                empty_text="无显式数值范围",
+            ),
+            f"- 结构性质：{self._format_properties(input_structure.get('properties', {}))}",
+        ]
+
+    def _render_readable_objective(self, objective: dict[str, Any]) -> list[str]:
+        return [
+            f"- 类型：{objective.get('type', '') or '无'}",
+            f"- 描述：{objective.get('description', '') or '无'}",
+            f"- 输出责任：{self._format_boolean_flag(objective.get('requires_solution'))}",
+        ]
+
+    def _render_readable_named_items(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        empty_text: str,
+    ) -> list[str]:
+        if not items:
+            return [empty_text]
+        return [f"- {self._format_named_item(item)}" for item in items]
+
+    def _render_candidate_outcome_summary(self, plan: VariantPlan) -> list[str]:
+        lines: list[str] = []
+        attempt_by_rule = {
+            str(item.get("rule_id", "")): item
+            for item in plan.candidate_attempts
+            if str(item.get("rule_id", "")).strip()
+        }
+        rejected_by_rule = {
+            str(item.get("rule_id", "")): item
+            for item in plan.rejected_candidates
+            if str(item.get("rule_id", "")).strip()
+        }
+        covered_rules: set[str] = set()
+        for item in plan.selection_trace:
+            rule_id = str(item.get("rule_id", "")).strip()
+            if not rule_id:
+                continue
+            covered_rules.add(rule_id)
+            reason_code = str(
+                attempt_by_rule.get(rule_id, {}).get("reason_code")
+                or item.get("reason_code", "")
+                or "无"
+            )
+            reason = str(
+                rejected_by_rule.get(rule_id, {}).get("reason")
+                or attempt_by_rule.get(rule_id, {}).get("reason")
+                or item.get("selection_reason", "")
+                or "无"
+            )
+            accepted = "资格通过" if bool(item.get("accepted")) else "资格未通过"
+            if rule_id in rejected_by_rule:
+                accepted = "规划未通过"
+            lines.append(f"- {rule_id}：{accepted}；reason_code={reason_code}；{reason}")
+        for item in plan.rejected_candidates:
+            rule_id = str(item.get("rule_id", "")).strip()
+            if not rule_id or rule_id in covered_rules:
+                continue
+            reason = str(item.get("reason", "") or "无")
+            status = str(item.get("status", "") or "difference_insufficient")
+            lines.append(f"- {rule_id}：规划未通过；reason_code={status}；{reason}")
+        return lines or ["- 无"]
+
+    def _format_range(
+        self,
+        value: dict[str, Any],
+        *,
+        none_text: str = "无",
+        empty_text: str = "无",
+    ) -> str:
+        if not isinstance(value, dict) or not value:
+            return empty_text
+        lower = value.get("min")
+        upper = value.get("max")
+        if lower is None and upper is None:
+            return none_text
+        if lower == upper and lower is not None:
+            return str(lower)
+        if lower is None:
+            return f"不超过 {upper}"
+        if upper is None:
+            return f"至少 {lower}"
+        return f"{lower} 到 {upper}"
+
+    def _format_properties(self, properties: dict[str, Any]) -> str:
+        if not isinstance(properties, dict) or not properties:
+            return "无"
+        parts: list[str] = []
+        for key, value in properties.items():
+            if value is True:
+                parts.append(str(key))
+            elif value is False:
+                parts.append(f"{key}=false")
+            else:
+                parts.append(f"{key}={value}")
+        return "、".join(parts) or "无"
+
+    def _format_named_item(self, item: dict[str, Any]) -> str:
+        if not isinstance(item, dict) or not item:
+            return "无"
+        name = str(item.get("name", "") or "").strip()
+        description = str(item.get("description", "") or "").strip()
+        if name and description:
+            return f"{name}：{description}"
+        return name or description or "无"
+
+    def _format_boolean_flag(self, value: Any) -> str:
+        if value is True:
+            return "需要输出完整解对象"
+        if value is False:
+            return "只需输出结果"
+        return "未显式声明"
+
+    def _compare_report_values(self, source: str, target: str) -> str:
+        if source == target:
+            return "保持一致"
+        if source == "无" and target != "无":
+            return "新增"
+        if target == "无" and source != "无":
+            return "移除"
+        return "发生变化"
+
+    def _escape_markdown_cell(self, value: Any) -> str:
+        text = str(value if value is not None else "无")
+        return text.replace("|", "\\|").replace("\n", "<br>")
 
     def _describe_input_structure(self, input_structure: dict[str, Any]) -> str:
         length = input_structure.get("length", {})
@@ -820,7 +1117,7 @@ def _normalize_distance_breakdown(distance_breakdown: dict[str, Any]) -> dict[st
     if not isinstance(distance_breakdown, dict):
         return {
             "distance_version": "v2",
-            "backend": "lexical_fallback",
+            "backend": "embedding",
             "total": 0.0,
             "axis_scores": {"I": 0.0, "C": 0.0, "O": 0.0, "V": 0.0},
             "components": {
@@ -834,7 +1131,7 @@ def _normalize_distance_breakdown(distance_breakdown: dict[str, Any]) -> dict[st
 
     return {
         "distance_version": str(distance_breakdown.get("distance_version", "v2")),
-        "backend": str(distance_breakdown.get("backend", "lexical_fallback")),
+        "backend": str(distance_breakdown.get("backend", "embedding")),
         "total": round(float(distance_breakdown.get("total", 0.0)), 4),
         "axis_scores": {
             axis: round(float(distance_breakdown.get("axis_scores", {}).get(axis, 0.0)), 4)

@@ -16,13 +16,12 @@ if str(GEN_DIR) not in sys.path:
     sys.path.insert(0, str(GEN_DIR))
 
 from main import _load_batch_problem_ids, _normalize_rule_overrides, _target_problem_ids, _validate_args, build_parser
-from models import DifferencePlan, GeneratedProblem, InstantiatedSchema, Theme, VariantPlan
+from models import DifferencePlan, GeneratedProblem, NewSchema, Theme, VariantPlan
 from pipeline import GenerationPipeline
 from problem_generator import ProblemGenerator
 from qwen_client import QwenClient
 from rule_handlers import get_rule_handler
 from rulebook import RuleBook
-from schema_preparer import SchemaPreparer
 from schema_tools import _objective_type_prompt, compute_schema_distance
 from variant_planner import VariantPlanner
 
@@ -136,7 +135,7 @@ class RuleBookTests(unittest.TestCase):
                 "eligibility_reason",
                 "core_transformation_summary",
                 "difference_plan",
-                "instantiated_schema",
+                "new_schema",
                 "algorithmic_delta_claim",
                 "anti_shallow_rationale",
                 "applied_helpers",
@@ -153,7 +152,7 @@ class RuleBookTests(unittest.TestCase):
                 "seed_b_indispensable_obligation",
                 "why_not_sequential_composition",
                 "fusion_ablation",
-                "instantiated_schema",
+                "new_schema",
                 "algorithmic_delta_claim",
                 "applied_helpers",
             ],
@@ -162,7 +161,7 @@ class RuleBookTests(unittest.TestCase):
     def test_rulebook_merges_mode_level_and_rule_level_required_fields(self) -> None:
         base_payload = json.loads((GEN_DIR / "planning_rules.json").read_text(encoding="utf-8"))
         base_payload["modes"]["single_seed_extension"]["rules"][0]["planner_output_contract"] = {
-            "required_fields": ["custom_field", "instantiated_schema"]
+            "required_fields": ["custom_field", "new_schema"]
         }
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -176,7 +175,7 @@ class RuleBookTests(unittest.TestCase):
                 "eligibility_reason",
                 "core_transformation_summary",
                 "difference_plan",
-                "instantiated_schema",
+                "new_schema",
                 "algorithmic_delta_claim",
                 "anti_shallow_rationale",
                 "applied_helpers",
@@ -193,35 +192,6 @@ class RuleBookTests(unittest.TestCase):
             rule_path.write_text(json.dumps(base_payload, ensure_ascii=False, indent=2), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "missing required execution fields"):
                 RuleBook.load(rule_path)
-
-
-class SchemaPreparerTests(unittest.TestCase):
-    def test_schema_preparer_drops_transform_space_from_prepared_schema(self) -> None:
-        raw_schema = {
-            **make_schema(problem_id="SCHEMA"),
-            "transform_space": {
-                "objective_options": ["counting"],
-            },
-        }
-
-        with tempfile.TemporaryDirectory() as tempdir:
-            source_dir = Path(tempdir) / "source"
-            cache_dir = Path(tempdir) / "cache"
-            source_dir.mkdir(parents=True, exist_ok=True)
-            (source_dir / "SCHEMA.json").write_text(
-                json.dumps(raw_schema, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-
-            prepared_dir = SchemaPreparer(source_dir=source_dir, cache_dir=cache_dir).prepare(["SCHEMA"])
-            prepared = json.loads((prepared_dir / "SCHEMA.json").read_text(encoding="utf-8"))
-
-        self.assertNotIn("transform_space", prepared)
-        self.assertEqual(
-            set(prepared),
-            {"problem_id", "source", "input_structure", "core_constraints", "objective", "invariant"},
-        )
-
 
 class SchemaDistanceTests(unittest.TestCase):
     def test_objective_type_prompt_uses_upstream_objective_specs(self) -> None:
@@ -318,16 +288,19 @@ class SchemaDistanceTests(unittest.TestCase):
 
         self.assertGreater(two_extra_distance["axis_scores"]["C"], one_extra_distance["axis_scores"]["C"])
 
-    def test_embedding_failure_falls_back_to_lexical_backend(self) -> None:
+    def test_embedding_failure_raises_runtime_error(self) -> None:
         left = make_schema(problem_id="LEFT")
         right = copy.deepcopy(left)
         right["objective"]["description"] = "判断是否能找到任意合法方案。"
 
-        distance = compute_schema_distance(left, right, embedding_client=FailingEmbeddingClient())
+        with self.assertRaisesRegex(RuntimeError, "embedding service unavailable"):
+            compute_schema_distance(left, right, embedding_client=FailingEmbeddingClient())
 
-        self.assertEqual(distance["backend"], "lexical_fallback")
-        self.assertIn("axis_scores", distance)
-        self.assertIn("components", distance)
+    def test_missing_embedding_client_raises_runtime_error(self) -> None:
+        schema = make_schema(problem_id="ONLY")
+
+        with self.assertRaisesRegex(RuntimeError, "embedding client unavailable"):
+            compute_schema_distance(schema, copy.deepcopy(schema), embedding_client=None)
 
 
 class SingleSeedExtensionTests(unittest.TestCase):
@@ -363,8 +336,7 @@ class SingleSeedExtensionTests(unittest.TestCase):
                     mode="single_seed_extension",
                     variant_index=1,
                     theme_id="campus_ops",
-                    original_schema=self.source_schema,
-                    prepared_schema=self.source_schema,
+                    seed_schema=self.source_schema,
                     original_problem=self.original_problem,
                     allowed_rule_ids={rule_id},
                 )
@@ -400,8 +372,7 @@ class SingleSeedExtensionTests(unittest.TestCase):
                     mode="single",
                     variant_index=1,
                     theme_id="campus_ops",
-                    original_schema=self.source_schema,
-                    prepared_schema=self.source_schema,
+                    seed_schema=self.source_schema,
                     original_problem=self.original_problem,
                     allowed_rule_ids={rule_id},
                 )
@@ -428,8 +399,7 @@ class SingleSeedExtensionTests(unittest.TestCase):
             mode="single_seed_extension",
             variant_index=1,
             theme_id="campus_ops",
-            original_schema=self.source_schema,
-            prepared_schema=self.source_schema,
+            seed_schema=self.source_schema,
             original_problem=self.original_problem,
         )
 
@@ -466,8 +436,7 @@ class SingleSeedExtensionTests(unittest.TestCase):
             mode="single_seed_extension",
             variant_index=1,
             theme_id="campus_ops",
-            original_schema=self.source_schema,
-            prepared_schema=self.source_schema,
+            seed_schema=self.source_schema,
             original_problem=self.original_problem,
         )
 
@@ -510,8 +479,7 @@ class SingleSeedExtensionTests(unittest.TestCase):
             mode="single_seed_extension",
             variant_index=1,
             theme_id="campus_ops",
-            original_schema=self.source_schema,
-            prepared_schema=self.source_schema,
+            seed_schema=self.source_schema,
             original_problem=self.original_problem,
         )
 
@@ -520,14 +488,14 @@ class SingleSeedExtensionTests(unittest.TestCase):
         self.assertIn("所有规则都只能形成浅改", plan.rule_selection_reason)
         self.assertEqual(client.calls, ["select"])
 
-    def test_validate_candidate_rejects_unexpected_instantiated_schema_fields(self) -> None:
+    def test_validate_candidate_rejects_unexpected_new_schema_fields(self) -> None:
         planner = VariantPlanner(
             client=None,
             rulebook=self.rulebook,
             seed=29,
         )
         payload = make_single_payload("canonical_witness")
-        payload["instantiated_schema"]["selected_input_options"] = ["legacy_option"]
+        payload["new_schema"]["selected_input_options"] = ["legacy_option"]
         rule = next(
             item
             for item in self.rulebook.enabled_rules("single_seed_extension")
@@ -745,7 +713,7 @@ class RuleHandlerTests(unittest.TestCase):
                     rule=rule,
                     payload=payload,
                     source_schema=make_schema(problem_id="SRC"),
-                    candidate_schema=payload["instantiated_schema"],
+                    candidate_schema=payload["new_schema"],
                     changed_axes=payload["difference_plan"]["changed_axes"],
                     global_constraints={"allow_helper_moves": True},
                 )
@@ -770,7 +738,7 @@ class RuleHandlerTests(unittest.TestCase):
                     rule=rule,
                     payload=payload,
                     source_schema=make_schema(problem_id="SRC"),
-                    candidate_schema=payload["instantiated_schema"],
+                    candidate_schema=payload["new_schema"],
                     changed_axes=payload["difference_plan"]["changed_axes"],
                     global_constraints={"allow_helper_moves": True},
                 )
@@ -798,7 +766,7 @@ class RuleHandlerTests(unittest.TestCase):
             rule=rule,
             payload=payload,
             source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=payload["instantiated_schema"],
+            candidate_schema=payload["new_schema"],
             changed_axes=payload["difference_plan"]["changed_axes"],
             global_constraints={"allow_helper_moves": True},
         )
@@ -826,14 +794,14 @@ class RuleHandlerTests(unittest.TestCase):
             rule=rule,
             payload=payload,
             source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=payload["instantiated_schema"],
+            candidate_schema=payload["new_schema"],
             changed_axes=payload["difference_plan"]["changed_axes"],
             global_constraints={"allow_helper_moves": True},
         )
         self.assertIn("C", payload["difference_plan"]["changed_axes"])
         self.assertIn("V", payload["difference_plan"]["changed_axes"])
         self.assertNotIn("O", payload["difference_plan"]["changed_axes"])
-        self.assertEqual(payload["instantiated_schema"]["objective"]["type"], "decision")
+        self.assertEqual(payload["new_schema"]["objective"]["type"], "decision")
         self.assertTrue(outcome.accepted)
         self.assertIn("plan_review:interlocked_constraints", client.calls)
 
@@ -849,7 +817,7 @@ class RuleHandlerTests(unittest.TestCase):
             rule=rule,
             payload=missing_payload,
             source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=missing_payload["instantiated_schema"],
+            candidate_schema=missing_payload["new_schema"],
             changed_axes=missing_payload["difference_plan"]["changed_axes"],
             global_constraints={"allow_helper_moves": True},
         )
@@ -873,7 +841,7 @@ class RuleHandlerTests(unittest.TestCase):
             rule=rule,
             payload=extra_payload,
             source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=extra_payload["instantiated_schema"],
+            candidate_schema=extra_payload["new_schema"],
             changed_axes=extra_payload["difference_plan"]["changed_axes"],
             global_constraints={"allow_helper_moves": True},
         )
@@ -887,7 +855,7 @@ class RuleHandlerTests(unittest.TestCase):
         broken_helper = copy.deepcopy(payload["applied_helpers"][0])
         broken_helper["schema_changes"] = ["只有目标变了。"]
         payload["applied_helpers"][0] = broken_helper
-        candidate_schema = copy.deepcopy(payload["instantiated_schema"])
+        candidate_schema = copy.deepcopy(payload["new_schema"])
         candidate_schema["invariant"] = copy.deepcopy(make_schema(problem_id="SRC")["invariant"])
         outcome = handler.validate_plan(
             client=FakePlannerClient(responses={}),
@@ -976,7 +944,7 @@ class PipelineArtifactTests(unittest.TestCase):
             summary="双向对等融合通过硬门槛。",
             mode="same_family_fusion",
         )
-        instantiated_schema = InstantiatedSchema(
+        new_schema = NewSchema(
             problem_id="A__B_FUSED",
             source="codeforces+codeforces",
             input_structure={
@@ -1013,7 +981,7 @@ class PipelineArtifactTests(unittest.TestCase):
             constraint_summary=["双义务互锁"],
             invariant_summary=["共享状态核"],
             difference_plan=difference_plan,
-            instantiated_schema_snapshot=instantiated_schema,
+            new_schema_snapshot=new_schema,
             predicted_schema_distance=0.44,
             distance_breakdown=make_distance_breakdown(i=0.0, c=0.6, o=0.6, v=0.4, total=0.44),
             changed_axes_realized=["C", "O", "V"],
@@ -1055,7 +1023,6 @@ class PipelineArtifactTests(unittest.TestCase):
                 )
 
             pipeline = GenerationPipeline(
-                raw_source_dir=source_dir,
                 source_dir=source_dir,
                 output_dir=output_dir,
                 artifact_dir=artifact_dir,
@@ -1081,7 +1048,7 @@ class PipelineArtifactTests(unittest.TestCase):
             "difference_plan",
             "predicted_schema_distance",
             "changed_axes_realized",
-            "instantiated_schema_snapshot",
+            "new_schema_snapshot",
             "mode",
             "applied_rule",
             "rule_selection_reason",
@@ -1119,7 +1086,7 @@ class PipelineArtifactTests(unittest.TestCase):
             "selected_input_options",
             "selected_invariant_options",
         ):
-            self.assertNotIn(key, artifact["instantiated_schema_snapshot"])
+            self.assertNotIn(key, artifact["new_schema_snapshot"])
             self.assertNotIn(key, report_text)
 
 
@@ -1139,7 +1106,6 @@ class BatchPipelineTests(unittest.TestCase):
             messages: list[str] = []
 
             pipeline = GenerationPipeline(
-                raw_source_dir=source_dir,
                 source_dir=source_dir,
                 output_dir=output_dir,
                 artifact_dir=artifact_dir,
@@ -1179,7 +1145,6 @@ class BatchPipelineTests(unittest.TestCase):
                 )
 
             pipeline = GenerationPipeline(
-                raw_source_dir=source_dir,
                 source_dir=source_dir,
                 output_dir=output_dir,
                 artifact_dir=artifact_dir,
@@ -1199,21 +1164,17 @@ class BatchPipelineTests(unittest.TestCase):
             batch_artifacts = sorted(artifact_dir.glob("batch_*.json"))
             batch_reports = sorted(report_dir.glob("batch_*.md"))
             self.assertEqual(len(batch_artifacts), 1)
-            self.assertEqual(len(batch_reports), 1)
+            self.assertEqual(len(batch_reports), 0)
             batch_payload = json.loads(batch_artifacts[0].read_text(encoding="utf-8"))
-            batch_report_text = batch_reports[0].read_text(encoding="utf-8")
             for record in records:
                 self.assertIn("batch_artifact_path", record)
-                self.assertIn("batch_report_path", record)
+                self.assertNotIn("batch_report_path", record)
                 self.assertTrue(Path(record["batch_artifact_path"]).exists())
-                self.assertTrue(Path(record["batch_report_path"]).exists())
 
         self.assertEqual(batch_payload["status"], "completed")
         self.assertEqual(batch_payload["task_order"], ["A", "B"])
         self.assertEqual(batch_payload["completed_count"], 2)
         self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B"])
-        self.assertIn("### 1. A", batch_report_text)
-        self.assertIn("### 2. B", batch_report_text)
 
     def test_batch_single_run_continues_after_failure_and_persists_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -1230,7 +1191,6 @@ class BatchPipelineTests(unittest.TestCase):
                 )
 
             pipeline = GenerationPipeline(
-                raw_source_dir=source_dir,
                 source_dir=source_dir,
                 output_dir=output_dir,
                 artifact_dir=artifact_dir,
@@ -1250,7 +1210,7 @@ class BatchPipelineTests(unittest.TestCase):
             batch_artifacts = sorted(artifact_dir.glob("batch_*.json"))
             batch_reports = sorted(report_dir.glob("batch_*.md"))
             self.assertEqual(len(batch_artifacts), 1)
-            self.assertEqual(len(batch_reports), 1)
+            self.assertEqual(len(batch_reports), 0)
             batch_payload = json.loads(batch_artifacts[0].read_text(encoding="utf-8"))
             markdown_paths = sorted(path.name for path in output_dir.glob("*.md"))
 
@@ -1263,6 +1223,168 @@ class BatchPipelineTests(unittest.TestCase):
         self.assertEqual(len(markdown_paths), 2)
         self.assertTrue(markdown_paths[0].startswith("A_v1_campus_ops_"))
         self.assertTrue(markdown_paths[1].startswith("C_v1_campus_ops_"))
+
+    def test_batch_single_run_continues_after_embedding_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            source_dir = temp / "schemas"
+            output_dir = temp / "output"
+            artifact_dir = temp / "artifacts"
+            report_dir = temp / "reports"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            for problem_id in ("A", "B", "C"):
+                (source_dir / f"{problem_id}.json").write_text(
+                    json.dumps(make_schema(problem_id=problem_id), ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+
+            pipeline = GenerationPipeline(
+                source_dir=source_dir,
+                output_dir=output_dir,
+                artifact_dir=artifact_dir,
+                report_dir=report_dir,
+                generator=FakeGenerator(),
+                planner=EmbeddingFailurePlanner(fail_problem_id="B"),
+                problem_repository=FakeProblemRepository(),
+            )
+            records = pipeline.run(
+                mode="single",
+                problem_ids=["A", "B", "C"],
+                variants=1,
+                theme_id="campus_ops",
+                batch_source_dir=source_dir,
+            )
+
+            batch_artifacts = sorted(artifact_dir.glob("batch_*.json"))
+            self.assertEqual(len(batch_artifacts), 1)
+            batch_payload = json.loads(batch_artifacts[0].read_text(encoding="utf-8"))
+
+        self.assertEqual(batch_payload["status"], "failed")
+        self.assertEqual(batch_payload["completed_count"], 2)
+        self.assertEqual(batch_payload["failed_count"], 1)
+        self.assertEqual(batch_payload["failed_problem_id"], "B")
+        self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B", "C"])
+        failed_item = next(item for item in batch_payload["items"] if item["problem_id"] == "B")
+        self.assertEqual(failed_item["status"], "failed")
+        self.assertIn("embedding service unavailable", failed_item["error_reason"])
+        self.assertEqual([record["source_problem_ids"] for record in records], [["A"], ["C"]])
+
+
+class ReportRenderingTests(unittest.TestCase):
+    def test_single_success_report_uses_quad_compare_tables(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            source_dir = temp / "schemas"
+            output_dir = temp / "output"
+            artifact_dir = temp / "artifacts"
+            report_dir = temp / "reports"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "A.json").write_text(
+                json.dumps(make_schema(problem_id="A"), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+
+            pipeline = GenerationPipeline(
+                source_dir=source_dir,
+                output_dir=output_dir,
+                artifact_dir=artifact_dir,
+                report_dir=report_dir,
+                generator=FakeGenerator(),
+                planner=ProblemAwarePlanner(),
+                problem_repository=FakeProblemRepository(),
+            )
+            records = pipeline.run(
+                mode="single",
+                problem_ids=["A"],
+                variants=1,
+                theme_id="campus_ops",
+            )
+
+            report_text = Path(records[0]["report_path"]).read_text(encoding="utf-8")
+
+        self.assertIn("# A 生成报告", report_text)
+        self.assertIn("### 四元组对比", report_text)
+        self.assertIn("| 项目 | 原题 | 新题 | 变化判断 |", report_text)
+        self.assertIn("#### 输入结构", report_text)
+        self.assertIn("#### 核心约束", report_text)
+        self.assertIn("#### 求解目标", report_text)
+        self.assertIn("#### 关键不变量", report_text)
+        self.assertIn("| 类型 |", report_text)
+        self.assertIn("- anti_shallow_rationale: 变化已进入主导义务。", report_text)
+        self.assertNotIn("### 审计轨迹", report_text)
+        self.assertNotIn("applied_helpers", report_text)
+        self.assertNotIn("candidate_attempts", report_text)
+        self.assertNotIn("### 实例化四元组", report_text)
+
+    def test_single_failure_report_uses_seed_summary_without_compare_tables(self) -> None:
+        plan = make_validation_plan("canonical_witness")
+        plan.problem_id = "A_GEN"
+        plan.source_problem_ids = ["A"]
+        plan.new_schema_snapshot.problem_id = "A_GEN"
+        plan.applied_rule = ""
+        plan.planning_status = "schema_insufficient"
+        plan.predicted_schema_distance = 0.0
+        plan.changed_axes_realized = []
+        plan.rule_selection_reason = "当前规则难以形成主导义务变化。"
+        plan.planning_error_reason = "当前种子缺少足够的结构增量空间。"
+        plan.planning_feedback = "建议更换具备多解空间或天然失败语义的种子题。"
+        plan.selection_trace = [
+            {
+                "rule_id": "canonical_witness",
+                "accepted": True,
+                "reason_code": "eligible",
+                "selection_reason": "规范输出会退化成后处理。",
+            },
+            {
+                "rule_id": "existence_to_counting",
+                "accepted": False,
+                "reason_code": "core_structure_mismatch",
+                "selection_reason": "原题没有自然的组合分支。",
+            },
+        ]
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            source_dir = temp / "schemas"
+            output_dir = temp / "output"
+            artifact_dir = temp / "artifacts"
+            report_dir = temp / "reports"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "A.json").write_text(
+                json.dumps(make_schema(problem_id="A"), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+
+            pipeline = GenerationPipeline(
+                source_dir=source_dir,
+                output_dir=output_dir,
+                artifact_dir=artifact_dir,
+                report_dir=report_dir,
+                generator=StatusGenerator(
+                    status="schema_insufficient",
+                    error_reason="当前种子缺少足够的结构增量空间。",
+                    feedback="建议更换具备多解空间或天然失败语义的种子题。",
+                ),
+                planner=FixedPlanPlanner(plan),
+                problem_repository=FakeProblemRepository(),
+            )
+            records = pipeline.run(
+                mode="single",
+                problem_ids=["A"],
+                variants=1,
+                theme_id="campus_ops",
+            )
+
+            report_text = Path(records[0]["report_path"]).read_text(encoding="utf-8")
+
+        self.assertIn("### 失败原因", report_text)
+        self.assertIn("### 原题四元组", report_text)
+        self.assertIn("### 候选规则结论", report_text)
+        self.assertIn("### 建议方向", report_text)
+        self.assertIn("canonical_witness", report_text)
+        self.assertNotIn("### 四元组对比", report_text)
+        self.assertNotIn("| 项目 | 原题 | 新题 | 变化判断 |", report_text)
+        self.assertNotIn("### 审计轨迹", report_text)
 
 
 class CliAndDocumentationTests(unittest.TestCase):
@@ -1368,9 +1490,14 @@ class CliAndDocumentationTests(unittest.TestCase):
         self.assertNotIn("transform_space", generator_readme)
         self.assertNotIn("instantiated_parameters", generator_readme)
         self.assertNotIn("selected_structural_options", generator_readme)
+        self.assertNotIn("schema_preparer.py", generator_readme)
+        self.assertNotIn("prepared_schemas", generator_readme)
+        self.assertNotIn("--prepared-schema-dir", generator_readme)
         self.assertNotIn("transform_space", root_generator_section)
         self.assertNotIn("instantiated_parameters", root_generator_section)
         self.assertNotIn("selected_structural_options", root_generator_section)
+        self.assertNotIn("schema_preparer.py", root_generator_section)
+        self.assertNotIn("prepared_schemas", root_generator_section)
         self.assertIn("check_eligibility", rules_doc)
         self.assertIn("validate_plan", rules_doc)
         self.assertIn("validate_problem", rules_doc)
@@ -1530,6 +1657,28 @@ class FakeGenerator:
         )
 
 
+class StatusGenerator:
+    def __init__(self, *, status: str, title: str = "", error_reason: str = "", feedback: str = "") -> None:
+        self.status = status
+        self.title = title
+        self.error_reason = error_reason
+        self.feedback = feedback
+
+    def generate(self, schema_context: dict, plan: VariantPlan, original_problems: list[dict] | None = None) -> GeneratedProblem:
+        return GeneratedProblem(
+            title=self.title,
+            description="",
+            input_format="",
+            output_format="",
+            constraints=[],
+            samples=[],
+            notes="",
+            status=self.status,
+            error_reason=self.error_reason,
+            feedback=self.feedback,
+        )
+
+
 class FailingOnProblemGenerator(FakeGenerator):
     def __init__(self, fail_problem_id: str) -> None:
         self.fail_problem_id = fail_problem_id
@@ -1558,16 +1707,30 @@ class FakeProblemRepository:
 
 class ProblemAwarePlanner:
     def build_plan(self, **kwargs: dict) -> VariantPlan:
-        prepared_schema = dict(kwargs.get("prepared_schema", {}))
-        source_problem_id = str(prepared_schema.get("problem_id", "unknown"))
+        seed_schema = dict(kwargs.get("seed_schema", {}))
+        source_problem_id = str(seed_schema.get("problem_id", "unknown"))
         variant_index = int(kwargs.get("variant_index", 1))
         plan = copy.deepcopy(make_validation_plan("canonical_witness"))
         plan.problem_id = f"{source_problem_id}_GEN"
         plan.variant_index = variant_index
         plan.source_problem_ids = [source_problem_id]
-        plan.instantiated_schema_snapshot.problem_id = f"{source_problem_id}_GEN"
+        plan.new_schema_snapshot.problem_id = f"{source_problem_id}_GEN"
         plan.seed = 20260409
         return plan
+
+
+class EmbeddingFailurePlanner:
+    def __init__(self, fail_problem_id: str) -> None:
+        self.fail_problem_id = fail_problem_id
+
+    def build_plan(self, **kwargs: dict) -> VariantPlan:
+        seed_schema = copy.deepcopy(dict(kwargs.get("seed_schema", {})))
+        source_problem_id = str(seed_schema.get("problem_id", "unknown"))
+        if source_problem_id == self.fail_problem_id:
+            candidate_schema = copy.deepcopy(seed_schema)
+            candidate_schema.setdefault("objective", {})["description"] = "判断是否能找到任意合法方案。"
+            compute_schema_distance(seed_schema, candidate_schema, embedding_client=FailingEmbeddingClient())
+        return ProblemAwarePlanner().build_plan(**kwargs)
 
 
 def _extract_readme_section(text: str, start_marker: str, end_marker: str) -> str:
@@ -1713,7 +1876,7 @@ def make_single_payload(rule_id: str) -> dict:
             "rationale": "新规则改变主导求解义务。",
             "summary": "通过硬门槛并可追溯到规则。",
         },
-        "instantiated_schema": {
+        "new_schema": {
             "problem_id": f"SINGLE_{rule_id}",
             "source": "codeforces",
             "input_structure": {
@@ -1760,17 +1923,17 @@ def make_single_payload(rule_id: str) -> dict:
             "without_seed_b": "",
         },
     }
-    constraints = base["instantiated_schema"]["core_constraints"]["constraints"]
-    invariants = base["instantiated_schema"]["invariant"]["invariants"]
+    constraints = base["new_schema"]["core_constraints"]["constraints"]
+    invariants = base["new_schema"]["invariant"]["invariants"]
     if rule_id == "construct_or_obstruction":
-        base["instantiated_schema"]["objective"] = {"type": "construction", "description": "输出构造或阻碍证书。"}
+        base["new_schema"]["objective"] = {"type": "construction", "description": "输出构造或阻碍证书。"}
         constraints.append({"name": "obstruction_certificate", "description": "当无解时，必须输出一个可局部检查的冲突证书。"})
     elif rule_id == "existence_to_counting":
-        base["instantiated_schema"]["objective"] = {"type": "counting", "description": "统计所有合法方案数。"}
+        base["new_schema"]["objective"] = {"type": "counting", "description": "统计所有合法方案数。"}
         constraints.append({"name": "counting_scope", "description": "两个方案只有在选择对象集合不同或等价类不同的情况下才计作不同答案；结果对 998244353 取模。"})
         invariants.append({"name": "finite_counting", "description": "候选对象空间有限，且每个对象都能映射到唯一计数单元。"})
     elif rule_id == "minimum_guarantee_under_perturbation":
-        base["instantiated_schema"]["objective"] = {"type": "minimize_value", "description": "求最小保底阈值。"}
+        base["new_schema"]["objective"] = {"type": "minimize_value", "description": "求最小保底阈值。"}
         constraints.append({"name": "worst_case_perturbation", "description": "必须在任意合法扰动顺序下都保证目标成立。"})
         invariants.append({"name": "guarantee_invariant", "description": "存在一个保底不变量，使最坏情形仍能维持可行。"})
     else:
@@ -1796,7 +1959,7 @@ def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) 
             "rationale": "共享主核上叠加双向不可删义务。",
             "summary": "通过单主核和反串联硬门槛。",
         },
-        "instantiated_schema": {
+        "new_schema": {
             "problem_id": f"FUSED_{rule_id}",
             "source": "codeforces+codeforces",
             "input_structure": {
@@ -1844,17 +2007,17 @@ def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) 
         },
     }
     if rule_id == "interlocked_constraints":
-        payload["instantiated_schema"]["input_structure"] = {
+        payload["new_schema"]["input_structure"] = {
             "type": "array",
             "length": {"min": 4, "max": 8},
             "value_range": {"min": 0, "max": 50},
             "properties": {"ordered": True, "segmented": True, "capacity_indexed": True},
         }
-        payload["instantiated_schema"]["core_constraints"]["constraints"] = [
+        payload["new_schema"]["core_constraints"]["constraints"] = [
             {"name": "capacity_lock", "description": "每一步状态转移都必须同时满足共享容量配额。"},
             {"name": "conflict_lock", "description": "同一步转移中被冲突关系绑定的对象不能共同进入合法状态。"},
         ]
-        payload["instantiated_schema"]["invariant"]["invariants"] = [
+        payload["new_schema"]["invariant"]["invariants"] = [
             {"name": "shared_pressure", "description": "任一可达状态都同时承受容量与冲突两类义务。"},
             {"name": "non_sequential_core", "description": "任何合法状态都不能拆成先满足一题再满足另一题的串联过程。"},
         ]
@@ -1877,7 +2040,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         keywords=["社团"],
         mapping_hint="校园资源调度。",
     )
-    instantiated_schema = InstantiatedSchema(
+    new_schema = NewSchema(
         problem_id=f"PLAN_{rule_id}",
         source="codeforces",
         input_structure={
@@ -1893,14 +2056,14 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         difficulty="Hard",
     )
     if rule_id == "interlocked_constraints":
-        instantiated_schema.input_structure = {
+        new_schema.input_structure = {
             "type": "array",
             "length": {"min": 4, "max": 8},
             "value_range": {"min": 0, "max": 50},
             "properties": {"ordered": True, "segmented": True, "capacity_indexed": True},
         }
-        instantiated_schema.objective = {"type": "decision", "description": "判断是否存在合法方案。"}
-    objective = instantiated_schema.objective
+        new_schema.objective = {"type": "decision", "description": "判断是否存在合法方案。"}
+    objective = new_schema.objective
     if rule_id == "existence_to_counting":
         objective = {"type": "counting", "description": "统计所有合法方案数。"}
     elif rule_id == "minimum_guarantee_under_perturbation":
@@ -1908,7 +2071,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
     elif rule_id == "interlocked_constraints":
         objective = {"type": "decision", "description": "判断是否存在合法方案。"}
     return VariantPlan(
-        problem_id=instantiated_schema.problem_id,
+        problem_id=new_schema.problem_id,
         variant_index=1,
         seed=1,
         mode="same_family_fusion" if "interlocked" in rule_id or "shared_core" in rule_id else "single_seed_extension",
@@ -1929,7 +2092,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
             summary="测试",
             mode="same_family_fusion" if "interlocked" in rule_id or "shared_core" in rule_id else "single_seed_extension",
         ),
-        instantiated_schema_snapshot=instantiated_schema,
+        new_schema_snapshot=new_schema,
         predicted_schema_distance=0.37 if rule_id == "interlocked_constraints" else 0.45,
         distance_breakdown=make_distance_breakdown(
             i=0.25 if rule_id == "interlocked_constraints" else 0.0,
@@ -1947,6 +2110,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
             "new_proof_obligation": "证明新责任成立",
             "why_direct_reuse_fails": "原解缺少新责任的验证链路",
         },
+        anti_shallow_rationale="变化已进入主导义务。",
         shared_core_summary="共享主核" if "interlocked" in rule_id or "shared_core" in rule_id else "",
         shared_core_anchors={
             "shared_state": "统一状态",

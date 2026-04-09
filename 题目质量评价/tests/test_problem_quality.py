@@ -14,45 +14,21 @@ if str(ROOT / "生成题面") not in sys.path:
 if str(ROOT / "题目质量评价") not in sys.path:
     sys.path.insert(0, str(ROOT / "题目质量评价"))
 
-from finiteness_verification.problem_repository import ProblemRepository
 from problem_quality import ProblemEvaluator
-from variant_planner import VariantPlanner
 
 
 class ProblemQualityTests(unittest.TestCase):
-    def test_variant_planner_builds_difference_plan_for_cf25e(self) -> None:
-        prepared_path = ROOT / "生成题面" / "prepared_schemas" / "CF25E.json"
-        prepared = json.loads(prepared_path.read_text(encoding="utf-8"))
-        original_problem = ProblemRepository().get_problem(
-            source=prepared["source"],
-            problem_id=prepared["problem_id"],
-        )
-
-        plan = VariantPlanner(seed=20260312).build_plan(
-            schema=prepared,
-            variant_index=1,
-            theme_id="campus_ops",
-            original_schema=prepared,
-            original_problem=original_problem,
-        )
-
-        self.assertGreaterEqual(plan.predicted_schema_distance, 0.35)
-        self.assertGreaterEqual(len(plan.changed_axes_realized), 2)
-        self.assertIn("O", plan.changed_axes_realized)
-        self.assertTrue(plan.difference_plan.forbidden_reuse)
-
-    def test_evaluator_rejects_legacy_cf25e_artifact_as_retheme(self) -> None:
+    def test_evaluator_rejects_failed_cf722d_artifact_as_retheme(self) -> None:
         evaluator = ProblemEvaluator(enable_llm=False)
         report = evaluator.evaluate_problem(
-            original_schema_path=ROOT / "生成题面" / "prepared_schemas" / "CF25E.json",
-            prepared_schema_path=ROOT / "生成题面" / "prepared_schemas" / "CF25E.json",
-            artifact_path=ROOT / "生成题面" / "artifacts" / "CF25E_v1_campus_ops_20260315_233917.json",
+            schema_path=ROOT / "四元组抽取" / "output" / "batch" / "normalized" / "CF722D.json",
+            artifact_path=ROOT / "生成题面" / "artifacts" / "CF722D_v1_campus_ops_20260409_165533.json",
         )
 
         self.assertEqual(report["overall"]["status"], "reject_as_retheme")
         failed_checks = {item["check_id"] for item in report["hard_checks"] if not item["passed"]}
-        self.assertIn("input_count_alignment", failed_checks)
         self.assertIn("schema_distance_threshold", failed_checks)
+        self.assertIn("changed_axes_threshold", failed_checks)
 
     def test_evaluator_can_separate_divergence_and_quality(self) -> None:
         evaluator = ProblemEvaluator(enable_llm=False)
@@ -87,7 +63,6 @@ class ProblemQualityTests(unittest.TestCase):
                 "structural_options": ["must_contain_in_order", "cyclic_string"],
             },
         }
-        prepared_schema = original_schema
         original_problem = {
             "problem_id": "CFX",
             "title": "E. Test",
@@ -191,23 +166,19 @@ class ProblemQualityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             temp = Path(tempdir)
             original_schema_path = temp / "original.json"
-            prepared_schema_path = temp / "prepared.json"
             artifact_path = temp / "artifact.json"
             low_quality_artifact_path = temp / "artifact_low_quality.json"
             original_schema_path.write_text(json.dumps(original_schema, ensure_ascii=False, indent=2), encoding="utf-8")
-            prepared_schema_path.write_text(json.dumps(prepared_schema, ensure_ascii=False, indent=2), encoding="utf-8")
             artifact_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
             low_quality_artifact_path.write_text(json.dumps(low_quality_artifact, ensure_ascii=False, indent=2), encoding="utf-8")
 
             pass_report = evaluator.evaluate_problem(
-                original_schema_path=original_schema_path,
-                prepared_schema_path=prepared_schema_path,
+                schema_path=original_schema_path,
                 artifact_path=artifact_path,
                 original_problem_override=original_problem,
             )
             revise_report = evaluator.evaluate_problem(
-                original_schema_path=original_schema_path,
-                prepared_schema_path=prepared_schema_path,
+                schema_path=original_schema_path,
                 artifact_path=low_quality_artifact_path,
                 original_problem_override=original_problem,
             )

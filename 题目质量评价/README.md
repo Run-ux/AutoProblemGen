@@ -1,6 +1,6 @@
 # 题目质量评价
 
-该目录提供“题面质量 + 反换皮”单题评估器。它直接消费 `生成题面/artifacts/*.json`，同时读取原始 schema、prepared schema 和原题文本，输出：
+该目录提供“题面质量 + 反换皮”单题评估器。它直接消费 `生成题面/artifacts/*.json`，同时读取源 schema 和原题文本，输出：
 
 - `reports/json/*_quality_report.json`
 - `reports/md/*_quality_report.md`
@@ -15,8 +15,7 @@
 
 ```bash
 python main.py ^
-  --original-schema D:\AutoProblemGen\生成题面\prepared_schemas\CF25E.json ^
-  --prepared-schema D:\AutoProblemGen\生成题面\prepared_schemas\CF25E.json ^
+  --schema D:\AutoProblemGen\四元组抽取\output\batch\normalized\CF25E.json ^
   --artifact D:\AutoProblemGen\生成题面\artifacts\CF25E_v1_campus_ops_20260315_233917.json ^
   --disable-llm
 ```

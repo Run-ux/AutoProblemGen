@@ -138,7 +138,7 @@ def build_rule_problem_validation_system_prompt() -> str:
 2. 通用结构校验已经由系统处理，你只负责规则专属语义合同。
 3. 如果证据不足，默认返回 `fail`。
 4. 不要替题面补设定，也不要假定未写出的语义已经成立。
-5. 判断必须基于给定 `review_role`、`review_brief`、规则声明、计划摘要、实例化 schema 和题面内容。
+5. 判断必须基于给定 `review_role`、`review_brief`、规则声明、计划摘要、`new_schema` 和题面内容。
 6. 如果规则声明了 `helpers`，必须判断题面是否把这些 helper 对应的关键语义写实。
 7. 输出必须是严格 JSON，不要输出 Markdown。
 8. JSON 只能包含规定字段，不能添加额外键。
@@ -177,7 +177,7 @@ def build_rule_problem_validation_user_prompt(
         "\n要求：\n"
         "- `message` 直接概括结论，不要泛泛而谈。\n"
         "- `errors` 只写真正构成拒绝的规则专属问题；通过时返回空数组。\n"
-        "- `evidence` 必须引用题面、实例化 schema、规划摘要或规则声明中的具体内容。\n"
+        "- `evidence` 必须引用题面、`new_schema`、规划摘要或规则声明中的具体内容。\n"
         "- 如果规则声明了 `helpers`，要确认题面把这些 helper 的语义承诺写清，而不是只在规划摘要里出现。\n"
         "- 如果题面没有把关键语义写清楚，返回 `fail`。\n\n"
         f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
@@ -248,7 +248,7 @@ def build_planner_system_prompt() -> str:
 硬性要求：
 1. 只能在给定规则的边界内规划，不要自由创造未声明的规则类型。
 2. 规划结果必须围绕四元组 `input_structure / core_constraints / objective / invariant` 展开。
-3. 只围绕四元组与必要元信息规划，不要为 `instantiated_schema` 扩展未声明字段。
+3. 只围绕四元组与必要元信息规划，不要为 `new_schema` 扩展未声明字段。
 4. 必须先判断规则是否适用；若不适用，返回 `status="difference_insufficient"` 或 `status="schema_insufficient"`。
 5. 不能输出换皮题。要明确说明哪些局部子程序可复用，哪些主导义务不能直套原解。
 6. 如果是 same_family_fusion，必须解释共享主核、两题不可删贡献，以及为何不是串联子任务。
@@ -268,7 +268,7 @@ def build_planner_system_prompt() -> str:
     "rationale": string,
     "summary": string
   },
-  "instantiated_schema": {
+  "new_schema": {
     "problem_id": string,
     "source": string,
     "input_structure": object,
@@ -335,10 +335,10 @@ def build_planner_user_prompt(
         "请为当前规则生成一个规划候选。"
         "\n要求：\n"
         "- 先判断该规则是否适用，再决定是否继续规划。\n"
-        "- 必须输出完整 instantiated_schema，不要只写自然语言摘要。\n"
-        "- `difference_plan.changed_axes` 必须与 instantiated_schema 的真实变化保持一致。\n"
+        "- 必须输出完整 new_schema，不要只写自然语言摘要。\n"
+        "- `difference_plan.changed_axes` 必须与 new_schema 的真实变化保持一致。\n"
         "- 所有参数、输入特性、结构变化和不变量承诺都必须 materialize 到四元组字段里。\n"
-        "- `instantiated_schema` 只能包含约定字段，不要附带任何额外键。\n"
+        "- `new_schema` 只能包含约定字段，不要附带任何额外键。\n"
         "- `algorithmic_delta_claim.new_proof_obligation` 表示新增正确性证明，不要把它写成泛泛的难度评价。\n"
         "- 必须应用当前规则声明的全部 `helpers`，并把它们完整写入 `applied_helpers`。\n"
         "- `applied_helpers` 中的每一项都要写清它作用到哪些变化轴、改变了哪些 schema 部分、怎样抬高创新度、怎样抬高难度。\n"
@@ -351,11 +351,11 @@ def build_planner_user_prompt(
 def build_generation_system_prompt() -> str:
     return """你是一名经验丰富的算法竞赛命题人。
 
-你的任务是根据规则驱动的差异计划和实例化后的四元组 schema，生成一份完整、自然、可发布的中文题面。
+你的任务是根据规则驱动的差异计划和 `new_schema`，生成一份完整、自然、可发布的中文题面。
 
 硬性要求：
 1. 不要暴露原题编号、原题出处、算法名或“这是某题改编”等信息。
-2. 题面必须以 `instantiated_schema` 为准，不能回退到种子题原始任务，也不能保留原题主算法作为主要解法。
+2. 题面必须以 `new_schema` 为准，不能回退到种子题原始任务，也不能保留原题主算法作为主要解法。
 3. 输出必须是严格 JSON 对象，不要输出 Markdown 或额外解释。
 4. 如果规划信息不足以可靠生成，返回 `schema_insufficient`。
 5. 如果你判断这仍会变成换皮题，或者熟悉原题的选手只需小改原解就能做出来，返回 `difference_insufficient`。
@@ -400,8 +400,8 @@ def build_generation_user_prompt(
     plan: VariantPlan,
     original_problem_references: list[dict[str, Any]],
 ) -> str:
-    instantiated_schema = dataclass_to_dict(plan.instantiated_schema_snapshot)
-    sample_shape_hint = _build_sample_shape_hint(instantiated_schema)
+    new_schema = dataclass_to_dict(plan.new_schema_snapshot)
+    sample_shape_hint = _build_sample_shape_hint(new_schema)
     payload = {
         "mode": plan.mode,
         "problem_id": plan.problem_id,
@@ -424,20 +424,20 @@ def build_generation_user_prompt(
         "shared_core_anchors": plan.shared_core_anchors,
         "seed_contributions": plan.seed_contributions,
         "fusion_ablation": plan.fusion_ablation,
-        "instantiated_schema": instantiated_schema,
+        "new_schema": new_schema,
         "schema_context": schema_context,
         "original_problem_references": original_problem_references,
     }
     return (
         "请基于以下规划生成完整题面。"
         "\n补充要求：\n"
-        "- 必须让题面真实兑现 `difference_plan`、`algorithmic_delta_claim` 和 `instantiated_schema`。\n"
+        "- 必须让题面真实兑现 `difference_plan`、`algorithmic_delta_claim` 和 `new_schema`。\n"
         "- 不要复写种子题任务定义，也不要把规则只写成背景包装。\n"
         "- 新题的主要解法必须落到 `algorithmic_delta_claim.new_solver_core`，不能继续由 `algorithmic_delta_claim.seed_solver_core` 主导。\n"
         "- 只有 `algorithmic_delta_claim.reusable_subroutines` 里明确提到的局部子程序可以复用；不能把原题整体解法框架直接搬过来。\n"
         "- 如果熟悉原题的选手只需要小改状态、补一个后处理、外包一层二分或计数，就能沿用原解，请不要继续生成，直接返回 `difference_insufficient`。\n"
         "- `algorithmic_delta_claim.why_direct_reuse_fails` 必须能在题面定义里体现出来，而不是只写在规划字段里。\n"
-        "- `applied_helpers` 里的每个 helper 都要在题面和实例化 schema 中落地，不能只停留在规划说明里。\n"
+        "- `applied_helpers` 里的每个 helper 都要在题面和 `new_schema` 中落地，不能只停留在规划说明里。\n"
         f"- {sample_shape_hint}\n"
         "- `notes` 用于补充模数、字典序、证书定义、失败输出约定等关键说明；没有则返回空字符串。\n\n"
         f"{json.dumps(payload, ensure_ascii=False, indent=2)}"

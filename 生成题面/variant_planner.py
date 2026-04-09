@@ -4,7 +4,7 @@ import copy
 import random
 from typing import Any
 
-from models import AuditTraceEvent, DifferencePlan, InstantiatedSchema, RuleSelectionResult, Theme, VariantPlan
+from models import AuditTraceEvent, DifferencePlan, NewSchema, RuleSelectionResult, Theme, VariantPlan
 from prompt_builder import (
     build_planner_system_prompt,
     build_planner_user_prompt,
@@ -48,7 +48,7 @@ THEMES = [
     ),
 ]
 
-REQUIRED_INSTANTIATED_SCHEMA_FIELDS = (
+REQUIRED_NEW_SCHEMA_FIELDS = (
     "problem_id",
     "source",
     "input_structure",
@@ -57,7 +57,7 @@ REQUIRED_INSTANTIATED_SCHEMA_FIELDS = (
     "invariant",
 )
 
-ALLOWED_INSTANTIATED_SCHEMA_FIELDS = REQUIRED_INSTANTIATED_SCHEMA_FIELDS + (
+ALLOWED_NEW_SCHEMA_FIELDS = REQUIRED_NEW_SCHEMA_FIELDS + (
     "theme",
     "difficulty",
 )
@@ -84,13 +84,10 @@ class VariantPlanner:
         mode: str,
         variant_index: int,
         theme_id: str | None,
-        original_schema: dict[str, Any] | None = None,
-        prepared_schema: dict[str, Any] | None = None,
+        seed_schema: dict[str, Any] | None = None,
         original_problem: dict[str, Any] | None = None,
         seed_a_schema: dict[str, Any] | None = None,
         seed_b_schema: dict[str, Any] | None = None,
-        seed_a_original_schema: dict[str, Any] | None = None,
-        seed_b_original_schema: dict[str, Any] | None = None,
         seed_a_problem: dict[str, Any] | None = None,
         seed_b_problem: dict[str, Any] | None = None,
         allowed_rule_ids: set[str] | None = None,
@@ -104,8 +101,7 @@ class VariantPlanner:
 
         if canonical_mode == "single_seed_extension":
             return self._build_single_plan(
-                prepared_schema=prepared_schema or original_schema,
-                original_schema=original_schema or prepared_schema or {},
+                seed_schema=seed_schema or {},
                 original_problem=original_problem,
                 variant_index=variant_index,
                 theme=theme,
@@ -117,8 +113,6 @@ class VariantPlanner:
             return self._build_same_family_plan(
                 seed_a_schema=seed_a_schema,
                 seed_b_schema=seed_b_schema,
-                seed_a_original_schema=seed_a_original_schema,
-                seed_b_original_schema=seed_b_original_schema,
                 seed_a_problem=seed_a_problem,
                 seed_b_problem=seed_b_problem,
                 variant_index=variant_index,
@@ -130,8 +124,7 @@ class VariantPlanner:
     def _build_single_plan(
         self,
         *,
-        prepared_schema: dict[str, Any],
-        original_schema: dict[str, Any],
+        seed_schema: dict[str, Any],
         original_problem: dict[str, Any] | None,
         variant_index: int,
         theme: Theme,
@@ -140,11 +133,10 @@ class VariantPlanner:
         return self._build_mode_plan(
             mode="single_seed_extension",
             rules=self.rulebook.enabled_rules("single_seed_extension", allowed_rule_ids),
-            source_schema=original_schema,
-            source_problem_ids=[prepared_schema.get("problem_id", "unknown")],
+            source_schema=seed_schema,
+            source_problem_ids=[seed_schema.get("problem_id", "unknown")],
             schema_context={
-                "seed_schema": prepared_schema,
-                "original_schema": original_schema,
+                "seed_schema": seed_schema,
             },
             original_refs=[_build_problem_reference(original_problem)],
             theme=theme,
@@ -157,8 +149,6 @@ class VariantPlanner:
         *,
         seed_a_schema: dict[str, Any],
         seed_b_schema: dict[str, Any],
-        seed_a_original_schema: dict[str, Any] | None,
-        seed_b_original_schema: dict[str, Any] | None,
         seed_a_problem: dict[str, Any],
         seed_b_problem: dict[str, Any],
         variant_index: int,
@@ -169,10 +159,6 @@ class VariantPlanner:
             "seed_a_schema": seed_a_schema,
             "seed_b_schema": seed_b_schema,
         }
-        if seed_a_original_schema is not None:
-            schema_context["seed_a_original_schema"] = seed_a_original_schema
-        if seed_b_original_schema is not None:
-            schema_context["seed_b_original_schema"] = seed_b_original_schema
         return self._build_mode_plan(
             mode="same_family_fusion",
             rules=self.rulebook.enabled_rules("same_family_fusion", allowed_rule_ids),
@@ -513,7 +499,7 @@ class VariantPlanner:
                 "planner_rejected",
             )
 
-        unexpected_fields = _find_unexpected_schema_fields(payload.get("instantiated_schema", {}))
+        unexpected_fields = _find_unexpected_new_schema_fields(payload.get("new_schema", {}))
         if unexpected_fields:
             trace.append(
                 AuditTraceEvent(
@@ -521,35 +507,35 @@ class VariantPlanner:
                     rule_id=str(rule.get("id", "")),
                     outcome="fail",
                     reason_code="unexpected_schema_fields",
-                    message="instantiated_schema 包含额外字段。",
+                    message="new_schema 包含额外字段。",
                     details={"unexpected_fields": unexpected_fields},
                 )
             )
             return (
                 False,
                 {},
-                "instantiated_schema 只能包含约定字段，检测到额外字段：" + ", ".join(unexpected_fields) + "。",
+                "new_schema 只能包含约定字段，检测到额外字段：" + ", ".join(unexpected_fields) + "。",
                 _serialize_events(trace),
                 "unexpected_schema_fields",
             )
 
-        instantiated_schema = _normalize_instantiated_schema(payload.get("instantiated_schema", {}), theme_payload)
-        if not instantiated_schema:
+        new_schema = _normalize_new_schema(payload.get("new_schema", {}), theme_payload)
+        if not new_schema:
             trace.append(
                 AuditTraceEvent(
                     stage="plan_validation",
                     rule_id=str(rule.get("id", "")),
                     outcome="fail",
                     reason_code="schema_incomplete",
-                    message="instantiated_schema 缺失或结构不完整。",
+                    message="new_schema 缺失或结构不完整。",
                 )
             )
-            return False, {}, "instantiated_schema 缺失或结构不完整。", _serialize_events(trace), "schema_incomplete"
+            return False, {}, "new_schema 缺失或结构不完整。", _serialize_events(trace), "schema_incomplete"
 
-        distance = compute_schema_distance(source_schema, instantiated_schema, embedding_client=self.client)
+        distance = compute_schema_distance(source_schema, new_schema, embedding_client=self.client)
         changed_axes = compute_changed_axes(
             source_schema,
-            instantiated_schema,
+            new_schema,
             embedding_client=self.client,
             distance=distance,
         )
@@ -568,7 +554,7 @@ class VariantPlanner:
             return (
                 False,
                 {},
-                "difference_plan.changed_axes 与实例化 schema 的真实变化不一致。",
+                "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
                 _serialize_events(trace),
                 "declared_axes_mismatch",
             )
@@ -622,7 +608,7 @@ class VariantPlanner:
             rule=rule,
             payload=payload,
             source_schema=source_schema,
-            candidate_schema=instantiated_schema,
+            candidate_schema=new_schema,
             changed_axes=changed_axes,
             global_constraints=self.rulebook.global_constraints(),
         )
@@ -636,22 +622,23 @@ class VariantPlanner:
                 outcome.reason_code or "rule_plan_validation_failed",
             )
 
-        plan_problem_id = instantiated_schema.get("problem_id") or "__".join(source_problem_ids)
-        difficulty = instantiated_schema.get("difficulty") or _infer_difficulty(instantiated_schema)
+        plan_problem_id = new_schema.get("problem_id") or "__".join(source_problem_ids)
+        difficulty = new_schema.get("difficulty") or _infer_difficulty(new_schema)
         normalized = {
             "problem_id": plan_problem_id,
             "source_problem_ids": list(source_problem_ids),
-            "objective": copy.deepcopy(instantiated_schema.get("objective", {})),
+            "objective": copy.deepcopy(new_schema.get("objective", {})),
             "difficulty": difficulty,
-            "input_summary": _summarize_input_structure(instantiated_schema.get("input_structure", {})),
-            "constraint_summary": _summarize_constraints(instantiated_schema.get("core_constraints", {}).get("constraints", [])),
-            "invariant_summary": _summarize_invariants(instantiated_schema.get("invariant", {}).get("invariants", [])),
-            "instantiated_schema": InstantiatedSchema(**instantiated_schema),
+            "input_summary": _summarize_input_structure(new_schema.get("input_structure", {})),
+            "constraint_summary": _summarize_constraints(new_schema.get("core_constraints", {}).get("constraints", [])),
+            "invariant_summary": _summarize_invariants(new_schema.get("invariant", {}).get("invariants", [])),
+            "new_schema": NewSchema(**new_schema),
             "distance": distance,
             "changed_axes": changed_axes,
             "difference_rationale": str(payload.get("difference_plan", {}).get("rationale", "")),
             "difference_summary": str(payload.get("difference_plan", {}).get("summary", "")),
             "algorithmic_delta_claim": _normalize_algorithmic_delta(payload.get("algorithmic_delta_claim", {})),
+            "anti_shallow_rationale": str(payload.get("anti_shallow_rationale", "")),
             "applied_rule": str(rule.get("id", "")),
             "shared_core_summary": str(payload.get("shared_core_summary", "")),
             "shared_core_anchors": {
@@ -694,7 +681,7 @@ class VariantPlanner:
         candidate_attempts: list[dict[str, Any]] | None = None,
     ) -> VariantPlan:
         if selected_plan is None:
-            fallback_schema = InstantiatedSchema(
+            fallback_schema = NewSchema(
                 problem_id="__".join(source_problem_ids),
                 source=str(source_schema.get("source", "")),
                 input_structure=copy.deepcopy(source_schema.get("input_structure", {})),
@@ -727,11 +714,11 @@ class VariantPlanner:
                 constraint_summary=_summarize_constraints(source_schema.get("core_constraints", {}).get("constraints", [])),
                 invariant_summary=_summarize_invariants(source_schema.get("invariant", {}).get("invariants", [])),
                 difference_plan=difference_plan,
-                instantiated_schema_snapshot=fallback_schema,
+                new_schema_snapshot=fallback_schema,
                 predicted_schema_distance=0.0,
                 distance_breakdown={
                     "distance_version": "v2",
-                    "backend": "lexical_fallback",
+                    "backend": "embedding",
                     "total": 0.0,
                     "axis_scores": {"I": 0.0, "C": 0.0, "O": 0.0, "V": 0.0},
                     "components": {
@@ -746,6 +733,7 @@ class VariantPlanner:
                 applied_rule=applied_rule,
                 rejected_candidates=rejected_candidates,
                 algorithmic_delta_claim={},
+                anti_shallow_rationale="",
                 planning_status=planning_status,
                 planning_error_reason=planning_error_reason,
                 planning_feedback=planning_feedback,
@@ -781,13 +769,14 @@ class VariantPlanner:
             constraint_summary=selected["constraint_summary"],
             invariant_summary=selected["invariant_summary"],
             difference_plan=difference_plan,
-            instantiated_schema_snapshot=selected["instantiated_schema"],
+            new_schema_snapshot=selected["new_schema"],
             predicted_schema_distance=selected["distance"]["total"],
             distance_breakdown=selected["distance"],
             changed_axes_realized=selected["changed_axes"],
             applied_rule=selected["applied_rule"],
             rejected_candidates=rejected_candidates,
             algorithmic_delta_claim=selected["algorithmic_delta_claim"],
+            anti_shallow_rationale=selected.get("anti_shallow_rationale", ""),
             shared_core_summary=selected["shared_core_summary"],
             shared_core_anchors=selected["shared_core_anchors"],
             seed_contributions=selected["seed_contributions"],
@@ -822,10 +811,10 @@ def _canonical_mode(mode: str) -> str:
     return normalize_mode_name(mode)
 
 
-def _normalize_instantiated_schema(payload: dict[str, Any], theme_payload: dict[str, Any]) -> dict[str, Any]:
+def _normalize_new_schema(payload: dict[str, Any], theme_payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {}
-    if not all(key in payload for key in REQUIRED_INSTANTIATED_SCHEMA_FIELDS):
+    if not all(key in payload for key in REQUIRED_NEW_SCHEMA_FIELDS):
         return {}
     return {
         "problem_id": str(payload.get("problem_id", "")).strip(),
@@ -839,10 +828,10 @@ def _normalize_instantiated_schema(payload: dict[str, Any], theme_payload: dict[
     }
 
 
-def _find_unexpected_schema_fields(payload: Any) -> list[str]:
+def _find_unexpected_new_schema_fields(payload: Any) -> list[str]:
     if not isinstance(payload, dict):
         return []
-    return sorted(str(field) for field in payload if str(field) not in ALLOWED_INSTANTIATED_SCHEMA_FIELDS)
+    return sorted(str(field) for field in payload if str(field) not in ALLOWED_NEW_SCHEMA_FIELDS)
 
 
 def _normalize_algorithmic_delta(payload: dict[str, Any]) -> dict[str, Any]:

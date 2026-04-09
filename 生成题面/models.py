@@ -25,7 +25,7 @@ class DifferencePlan:
 
 
 @dataclass
-class InstantiatedSchema:
+class NewSchema:
     problem_id: str
     source: str
     input_structure: dict[str, Any]
@@ -82,13 +82,14 @@ class VariantPlan:
     constraint_summary: list[str]
     invariant_summary: list[str]
     difference_plan: DifferencePlan
-    instantiated_schema_snapshot: InstantiatedSchema
+    new_schema_snapshot: NewSchema
     predicted_schema_distance: float
     distance_breakdown: dict[str, Any]
     changed_axes_realized: list[str]
     applied_rule: str
     rejected_candidates: list[dict[str, Any]] = field(default_factory=list)
     algorithmic_delta_claim: dict[str, Any] = field(default_factory=dict)
+    anti_shallow_rationale: str = ""
     planning_status: str = "ok"
     planning_error_reason: str = ""
     planning_feedback: str = ""

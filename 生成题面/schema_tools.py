@@ -42,11 +42,13 @@ class InputTreeNode:
 
 class SimilarityBackend:
     def __init__(self, embedding_client: Any | None):
+        if embedding_client is None or not hasattr(embedding_client, "embed_texts"):
+            raise RuntimeError("embedding client unavailable")
         self.embedding_client = embedding_client
         self.embedding_model = str(
             getattr(embedding_client, "embedding_model", "") or DEFAULT_EMBEDDING_MODEL
         )
-        self.backend = "embedding" if embedding_client and hasattr(embedding_client, "embed_texts") else "lexical_fallback"
+        self.backend = "embedding"
         self._vector_cache: dict[str, list[float]] = {}
         self._cache_dirty = False
         self._file_cache_path = self._resolve_cache_path(embedding_client)
@@ -60,15 +62,9 @@ class SimilarityBackend:
         if normalized_left == normalized_right:
             return 1.0
 
-        if self.backend == "embedding":
-            try:
-                left_vector = self._get_vector(normalized_left)
-                right_vector = self._get_vector(normalized_right)
-                return _cosine_similarity(left_vector, right_vector)
-            except Exception:
-                self.backend = "lexical_fallback"
-
-        return _lexical_similarity(normalized_left, normalized_right)
+        left_vector = self._get_vector(normalized_left)
+        right_vector = self._get_vector(normalized_right)
+        return _cosine_similarity(left_vector, right_vector)
 
     def distance(self, left: str, right: str) -> float:
         return round(1.0 - self.similarity(left, right), 4)
