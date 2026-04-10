@@ -13,30 +13,29 @@ class ProblemQualityJudge:
 
     def evaluate(
         self,
-        instantiated_schema: dict[str, Any],
+        new_schema: dict[str, Any],
         generated_problem: dict[str, Any],
         hard_checks: list[dict[str, Any]],
+        review_context: dict[str, Any],
     ) -> dict[str, Any]:
-        if self.client is not None:
-            try:
-                return self._evaluate_with_llm(instantiated_schema, generated_problem, hard_checks)
-            except Exception:
-                pass
-        return self._evaluate_heuristically(instantiated_schema, generated_problem, hard_checks)
+        if self.client is None:
+            raise RuntimeError("当前版本的题目质量评价需要可用的 LLM Judge 接口。")
+        return self._evaluate_with_llm(new_schema, generated_problem, hard_checks, review_context)
 
     def _evaluate_with_llm(
         self,
-        instantiated_schema: dict[str, Any],
+        new_schema: dict[str, Any],
         generated_problem: dict[str, Any],
         hard_checks: list[dict[str, Any]],
+        review_context: dict[str, Any],
     ) -> dict[str, Any]:
-        system_prompt = """你是一名算法竞赛题面审稿人。请根据实例化后的 schema、生成题面和 hard_checks，评估题面质量。
+        system_prompt = """你是一名算法竞赛题面审稿人。请根据 new_schema、生成题面、hard_checks 和 review_context，评估题面质量。
 
 评分时使用以下统一 rubric：
 
 1. variant_fidelity
-- 定义：看 instantiated_schema 中已经确定的任务变体、输入对象、目标函数、结构选项，是否真实落地到 generated_problem 的 description、input_format、output_format、constraints、samples。
-- 不要看：它和原题像不像；这里只评估“实例化后的 schema 是否被准确实现”。
+- 定义：看 new_schema 中已经确定的任务变体、输入对象、目标函数、结构选项，是否真实落地到 generated_problem 的 description、input_format、output_format、constraints、samples。
+- 不要看：它和原题像不像；这里只评估“new_schema 是否被准确实现”。
 
 2. spec_completeness
 - 定义：看题面是否提供了独立做题所需的关键信息，尤其是任务说明、输入格式、输出格式、约束、必要说明是否齐全。
@@ -63,6 +62,12 @@ class ProblemQualityJudge:
 - hard_checks 是强证据。若某项 hard_check 明确失败，相关维度通常不能给高分。
 - rationale 和 issues 必须尽量引用 hard_checks 或输入中的字段路径作为证据。
 - 只依据给定字段路径做判断，不要臆测缺失信息。
+
+使用 review_context 的规则：
+- review_context 只作为辅助上下文，用来理解上游规划希望落地哪些变化。
+- 主证据仍以 new_schema、generated_problem 和 hard_checks 为准。
+- 如果 review_context 的声称内容与 new_schema 或 generated_problem 冲突，应以 new_schema 和 generated_problem 为准。
+- 如果 review_context 声称存在某种结构变化、算法增量或 helper 落地，但题面没有兑现，应在 issues 中明确指出“规划意图未落地”。
 
 必须返回严格 JSON，格式如下：
 {
@@ -93,9 +98,10 @@ class ProblemQualityJudge:
 - 不要输出 JSON 之外的任何解释。"""
         user_prompt = json.dumps(
             {
-                "instantiated_schema": instantiated_schema,
+                "new_schema": new_schema,
                 "generated_problem": generated_problem,
                 "hard_checks": hard_checks,
+                "review_context": review_context,
             },
             ensure_ascii=False,
             indent=2,
@@ -105,170 +111,7 @@ class ProblemQualityJudge:
             user_prompt=user_prompt,
             temperature=0.1,
         )
-        dimension_scores = [
-            asdict(
-                DimensionScore(
-                    dimension=dimension,
-                    score=float(payload.get("score", 3.0)),
-                    rationale=str(payload.get("rationale", "")),
-                    evidence_refs=list(payload.get("evidence_refs", [])),
-                )
-            )
-            for dimension, payload in result.get("scores", {}).items()
-        ]
-        issues = [
-            asdict(
-                Issue(
-                    issue_type="quality_issue",
-                    severity=str(item.get("severity", "minor")),
-                    title=str(item.get("title", "")),
-                    detail=str(item.get("detail", "")),
-                    evidence_refs=list(item.get("evidence_refs", [])),
-                    fix_hint=str(item.get("fix_hint", "")),
-                )
-            )
-            for item in result.get("issues", [])
-        ]
-        return {
-            "dimension_scores": dimension_scores,
-            "issues": issues,
-            "strengths": list(result.get("strengths", [])),
-            "suggested_revisions": list(result.get("suggested_revisions", [])),
-        }
-
-    def _evaluate_heuristically(
-        self,
-        instantiated_schema: dict[str, Any],
-        generated_problem: dict[str, Any],
-        hard_checks: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        failed = {item["check_id"]: item for item in hard_checks if not item["passed"]}
-        samples = list(generated_problem.get("samples", []))
-        constraints = list(generated_problem.get("constraints", []))
-
-        dimension_scores = [
-            asdict(
-                DimensionScore(
-                    dimension="variant_fidelity",
-                    score=_clamp_score(
-                        5.0
-                        - 1.4 * _bool_score("input_count_alignment" in failed)
-                        - 1.4 * _bool_score("objective_alignment" in failed)
-                        - 1.0 * _bool_score("structural_option_alignment" in failed)
-                    ),
-                    rationale="重点看实例化 schema 是否真实落地到题面字段。",
-                    evidence_refs=[
-                        "snapshots.instantiated_schema",
-                        "snapshots.generated_problem",
-                    ],
-                )
-            ),
-            asdict(
-                DimensionScore(
-                    dimension="spec_completeness",
-                    score=_clamp_score(
-                        2.0
-                        + 0.5 * _nonempty(generated_problem.get("title"))
-                        + 0.8 * _nonempty(generated_problem.get("description"))
-                        + 0.6 * _nonempty(generated_problem.get("input_format"))
-                        + 0.6 * _nonempty(generated_problem.get("output_format"))
-                        + 0.5 * _bool_score(len(constraints) >= 2)
-                    ),
-                    rationale="检查关键段落、限制条件和任务说明是否齐全。",
-                    evidence_refs=["snapshots.generated_problem"],
-                )
-            ),
-            asdict(
-                DimensionScore(
-                    dimension="cross_section_consistency",
-                    score=_clamp_score(
-                        5.0
-                        - 1.5 * _count_failed(failed, {"input_count_alignment", "sample_line_alignment"})
-                        - 1.0 * _bool_score("objective_alignment" in failed)
-                        - 1.0 * _bool_score("structural_option_alignment" in failed)
-                    ),
-                    rationale="检查 description、input/output、constraints、samples 是否互相一致。",
-                    evidence_refs=[
-                        "snapshots.generated_problem.input_format",
-                        "snapshots.generated_problem.samples",
-                    ],
-                )
-            ),
-            asdict(
-                DimensionScore(
-                    dimension="sample_quality",
-                    score=_clamp_score(
-                        2.5
-                        + 0.7 * _bool_score(len(samples) >= 2)
-                        + 0.6 * _bool_score(all(sample.get("explanation") for sample in samples))
-                        + 0.6 * _bool_score("sample_line_alignment" not in failed)
-                        + 0.4 * _bool_score("sample_count" not in failed)
-                    ),
-                    rationale="检查样例数量、解释和与输入结构的匹配度。",
-                    evidence_refs=["snapshots.generated_problem.samples"],
-                )
-            ),
-            asdict(
-                DimensionScore(
-                    dimension="oj_readability",
-                    score=_clamp_score(
-                        3.0
-                        + 0.5 * _length_band(generated_problem.get("description", ""), 60, 900)
-                        + 0.4 * _length_band(generated_problem.get("input_format", ""), 20, 280)
-                        + 0.4 * _length_band(generated_problem.get("output_format", ""), 10, 180)
-                        + 0.4 * _bool_score("source_leakage" not in failed)
-                    ),
-                    rationale="检查题面是否具备正常 OJ 可读性且无明显污染。",
-                    evidence_refs=["snapshots.generated_problem"],
-                )
-            ),
-        ]
-        issues: list[dict[str, Any]] = []
-        if "input_count_alignment" in failed:
-            issues.append(
-                asdict(
-                    Issue(
-                        issue_type="quality_issue",
-                        severity="major",
-                        title="输入项数量与实例化 schema 不一致",
-                        detail=failed["input_count_alignment"]["message"],
-                        evidence_refs=failed["input_count_alignment"]["evidence_refs"],
-                        fix_hint="按实例化 schema 改写 input_format、description 和样例输入的项数。",
-                    )
-                )
-            )
-        if "objective_alignment" in failed:
-            issues.append(
-                asdict(
-                    Issue(
-                        issue_type="quality_issue",
-                        severity="major",
-                        title="目标函数未准确落地",
-                        detail=failed["objective_alignment"]["message"],
-                        evidence_refs=failed["objective_alignment"]["evidence_refs"],
-                        fix_hint="在 output_format 和 notes 中明确目标函数的输出对象与 tie-break 规则。",
-                    )
-                )
-            )
-        if "structural_option_alignment" in failed:
-            issues.append(
-                asdict(
-                    Issue(
-                        issue_type="quality_issue",
-                        severity="major",
-                        title="结构选项没有体现在题面中",
-                        detail=failed["structural_option_alignment"]["message"],
-                        evidence_refs=failed["structural_option_alignment"]["evidence_refs"],
-                        fix_hint="把顺序约束、循环语义等结构变化显式写进描述或说明部分。",
-                    )
-                )
-            )
-        return {
-            "dimension_scores": dimension_scores,
-            "issues": issues,
-            "strengths": _quality_strengths(dimension_scores),
-            "suggested_revisions": [issue["fix_hint"] for issue in issues if issue.get("fix_hint")],
-        }
+        return _validate_quality_result(result)
 
 
 class SourceDivergenceJudge:
@@ -279,43 +122,37 @@ class SourceDivergenceJudge:
         self,
         original_problem: dict[str, Any],
         original_schema: dict[str, Any],
-        instantiated_schema: dict[str, Any],
+        new_schema: dict[str, Any],
         generated_problem: dict[str, Any],
         hard_checks: list[dict[str, Any]],
         schema_distance: float,
+        review_context: dict[str, Any],
     ) -> dict[str, Any]:
-        if self.client is not None and schema_distance >= 0.35:
-            try:
-                return self._evaluate_with_llm(
-                    original_problem,
-                    original_schema,
-                    instantiated_schema,
-                    generated_problem,
-                    hard_checks,
-                    schema_distance,
-                )
-            except Exception:
-                pass
-        return self._evaluate_heuristically(
+        if self.client is None:
+            raise RuntimeError("当前版本的题目质量评价需要可用的 LLM Judge 接口。")
+        return self._evaluate_with_llm(
             original_problem,
-            instantiated_schema,
+            original_schema,
+            new_schema,
             generated_problem,
             hard_checks,
             schema_distance,
+            review_context,
         )
 
     def _evaluate_with_llm(
         self,
         original_problem: dict[str, Any],
         original_schema: dict[str, Any],
-        instantiated_schema: dict[str, Any],
+        new_schema: dict[str, Any],
         generated_problem: dict[str, Any],
         hard_checks: list[dict[str, Any]],
         schema_distance: float,
+        review_context: dict[str, Any],
     ) -> dict[str, Any]:
         system_prompt = """你是一名算法竞赛命题审稿人。你的任务是判断新题是否只是原题换皮。
 
-你要综合 original_problem、original_schema、instantiated_schema、generated_problem、hard_checks 和 schema_distance 进行判断。
+你要综合 original_problem、original_schema、new_schema、generated_problem、hard_checks、schema_distance 和 review_context 进行判断。
 
 评分 rubric：
 
@@ -335,10 +172,14 @@ class SourceDivergenceJudge:
 - 低分表示：即使主题相关，表述组织、任务展开和样例设计也没有明显复用痕迹。
 
 判断时的重点：
-- 先看 instantiated_schema 相比 original_schema 是否真的改变了关键轴，再看 generated_problem 是否把这些变化真实落地。
+- 先看 new_schema 相比 original_schema 是否真的改变了关键轴，再看 generated_problem 是否把这些变化真实落地。
 - schema_distance 是强结构信号，但不是唯一依据；如果 schema_distance 不低，但新题语义和解法迁移风险仍然很接近原题，仍应判为换皮。
 - hard_checks 中与 source_leakage、结构落地失败相关的失败项，是重要负面证据。
 - 不要因为背景故事不同就高估 semantic_difference；关键看“会不会迫使解题者改变问题建模和解法”。
+- review_context.distance_breakdown.axis_scores 与 review_context.changed_axes_realized 可用来定位变化轴，但它们只是结构先验，不能替代对 new_schema 和 generated_problem 的复核。
+- review_context.algorithmic_delta_claim 与 review_context.anti_shallow_rationale 只视为上游声明，不能直接采信。
+- 如果 review_context 声称变化明显，但 new_schema 或 generated_problem 没有兑现这些变化，solution_transfer_risk 仍应保持高值。
+- surface_retheme_risk 继续以 original_problem 与 generated_problem 的文本和任务结构对照为主，不要因为 review_context 的规划说明而降低风险判断。
 
 分数锚点：
 - semantic_difference: 0.8-1.0 表示实质差异明显；0.4-0.6 表示有变化但核心求解框架仍较接近；0.0-0.2 表示基本只是换皮。
@@ -376,9 +217,10 @@ verdict 规则：
                     "constraints": original_problem.get("constraints", ""),
                 },
                 "original_schema": original_schema,
-                "instantiated_schema": instantiated_schema,
+                "new_schema": new_schema,
                 "generated_problem": generated_problem,
                 "hard_checks": hard_checks,
+                "review_context": review_context,
             },
             ensure_ascii=False,
             indent=2,
@@ -388,127 +230,135 @@ verdict 规则：
             user_prompt=user_prompt,
             temperature=0.1,
         )
-        return {
-            "semantic_difference": float(result.get("semantic_difference", 0.0)),
-            "solution_transfer_risk": float(result.get("solution_transfer_risk", 1.0)),
-            "surface_retheme_risk": float(result.get("surface_retheme_risk", 1.0)),
-            "verdict": str(result.get("verdict", "reject_as_retheme")),
-            "rationale": str(result.get("rationale", "")),
-            "evidence_refs": list(result.get("evidence_refs", [])),
-        }
+        return _validate_divergence_result(result)
 
-    def _evaluate_heuristically(
-        self,
-        original_problem: dict[str, Any],
-        instantiated_schema: dict[str, Any],
-        generated_problem: dict[str, Any],
-        hard_checks: list[dict[str, Any]],
-        schema_distance: float,
-    ) -> dict[str, Any]:
-        original_text = "\n".join(
-            [
-                str(original_problem.get("title", "")),
-                str(original_problem.get("description", "")),
-                str(original_problem.get("input", "")),
-                str(original_problem.get("output", "")),
-            ]
-        )
-        generated_text = "\n".join(
-            [
-                str(generated_problem.get("title", "")),
-                str(generated_problem.get("description", "")),
-                str(generated_problem.get("input_format", "")),
-                str(generated_problem.get("output_format", "")),
-            ]
-        )
-        title_overlap = _text_overlap(
-            str(original_problem.get("title", "")),
-            str(generated_problem.get("title", "")),
-        )
-        desc_overlap = _text_overlap(original_text, generated_text)
-        failed = {item["check_id"]: item for item in hard_checks if not item["passed"]}
 
-        semantic_difference = min(1.0, max(0.0, schema_distance / 0.60))
-        solution_transfer_risk = max(
+def _validate_quality_result(result: Any) -> dict[str, Any]:
+    payload = _require_dict(result, "quality judge response")
+    raw_scores = _require_dict(payload.get("scores"), "quality judge scores")
+    dimensions = [
+        "variant_fidelity",
+        "spec_completeness",
+        "cross_section_consistency",
+        "sample_quality",
+        "oj_readability",
+    ]
+    dimension_scores: list[dict[str, Any]] = []
+    for dimension in dimensions:
+        item = _require_dict(raw_scores.get(dimension), f"quality score {dimension}")
+        dimension_scores.append(
+            asdict(
+                DimensionScore(
+                    dimension=dimension,
+                    score=float(_require_int_in_range(item.get("score"), f"{dimension}.score", 1, 5)),
+                    rationale=_require_string(item.get("rationale"), f"{dimension}.rationale"),
+                    evidence_refs=_require_string_list(item.get("evidence_refs"), f"{dimension}.evidence_refs"),
+                )
+            )
+        )
+
+    issues: list[dict[str, Any]] = []
+    raw_issues = payload.get("issues", [])
+    if not isinstance(raw_issues, list):
+        raise ValueError("quality judge issues 必须是数组。")
+    for index, item in enumerate(raw_issues):
+        issue = _require_dict(item, f"quality issue {index}")
+        severity = _require_string(issue.get("severity"), f"quality issue {index}.severity")
+        if severity not in {"major", "minor"}:
+            raise ValueError(f"quality issue {index}.severity 非法：{severity}")
+        issues.append(
+            asdict(
+                Issue(
+                    issue_type="quality_issue",
+                    severity=severity,
+                    title=_require_string(issue.get("title"), f"quality issue {index}.title"),
+                    detail=_require_string(issue.get("detail"), f"quality issue {index}.detail"),
+                    evidence_refs=_require_string_list(
+                        issue.get("evidence_refs"),
+                        f"quality issue {index}.evidence_refs",
+                    ),
+                    fix_hint=_require_string(issue.get("fix_hint"), f"quality issue {index}.fix_hint"),
+                )
+            )
+        )
+
+    return {
+        "dimension_scores": dimension_scores,
+        "issues": issues,
+        "strengths": _require_string_list(payload.get("strengths"), "quality strengths"),
+        "suggested_revisions": _require_string_list(
+            payload.get("suggested_revisions"),
+            "quality suggested_revisions",
+        ),
+    }
+
+
+def _validate_divergence_result(result: Any) -> dict[str, Any]:
+    payload = _require_dict(result, "divergence judge response")
+    verdict = _require_string(payload.get("verdict"), "divergence verdict")
+    if verdict not in {"pass", "reject_as_retheme"}:
+        raise ValueError(f"divergence verdict 非法：{verdict}")
+    return {
+        "semantic_difference": _require_float_in_range(
+            payload.get("semantic_difference"),
+            "semantic_difference",
             0.0,
-            min(
-                1.0,
-                1.0
-                - semantic_difference * 0.85
-                + desc_overlap * 0.35
-                + title_overlap * 0.25
-                + 0.20 * _bool_score("source_leakage" in failed),
-            ),
-        )
-        surface_retheme_risk = max(
-            title_overlap,
-            min(1.0, desc_overlap + 0.20 * _bool_score("source_leakage" in failed)),
-        )
-        if generated_problem.get("status") == "difference_insufficient":
-            surface_retheme_risk = max(surface_retheme_risk, 0.95)
-            solution_transfer_risk = max(solution_transfer_risk, 0.9)
-
-        verdict = (
-            "reject_as_retheme"
-            if surface_retheme_risk >= 0.75 or solution_transfer_risk >= 0.72 or semantic_difference < 0.45
-            else "pass"
-        )
-        rationale = (
-            f"schema_distance={schema_distance:.2f}, semantic_difference={semantic_difference:.2f}, "
-            f"solution_transfer_risk={solution_transfer_risk:.2f}, surface_retheme_risk={surface_retheme_risk:.2f}."
-        )
-        return {
-            "semantic_difference": semantic_difference,
-            "solution_transfer_risk": solution_transfer_risk,
-            "surface_retheme_risk": surface_retheme_risk,
-            "verdict": verdict,
-            "rationale": rationale,
-            "evidence_refs": [
-                "snapshots.original_problem",
-                "snapshots.generated_problem",
-                "snapshots.instantiated_schema",
-            ],
-        }
+            1.0,
+        ),
+        "solution_transfer_risk": _require_float_in_range(
+            payload.get("solution_transfer_risk"),
+            "solution_transfer_risk",
+            0.0,
+            1.0,
+        ),
+        "surface_retheme_risk": _require_float_in_range(
+            payload.get("surface_retheme_risk"),
+            "surface_retheme_risk",
+            0.0,
+            1.0,
+        ),
+        "verdict": verdict,
+        "rationale": _require_string(payload.get("rationale"), "divergence rationale"),
+        "evidence_refs": _require_string_list(payload.get("evidence_refs"), "divergence evidence_refs"),
+    }
 
 
-def _bool_score(value: bool) -> float:
-    return 1.0 if value else 0.0
+def _require_dict(value: Any, name: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} 必须是对象。")
+    return value
 
 
-def _nonempty(value: Any) -> float:
-    return 1.0 if str(value or "").strip() else 0.0
+def _require_string(value: Any, name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{name} 必须是字符串。")
+    return value
 
 
-def _count_failed(failed: dict[str, Any], check_ids: set[str]) -> int:
-    return sum(1 for check_id in check_ids if check_id in failed)
+def _require_string_list(value: Any, name: str) -> list[str]:
+    if not isinstance(value, list):
+        raise ValueError(f"{name} 必须是字符串数组。")
+    result: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str):
+            raise ValueError(f"{name}[{index}] 必须是字符串。")
+        result.append(item)
+    return result
 
 
-def _length_band(text: str, minimum: int, maximum: int) -> float:
-    length = len(str(text or "").strip())
-    return 1.0 if minimum <= length <= maximum else 0.0
+def _require_int_in_range(value: Any, name: str, minimum: int, maximum: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} 必须是整数。")
+    integer = int(value)
+    if integer != value or integer < minimum or integer > maximum:
+        raise ValueError(f"{name} 超出范围：{value}")
+    return integer
 
 
-def _clamp_score(score: float) -> float:
-    return round(max(1.0, min(5.0, score)), 2)
-
-
-def _quality_strengths(dimension_scores: list[dict[str, Any]]) -> list[str]:
-    strengths = []
-    for item in dimension_scores:
-        if item["score"] >= 4.3:
-            strengths.append(f"{item['dimension']} 表现稳定")
-    return strengths or ["题面基础结构完整"]
-
-
-def _text_overlap(left: str, right: str) -> float:
-    left_tokens = set(_tokenize(left))
-    right_tokens = set(_tokenize(right))
-    if not left_tokens or not right_tokens:
-        return 0.0
-    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
-
-
-def _tokenize(text: str) -> list[str]:
-    import re
-
-    return re.findall(r"[a-z0-9_]+|[\u4e00-\u9fff]+", str(text).lower())
+def _require_float_in_range(value: Any, name: str, minimum: float, maximum: float) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} 必须是数值。")
+    number = float(value)
+    if number < minimum or number > maximum:
+        raise ValueError(f"{name} 超出范围：{value}")
+    return number
