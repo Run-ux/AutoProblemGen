@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import math
+import re
 from typing import Any, Callable
 
 try:  # 兼容包内导入与当前目录直接运行两种方式。
@@ -32,6 +34,7 @@ try:  # 兼容包内导入与当前目录直接运行两种方式。
         prompt_checker_counterexample,
         prompt_checker_false_accept_debug,
         prompt_checker_false_reject_debug,
+        prompt_standard_solution_debug,
     )
 except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导入。
     from execution_config import ExecutionConfig
@@ -61,6 +64,7 @@ except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导�
         prompt_checker_counterexample,
         prompt_checker_false_accept_debug,
         prompt_checker_false_reject_debug,
+        prompt_standard_solution_debug,
     )
 
 
@@ -69,6 +73,16 @@ logger = logging.getLogger(__name__)
 Validator = Callable[[dict[str, Any]], dict[str, Any]]
 
 WRONG_POOL_STOP_KILL_RATIO = 0.8
+TIME_LIMIT_LABEL_RE = re.compile(r"(时间限制|time\s*limit)", re.IGNORECASE)
+MEMORY_LIMIT_LABEL_RE = re.compile(r"(空间限制|内存限制|memory\s*limit)", re.IGNORECASE)
+TIME_LIMIT_VALUE_RE = re.compile(
+    r"(?P<value>\d+(?:\.\d+)?)\s*(?P<unit>ms|毫秒|milliseconds?|secs?|seconds?|s|秒)",
+    re.IGNORECASE,
+)
+MEMORY_LIMIT_VALUE_RE = re.compile(
+    r"(?P<value>\d+(?:\.\d+)?)\s*(?P<unit>kb|kib|mb|mib|gb|gib)",
+    re.IGNORECASE,
+)
 
 
 class VerificationError(RuntimeError):
@@ -151,6 +165,110 @@ def _ensure_true_result(context: str, result: ExecutionResult) -> None:
         _fail_execution(context, result)
     if result.return_value is not True:
         raise VerificationError(f"{context} 校验未通过。实际返回：{result.return_value!r}")
+
+
+def _constraint_texts(artifact: dict[str, Any]) -> list[str]:
+    problem = artifact.get("generated_problem") if isinstance(artifact, dict) else None
+    if not isinstance(problem, dict):
+        raise VerificationError("artifact.generated_problem 必须是字典，无法解析标准解执行限制。")
+
+    constraints = problem.get("constraints")
+    if isinstance(constraints, str):
+        return [item.strip() for item in constraints.splitlines() if item.strip()]
+    if isinstance(constraints, list):
+        return [str(item) for item in constraints]
+    if isinstance(constraints, dict):
+        return [f"{key}: {value}" for key, value in constraints.items()]
+    raise VerificationError("generated_problem.constraints 必须是字符串、列表或字典，无法解析标准解执行限制。")
+
+
+def _parse_limit_value_after_label(
+    text: str,
+    *,
+    label_re: re.Pattern[str],
+    value_re: re.Pattern[str],
+    limit_name: str,
+) -> re.Match[str] | None:
+    label_match = label_re.search(text)
+    if label_match is None:
+        return None
+    value_match = value_re.search(text[label_match.end() :])
+    if value_match is None:
+        raise VerificationError(f"constraints 中的{limit_name}缺少明确数值和单位：{text}")
+    return value_match
+
+
+def _time_limit_seconds(match: re.Match[str]) -> float:
+    value = float(match.group("value"))
+    unit = match.group("unit").lower()
+    if value <= 0:
+        raise VerificationError("标准解时间限制必须大于 0。")
+    if unit in ("ms", "毫秒", "millisecond", "milliseconds"):
+        return value / 1000
+    return value
+
+
+def _memory_limit_mb(match: re.Match[str]) -> int:
+    value = float(match.group("value"))
+    unit = match.group("unit").lower()
+    if value <= 0:
+        raise VerificationError("标准解空间限制必须大于 0。")
+    if unit in ("kb", "kib"):
+        return max(1, math.ceil(value / 1024))
+    if unit in ("gb", "gib"):
+        return math.ceil(value * 1024)
+    return math.ceil(value)
+
+
+def _parse_standard_solution_limits(artifact: dict[str, Any]) -> dict[str, Any]:
+    """从题面 constraints 中解析标准解运行限制，避免用测试配置替代题面限制。"""
+
+    time_limit: float | None = None
+    memory_limit: int | None = None
+    raw_time_limit = ""
+    raw_memory_limit = ""
+
+    for text in _constraint_texts(artifact):
+        if time_limit is None:
+            time_match = _parse_limit_value_after_label(
+                text,
+                label_re=TIME_LIMIT_LABEL_RE,
+                value_re=TIME_LIMIT_VALUE_RE,
+                limit_name="时间限制",
+            )
+            if time_match is not None:
+                time_limit = _time_limit_seconds(time_match)
+                raw_time_limit = text
+        if memory_limit is None:
+            memory_match = _parse_limit_value_after_label(
+                text,
+                label_re=MEMORY_LIMIT_LABEL_RE,
+                value_re=MEMORY_LIMIT_VALUE_RE,
+                limit_name="空间限制",
+            )
+            if memory_match is not None:
+                memory_limit = _memory_limit_mb(memory_match)
+                raw_memory_limit = text
+
+    missing = []
+    if time_limit is None:
+        missing.append("时间限制")
+    if memory_limit is None:
+        missing.append("空间限制")
+    if missing:
+        raise VerificationError(
+            "无法从 generated_problem.constraints 解析标准解"
+            + "、".join(missing)
+            + "；请提供带明确标签和单位的约束，例如“时间限制: 2s”“空间限制: 512MB”。"
+        )
+
+    return {
+        "timeout_seconds": time_limit,
+        "memory_limit_mb": memory_limit,
+        "source": "generated_problem.constraints",
+        "raw_time_limit": raw_time_limit,
+        "raw_memory_limit": raw_memory_limit,
+    }
 
 
 def _validate_input(
@@ -651,6 +769,239 @@ def verify_checker(
         "checked_counterexamples": checked_counterexamples,
         "repair_history": repair_history,
         "repair_iteration_count": len(repair_history),
+    }
+
+
+def _repair_standard_solution(
+    artifact: dict[str, Any],
+    client: ChatLLMClient,
+    *,
+    initial_code: str,
+    current_code: str,
+    failing_input: str,
+    expected_output: str,
+    actual_output: str,
+    error_report: str,
+) -> dict[str, Any]:
+    return _call_prompt(
+        client,
+        task_name="standard_solution_debug",
+        system_prompt=prompt_standard_solution_debug.build_system_prompt(),
+        user_prompt=prompt_standard_solution_debug.build_user_prompt(
+            artifact,
+            initial_code=initial_code,
+            current_code=current_code,
+            failing_input=failing_input,
+            expected_output=expected_output,
+            actual_output=actual_output,
+            error_report=error_report,
+        ),
+        validator=lambda payload: validate_code_repair_response(payload, task_name="standard_solution_debug"),
+    )
+
+
+def _checker_code_for_standard_verification(
+    checker_payload: dict[str, Any],
+    checker_verification: dict[str, Any],
+) -> str | None:
+    if not checker_payload.get("needs_checker"):
+        return None
+    checker_code = checker_verification.get("final_checker_code")
+    if not isinstance(checker_code, str) or not checker_code.strip():
+        raise VerificationError("题目需要 checker，但 checker 未完成验证，无法验证标准解输出。")
+    return checker_code
+
+
+def _standard_output_failure_report(
+    *,
+    solution_result: ExecutionResult,
+    expected_output: str,
+    actual_output: str,
+    checker_result: ExecutionResult | None,
+) -> str:
+    if checker_result is not None:
+        return json.dumps(
+            {
+                "expectation": "标准解输出必须被 checker 判为 AC/True。",
+                "expected_output_reference": expected_output,
+                "actual_output": actual_output,
+                "standard_solution_execution_result": _result_summary(solution_result),
+                "checker_execution_result": _result_summary(checker_result),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    return json.dumps(
+        {
+            "expectation": "标准解输出必须与小规模真值输出完全一致。",
+            "expected_output": expected_output,
+            "actual_output": actual_output,
+            "standard_solution_execution_result": _result_summary(solution_result),
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+def verify_standard_solution(
+    artifact: dict[str, Any],
+    standard_payload: dict[str, Any],
+    solved_cases: list[dict[str, Any]],
+    checker_payload: dict[str, Any],
+    checker_verification: dict[str, Any],
+    client: ChatLLMClient,
+    execution_config: ExecutionConfig,
+) -> dict[str, Any]:
+    if standard_payload.get("status") != "ok":
+        raise VerificationError("标准解未生成成功，无法执行验证：" + str(standard_payload.get("block_reason", "")))
+    if not solved_cases:
+        raise VerificationError("没有可用于验证标准解的小规模真值用例。")
+
+    standard_limits = _parse_standard_solution_limits(artifact)
+    checker_code = _checker_code_for_standard_verification(checker_payload, checker_verification)
+    initial_code = standard_payload["code"]
+    current_code = initial_code
+    repair_history: list[dict[str, Any]] = []
+    iteration = 0
+
+    while True:
+        iteration += 1
+        checked_cases: list[dict[str, Any]] = []
+        should_restart = False
+
+        for case in solved_cases:
+            result = run_solution(
+                current_code,
+                case["input"],
+                timeout_seconds=standard_limits["timeout_seconds"],
+                memory_limit_mb=standard_limits["memory_limit_mb"],
+            )
+            expected_output = case["output"]
+            actual_output = result.return_value if result.status == EXECUTION_OK and isinstance(result.return_value, str) else ""
+
+            if result.status == EXECUTION_OK and isinstance(result.return_value, str):
+                if checker_code is None:
+                    if actual_output == expected_output:
+                        checked_cases.append({"case_id": case["case_id"], "verdict": "accepted"})
+                        continue
+                    error_report = _standard_output_failure_report(
+                        solution_result=result,
+                        expected_output=expected_output,
+                        actual_output=actual_output,
+                        checker_result=None,
+                    )
+                else:
+                    checker_result = run_checker(
+                        checker_code,
+                        case["input"],
+                        actual_output,
+                        timeout_seconds=execution_config.checker_timeout_seconds,
+                        memory_limit_mb=execution_config.checker_memory_limit_mb,
+                    )
+                    if checker_result.status == EXECUTION_OK and checker_result.return_value is True:
+                        checked_cases.append({"case_id": case["case_id"], "verdict": "accepted_by_checker"})
+                        continue
+                    error_report = _standard_output_failure_report(
+                        solution_result=result,
+                        expected_output=expected_output,
+                        actual_output=actual_output,
+                        checker_result=checker_result,
+                    )
+            elif result.status == EXECUTION_OK:
+                error_report = json.dumps(
+                    {
+                        "expectation": "solve(input_str) 必须返回字符串。",
+                        "expected_output": expected_output,
+                        "actual_return_value": result.return_value,
+                        "standard_solution_execution_result": _result_summary(result),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            else:
+                error_report = _format_execution_report(result, expectation="标准解应在题面限制内正常返回输出字符串。")
+
+            repair = _repair_standard_solution(
+                artifact,
+                client,
+                initial_code=initial_code,
+                current_code=current_code,
+                failing_input=case["input"],
+                expected_output=expected_output,
+                actual_output=actual_output,
+                error_report=error_report,
+            )
+            repair_history.append(
+                {
+                    "iteration": iteration,
+                    "failed_case_id": case["case_id"],
+                    "failed_input": case["input"],
+                    "expected_output": expected_output,
+                    "actual_output": actual_output,
+                    "error_report": error_report,
+                    "repair": repair,
+                }
+            )
+            current_code = repair["code"]
+            should_restart = True
+            logger.info("标准解已修复，准备重新验证全部小规模真值输入: iteration=%s", iteration)
+            break
+
+        if not should_restart:
+            return {
+                "status": "ok",
+                "final_code": current_code,
+                "checked_cases": checked_cases,
+                "checked_count": len(checked_cases),
+                "standard_solution_limits": standard_limits,
+                "checker_used": checker_code is not None,
+                "repair_history": repair_history,
+                "repair_iteration_count": len(repair_history),
+            }
+
+
+def generate_large_scale_truth_outputs(
+    standard_code: str,
+    large_scale_inputs: list[dict[str, Any]],
+    standard_limits: dict[str, Any],
+) -> dict[str, Any]:
+    if not large_scale_inputs:
+        return {
+            "status": "skipped",
+            "reason": "没有大规模测试输入。",
+            "cases": [],
+            "count": 0,
+            "standard_solution_limits": standard_limits,
+        }
+
+    cases: list[dict[str, Any]] = []
+    for index, case in enumerate(large_scale_inputs, start=1):
+        result = run_solution(
+            standard_code,
+            case["input"],
+            timeout_seconds=standard_limits["timeout_seconds"],
+            memory_limit_mb=standard_limits["memory_limit_mb"],
+        )
+        if result.status != EXECUTION_OK or not isinstance(result.return_value, str):
+            raise VerificationError(
+                f"标准解生成第 {index} 条大规模真值输出失败："
+                + json.dumps(_result_summary(result), ensure_ascii=False, indent=2)
+            )
+        cases.append(
+            {
+                "case_id": case["case_id"],
+                "source": case["source"],
+                "input": case["input"],
+                "output": result.return_value,
+                "execution_result": _result_summary(result),
+            }
+        )
+
+    return {
+        "status": "ok",
+        "cases": cases,
+        "count": len(cases),
+        "standard_solution_limits": standard_limits,
     }
 
 
@@ -1170,6 +1521,20 @@ def generate_verified_artifacts(
         "solved_cases": wrong_solution_pool_result["solved_cases"],
         "solved_case_count": len(wrong_solution_pool_result["solved_cases"]),
     }
+    standard_solution_verification = verify_standard_solution(
+        artifact,
+        generated_artifacts["standard_solution"],
+        bruteforce_verification["solved_cases"],
+        generated_artifacts["checker"],
+        checker_verification,
+        active_client,
+        active_execution_config,
+    )
+    large_scale_truth_outputs = generate_large_scale_truth_outputs(
+        standard_solution_verification["final_code"],
+        bruteforce_verification["large_scale_inputs"],
+        standard_solution_verification["standard_solution_limits"],
+    )
 
     result = dict(generated_artifacts)
     final_checker_code = checker_verification.get("final_checker_code")
@@ -1185,6 +1550,12 @@ def generate_verified_artifacts(
 
     result.update(
         {
+            "standard_solution": {
+                **generated_artifacts["standard_solution"],
+                "initial_code": generated_artifacts["standard_solution"]["code"],
+                "code": standard_solution_verification["final_code"],
+                "verified_code": standard_solution_verification["final_code"],
+            },
             "bruteforce_solution": {
                 **generated_artifacts["bruteforce_solution"],
                 "initial_code": generated_artifacts["bruteforce_solution"]["code"],
@@ -1195,6 +1566,8 @@ def generate_verified_artifacts(
             "verified_test_inputs": verified_test_inputs,
             "bruteforce_verification": bruteforce_verification,
             "checker_verification": checker_verification,
+            "standard_solution_verification": standard_solution_verification,
+            "large_scale_truth_outputs": large_scale_truth_outputs,
             "wrong_solution_pool_verification": wrong_solution_pool_result["verification"],
             "execution_metadata": {
                 "execution_config": {
@@ -1208,6 +1581,17 @@ def generate_verified_artifacts(
                 "verified_test_input_count": verified_test_inputs["count"],
                 "solved_case_count": bruteforce_verification["solved_case_count"],
                 "large_scale_input_count": bruteforce_verification["large_scale_input_count"],
+                "standard_solution_timeout_seconds": standard_solution_verification["standard_solution_limits"][
+                    "timeout_seconds"
+                ],
+                "standard_solution_memory_limit_mb": standard_solution_verification["standard_solution_limits"][
+                    "memory_limit_mb"
+                ],
+                "standard_solution_repair_iteration_count": standard_solution_verification[
+                    "repair_iteration_count"
+                ],
+                "standard_solution_checked_count": standard_solution_verification["checked_count"],
+                "large_scale_truth_output_count": large_scale_truth_outputs["count"],
                 "wrong_solution_pool_targeted_input_count": wrong_solution_pool_result["verification"][
                     "targeted_input_count"
                 ],

@@ -677,6 +677,142 @@ class MinimumGuaranteeUnderPerturbationHandler(RuleHandler):
         return "确认题面是否写清扰动来源、最坏情况语义，以及要求求出最小保底值或等价的鲁棒目标。"
 
 
+class StaticToOnlineQueriesHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名在线查询扩展审查官，重点判断静态种子题是否存在可局部更新且可维护的核心状态。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名动态查询规划审查官，重点确认规划是否真正引入更新-查询操作流和动态状态维护责任。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否把输入改成操作流，让查询依赖此前更新后的状态，而不是把原题重复运行多次。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名在线查询题面审查官，重点确认题面是否清楚写出更新、查询和当前状态语义。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求维护动态状态并回答查询，且更新会真实影响后续答案。"
+
+
+class FeasibilityToExtremalThresholdHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名临界阈值规划审查官，重点确认阈值是否进入主约束和主目标，而不是外层机械二分。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否定义临界参数、可行区域和边界不变量，并要求输出最小或最大阈值。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名阈值优化题面审查官，重点确认题面是否写清临界值、达成性和不可突破语义。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求求出真正的最小阈值或最大容量，并说明该阈值如何约束可行性。"
+
+
+class SingleObjectiveToTradeoffFrontierHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名权衡前沿规划审查官，重点确认规划是否形成预算、收益、风险等指标之间的真实耦合。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否定义第二指标、支配关系或预算口径，并阻止退化成两个独立最优值。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名权衡题面审查官，重点确认题面是否清楚表达多指标冲突和前沿或折中输出。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否定义指标比较口径，并要求输出权衡结果而不是附属统计。"
+
+
+class ForwardSolutionToInverseDesignHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。"
+
+
+class IndependentComponentsToGlobalCouplingHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名全局耦合规划审查官，重点确认规划是否破坏局部独立求解，形成跨组件依赖。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否引入共享资源、守恒量或跨组件冲突，并让整体最优不能由局部答案直接拼接得到。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名全局耦合题面审查官，重点确认题面是否写清共享资源和整体一致性条件。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求统一处理多个局部单元，而不是分别求解后相加。"
+
+
+class DeterministicProcessToGameOutcomeHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名博弈规划审查官，重点确认规划是否建立双方行动、最优策略和博弈状态不变量。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否把原操作空间转成自然博弈，而不是凭故事背景硬造玩家或固定策略模拟。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名博弈题面审查官，重点确认题面是否写清双方行动、终止条件和最优策略语义。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求在双方最优行动下判断胜负或计算得分差。"
+
+
+class LocalPathToGlobalCoverHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名覆盖规划审查官，重点确认规划是否从单个局部对象升级为对象族上的全局选择。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否定义对象族、覆盖或割关系，并让全局选择同时影响多个对象。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名覆盖题面审查官，重点确认题面是否写清对象族、覆盖口径和全局验证方式。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求输出全局覆盖值、最小割或可验证方案，而不是重复局部任务。"
+
+
+class PlainCountingToWeightedDistributionHandler(RuleHandler):
+    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。"
+
+    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "你扮演一名分布计数规划审查官，重点确认规划是否把普通计数升级为带权、分层或分类分布统计。"
+
+    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
+        return "确认规划是否定义自然权重或统计量，并让计数状态承担不重不漏的分布汇总责任。"
+
+    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "你扮演一名分布计数题面审查官，重点确认题面是否写清权重、分类桶和输出分布。"
+
+    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
+        return "确认题面是否要求输出带权和或分类分布，而不是普通计数换模数。"
+
+
 class InterlockedConstraintsHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名共享主核融合审查官，重点判断两题是否真的共享同一个状态核，并能形成互锁约束。"
@@ -904,6 +1040,14 @@ _RULE_HANDLER_REGISTRY = {
     "construct_or_obstruction": ConstructOrObstructionHandler,
     "existence_to_counting": ExistenceToCountingHandler,
     "minimum_guarantee_under_perturbation": MinimumGuaranteeUnderPerturbationHandler,
+    "static_to_online_queries": StaticToOnlineQueriesHandler,
+    "feasibility_to_extremal_threshold": FeasibilityToExtremalThresholdHandler,
+    "single_objective_to_tradeoff_frontier": SingleObjectiveToTradeoffFrontierHandler,
+    "forward_solution_to_inverse_design": ForwardSolutionToInverseDesignHandler,
+    "independent_components_to_global_coupling": IndependentComponentsToGlobalCouplingHandler,
+    "deterministic_process_to_game_outcome": DeterministicProcessToGameOutcomeHandler,
+    "local_path_to_global_cover": LocalPathToGlobalCoverHandler,
+    "plain_counting_to_weighted_distribution": PlainCountingToWeightedDistributionHandler,
     "interlocked_constraints": InterlockedConstraintsHandler,
     "shared_core_objective_upgrade": SharedCoreObjectiveUpgradeHandler,
 }

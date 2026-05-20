@@ -14,11 +14,15 @@ from local_execution import (
 )
 from verification_pipeline import (
     _candidate_prompt_payload,
+    _parse_standard_solution_limits,
     _result_summary,
     collect_verified_test_inputs,
+    generate_large_scale_truth_outputs,
     generate_verified_artifacts,
+    VerificationError,
     verify_bruteforce_solution,
     verify_checker,
+    verify_standard_solution,
     verify_wrong_solution_pool,
 )
 
@@ -30,7 +34,7 @@ def sample_artifact() -> dict:
             "description": "给定 n 个整数，输出它们的和。",
             "input_format": "第一行 n，第二行 n 个整数。",
             "output_format": "输出一个整数。",
-            "constraints": ["1 <= n <= 10", "-100 <= ai <= 100"],
+            "constraints": ["1 <= n <= 10", "-100 <= ai <= 100", "时间限制: 1秒", "空间限制: 512MB"],
             "samples": [{"input": "3\n1 2 3", "output": "6"}],
             "notes": "无",
         },
@@ -119,6 +123,8 @@ class FakeLLMClient:
             return json.dumps({"code": "def solve(input_str):\n    return '0'"}, ensure_ascii=False)
         if task_name == "bruteforce_debug":
             return json.dumps({"code": "good_code"}, ensure_ascii=False)
+        if task_name == "standard_solution_debug":
+            return json.dumps({"code": "good_standard_code"}, ensure_ascii=False)
         if task_name == "checker_false_reject_debug":
             return json.dumps(
                 {"analysis": "过严", "fix_plan": "放宽合法格式", "checker_code": "accept_legal"},
@@ -202,6 +208,30 @@ class VerificationPipelineTests(unittest.TestCase):
 
         self.assertEqual(payload["code"], long_code)
         self.assertNotIn("...<truncated>...", payload["code"])
+
+    def test_parse_standard_solution_limits_accepts_labeled_units(self) -> None:
+        cases = [
+            (["时间限制: 1500ms", "空间限制: 1536KB"], 1.5, 2),
+            (["Time Limit: 2 seconds", "Memory Limit: 1GB"], 2.0, 1024),
+        ]
+
+        for constraints, expected_time, expected_memory in cases:
+            with self.subTest(constraints=constraints):
+                artifact = sample_artifact()
+                artifact["generated_problem"]["constraints"] = constraints
+
+                limits = _parse_standard_solution_limits(artifact)
+
+                self.assertEqual(limits["timeout_seconds"], expected_time)
+                self.assertEqual(limits["memory_limit_mb"], expected_memory)
+                self.assertEqual(limits["source"], "generated_problem.constraints")
+
+    def test_parse_standard_solution_limits_rejects_missing_labels(self) -> None:
+        artifact = sample_artifact()
+        artifact["generated_problem"]["constraints"] = ["1 <= n <= 100000", "-10^9 <= ai <= 10^9"]
+
+        with self.assertRaisesRegex(VerificationError, "时间限制.*空间限制"):
+            _parse_standard_solution_limits(artifact)
 
     @patch("verification_pipeline.run_validate_test_input")
     @patch("verification_pipeline.run_generate_test_input")
@@ -306,6 +336,122 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(result["property_1"]["status"], "ok")
         self.assertEqual(result["property_2"]["status"], "ok")
         self.assertEqual(result["repair_iteration_count"], 2)
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_repairs_output_mismatch_without_checker(self, fake_run_solution) -> None:
+        client = FakeLLMClient()
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            if code == "bad_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value="0")
+            if code == "good_standard_code":
+                return ExecutionResult(status=EXECUTION_OK, return_value="1")
+            raise AssertionError((code, input_string))
+
+        fake_run_solution.side_effect = side_effect
+
+        result = verify_standard_solution(
+            sample_artifact(),
+            {"status": "ok", "code": "bad_standard"},
+            [{"case_id": "case_001", "source": "random", "input": "1\n1", "output": "1"}],
+            {"needs_checker": False, "reason": "唯一答案题。"},
+            {"status": "skipped"},
+            client,
+            self.config,
+        )
+
+        self.assertEqual(result["final_code"], "good_standard_code")
+        self.assertEqual(result["repair_iteration_count"], 1)
+        self.assertEqual(result["repair_history"][0]["expected_output"], "1")
+        self.assertEqual(result["repair_history"][0]["actual_output"], "0")
+        self.assertEqual(result["checked_count"], 1)
+
+    @patch("verification_pipeline.run_checker")
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_uses_checker_when_available(
+        self,
+        fake_run_solution,
+        fake_run_checker,
+    ) -> None:
+        client = FakeLLMClient(checker=True)
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_OK, return_value="2")
+        fake_run_checker.return_value = ExecutionResult(status=EXECUTION_OK, return_value=True)
+
+        result = verify_standard_solution(
+            sample_artifact(),
+            {"status": "ok", "code": "standard"},
+            [{"case_id": "case_001", "source": "random", "input": "1\n1", "output": "1"}],
+            {"needs_checker": True, "checker_code": "checker"},
+            {"status": "ok", "final_checker_code": "checker"},
+            client,
+            self.config,
+        )
+
+        self.assertEqual(result["final_code"], "standard")
+        self.assertTrue(result["checker_used"])
+        self.assertEqual(result["repair_iteration_count"], 0)
+        self.assertNotIn("standard_solution_debug", client.calls)
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_repairs_execution_failures(self, fake_run_solution) -> None:
+        failures = [
+            ExecutionResult(status=EXECUTION_ERROR, phase="runtime", error_type="ValueError", error_message="boom"),
+            ExecutionResult(status=EXECUTION_OK, return_value=123),
+            ExecutionResult(status=EXECUTION_TIMEOUT),
+            ExecutionResult(status=EXECUTION_MEMORY_LIMIT),
+        ]
+
+        for failure in failures:
+            with self.subTest(status=failure.status, return_value=failure.return_value):
+                client = FakeLLMClient()
+
+                def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+                    if code == "bad_standard":
+                        return failure
+                    if code == "good_standard_code":
+                        return ExecutionResult(status=EXECUTION_OK, return_value="1")
+                    raise AssertionError((code, input_string))
+
+                fake_run_solution.reset_mock()
+                fake_run_solution.side_effect = side_effect
+
+                result = verify_standard_solution(
+                    sample_artifact(),
+                    {"status": "ok", "code": "bad_standard"},
+                    [{"case_id": "case_001", "source": "random", "input": "1\n1", "output": "1"}],
+                    {"needs_checker": False, "reason": "唯一答案题。"},
+                    {"status": "skipped"},
+                    client,
+                    self.config,
+                )
+
+                self.assertEqual(result["final_code"], "good_standard_code")
+                self.assertEqual(result["repair_iteration_count"], 1)
+
+    @patch("verification_pipeline.run_solution")
+    def test_generate_large_scale_truth_outputs_uses_verified_standard_solution(self, fake_run_solution) -> None:
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_OK, return_value="100")
+
+        result = generate_large_scale_truth_outputs(
+            "standard",
+            [{"case_id": "case_002", "source": "random", "input": "100000\n..."}],
+            {"timeout_seconds": 1.0, "memory_limit_mb": 512},
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["cases"][0]["output"], "100")
+
+    @patch("verification_pipeline.run_solution")
+    def test_generate_large_scale_truth_outputs_fails_fast_on_execution_error(self, fake_run_solution) -> None:
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_TIMEOUT)
+
+        with self.assertRaisesRegex(VerificationError, "大规模真值输出失败"):
+            generate_large_scale_truth_outputs(
+                "standard",
+                [{"case_id": "case_002", "source": "random", "input": "100000\n..."}],
+                {"timeout_seconds": 1.0, "memory_limit_mb": 512},
+            )
 
     @patch("verification_pipeline.run_validate_test_input")
     @patch("verification_pipeline.run_solution")
@@ -679,9 +825,18 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(result["bruteforce_verification"]["solved_case_count"], 30)
         self.assertEqual(result["bruteforce_solution"]["code"], result["bruteforce_solution"]["verified_code"])
         self.assertIn("initial_code", result["bruteforce_solution"])
+        self.assertEqual(result["standard_solution"]["code"], result["standard_solution"]["verified_code"])
+        self.assertIn("initial_code", result["standard_solution"])
         self.assertEqual(result["checker_verification"]["status"], "skipped")
+        self.assertEqual(result["standard_solution_verification"]["status"], "ok")
+        self.assertIn("large_scale_truth_outputs", result)
         self.assertIn("wrong_solution_pool_verification", result)
         self.assertGreater(result["wrong_solution_pool_verification"]["killed_count"], 0)
+        self.assertEqual(
+            result["execution_metadata"]["standard_solution_checked_count"],
+            result["bruteforce_verification"]["solved_case_count"],
+        )
+        self.assertEqual(result["execution_metadata"]["large_scale_truth_output_count"], 0)
         self.assertEqual(result["execution_metadata"]["large_scale_input_count"], 0)
 
 

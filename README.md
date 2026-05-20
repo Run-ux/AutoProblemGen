@@ -11,6 +11,42 @@
 | `生成题面`                | 基于四元组、规则文件和两阶段 LLM 规划生成结构化题面                                            | 当前生成器             |
 | `题目质量评价`            | 对生成 artifact 做题面质量评分、反换皮判定、硬约束检查，并输出 `revision_brief`              | 当前质量闭环           |
 | `生成测试用例和标准解法`  | 基于上游 artifact 生成标准解、暴力解、测试输入生成器、checker 和错误解池，并执行本地验证闭环   | 交付验证能力建设       |
+| `总流程`                  | 将四元组抽取、题面生成、质量评价、测试用例与标准解法验证串成一条端到端 CLI                    | 一键编排入口           |
+
+## 端到端总流程
+
+`总流程` 提供从原始单题 schema JSON 到最终验证产物的一键编排入口，固定串联：
+
+```text
+原始 schema -> 四元组抽取 -> 四元组归一化 -> 生成题面 -> 题目质量评价 -> 生成测试用例和标准解法
+```
+
+运行示例：
+
+```powershell
+python D:\AutoProblemGen\总流程\main.py ^
+  --input D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs ^
+  --run-id demo_run ^
+  --quality-iterations 3
+```
+
+总流程 v1 只支持 `single_seed_extension`，不包含爬取阶段，也不串 `same_family_fusion`。输入可以是单个原始 schema JSON，或包含多个 schema JSON 的目录。`--quality-iterations` 必须为 `1`、`2` 或 `3`，不能关闭质量评价；只有最终质量报告满足 `generated_status=ok`、`overall.status=pass`，且迭代摘要 `stop_reason=pass` 的题目才会进入测试用例与标准解法验证阶段。
+
+默认输出位于：
+
+```text
+总流程/output/<run_id>/
+├── tuple/raw/
+├── tuple/normalized/
+├── generation/output/
+├── generation/artifacts/
+├── generation/reports/
+├── verification/<problem_id>/
+├── logs/
+└── workflow_summary.json
+```
+
+`workflow_summary.json` 会按题记录抽取、生成、质量门槛和验证状态。若某题抽取四维中任一维失败，该题会标记为 `skipped_before_generation`，不会进入题面生成；若质量门槛未通过，则不会生成下游测试与标准解法产物。
 
 ## 主线流程
 
@@ -78,6 +114,8 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
 
 - `single_seed_extension`：CLI 中对应 `--mode single`
 - `same_family_fusion`：CLI 中对应 `--mode same_family`
+
+`single_seed_extension` 的规则集合按竞赛题型谱系扩展，覆盖规范构造、冲突证书、计数与分布计数、阈值优化、鲁棒保底、在线查询、多目标权衡、反向设计、全局耦合、博弈化和全局覆盖等方向。每次仍只选择一条主规则，并记录完整的资格、排序、规划和题面审查轨迹。
 
 `cross_family_fusion` 仅保留规则文件占位，当前不宣称支持运行。
 
@@ -236,6 +274,8 @@ python -m unittest discover -s D:\AutoProblemGen\生成题面\tests -v
 python -m unittest discover -s D:\AutoProblemGen\题目质量评价\tests -v
 
 python -m unittest discover -s D:\AutoProblemGen\生成测试用例和标准解法\tests -v
+
+python -m unittest discover -s D:\AutoProblemGen\总流程\tests -v
 ```
 
 `四元组抽取` 可运行：

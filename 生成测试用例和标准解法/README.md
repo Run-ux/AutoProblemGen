@@ -114,12 +114,18 @@ result = generate_verified_artifacts(artifact, config)
         "repair_history": [...],
     },
     "checker_verification": {...},
+    "standard_solution_verification": {...},
+    "large_scale_truth_outputs": {
+        "status": "ok",
+        "cases": [...],
+        "count": 0,
+    },
     "wrong_solution_pool_verification": {...},
     "execution_metadata": {...},
 }
 ```
 
-验证入口会把修复后的暴力解法写回 `bruteforce_solution.code`，并保留 `bruteforce_solution.initial_code`；需要 checker 且完成验证时，也会把修复后的 checker 写回 `checker.checker_code`，并保留 `checker.initial_checker_code`。
+验证入口会把修复后的标准解写回 `standard_solution.code`，并保留 `standard_solution.initial_code`；会把修复后的暴力解法写回 `bruteforce_solution.code`，并保留 `bruteforce_solution.initial_code`；需要 checker 且完成验证时，也会把修复后的 checker 写回 `checker.checker_code`，并保留 `checker.initial_checker_code`。
 
 调用默认启用 `response_format={"type": "json_object"}`。普通生成入口只解析和校验 LLM 返回的 JSON；验证入口会在受限子进程中执行生成代码，但不落盘。
 
@@ -129,7 +135,10 @@ result = generate_verified_artifacts(artifact, config)
 - 暴力解法：对 30 条输入逐一运行 `solve`。编译错误、接口错误和运行时错误会触发暴力 debug LLM 修复，并从头重新验证；超时或超内存输入会归为 `large_scale_inputs`，不触发 debug。
 - 真值用例：最终只保留暴力解法能正常返回字符串输出的 `solved_cases`，数量允许少于已验证输入总数。
 - checker：当 `needs_checker=false` 时跳过 checker 闭环；当需要 checker 时，先用 `solved_cases` 验证不误拒合法输出，再由反例生成 LLM 构造错误输出集合验证不误收非法输出。
-- 修复循环：暴力解法、checker 误拒和 checker 误收修复均不设轮数上限，直到本地执行结果通过对应阶段。
+- 标准解：错误解池补测后，用全部 `solved_cases` 验证标准解。无 checker 题做输出字符串精确比对；有 checker 题使用修复后的 checker 判定标准解输出。任一用例不通过时触发标准解 debug LLM 修复，并从头重跑。
+- 大规模真值：标准解通过小规模真值后，运行 `large_scale_inputs` 并把标准解输出写入 `large_scale_truth_outputs`；若标准解执行失败、超时、超内存或未返回字符串，会 fail-fast，不产出可疑真值。
+- 标准解执行限制：从 `generated_problem.constraints` 解析带明确标签的题面限制，例如 `时间限制: 2s`、`time limit: 2 seconds`、`空间限制: 512MB`、`memory limit: 256 MB`。缺少时间或空间限制时会 fail-fast。
+- 修复循环：标准解、暴力解法、checker 误拒和 checker 误收修复均不设轮数上限，直到本地执行结果通过对应阶段。
 - 错误解池增强：基础 checker 验证完成后，默认执行单题临时错误解池；无 checker 题使用输出字符串差异识别错误解问题，有 checker 题只使用已修复 checker 判定错误解输出是否暴露问题。
 - 定向补测：错误解池会为全部当前尚未暴露问题的错误解生成单条 targeted 输入；输入通过现有 validate 函数且暴力解能产出真值时，会追加到 `verified_test_inputs` 和 `solved_cases`。当原始未暴露问题的错误解累计暴露比例达到 0.8，或某轮没有新增有效输入时停止。
 
@@ -144,6 +153,8 @@ result = generate_verified_artifacts(artifact, config)
 - `constraints`
 - `samples`
 - `notes`
+
+其中 `constraints` 还必须包含标准解执行所需的题面时间和空间限制，且要带明确标签和单位。当前支持 `ms/s/seconds/秒` 和 `KB/MB/GB`。
 
 需要题目结构信息的 prompt 额外读取 `new_schema_snapshot` 的以下字段；当前标准解、暴力解、checker、schema 错误策略分析和按策略错误解会读取这些字段：
 
@@ -175,6 +186,7 @@ def build_user_prompt(...) -> str:
 - `prompts.standard_solution.prompt_standard_solution`
 - `prompts.bruteforce_solution.prompt_bruteforce_solution`
 - `prompts.verification.prompt_bruteforce_debug`
+- `prompts.verification.prompt_standard_solution_debug`
 - `prompts.verification.prompt_checker_counterexample`
 - `prompts.verification.prompt_checker_false_accept_debug`
 - `prompts.verification.prompt_checker_false_reject_debug`
@@ -192,7 +204,7 @@ def build_user_prompt(...) -> str:
 - 标准解：`status`、`block_reason`、`solution_markdown`、`code`、`time_complexity`、`space_complexity`
 - 暴力解：`status`、`block_reason`、`bruteforce_markdown`、`code`、`time_complexity`、`space_complexity`
 - checker：不需要时返回 `needs_checker=false`、`reason`；需要时返回 `needs_checker=true`、`output_rule_analysis`、`checker_code`、`notes`
-- 暴力 debug：`code`
+- 标准解/暴力 debug：`code`
 - checker 误拒/误收修复：`analysis`、`fix_plan`、`checker_code`
 - checker 反例生成：`counterexamples`、`skipped`；进入 `counterexamples` 的反例 `confidence` 必须大于等于 `0.85`
 - 错误解池定向输入：`test_input`

@@ -176,12 +176,22 @@ python main.py --mode single --problem-ids CF25E --quality-iterations 3
 
 ### `single_seed_extension`
 
-首版固定 4 条规则：
+`single_seed_extension` 当前按竞赛题常见题型谱系组织规则，而不是围绕某一批输入样本定制。已启用规则包括：
 
 - `canonical_witness`
 - `construct_or_obstruction`
 - `existence_to_counting`
 - `minimum_guarantee_under_perturbation`
+- `static_to_online_queries`
+- `feasibility_to_extremal_threshold`
+- `single_objective_to_tradeoff_frontier`
+- `forward_solution_to_inverse_design`
+- `independent_components_to_global_coupling`
+- `deterministic_process_to_game_outcome`
+- `local_path_to_global_cover`
+- `plain_counting_to_weighted_distribution`
+
+覆盖方向包括规范构造、冲突证书、计数化、鲁棒保底、在线查询、阈值优化、多目标权衡、反向设计、全局耦合、博弈化、全局覆盖和带权分布计数。
 
 每次只允许一条主规则。运行时会先对每条规则发起一次角色审查式资格校验，再做排序式规则选择，随后按前 2 到 3 条候选顺序规划；如果前一候选没有通过硬门槛，会自动回退到下一候选。artifact 会记录所有候选尝试与拒绝原因。
 

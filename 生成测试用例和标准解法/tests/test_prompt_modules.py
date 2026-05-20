@@ -16,6 +16,7 @@ from prompts.verification import (
     prompt_checker_counterexample,
     prompt_checker_false_accept_debug,
     prompt_checker_false_reject_debug,
+    prompt_standard_solution_debug,
 )
 from prompts.wrong_solution import (
     prompt_fixed_category_wrong_solution,
@@ -32,7 +33,7 @@ class PromptModuleTests(unittest.TestCase):
                 "description": "给定 n 个整数，输出它们的和。",
                 "input_format": "第一行 n，第二行 n 个整数。",
                 "output_format": "输出一个整数。",
-                "constraints": ["1 <= n <= 100000", "-10^9 <= ai <= 10^9"],
+                "constraints": ["1 <= n <= 100000", "-10^9 <= ai <= 10^9", "时间限制: 1秒", "空间限制: 512MB"],
                 "samples": [{"input": "3\n1 2 3", "output": "6"}],
                 "notes": "样例只展示基础求和。",
             },
@@ -213,6 +214,15 @@ class PromptModuleTests(unittest.TestCase):
             failing_input="1\n1",
             error_report="Traceback",
         )
+        standard_debug_prompt = prompt_standard_solution_debug.build_user_prompt(
+            self.artifact,
+            initial_code="def solve(input_str):\n    return '0'",
+            current_code="def solve(input_str):\n    return '0'",
+            failing_input="1\n1",
+            expected_output="1",
+            actual_output="0",
+            error_report="输出不一致",
+        )
         false_reject_prompt = prompt_checker_false_reject_debug.build_user_prompt(
             self.artifact,
             checker_code="def check_output(input_string, output_string):\n    return False",
@@ -233,6 +243,9 @@ class PromptModuleTests(unittest.TestCase):
         )
 
         self.assertIn('"code"', brute_prompt)
+        self.assertIn('"code"', standard_debug_prompt)
+        self.assertIn("小规模真值输出", standard_debug_prompt)
+        self.assertIn("当前标准解实际输出", standard_debug_prompt)
         self.assertIn('"checker_code"', false_reject_prompt)
         self.assertIn('"checker_code"', false_accept_prompt)
         self.assertIn('"counterexamples"', counterexample_prompt)

@@ -388,6 +388,734 @@
             "not_applicable": "这道种子题没有可以稳定放大的原生扰动来源。",
             "difference_insufficient": "保底目标没有形成真正的最坏情况责任。"
           }
+        },
+        {
+          "id": "static_to_online_queries",
+          "family": "dynamic_query_extension",
+          "audit_tags": ["single_seed", "online_queries", "state_updates"],
+          "handler": "static_to_online_queries",
+          "enabled": true,
+          "summary": "把一次性静态求值或优化题扩展为带更新与查询交错的在线题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题核心量可以在局部修改后重新定义",
+              "查询答案依赖可维护的状态摘要，而不是完全重算"
+            ],
+            "forbidden_seed_properties": [
+              "局部更新不会影响主答案",
+              "在线化只能变成重复运行原题"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["I", "C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "static_to_online_queries",
+            "target_shift": "从一次性求解改成更新和查询交错",
+            "new_obligation": "维护动态状态，并在每次查询时输出当前答案"
+          },
+          "helpers": [
+            {
+              "id": "operation_stream_lift",
+              "summary": "把静态输入提升为更新与查询组成的操作流。",
+              "must_realize_in": ["input_structure", "core_constraints", "objective"],
+              "target_axes": ["I", "C", "O"],
+              "innovation_role": "让题目从单次计算变成持续维护过程。",
+              "difficulty_role": "要求算法设计可更新状态，而不是离线重算。",
+              "prompt_guidance": [
+                "输入结构必须明确操作类型、顺序和每类操作参数。",
+                "目标必须要求回答每次查询或最终操作流结果。"
+              ],
+              "redlines": [
+                "不能只是多组独立测试。",
+                "不能让每次查询互不影响。"
+              ]
+            },
+            {
+              "id": "dynamic_state_invariant",
+              "summary": "建立更新后仍可维护的核心状态不变量。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "把原题静态结构压成动态维护的状态摘要。",
+              "difficulty_role": "要求证明每次更新后状态摘要仍足以回答查询。",
+              "prompt_guidance": [
+                "让不变量描述更新前后如何保持正确。",
+                "让核心约束限制合法更新对状态的影响。"
+              ],
+              "redlines": [
+                "不能只说重新计算答案。",
+                "不能缺少更新后状态一致性说明。"
+              ]
+            },
+            {
+              "id": "query_dependency_lock",
+              "summary": "让查询答案依赖此前更新形成的累积状态。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "阻止在线题退化为若干独立静态子题。",
+              "difficulty_role": "要求解法处理操作历史对当前答案的影响。",
+              "prompt_guidance": [
+                "查询语义必须引用当前状态而不是原始输入。",
+                "直接复用原解应当因为状态变化而失败。"
+              ],
+              "redlines": [
+                "不能把操作流拆成独立样例。",
+                "不能让更新只改变输出格式。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "输入必须出现更新与查询的操作流",
+              "查询必须依赖动态维护状态",
+              "不能退化为对每个查询重跑原题"
+            ]
+          },
+          "examples": {
+            "positive": "把静态数组最优值改成单点更新后多次询问当前最优值。",
+            "negative": "只是给出多组互不相关的静态输入。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题没有可被局部更新影响的核心状态，不适合扩成在线查询题。",
+            "difference_insufficient": "在线化后仍然只是重复运行原静态解法，没有形成动态维护责任。"
+          }
+        },
+        {
+          "id": "feasibility_to_extremal_threshold",
+          "family": "threshold_optimization",
+          "audit_tags": ["single_seed", "threshold", "extremal_value"],
+          "handler": "feasibility_to_extremal_threshold",
+          "enabled": true,
+          "summary": "把判定或可行性问题扩展为求最小阈值、最大容量或临界参数的优化题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题可行性随某个参数具有清晰的单调性或分层结构",
+              "阈值变化会改变主约束的可行区域"
+            ],
+            "forbidden_seed_properties": [
+              "没有自然参数可优化",
+              "阈值只是在原判定外层做机械二分"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "feasibility_to_extremal_threshold",
+            "target_shift": "从判断是否可行改成求临界阈值",
+            "new_obligation": "定义阈值、可行区域和临界性证明"
+          },
+          "helpers": [
+            {
+              "id": "threshold_parameterization",
+              "summary": "把原可行性条件参数化成可搜索的临界阈值。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让目标从真假判断变成极值求解。",
+              "difficulty_role": "要求算法处理阈值与可行性的耦合关系。",
+              "prompt_guidance": [
+                "阈值必须进入核心约束的定义。",
+                "目标必须要求输出最小或最大临界参数。"
+              ],
+              "redlines": [
+                "不能只是把 Yes/No 改成 0/1。",
+                "不能让阈值脱离主约束。"
+              ]
+            },
+            {
+              "id": "monotone_boundary_invariant",
+              "summary": "补出支撑临界值正确性的单调或边界不变量。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "把可行性结构提升为边界定位问题。",
+              "difficulty_role": "要求证明临界值两侧语义不同且可判定。",
+              "prompt_guidance": [
+                "说明阈值变化如何影响可行集合。",
+                "不变量要支撑边界存在性或唯一性。"
+              ],
+              "redlines": [
+                "不能只有经验性单调描述。",
+                "不能省略边界正确性责任。"
+              ]
+            },
+            {
+              "id": "extremal_answer_contract",
+              "summary": "把输出责任锁定为临界值及其可验证含义。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "让答案成为带证明语义的极值参数。",
+              "difficulty_role": "要求解法同时证明达到与不可突破。",
+              "prompt_guidance": [
+                "目标应说明阈值为何是最小或最大。",
+                "不变量应覆盖阈值的达成性和极限性。"
+              ],
+              "redlines": [
+                "不能只输出任意可行参数。",
+                "不能把极值证明留给备注。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "阈值必须改变主求解目标",
+              "阈值必须进入核心约束",
+              "必须说明临界性不变量"
+            ]
+          },
+          "examples": {
+            "positive": "把判断是否存在合法方案改成求允许合法方案存在的最小容量。",
+            "negative": "原题判定外面简单套一层二分但约束语义不变。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题缺少自然临界参数，无法稳定扩成阈值优化题。",
+            "difference_insufficient": "阈值目标没有改变主约束或证明义务，只是包装原判定。"
+          }
+        },
+        {
+          "id": "single_objective_to_tradeoff_frontier",
+          "family": "multi_objective_tradeoff",
+          "audit_tags": ["single_seed", "tradeoff", "pareto_frontier"],
+          "handler": "single_objective_to_tradeoff_frontier",
+          "enabled": true,
+          "summary": "把单目标最优题扩展为预算、收益、风险等多指标权衡或前沿查询题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题目标附近存在自然的第二评价指标",
+              "两个指标之间存在真实冲突，不能同时独立最优"
+            ],
+            "forbidden_seed_properties": [
+              "第二指标只是原目标的同义改写",
+              "权衡关系可以由原答案直接后处理得到"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "single_objective_to_tradeoff_frontier",
+            "target_shift": "从单目标最优改成双指标权衡",
+            "new_obligation": "定义主指标、约束指标和前沿或最优折中口径"
+          },
+          "helpers": [
+            {
+              "id": "secondary_metric_materialization",
+              "summary": "引入与原目标冲突的第二指标。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让目标空间从一维扩展到真实权衡。",
+              "difficulty_role": "要求算法同时跟踪两个评价维度。",
+              "prompt_guidance": [
+                "第二指标必须来自原题对象的自然属性。",
+                "目标要写清主指标与约束指标的关系。"
+              ],
+              "redlines": [
+                "不能把第二指标写成原指标的别名。",
+                "不能只增加一个无影响的附加输出。"
+              ]
+            },
+            {
+              "id": "frontier_dominance_rule",
+              "summary": "定义支配关系、预算约束或前沿输出口径。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "把答案从单个最优值变成可比较的前沿语义。",
+              "difficulty_role": "要求解法维护不可支配状态或折中证明。",
+              "prompt_guidance": [
+                "说明什么方案被另一个方案支配。",
+                "不变量要支撑前沿剪枝或预算转移。"
+              ],
+              "redlines": [
+                "不能只输出两个独立最优值。",
+                "不能缺少比较口径。"
+              ]
+            },
+            {
+              "id": "coupled_state_expansion",
+              "summary": "让核心状态同时承载两个指标的耦合变化。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "阻止多目标退化成两个独立子题。",
+              "difficulty_role": "要求证明状态压缩不会丢掉折中信息。",
+              "prompt_guidance": [
+                "状态或约束必须体现指标之间的相互影响。",
+                "不变量要解释为何不能先优化一个再优化另一个。"
+              ],
+              "redlines": [
+                "不能拆成先求目标 A 再求目标 B。",
+                "不能让第二指标只在排序时出现。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "第二指标必须与原目标真实冲突",
+              "必须定义支配或预算口径",
+              "不能退化成两个独立最优值"
+            ]
+          },
+          "examples": {
+            "positive": "在最大收益之外加入总风险预算，要求输出每个预算下的最优收益。",
+            "negative": "同时输出最大值和该最大值出现的位置。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题缺少自然冲突的第二指标，不适合扩成权衡前沿题。",
+            "difference_insufficient": "新增指标没有进入主状态，只是原答案的附属统计。"
+          }
+        },
+        {
+          "id": "forward_solution_to_inverse_design",
+          "family": "inverse_design",
+          "audit_tags": ["single_seed", "inverse_problem", "minimal_edit"],
+          "handler": "forward_solution_to_inverse_design",
+          "enabled": true,
+          "summary": "把正向求解题扩展为给定目标后的最小修改、参数反推或输入设计题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题输出或性质可以作为反向目标被指定",
+              "存在自然的修改操作或设计自由度"
+            ],
+            "forbidden_seed_properties": [
+              "无法定义可验证的反向目标",
+              "修改操作与原核心规律无关"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "forward_solution_to_inverse_design",
+            "target_shift": "从计算给定输入的结果改成设计输入或修改使目标成立",
+            "new_obligation": "定义目标结果、允许修改和最小性证明"
+          },
+          "helpers": [
+            {
+              "id": "target_result_binding",
+              "summary": "把原题结果绑定成新题要达成的反向目标。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让求解方向从正向计算翻转为目标驱动设计。",
+              "difficulty_role": "要求算法围绕目标约束反推状态。",
+              "prompt_guidance": [
+                "目标必须说明要达成的结果性质。",
+                "核心约束必须限制目标如何被满足。"
+              ],
+              "redlines": [
+                "不能只是问原答案是否等于给定值。",
+                "不能让目标与原核心规律脱节。"
+              ]
+            },
+            {
+              "id": "edit_operation_contract",
+              "summary": "定义允许修改、构造或参数调整的正式操作集合。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "把反向设计落实到可枚举或可优化的操作空间。",
+              "difficulty_role": "要求证明操作序列与目标结果之间的对应关系。",
+              "prompt_guidance": [
+                "修改操作必须来自原题对象的自然结构。",
+                "不变量要解释修改如何影响目标结果。"
+              ],
+              "redlines": [
+                "不能发明无关操作。",
+                "不能让修改只改变叙事外观。"
+              ]
+            },
+            {
+              "id": "minimality_or_certificate_lock",
+              "summary": "要求输出最小修改代价或可验证设计证据。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "让答案承担最小性或构造正确性责任。",
+              "difficulty_role": "要求算法证明不能用更少修改达成目标。",
+              "prompt_guidance": [
+                "输出目标应包含最小代价或具体设计。",
+                "不变量要支持下界或正确性证明。"
+              ],
+              "redlines": [
+                "不能只输出任意可行修改。",
+                "不能省略最小性证明责任。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "反向目标必须来自原题结果语义",
+              "修改操作必须与原核心对象相关",
+              "必须承担最小性或设计正确性责任"
+            ]
+          },
+          "examples": {
+            "positive": "给定目标答案，求最少修改几个元素使原性质成立。",
+            "negative": "随意添加一种与原题无关的操作来构造任意结果。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题无法定义稳定的反向目标或自然修改操作。",
+            "difference_insufficient": "反向设计没有改变主求解方向，只是把原判定换了问法。"
+          }
+        },
+        {
+          "id": "independent_components_to_global_coupling",
+          "family": "global_coupling",
+          "audit_tags": ["single_seed", "global_constraint", "coupled_components"],
+          "handler": "independent_components_to_global_coupling",
+          "enabled": true,
+          "summary": "把原本可独立处理的分量、位置或查询扩展为共享资源和全局守恒耦合题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题存在可分解的局部单元",
+              "局部单元之间能通过共享资源、总量或全局选择自然耦合"
+            ],
+            "forbidden_seed_properties": [
+              "各单元完全没有共同变量",
+              "全局约束只能靠无关背景硬加"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "independent_components_to_global_coupling",
+            "target_shift": "从局部独立求解改成全局耦合求解",
+            "new_obligation": "在共享预算、守恒量或跨组件依赖下统一求解"
+          },
+          "helpers": [
+            {
+              "id": "shared_resource_constraint",
+              "summary": "把多个局部单元绑定到同一个共享资源或守恒量。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让原来的分而治之不再成立。",
+              "difficulty_role": "要求算法在全局预算下统一选择局部决策。",
+              "prompt_guidance": [
+                "共享资源必须直接约束多个局部单元。",
+                "目标必须依赖全局分配结果。"
+              ],
+              "redlines": [
+                "不能只给每个单元独立加同一限制。",
+                "不能把全局约束写成无影响上限。"
+              ]
+            },
+            {
+              "id": "cross_component_dependency",
+              "summary": "建立局部选择之间的跨组件依赖或冲突。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "让任一局部决策影响其它单元可行性。",
+              "difficulty_role": "要求解法维护跨组件状态关系。",
+              "prompt_guidance": [
+                "约束要说明一个单元的选择如何影响其它单元。",
+                "不变量要支撑跨组件一致性。"
+              ],
+              "redlines": [
+                "不能仍然逐个单元独立求解。",
+                "不能只在答案汇总时相加。"
+              ]
+            },
+            {
+              "id": "global_optimality_lock",
+              "summary": "让输出责任变成全局最优或全局可行证明。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "把局部答案集合提升成整体决策对象。",
+              "difficulty_role": "要求证明局部取舍组合后的整体最优性。",
+              "prompt_guidance": [
+                "目标要强调整体最优或整体可行。",
+                "不变量要阻止局部贪心直接拼接。"
+              ],
+              "redlines": [
+                "不能只把局部答案加总。",
+                "不能没有全局一致性证明。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "必须有共享资源或跨组件依赖",
+              "局部单元不能继续独立求解",
+              "必须定义全局最优或全局可行责任"
+            ]
+          },
+          "examples": {
+            "positive": "若干区间原可独立选点，改成所有区间共享总预算并互相排斥。",
+            "negative": "分别求每个连通块答案后简单相加。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题没有可自然耦合的局部单元。",
+            "difference_insufficient": "新增全局条件没有进入主状态，局部答案仍能独立拼接。"
+          }
+        },
+        {
+          "id": "deterministic_process_to_game_outcome",
+          "family": "game_transformation",
+          "audit_tags": ["single_seed", "game", "adversarial_choice"],
+          "handler": "deterministic_process_to_game_outcome",
+          "enabled": true,
+          "summary": "把单人确定性选择或操作过程扩展为双方最优行动下的胜负或得分差题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题存在可轮流选择、拿取、移动或改变状态的自然操作",
+              "不同操作会改变后续可选状态"
+            ],
+            "forbidden_seed_properties": [
+              "操作顺序固定且没有选择自由度",
+              "对抗方只能靠故事背景硬造"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "deterministic_process_to_game_outcome",
+            "target_shift": "从单人过程改成双方最优博弈",
+            "new_obligation": "定义行动规则、胜负目标和博弈状态不变量"
+          },
+          "helpers": [
+            {
+              "id": "turn_structure_binding",
+              "summary": "把原操作空间拆成双方轮流行动的正式规则。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让原决策过程获得对抗语义。",
+              "difficulty_role": "要求算法分析双方最优响应。",
+              "prompt_guidance": [
+                "行动必须来自原题已有操作或选择。",
+                "目标要明确先手、后手和胜负或得分。"
+              ],
+              "redlines": [
+                "不能凭背景硬造玩家。",
+                "不能把博弈写成固定顺序模拟。"
+              ]
+            },
+            {
+              "id": "adversarial_state_invariant",
+              "summary": "建立双方行动后状态演化的博弈不变量。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "把可达状态从单人最优扩成对抗可达。",
+              "difficulty_role": "要求证明策略转移、必胜态或得分界。",
+              "prompt_guidance": [
+                "不变量要表达状态类别如何随行动翻转或转移。",
+                "核心约束要限制双方可行动作。"
+              ],
+              "redlines": [
+                "不能只比较两个独立方案。",
+                "不能没有状态转移下的策略语义。"
+              ]
+            },
+            {
+              "id": "optimal_play_contract",
+              "summary": "把输出责任锁定为最优博弈结果。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "让答案从最优值或可行性变成策略结果。",
+              "difficulty_role": "要求证明双方都最优时的结果唯一成立。",
+              "prompt_guidance": [
+                "目标必须写明双方均采取最优策略。",
+                "不变量要支持胜负判定或得分差计算。"
+              ],
+              "redlines": [
+                "不能只要求模拟某个给定策略。",
+                "不能省略最优行动前提。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "博弈行动必须来自原题自然操作",
+              "必须有双方最优语义",
+              "必须形成博弈状态不变量"
+            ]
+          },
+          "examples": {
+            "positive": "把单人取物最优改成两人轮流取物，判断先手是否必胜。",
+            "negative": "只是把两个玩家名字写进原确定性过程。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题没有可自然对抗化的选择过程。",
+            "difference_insufficient": "博弈语义没有改变状态转移，只是换了叙事。"
+          }
+        },
+        {
+          "id": "local_path_to_global_cover",
+          "family": "global_cover",
+          "audit_tags": ["single_seed", "cover", "cut_or_dominance"],
+          "handler": "local_path_to_global_cover",
+          "enabled": true,
+          "summary": "把单路径、单区间或单子树性质扩展为覆盖、割、支配或多对象联动约束题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题核心对象具有路径、区间、子树、集合等局部结构",
+              "多个局部对象之间可以自然形成覆盖或割关系"
+            ],
+            "forbidden_seed_properties": [
+              "不存在可组合的局部对象族",
+              "覆盖关系只能靠无关附加限制产生"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "local_path_to_global_cover",
+            "target_shift": "从单个局部对象求解改成全局覆盖或切断",
+            "new_obligation": "定义对象族、覆盖口径和全局可验证条件"
+          },
+          "helpers": [
+            {
+              "id": "object_family_expansion",
+              "summary": "把单个路径、区间或子结构扩成需要同时处理的对象族。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让问题从局部求解升级为全局对象族管理。",
+              "difficulty_role": "要求算法处理多个对象之间的交叠与选择。",
+              "prompt_guidance": [
+                "目标必须涉及覆盖、割、支配或多对象满足。",
+                "核心约束要定义对象族如何产生。"
+              ],
+              "redlines": [
+                "不能只是重复处理多个独立对象。",
+                "不能只把单对象答案输出多次。"
+              ]
+            },
+            {
+              "id": "cover_cut_consistency",
+              "summary": "定义覆盖、割或支配关系的一致性约束。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "让多个局部对象通过同一个全局选择相互制约。",
+              "difficulty_role": "要求证明全局选择对所有对象同时成立。",
+              "prompt_guidance": [
+                "覆盖或割关系必须能从原结构验证。",
+                "不变量要说明全局选择如何支配对象族。"
+              ],
+              "redlines": [
+                "不能只定义互不关联的局部条件。",
+                "不能让全局选择脱离原结构。"
+              ]
+            },
+            {
+              "id": "global_certificate_or_value",
+              "summary": "把输出责任改成全局覆盖值、最小割或可验证方案。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "让答案承载全局对象族的统一证明。",
+              "difficulty_role": "要求解法证明最小性、最大性或覆盖完备性。",
+              "prompt_guidance": [
+                "目标要写清输出值或方案如何验证全局性质。",
+                "不变量要支撑全局完备性或下界。"
+              ],
+              "redlines": [
+                "不能只输出任意局部对象。",
+                "不能省略全局验证口径。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "必须从局部对象族形成全局覆盖或割语义",
+              "全局选择必须同时影响多个对象",
+              "必须有全局验证或最优性责任"
+            ]
+          },
+          "examples": {
+            "positive": "把求一条路径的性质改成选择最少点覆盖所有给定路径。",
+            "negative": "分别对每条路径运行原算法后输出结果列表。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题没有适合扩成覆盖或割的局部对象族。",
+            "difference_insufficient": "全局覆盖语义没有进入主约束，只是重复局部问题。"
+          }
+        },
+        {
+          "id": "plain_counting_to_weighted_distribution",
+          "family": "counting_refinement",
+          "audit_tags": ["single_seed", "weighted_counting", "distribution"],
+          "handler": "plain_counting_to_weighted_distribution",
+          "enabled": true,
+          "summary": "把普通计数题扩展为带权计数、按统计量分类的分布计数或分层计数题。",
+          "eligibility": {
+            "required_seed_properties": [
+              "原题已经有明确有限的计数对象",
+              "计数对象上存在自然权重、等级或统计量"
+            ],
+            "forbidden_seed_properties": [
+              "原题不是稳定计数对象",
+              "权重或分类只能凭背景硬造"
+            ]
+          },
+          "required_axis_changes": {
+            "must_change": ["C", "O", "V"]
+          },
+          "core_transformation": {
+            "primary_operator": "plain_counting_to_weighted_distribution",
+            "target_shift": "从计数总数改成带权或分布统计",
+            "new_obligation": "定义权重函数、分类统计量和汇总不变量"
+          },
+          "helpers": [
+            {
+              "id": "weight_or_statistic_definition",
+              "summary": "在原计数对象上定义自然权重或分类统计量。",
+              "must_realize_in": ["core_constraints", "objective"],
+              "target_axes": ["C", "O"],
+              "innovation_role": "让计数目标从总数升级为结构化统计。",
+              "difficulty_role": "要求算法保留对象的附加统计信息。",
+              "prompt_guidance": [
+                "权重或统计量必须由原计数对象自身决定。",
+                "目标要说明输出总权重、分布或分层结果。"
+              ],
+              "redlines": [
+                "不能只换模数。",
+                "不能添加与计数对象无关的权重。"
+              ]
+            },
+            {
+              "id": "distribution_state_factorization",
+              "summary": "把计数状态拆成可维护权重或分布的状态单元。",
+              "must_realize_in": ["core_constraints", "invariant"],
+              "target_axes": ["C", "V"],
+              "innovation_role": "让原计数 DP 或组合结构承担额外维度。",
+              "difficulty_role": "要求证明分布转移不重不漏。",
+              "prompt_guidance": [
+                "核心约束要定义状态如何携带统计量。",
+                "不变量要说明分类或权重汇总的正确性。"
+              ],
+              "redlines": [
+                "不能先数总数再随意分摊。",
+                "不能缺少去重和汇总口径。"
+              ]
+            },
+            {
+              "id": "weighted_output_contract",
+              "summary": "把输出责任锁定为带权和或分类分布。",
+              "must_realize_in": ["objective", "invariant"],
+              "target_axes": ["O", "V"],
+              "innovation_role": "让答案不再是单一数量，而是结构化计数结果。",
+              "difficulty_role": "要求解法证明每一类或每个权重贡献都正确。",
+              "prompt_guidance": [
+                "输出格式必须体现带权或分布结果。",
+                "不变量要支撑每个分类桶或权重项。"
+              ],
+              "redlines": [
+                "不能只输出普通计数。",
+                "不能把分布写成题面备注。"
+              ]
+            }
+          ],
+          "validation_contract": {
+            "hard_checks": [
+              "必须保留明确计数对象",
+              "必须定义自然权重或统计量",
+              "必须说明分布或带权汇总的不重不漏"
+            ]
+          },
+          "examples": {
+            "positive": "从统计合法方案个数改成统计每种代价下的合法方案数。",
+            "negative": "只把答案从普通取模改成另一个模数。"
+          },
+          "failure_templates": {
+            "not_applicable": "这道种子题没有明确计数对象或自然统计量。",
+            "difference_insufficient": "带权或分布目标没有改变计数状态，只是普通计数的后处理。"
+          }
         }
       ]
     },

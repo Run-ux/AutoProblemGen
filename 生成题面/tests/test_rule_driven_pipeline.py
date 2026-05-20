@@ -26,6 +26,34 @@ from schema_tools import _objective_type_prompt, compute_schema_distance
 from variant_planner import VariantPlanner
 
 
+SINGLE_RULE_IDS = (
+    "canonical_witness",
+    "construct_or_obstruction",
+    "existence_to_counting",
+    "minimum_guarantee_under_perturbation",
+    "static_to_online_queries",
+    "feasibility_to_extremal_threshold",
+    "single_objective_to_tradeoff_frontier",
+    "forward_solution_to_inverse_design",
+    "independent_components_to_global_coupling",
+    "deterministic_process_to_game_outcome",
+    "local_path_to_global_cover",
+    "plain_counting_to_weighted_distribution",
+)
+
+SAME_FAMILY_RULE_IDS = (
+    "interlocked_constraints",
+    "shared_core_objective_upgrade",
+)
+
+ALL_RULE_IDS = SINGLE_RULE_IDS + SAME_FAMILY_RULE_IDS
+SAME_FAMILY_RULE_ID_SET = set(SAME_FAMILY_RULE_IDS)
+
+
+def _mode_for_rule_id(rule_id: str) -> str:
+    return "same_family_fusion" if rule_id in SAME_FAMILY_RULE_ID_SET else "single_seed_extension"
+
+
 def _load_upstream_objective_specs() -> dict[str, str]:
     module_path = ROOT / "四元组抽取" / "label_vocab.py"
     spec = importlib.util.spec_from_file_location("test_upstream_label_vocab", module_path)
@@ -103,6 +131,28 @@ class RuleBookTests(unittest.TestCase):
         self.assertTrue(first_rule["handler"])
         self.assertTrue(first_rule["family"])
         self.assertTrue(first_rule["helpers"])
+
+    def test_rulebook_loads_all_single_seed_rule_handlers_and_helper_contracts(self) -> None:
+        rulebook = RuleBook.load(GEN_DIR / "planning_rules.json")
+        enabled_rules = rulebook.enabled_rules("single_seed_extension")
+        enabled_ids = {item["id"] for item in enabled_rules}
+
+        self.assertEqual(enabled_ids, set(SINGLE_RULE_IDS))
+        for rule in enabled_rules:
+            with self.subTest(rule_id=rule["id"]):
+                self.assertTrue(rule["handler"])
+                helper_ids = [helper["id"] for helper in rule["helpers"]]
+                self.assertEqual(len(helper_ids), len(set(helper_ids)))
+                helper_axes = {
+                    axis
+                    for helper in rule["helpers"]
+                    for axis in helper.get("target_axes", [])
+                }
+                self.assertEqual(
+                    helper_axes,
+                    set(rule["required_axis_changes"]["must_change"]),
+                )
+                self.assertNotEqual(get_rule_handler(rule).__class__.__name__, "GenericRuleHandler")
 
     def test_rulebook_rejects_duplicate_helper_ids(self) -> None:
         base_payload = json.loads((GEN_DIR / "planning_rules.json").read_text(encoding="utf-8"))
@@ -319,10 +369,8 @@ class SingleSeedExtensionTests(unittest.TestCase):
 
     def test_each_single_rule_can_pass(self) -> None:
         responses = {
-            "canonical_witness": make_single_payload("canonical_witness"),
-            "construct_or_obstruction": make_single_payload("construct_or_obstruction"),
-            "existence_to_counting": make_single_payload("existence_to_counting"),
-            "minimum_guarantee_under_perturbation": make_single_payload("minimum_guarantee_under_perturbation"),
+            rule_id: make_single_payload(rule_id)
+            for rule_id in SINGLE_RULE_IDS
         }
         planner = VariantPlanner(
             client=FakePlannerClient(responses),
@@ -354,10 +402,7 @@ class SingleSeedExtensionTests(unittest.TestCase):
                 "feedback": "浅改风险过高",
             }
             for rule_id in (
-                "canonical_witness",
-                "construct_or_obstruction",
-                "existence_to_counting",
-                "minimum_guarantee_under_perturbation",
+                *SINGLE_RULE_IDS,
             )
         }
         planner = VariantPlanner(
@@ -683,16 +728,9 @@ class RuleHandlerTests(unittest.TestCase):
         self.assertFalse(fusion_result.accepted)
 
     def test_rule_specific_plan_validation_uses_llm_reviews(self) -> None:
-        for rule_id in (
-            "canonical_witness",
-            "construct_or_obstruction",
-            "existence_to_counting",
-            "minimum_guarantee_under_perturbation",
-            "interlocked_constraints",
-            "shared_core_objective_upgrade",
-        ):
+        for rule_id in ALL_RULE_IDS:
             with self.subTest(rule_id=rule_id):
-                mode = "same_family_fusion" if rule_id in {"interlocked_constraints", "shared_core_objective_upgrade"} else "single_seed_extension"
+                mode = _mode_for_rule_id(rule_id)
                 rule = self.rulebook.rule(mode, rule_id)
                 payload = make_same_family_payload(rule_id) if mode == "same_family_fusion" else make_single_payload(rule_id)
                 handler = get_rule_handler(rule)
@@ -806,69 +844,78 @@ class RuleHandlerTests(unittest.TestCase):
         self.assertIn("plan_review:interlocked_constraints", client.calls)
 
     def test_rule_plan_validation_rejects_missing_or_extra_helpers(self) -> None:
-        rule = self.rulebook.rule("single_seed_extension", "canonical_witness")
-        handler = get_rule_handler(rule)
+        for rule_id in SINGLE_RULE_IDS:
+            with self.subTest(rule_id=rule_id):
+                rule = self.rulebook.rule("single_seed_extension", rule_id)
+                handler = get_rule_handler(rule)
 
-        missing_payload = make_single_payload("canonical_witness")
-        missing_payload["applied_helpers"] = missing_payload["applied_helpers"][:-1]
-        missing_outcome = handler.validate_plan(
-            client=FakePlannerClient(responses={}),
-            mode="single_seed_extension",
-            rule=rule,
-            payload=missing_payload,
-            source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=missing_payload["new_schema"],
-            changed_axes=missing_payload["difference_plan"]["changed_axes"],
-            global_constraints={"allow_helper_moves": True},
-        )
-        self.assertFalse(missing_outcome.accepted)
-        self.assertEqual(missing_outcome.reason_code, "helper_missing")
+                missing_payload = make_single_payload(rule_id)
+                missing_payload["applied_helpers"] = missing_payload["applied_helpers"][:-1]
+                missing_outcome = handler.validate_plan(
+                    client=FakePlannerClient(responses={}),
+                    mode="single_seed_extension",
+                    rule=rule,
+                    payload=missing_payload,
+                    source_schema=make_schema(problem_id="SRC"),
+                    candidate_schema=missing_payload["new_schema"],
+                    changed_axes=missing_payload["difference_plan"]["changed_axes"],
+                    global_constraints={"allow_helper_moves": True},
+                )
+                self.assertFalse(missing_outcome.accepted)
+                self.assertEqual(missing_outcome.reason_code, "helper_missing")
 
-        extra_payload = make_single_payload("canonical_witness")
-        extra_payload["applied_helpers"] = list(extra_payload["applied_helpers"]) + [
-            {
-                "id": "unexpected_helper",
-                "selection_reason": "无效 helper。",
-                "affected_axes": ["C"],
-                "schema_changes": ["核心约束被改动。"],
-                "innovation_reason": "无效。",
-                "difficulty_reason": "无效。",
-            }
-        ]
-        extra_outcome = handler.validate_plan(
-            client=FakePlannerClient(responses={}),
-            mode="single_seed_extension",
-            rule=rule,
-            payload=extra_payload,
-            source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=extra_payload["new_schema"],
-            changed_axes=extra_payload["difference_plan"]["changed_axes"],
-            global_constraints={"allow_helper_moves": True},
-        )
-        self.assertFalse(extra_outcome.accepted)
-        self.assertEqual(extra_outcome.reason_code, "helper_not_declared")
+                extra_payload = make_single_payload(rule_id)
+                extra_payload["applied_helpers"] = list(extra_payload["applied_helpers"]) + [
+                    {
+                        "id": "unexpected_helper",
+                        "selection_reason": "无效 helper。",
+                        "affected_axes": ["C"],
+                        "schema_changes": ["核心约束被改动。"],
+                        "innovation_reason": "无效。",
+                        "difficulty_reason": "无效。",
+                    }
+                ]
+                extra_outcome = handler.validate_plan(
+                    client=FakePlannerClient(responses={}),
+                    mode="single_seed_extension",
+                    rule=rule,
+                    payload=extra_payload,
+                    source_schema=make_schema(problem_id="SRC"),
+                    candidate_schema=extra_payload["new_schema"],
+                    changed_axes=extra_payload["difference_plan"]["changed_axes"],
+                    global_constraints={"allow_helper_moves": True},
+                )
+                self.assertFalse(extra_outcome.accepted)
+                self.assertEqual(extra_outcome.reason_code, "helper_not_declared")
 
     def test_rule_plan_validation_rejects_helper_without_realized_schema_sections(self) -> None:
-        rule = self.rulebook.rule("single_seed_extension", "canonical_witness")
-        handler = get_rule_handler(rule)
-        payload = make_single_payload("canonical_witness")
-        broken_helper = copy.deepcopy(payload["applied_helpers"][0])
-        broken_helper["schema_changes"] = ["只有目标变了。"]
-        payload["applied_helpers"][0] = broken_helper
-        candidate_schema = copy.deepcopy(payload["new_schema"])
-        candidate_schema["invariant"] = copy.deepcopy(make_schema(problem_id="SRC")["invariant"])
-        outcome = handler.validate_plan(
-            client=FakePlannerClient(responses={}),
-            mode="single_seed_extension",
-            rule=rule,
-            payload=payload,
-            source_schema=make_schema(problem_id="SRC"),
-            candidate_schema=candidate_schema,
-            changed_axes=payload["difference_plan"]["changed_axes"],
-            global_constraints={"allow_helper_moves": True},
-        )
-        self.assertFalse(outcome.accepted)
-        self.assertEqual(outcome.reason_code, "helper_realization_missing")
+        for rule_id in SINGLE_RULE_IDS:
+            with self.subTest(rule_id=rule_id):
+                rule = self.rulebook.rule("single_seed_extension", rule_id)
+                handler = get_rule_handler(rule)
+                payload = make_single_payload(rule_id)
+                helper_index = next(
+                    index
+                    for index, helper in enumerate(rule["helpers"])
+                    if "invariant" in helper.get("must_realize_in", [])
+                )
+                broken_helper = copy.deepcopy(payload["applied_helpers"][helper_index])
+                broken_helper["schema_changes"] = ["只有目标变了。"]
+                payload["applied_helpers"][helper_index] = broken_helper
+                candidate_schema = copy.deepcopy(payload["new_schema"])
+                candidate_schema["invariant"] = copy.deepcopy(make_schema(problem_id="SRC")["invariant"])
+                outcome = handler.validate_plan(
+                    client=FakePlannerClient(responses={}),
+                    mode="single_seed_extension",
+                    rule=rule,
+                    payload=payload,
+                    source_schema=make_schema(problem_id="SRC"),
+                    candidate_schema=candidate_schema,
+                    changed_axes=payload["difference_plan"]["changed_axes"],
+                    global_constraints={"allow_helper_moves": True},
+                )
+                self.assertFalse(outcome.accepted)
+                self.assertEqual(outcome.reason_code, "helper_realization_missing")
 
     def test_rule_specific_problem_validation_rejects_missing_commitments(self) -> None:
         base_problem = GeneratedProblem(
@@ -880,14 +927,7 @@ class RuleHandlerTests(unittest.TestCase):
             samples=[{"input": "1\n2\n3", "output": "1", "explanation": "样例。"}, {"input": "3\n2\n1", "output": "1", "explanation": "样例。"}],
             notes="",
         )
-        for rule_id in (
-            "canonical_witness",
-            "construct_or_obstruction",
-            "existence_to_counting",
-            "minimum_guarantee_under_perturbation",
-            "interlocked_constraints",
-            "shared_core_objective_upgrade",
-        ):
+        for rule_id in ALL_RULE_IDS:
             with self.subTest(rule_id=rule_id):
                 client = FakePlannerClient(
                     responses={},
@@ -2044,7 +2084,7 @@ class CliAndDocumentationTests(unittest.TestCase):
         generator_readme = (GEN_DIR / "README.md").read_text(encoding="utf-8")
         rules_doc = (GEN_DIR / "RULES.md").read_text(encoding="utf-8")
         root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        root_generator_section = _extract_readme_section(root_readme, "## 5. `生成题面`", "## 6. `题目质量评价`")
+        root_generator_section = _extract_readme_section(root_readme, "### 4. `生成题面`", "### 5. `题目质量评价`")
 
         for text in (generator_readme, root_generator_section):
             self.assertIn("规则", text)
@@ -2568,6 +2608,7 @@ def _toy_embedding(text: str) -> list[float]:
         1.0 if any(token in {"count", "统计", "counting"} for token in tokens) else 0.0,
         1.0 if any(token in {"construct", "construction", "构造", "witness"} for token in tokens) else 0.0,
         1.0 if any(token in {"minimize", "minimum", "最小", "保底"} for token in tokens) else 0.0,
+        1.0 if any(token in {"game_outcome", "game", "博弈", "玩家", "胜负", "先手", "后手"} for token in tokens) else 0.0,
         1.0 if any(token in {"array", "数组"} for token in tokens) else 0.0,
         1.0 if any(token in {"tree", "树"} for token in tokens) else 0.0,
         1.0 if any(token in {"graph", "图"} for token in tokens) else 0.0,
@@ -2596,7 +2637,34 @@ def make_distance_breakdown(*, i: float, c: float, o: float, v: float, total: fl
     }
 
 
+def _single_rule_required_axes(rule_id: str) -> list[str]:
+    payload = json.loads((GEN_DIR / "planning_rules.json").read_text(encoding="utf-8"))
+    for rule in payload["modes"]["single_seed_extension"]["rules"]:
+        if rule["id"] == rule_id:
+            return [str(axis) for axis in rule["required_axis_changes"]["must_change"]]
+    raise KeyError(rule_id)
+
+
+def _single_rule_objective(rule_id: str) -> dict[str, str]:
+    objectives = {
+        "canonical_witness": {"type": "construction", "description": "输出一个满足全部约束且按规范顺序最小的构造 witness。"},
+        "construct_or_obstruction": {"type": "construction", "description": "输出合法构造；若不存在，则输出可局部检查的阻碍证书。"},
+        "existence_to_counting": {"type": "counting", "description": "统计所有不同合法方案数。"},
+        "minimum_guarantee_under_perturbation": {"type": "minimize_value", "description": "求任意合法扰动下仍能保证成功的最小保底阈值。"},
+        "static_to_online_queries": {"type": "value_computation", "description": "在更新和查询交错的操作流中输出每次查询的当前答案。"},
+        "feasibility_to_extremal_threshold": {"type": "minimize_value", "description": "求使可行性成立的最小临界阈值。"},
+        "single_objective_to_tradeoff_frontier": {"type": "maximize_value", "description": "在预算限制下最大化收益，并输出不可支配权衡结果。"},
+        "forward_solution_to_inverse_design": {"type": "construction", "description": "构造最小修改方案，使给定目标结果成立。"},
+        "independent_components_to_global_coupling": {"type": "maximize_value", "description": "在共享资源和跨组件约束下最大化整体收益。"},
+        "deterministic_process_to_game_outcome": {"type": "game_outcome", "description": "判断双方最优行动下先手是否必胜，或计算最优得分差。"},
+        "local_path_to_global_cover": {"type": "minimize_value", "description": "求覆盖所有目标路径或局部对象族的最小全局选择代价。"},
+        "plain_counting_to_weighted_distribution": {"type": "counting", "description": "按自然统计量输出合法对象的带权计数分布。"},
+    }
+    return dict(objectives.get(rule_id, objectives["canonical_witness"]))
+
+
 def make_single_payload(rule_id: str) -> dict:
+    changed_axes = _single_rule_required_axes(rule_id)
     base = {
         "status": "ok",
         "error_reason": "",
@@ -2604,7 +2672,7 @@ def make_single_payload(rule_id: str) -> dict:
         "eligibility_reason": "种子题具备稳定可扩展性。",
         "core_transformation_summary": "在四元组层面引入新义务。",
         "difference_plan": {
-            "changed_axes": ["C", "O", "V"],
+            "changed_axes": changed_axes,
             "rationale": "新规则改变主导求解义务。",
             "summary": "通过硬门槛并可追溯到规则。",
         },
@@ -2620,14 +2688,14 @@ def make_single_payload(rule_id: str) -> dict:
             "core_constraints": {
                 "constraints": [
                     {"name": "base_constraint", "description": "需要满足基础选择约束。"},
-                    {"name": f"{rule_id}_constraint", "description": f"{rule_id} 引入新的核心约束。"}
+                    {"name": f"{rule_id}_constraint", "description": f"{rule_id} 引入新的核心约束和主导义务。"}
                 ]
             },
-            "objective": {"type": "construction", "description": "输出一个规范 witness。"},
+            "objective": _single_rule_objective(rule_id),
             "invariant": {
                 "invariants": [
                     {"name": "base_invariant", "description": "基础不变量保持成立。"},
-                    {"name": f"{rule_id}_invariant", "description": f"{rule_id} 引入新的验证不变量。"}
+                    {"name": f"{rule_id}_invariant", "description": f"{rule_id} 引入新的验证不变量和复用阻断证明。"}
                 ]
             },
             "difficulty": "Medium",
@@ -2635,7 +2703,7 @@ def make_single_payload(rule_id: str) -> dict:
         "algorithmic_delta_claim": {
             "seed_solver_core": "基础判定过程",
             "reusable_subroutines": "状态预处理",
-            "new_solver_core": "需要输出并验证新的结构",
+            "new_solver_core": f"{rule_id} 要求维护新的主状态和证明责任",
             "new_proof_obligation": "必须证明构造满足新约束",
             "why_direct_reuse_fails": "原解缺少对新义务的验证链路",
         },
@@ -2657,17 +2725,48 @@ def make_single_payload(rule_id: str) -> dict:
     }
     constraints = base["new_schema"]["core_constraints"]["constraints"]
     invariants = base["new_schema"]["invariant"]["invariants"]
+    if "I" in changed_axes:
+        base["new_schema"]["input_structure"] = {
+            "type": "operation_stream",
+            "length": {"min": 1, "max": 200000},
+            "value_range": {"min": 0, "max": 1000000000},
+            "properties": {
+                "operations": ["update", "query"],
+                "online_ordered": True,
+                "stateful": True,
+            },
+        }
+        constraints.append({"name": "operation_order", "description": "每次查询必须基于此前所有更新后的当前状态回答。"})
+        invariants.append({"name": "dynamic_state_summary", "description": "维护的状态摘要在任意更新后仍足以回答查询。"})
     if rule_id == "construct_or_obstruction":
-        base["new_schema"]["objective"] = {"type": "construction", "description": "输出构造或阻碍证书。"}
         constraints.append({"name": "obstruction_certificate", "description": "当无解时，必须输出一个可局部检查的冲突证书。"})
     elif rule_id == "existence_to_counting":
-        base["new_schema"]["objective"] = {"type": "counting", "description": "统计所有合法方案数。"}
         constraints.append({"name": "counting_scope", "description": "两个方案只有在选择对象集合不同或等价类不同的情况下才计作不同答案；结果对 998244353 取模。"})
         invariants.append({"name": "finite_counting", "description": "候选对象空间有限，且每个对象都能映射到唯一计数单元。"})
     elif rule_id == "minimum_guarantee_under_perturbation":
-        base["new_schema"]["objective"] = {"type": "minimize_value", "description": "求最小保底阈值。"}
         constraints.append({"name": "worst_case_perturbation", "description": "必须在任意合法扰动顺序下都保证目标成立。"})
         invariants.append({"name": "guarantee_invariant", "description": "存在一个保底不变量，使最坏情形仍能维持可行。"})
+    elif rule_id == "feasibility_to_extremal_threshold":
+        constraints.append({"name": "threshold_feasibility", "description": "阈值改变会改变合法方案集合，答案必须是临界边界。"})
+        invariants.append({"name": "monotone_boundary", "description": "临界阈值两侧的可行性满足可证明的边界关系。"})
+    elif rule_id == "single_objective_to_tradeoff_frontier":
+        constraints.append({"name": "tradeoff_budget", "description": "收益和预算两个指标相互制约，不能独立最优。"})
+        invariants.append({"name": "pareto_frontier", "description": "不可支配状态保留所有可能成为答案的权衡结果。"})
+    elif rule_id == "forward_solution_to_inverse_design":
+        constraints.append({"name": "inverse_target", "description": "必须通过允许修改使指定目标结果成立，且修改次数最少。"})
+        invariants.append({"name": "edit_minimality", "description": "任意更少修改都无法达成目标结果。"})
+    elif rule_id == "independent_components_to_global_coupling":
+        constraints.append({"name": "shared_resource", "description": "所有局部单元共享同一资源预算，任一选择都会影响其它单元可行性。"})
+        invariants.append({"name": "global_consistency", "description": "整体状态同时记录局部贡献和共享资源剩余量。"})
+    elif rule_id == "deterministic_process_to_game_outcome":
+        constraints.append({"name": "turn_based_choice", "description": "双方轮流从同一状态中选择操作，行动会改变后续可行动作。"})
+        invariants.append({"name": "winning_state_transition", "description": "状态按双方最优行动在必胜态与必败态之间转移。"})
+    elif rule_id == "local_path_to_global_cover":
+        constraints.append({"name": "global_cover", "description": "一个全局选择必须同时覆盖所有目标路径、区间或局部对象。"})
+        invariants.append({"name": "cover_completeness", "description": "任意未覆盖对象都会被当前全局选择的不变量检测到。"})
+    elif rule_id == "plain_counting_to_weighted_distribution":
+        constraints.append({"name": "weighted_distribution", "description": "每个合法对象按照自然统计量归入唯一分类桶并贡献权重。"})
+        invariants.append({"name": "distribution_conservation", "description": "所有分类桶的贡献不重不漏地覆盖原计数对象。"})
     else:
         constraints.append({"name": "canonical_order", "description": "所有合法构造需要按统一规范顺序输出。"})
     return base
@@ -2765,6 +2864,10 @@ def make_same_family_payload(rule_id: str, drop_fields: set[str] | None = None) 
 
 
 def make_validation_plan(rule_id: str) -> VariantPlan:
+    mode = _mode_for_rule_id(rule_id)
+    changed_axes = ["I", "C", "V"] if rule_id == "interlocked_constraints" else (
+        _single_rule_required_axes(rule_id) if mode == "single_seed_extension" else ["C", "O", "V"]
+    )
     theme = Theme(
         theme_id="campus_ops",
         name="校园运营",
@@ -2779,14 +2882,21 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
             "type": "array",
             "length": {"min": 3, "max": 3},
             "value_range": {"min": 1, "max": 9},
-            "properties": {"ordered": True} if "interlocked" in rule_id or "shared_core" in rule_id else {},
+            "properties": {"ordered": True} if mode == "same_family_fusion" else {},
         },
         core_constraints={"constraints": [{"name": "base_constraint", "description": "基础约束。"}]},
-        objective={"type": "construction", "description": "输出一个规范构造。"},
+        objective=_single_rule_objective(rule_id) if mode == "single_seed_extension" else {"type": "construction", "description": "输出一个规范构造。"},
         invariant={"invariants": [{"name": "base_invariant", "description": "基础不变量。"}]},
         theme={"id": "campus_ops", "name": "校园运营"},
         difficulty="Hard",
     )
+    if "I" in changed_axes and mode == "single_seed_extension":
+        new_schema.input_structure = {
+            "type": "operation_stream",
+            "length": {"min": 1, "max": 200000},
+            "value_range": {"min": 0, "max": 1000000000},
+            "properties": {"operations": ["update", "query"], "online_ordered": True},
+        }
     if rule_id == "interlocked_constraints":
         new_schema.input_structure = {
             "type": "array",
@@ -2796,19 +2906,15 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         }
         new_schema.objective = {"type": "decision", "description": "判断是否存在合法方案。"}
     objective = new_schema.objective
-    if rule_id == "existence_to_counting":
-        objective = {"type": "counting", "description": "统计所有合法方案数。"}
-    elif rule_id == "minimum_guarantee_under_perturbation":
-        objective = {"type": "minimize_value", "description": "求最小保底阈值。"}
-    elif rule_id == "interlocked_constraints":
+    if rule_id == "interlocked_constraints":
         objective = {"type": "decision", "description": "判断是否存在合法方案。"}
     return VariantPlan(
         problem_id=new_schema.problem_id,
         variant_index=1,
         seed=1,
-        mode="same_family_fusion" if "interlocked" in rule_id or "shared_core" in rule_id else "single_seed_extension",
+        mode=mode,
         theme=theme,
-        source_problem_ids=["A", "B"] if "interlocked" in rule_id or "shared_core" in rule_id else ["A"],
+        source_problem_ids=["A", "B"] if mode == "same_family_fusion" else ["A"],
         objective=objective,
         difficulty="Hard",
         rule_selection_reason="测试",
@@ -2817,23 +2923,23 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
         invariant_summary=["基础不变量。"],
         difference_plan=DifferencePlan(
             target_distance_band={"min": 0.35, "max": 0.60},
-            changed_axes=["I", "C", "V"] if rule_id == "interlocked_constraints" else ["C", "O", "V"],
+            changed_axes=changed_axes,
             same_family_allowed=True,
             forbidden_reuse=["A"],
             rationale="测试",
             summary="测试",
-            mode="same_family_fusion" if "interlocked" in rule_id or "shared_core" in rule_id else "single_seed_extension",
+            mode=mode,
         ),
         new_schema_snapshot=new_schema,
         predicted_schema_distance=0.37 if rule_id == "interlocked_constraints" else 0.45,
         distance_breakdown=make_distance_breakdown(
-            i=0.25 if rule_id == "interlocked_constraints" else 0.0,
+            i=0.25 if "I" in changed_axes else 0.0,
             c=0.5,
             o=0.0 if rule_id == "interlocked_constraints" else 0.8,
             v=0.4,
             total=0.37 if rule_id == "interlocked_constraints" else 0.45,
         ),
-        changed_axes_realized=["I", "C", "V"] if rule_id == "interlocked_constraints" else ["C", "O", "V"],
+        changed_axes_realized=changed_axes,
         applied_rule=rule_id,
         algorithmic_delta_claim={
             "seed_solver_core": "基础判定",
@@ -2843,19 +2949,19 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
             "why_direct_reuse_fails": "原解缺少新责任的验证链路",
         },
         anti_shallow_rationale="变化已进入主导义务。",
-        shared_core_summary="共享主核" if "interlocked" in rule_id or "shared_core" in rule_id else "",
+        shared_core_summary="共享主核" if mode == "same_family_fusion" else "",
         shared_core_anchors={
             "shared_state": "统一状态",
             "shared_transition": "统一转移",
             "shared_decision_basis": "统一判定",
         }
-        if "interlocked" in rule_id or "shared_core" in rule_id
+        if mode == "same_family_fusion"
         else {},
         seed_contributions={"seed_a": "容量义务", "seed_b": "冲突义务"}
-        if "interlocked" in rule_id or "shared_core" in rule_id
+        if mode == "same_family_fusion"
         else {},
         fusion_ablation={"without_seed_a": "退化", "without_seed_b": "退化"}
-        if "interlocked" in rule_id or "shared_core" in rule_id
+        if mode == "same_family_fusion"
         else {},
         applied_helpers=make_applied_helpers(rule_id),
     )
@@ -2898,6 +3004,78 @@ def make_valid_problem_cases() -> dict[str, GeneratedProblem]:
             constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
             samples=[{"input": "1\n2\n3", "output": "5", "explanation": "样例。"}, {"input": "3\n2\n1", "output": "7", "explanation": "样例。"}],
             notes="需要考虑最坏情况。",
+        ),
+        "static_to_online_queries": GeneratedProblem(
+            title="在线查询",
+            description="给定更新和查询交错的操作流，每次查询都必须基于此前所有更新后的当前状态输出答案。",
+            input_format="输入操作数量以及每个 update 或 query 操作。",
+            output_format="对每个 query 输出当前答案。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "3\nquery\nupdate 1 2\nquery", "output": "1\n2", "explanation": "第二次查询受更新影响。"}, {"input": "2\nupdate 1 3\nquery", "output": "3", "explanation": "样例。"}],
+            notes="不能把每次查询当成独立静态输入。",
+        ),
+        "feasibility_to_extremal_threshold": GeneratedProblem(
+            title="临界阈值",
+            description="求使可行性成立的最小临界阈值，并证明更小阈值不可行。",
+            input_format="输入基础结构和候选限制。",
+            output_format="输出最小阈值。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "1\n2\n3", "output": "4", "explanation": "4 是最小可行阈值。"}, {"input": "3\n4\n5", "output": "6", "explanation": "样例。"}],
+            notes="阈值必须进入主约束。",
+        ),
+        "single_objective_to_tradeoff_frontier": GeneratedProblem(
+            title="权衡前沿",
+            description="在预算约束下最大化收益，并输出不可支配的预算-收益权衡结果。",
+            input_format="输入对象、收益和风险。",
+            output_format="输出每个预算下的最优收益。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "2\n1 3\n2 5", "output": "0 3 5", "explanation": "样例。"}, {"input": "1\n2 4", "output": "0 0 4", "explanation": "样例。"}],
+            notes="不能只输出两个独立最优值。",
+        ),
+        "forward_solution_to_inverse_design": GeneratedProblem(
+            title="反向设计",
+            description="给定目标结果，要求输出最少修改方案，使修改后的对象满足该目标。",
+            input_format="输入原对象和目标结果。",
+            output_format="输出最小修改次数和修改方案。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "3\n1 2 3\n5", "output": "1\n2 4", "explanation": "一次修改达成目标。"}, {"input": "2\n1 1\n2", "output": "0", "explanation": "样例。"}],
+            notes="修改操作必须来自原对象结构。",
+        ),
+        "independent_components_to_global_coupling": GeneratedProblem(
+            title="全局耦合",
+            description="多个局部单元共享同一资源预算，任一局部选择都会影响其它单元可行性，要求最大化整体收益。",
+            input_format="输入局部单元和共享预算。",
+            output_format="输出整体最大收益。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "2 3\n1 2\n2 4", "output": "4", "explanation": "共享预算限制局部选择。"}, {"input": "1 1\n1 2", "output": "2", "explanation": "样例。"}],
+            notes="不能分别求每个局部单元后相加。",
+        ),
+        "deterministic_process_to_game_outcome": GeneratedProblem(
+            title="最优博弈",
+            description="两名玩家轮流执行原题自然操作，双方都采取最优策略，判断先手是否必胜。",
+            input_format="输入初始状态。",
+            output_format="输出 First 或 Second。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "3", "output": "First", "explanation": "先手存在必胜行动。"}, {"input": "2", "output": "Second", "explanation": "样例。"}],
+            notes="行动必须改变后续可选状态。",
+        ),
+        "local_path_to_global_cover": GeneratedProblem(
+            title="全局覆盖",
+            description="选择最少对象覆盖所有给定路径或局部结构，并输出最小覆盖代价。",
+            input_format="输入结构和目标对象族。",
+            output_format="输出最小覆盖代价。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "3\n1 2\n2 3", "output": "1", "explanation": "一个选择覆盖所有路径。"}, {"input": "2\n1 2", "output": "1", "explanation": "样例。"}],
+            notes="全局选择必须同时影响多个局部对象。",
+        ),
+        "plain_counting_to_weighted_distribution": GeneratedProblem(
+            title="带权分布计数",
+            description="统计合法对象按自然统计量分类后的带权计数分布。",
+            input_format="输入对象集合和统计量定义。",
+            output_format="输出每个分类桶的计数或权重和。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[{"input": "3", "output": "1 2 1", "explanation": "三个分类桶的贡献。"}, {"input": "2", "output": "1 1", "explanation": "样例。"}],
+            notes="分类桶必须不重不漏覆盖计数对象。",
         ),
         "interlocked_constraints": GeneratedProblem(
             title="共享主核互锁",
