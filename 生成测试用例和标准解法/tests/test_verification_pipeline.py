@@ -4,6 +4,7 @@ import json
 import unittest
 from unittest.mock import patch
 
+import path_setup  # noqa: F401
 from execution_config import ExecutionConfig
 from local_execution import (
     EXECUTION_ERROR,

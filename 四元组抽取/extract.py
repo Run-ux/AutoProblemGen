@@ -10,7 +10,6 @@
 输出目录结构：
     output/pilot/
     ├── raw/          # 原始抽取结果（每题每维一个文件）
-    ├── normalized/   # 归一化后的最终结果
     └── logs/         # 日志和进度记录
 """
 
@@ -19,9 +18,16 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List
+
+WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKFLOW_DIR))
+
+from runtime_config import RUNTIME_GENERATION_LLM_ENV, RuntimeConfigError, llm_config_from_runtime_env
 
 try:
     from .problem_schema import load_problem_records
@@ -298,7 +304,7 @@ def main():
         "--temperature",
         type=float,
         default=0.4,
-        help="LLM 采样温度（默认 0.4，归一化阶段固定使用 0.2）",
+        help="LLM 采样温度（默认 0.4）",
     )
 
     args = parser.parse_args()
@@ -335,11 +341,12 @@ def main():
 
     # 初始化 Qwen 客户端
     try:
-        client = QwenClient(QwenConfig(stage="extract"))
+        generation_config = llm_config_from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
+        client = QwenClient(QwenConfig(stage="extract"), llm_config=generation_config)
         logger.info("Qwen 客户端初始化成功")
-    except RuntimeError as e:
+    except (RuntimeError, RuntimeConfigError) as e:
         logger.error(f"Qwen 客户端初始化失败：{e}")
-        logger.error("请在四元组抽取/.env 中设置 DASHSCOPE_API_KEY 或 QWEN_API_KEY")
+        logger.error("请通过总流程 generation_llm.env 配置 API_KEY，并由总流程注入运行时配置。")
         return
 
     # 执行抽取
@@ -354,7 +361,6 @@ def main():
     )
 
     logger.info(f"所有结果已保存到：{output_dir / 'raw'}")
-    logger.info("下一步：运行 normalize.py 生成归一化后的最终结果")
 
 
 if __name__ == "__main__":

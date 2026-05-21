@@ -5,25 +5,30 @@ import json
 import sys
 from pathlib import Path
 
-from config import (
-    DEFAULT_API_KEY,
-    DEFAULT_ARTIFACT_DIR,
-    DEFAULT_BASE_URL,
-    DEFAULT_EMBEDDING_MODEL,
-    DEFAULT_MODEL,
-    DEFAULT_OUTPUT_DIR,
-    DEFAULT_REPORT_DIR,
-    DEFAULT_RULE_FILE,
-    DEFAULT_SOURCE_DIR,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_TIMEOUT_S,
-    DEFAULT_VARIANTS,
-)
+WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKFLOW_DIR))
+
+QUALITY_EVAL_DIR = Path(__file__).resolve().parents[1] / "题目质量评价"
+if str(QUALITY_EVAL_DIR) not in sys.path:
+    sys.path.insert(0, str(QUALITY_EVAL_DIR))
+
+from runtime_config import RUNTIME_EMBEDDING_LLM_ENV, RUNTIME_GENERATION_LLM_ENV, llm_config_from_runtime_env
 from pipeline import GenerationPipeline
 from problem_generator import ProblemGenerator
+from problem_quality import ProblemEvaluator
 from qwen_client import QwenClient
 from rulebook import RuleBook, normalize_rule_id
-from variant_planner import THEMES, VariantPlanner
+from variant_planner import VariantPlanner
+
+
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+DEFAULT_SOURCE_DIR = PROJECT_ROOT / "总流程" / "output"
+DEFAULT_OUTPUT_DIR = BASE_DIR / "output"
+DEFAULT_ARTIFACT_DIR = BASE_DIR / "artifacts"
+DEFAULT_REPORT_DIR = BASE_DIR / "reports"
+DEFAULT_RULE_FILE = BASE_DIR / "planning_rules.json"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,16 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--problem-ids", nargs="*", default=[], help="single 模式下待生成的 problem id")
     parser.add_argument("--seed-a", help="same_family 模式下的第一个种子题 problem id")
     parser.add_argument("--seed-b", help="same_family 模式下的第二个种子题 problem id")
-    parser.add_argument("--variants", type=int, default=DEFAULT_VARIANTS, help="每次运行生成多少个变体")
-    parser.add_argument("--theme", choices=[theme.theme_id for theme in THEMES], help="固定主题")
     parser.add_argument("--source-dir", default=str(DEFAULT_SOURCE_DIR), help="Schema JSON 目录")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Markdown 输出目录")
     parser.add_argument("--artifact-dir", default=str(DEFAULT_ARTIFACT_DIR), help="结构化产物目录")
     parser.add_argument("--report-dir", default=str(DEFAULT_REPORT_DIR), help="过程说明 Markdown 输出目录")
     parser.add_argument("--rule-file", default=str(DEFAULT_RULE_FILE), help="规则 JSON 文件")
-    parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S, help="模型接口请求超时秒数")
-    parser.add_argument("--temperature", type=float, default=DEFAULT_TEMPERATURE, help="采样温度")
-    parser.add_argument("--seed", type=int, default=20260312, help="随机种子")
+    parser.add_argument("--temperature", type=float, help="采样温度；默认使用 generation_llm.env 中的 TEMPERATURE")
     parser.add_argument(
         "--quality-iterations",
         type=int,
@@ -80,13 +81,9 @@ def main() -> None:
     )
 
     _emit_progress("[main] 初始化模型客户端与规则文件。")
-    client = QwenClient(
-        api_key=DEFAULT_API_KEY,
-        model=DEFAULT_MODEL,
-        base_url=DEFAULT_BASE_URL,
-        timeout_s=args.timeout,
-        embedding_model=DEFAULT_EMBEDDING_MODEL,
-    )
+    generation_config = llm_config_from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
+    embedding_config = llm_config_from_runtime_env(RUNTIME_EMBEDDING_LLM_ENV)
+    client = QwenClient(generation_config=generation_config, embedding_config=embedding_config)
     rulebook = RuleBook.load(args.rule_file)
 
     pipeline = GenerationPipeline(
@@ -94,8 +91,12 @@ def main() -> None:
         output_dir=Path(args.output_dir),
         artifact_dir=Path(args.artifact_dir),
         report_dir=Path(args.report_dir),
-        generator=ProblemGenerator(client=client, temperature=args.temperature),
-        planner=VariantPlanner(client=client, rulebook=rulebook, seed=args.seed),
+        generator=ProblemGenerator(
+            client=client,
+            temperature=args.temperature if args.temperature is not None else generation_config.temperature,
+        ),
+        planner=VariantPlanner(client=client, rulebook=rulebook),
+        quality_evaluator=ProblemEvaluator(judge_client=client),
         progress_writer=_emit_progress,
     )
 
@@ -103,8 +104,6 @@ def main() -> None:
     pipeline.run(
         mode=args.mode,
         problem_ids=target_problem_ids,
-        variants=args.variants,
-        theme_id=args.theme,
         seed_a=args.seed_a,
         seed_b=args.seed_b,
         allowed_rule_ids=_normalize_rule_overrides(args.rule_override),
@@ -116,8 +115,6 @@ def main() -> None:
 
 
 def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
-    if args.timeout <= 0:
-        parser.error("--timeout 必须是正整数。")
     if args.quality_iterations not in {0, 1, 2, 3}:
         parser.error("--quality-iterations 只支持 0、1、2、3。")
     if args.quality_full_score_max_iterations <= 0:

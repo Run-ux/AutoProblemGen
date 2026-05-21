@@ -17,7 +17,7 @@
 - 未实现：题包流水线、CLI、旧项目迁移。
 - 不复用 `D:\AutoProblemGen\测试用例和标准解法共迭代` 的代码实现。
 
-## 环境配置
+## 配置来源
 
 安装依赖：
 
@@ -25,31 +25,19 @@
 pip install -r requirements.txt
 ```
 
-复制 `.env.example` 为 `.env`，并填写真实配置：
+本模块不再维护模块级 `.env.example`，也不再读取本地 `.env`。主线入口由总流程统一调用：
 
-```dotenv
-OPENAI_API_KEY=
-OPENAI_BASE_URL=
-OPENAI_MODEL=
-OPENAI_TEMPERATURE=0.2
-OPENAI_TIMEOUT_SECONDS=1200
-OPENAI_MAX_RETRIES=3
-EXECUTION_TEST_INPUT_TIMEOUT_SECONDS=5
-EXECUTION_TEST_INPUT_MEMORY_LIMIT_MB=512
-EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS=5
-EXECUTION_BRUTEFORCE_MEMORY_LIMIT_MB=512
-EXECUTION_CHECKER_TIMEOUT_SECONDS=5
-EXECUTION_CHECKER_MEMORY_LIMIT_MB=512
+```powershell
+python D:\AutoProblemGen\总流程\main.py --workflow-config D:\AutoProblemGen\总流程\workflow.env
 ```
 
 说明：
 
-- `.env` 用于本地密钥，已被 `.gitignore` 忽略。
-- `.env.example` 只保存空值或安全默认值，可提交。
-- `OPENAI_API_KEY` 和 `OPENAI_MODEL` 必填，缺失时会 fail-fast。
-- `OPENAI_BASE_URL` 可选；使用 OpenAI 兼容服务时填写对应 `/v1` 地址。
-- `EXECUTION_*` 只控制本地子进程执行生成器、暴力解法和 checker 的时间/空间限制，不影响 LLM 调用。
-- `.env` 解析只支持空行、`#` 注释、`KEY=VALUE` 和简单单双引号，不支持变量插值或复杂 shell 语法。
+- generation LLM 配置来自 `总流程/generation_llm.env`，用于标准解、暴力解、测试输入、checker 和错误解池生成。
+- 执行限制来自 `总流程/workflow.env` 中的 `EXECUTION_*` 字段，用于约束本地子进程执行生成器、暴力解法和 checker 的时间/空间限制。
+- `generate_all_artifacts` 必须接收总流程传入的 `LLMConfig` 或显式 client。
+- `generate_verified_artifacts` 必须额外接收总流程传入的 `ExecutionConfig`。
+- 缺少 LLM 配置或执行限制时会 fail-fast，不会尝试读取模块本地配置文件。
 
 ## 库函数入口
 
@@ -57,7 +45,7 @@ EXECUTION_CHECKER_MEMORY_LIMIT_MB=512
 from generation_pipeline import generate_all_artifacts
 from llm_config import LLMConfig
 
-config = LLMConfig.from_dotenv()
+config = LLMConfig.from_endpoint(generation_endpoint_config)
 result = generate_all_artifacts(artifact, config)
 ```
 
@@ -65,10 +53,12 @@ result = generate_all_artifacts(artifact, config)
 
 ```python
 from generation_pipeline import generate_verified_artifacts
+from execution_config import ExecutionConfig
 from llm_config import LLMConfig
 
-config = LLMConfig.from_dotenv()
-result = generate_verified_artifacts(artifact, config)
+config = LLMConfig.from_endpoint(generation_endpoint_config)
+execution_config = ExecutionConfig.from_runtime_limits(execution_limits)
+result = generate_verified_artifacts(artifact, config, execution_config=execution_config)
 ```
 
 返回结构：

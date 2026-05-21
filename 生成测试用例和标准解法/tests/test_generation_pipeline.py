@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 
+import path_setup  # noqa: F401
 from generation_pipeline import generate_all_artifacts
 from prompts.wrong_solution.prompt_fixed_category_wrong_solution import FIXED_WRONG_CATEGORIES
 

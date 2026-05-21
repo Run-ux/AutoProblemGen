@@ -6,7 +6,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -263,9 +262,8 @@ class ProblemQualityTests(unittest.TestCase):
         self.assertIn("changed_axes_realized_present", failed_checks)
 
     def test_evaluator_requires_judge_client(self) -> None:
-        with mock.patch("problem_quality.evaluator.DEFAULT_API_KEY", ""):
-            with self.assertRaisesRegex(RuntimeError, "LLM Judge"):
-                ProblemEvaluator()
+        with self.assertRaisesRegex(RuntimeError, "LLM Judge"):
+            ProblemEvaluator()
 
     def test_evaluator_raises_when_quality_judge_fails(self) -> None:
         evaluator = ProblemEvaluator(judge_client=FakeJudgeClient([RuntimeError("quality failed")]))

@@ -56,52 +56,6 @@ INPUT_STRUCTURE_PROPERTY_KEYS = [
 ]
 
 
-CORE_CONSTRAINT_SPECS = [
-    LabelSpec("connectivity", "约束要求图、状态空间或构造对象保持连通或满足可达性时使用；普通输入保证连通而不影响解语义时不单列。"),
-    LabelSpec("acyclicity", "约束要求结构无环或禁止形成环时使用；树的输入类型信息本身不必重复写成约束。"),
-    LabelSpec("bipartiteness", "约束要求图或关系可二染色、分属两侧或满足二部性质时使用；普通奇偶分类不归入此标签。"),
-    LabelSpec("degree_bound", "约束直接限制节点、元素或位置的度数、入度、出度或连接数量时使用；一般计数上界若不对应度语义则不使用。"),
-    LabelSpec("path_constraint", "约束围绕路径合法性、简单路径、长度限制、经过关系或路径形态展开时使用；单纯最短路目标不自动归入此标签。"),
-    LabelSpec("matching_constraint", "约束要求一对一配对、匹配合法性或匹配规模条件时使用；普通互异分配若没有匹配语义则不优先使用。"),
-    LabelSpec("flow_constraint", "约束涉及流量、容量、供需守恒或边通过量限制时使用；普通总和上界但没有流网络语义时不使用。"),
-    LabelSpec("coloring_constraint", "约束要求颜色分配合法、相邻颜色不同或颜色数量受限时使用；普通类别编号限制不自动归入此标签。"),
-    LabelSpec("spanning_constraint", "约束要求结果覆盖全部节点并形成生成树、生成森林或等价的全覆盖连通骨架时使用；普通连通要求不单独升格为此标签。"),
-    LabelSpec("order_constraint", "约束要求顺序、相对位置、拓扑先后、单调排列或先后依赖关系时使用；算法扫描顺序不属于此标签。"),
-    LabelSpec("distinctness", "约束要求元素、值、位置或选择结果互异时使用；排列特有的一一对应约束优先归入 permutation_constraint。"),
-    LabelSpec("adjacency_relation", "约束依赖相邻、邻接、相连或局部接触关系时使用；一般图边存在本身若只是输入结构不单列。"),
-    LabelSpec("frequency_bound", "约束限制某值、字符、颜色或事件出现次数的上下界或精确次数时使用；单纯数组长度上界不使用。"),
-    LabelSpec("subsequence_constraint", "约束要求对象是子序列、子串、连续片段或满足特定片段结构时使用；普通顺序关系但没有片段语义时不使用。"),
-    LabelSpec("permutation_constraint", "约束要求结果或输入形成排列、置换、双射或完整重排时使用；仅仅互异但不要求覆盖全部元素时不使用。"),
-    LabelSpec("range_bound", "约束中的取值范围本身参与语义，例如容量、允许步长、颜色编号区间或答案候选区间时使用；普通 n、m、q 或 a_i 读入范围不使用。"),
-    LabelSpec("sum_constraint", "约束直接限定总和、前缀和、区间和或资源总量时使用；目标函数要求最小化或最大化总和不属于该标签。"),
-    LabelSpec("balance_constraint", "约束要求前缀不欠账、左右平衡、括号合法、净差受控或类似守恒平衡时使用；普通总量上界不优先归入此标签。"),
-    LabelSpec("divisibility", "约束围绕整除、同余、模类或余数条件时使用；偶奇性条件更适合归入 parity。"),
-    LabelSpec("parity", "约束只关心奇偶性或 parity class 时使用；更一般的模 k 关系优先归入 divisibility。"),
-    LabelSpec("linear_relation", "约束可以稳定表述为线性等式、不等式或线性组合关系时使用；非线性、图结构或纯顺序约束不归入此标签。"),
-    LabelSpec("convexity", "约束依赖凸性、凹性、凸包次序或斜率单调一类几何或数值结构时使用；目标函数凸不自动构成约束标签。"),
-    LabelSpec("distance_bound", "约束直接限制点对距离、树上距离、编辑距离或步数距离时使用；若距离只是优化目标而非合法性条件，不使用。"),
-    LabelSpec("overlap_constraint", "约束禁止、限制或要求区间、集合、路径、图形之间的交叠和交叉时使用；普通相邻关系不归入此标签。"),
-    LabelSpec("orientation_constraint", "约束依赖方向、朝向、左右、顺逆时针或相对方位时使用；有向图输入类型本身不必重复写成约束。"),
-    LabelSpec("subset_constraint", "约束要求从候选集合中选择满足条件的子集时使用；若重点是完整划分则优先归入 partition。"),
-    LabelSpec("partition", "约束要求把元素分成若干互不重叠部分且整体被完全划分时使用；只选其中一部分不归入此标签。"),
-    LabelSpec("coverage", "约束要求选出的对象覆盖全部元素、位置、点或需求时使用；普通生成树覆盖优先归入 spanning_constraint。"),
-    LabelSpec("exclusion", "约束明确禁止同时出现、禁止选择、禁止经过或要求互不相容时使用；一般 distinctness 不自动归入此标签。"),
-    LabelSpec("inclusion", "约束要求必须包含、必须选择、必须经过或必须满足某些必要元素时使用；可选偏好不归入此标签。"),
-    LabelSpec("operation_limit", "约束限制操作次数、修改预算、回合数或资源配额时使用；时间复杂度和机器资源限制不使用。"),
-    LabelSpec("operation_type", "约束规定允许执行哪些操作、禁止哪些操作或每次操作的合法形式时使用；算法内部步骤不归入此标签。"),
-    LabelSpec("state_transition", "约束定义状态之间什么转移合法、什么转移非法时使用；普通 DP 转移思路若未成为题面约束，不使用。"),
-    LabelSpec("rewrite_rule", "约束要求按照替换、改写、映射、合并或文法式规则演化对象时使用；普通单步操作若没有改写语义，不优先使用。"),
-    LabelSpec("palindrome", "约束要求字符串、序列或构造结果满足回文性质时使用；只涉及对称但不要求回文时不使用。"),
-    LabelSpec("pattern_matching", "约束要求匹配模板、通配模式、正则式样或固定模式结构时使用；普通子串存在性若无模式语义，不优先使用。"),
-    LabelSpec("alphabet_constraint", "约束限制可用字符集、符号表、字母类别或字符合法范围时使用；普通字符输入但没有额外限制时不使用。"),
-    LabelSpec("periodicity", "约束要求周期重复、循环节一致或按周期模式出现时使用；普通循环算法过程不归入此标签。"),
-    LabelSpec("optimal_play", "约束来自双方轮流行动且都按最优策略选择的对抗过程时使用；单人贪心或普通最优化不归入此标签。"),
-    LabelSpec("probability_distribution", "约束明确给出随机过程、分布、独立性或概率质量定义时使用；期望目标但没有概率模型约束时不使用。"),
-]
-
-CORE_CONSTRAINT_LABELS = _to_label_pairs(CORE_CONSTRAINT_SPECS)
-
-
 OBJECTIVE_SPECS = [
     LabelSpec("value_computation", "题目要求计算某个已经定义好的结果值，没有显式最优性比较；若需要在多种方案间选最优，不归入此标签。"),
     LabelSpec("maximize_value", "题目要求在合法方案中让某个数值目标尽可能大，例如总和、收益、长度、数量或期望；若要求最小化则不使用。"),
@@ -115,26 +69,6 @@ OBJECTIVE_SPECS = [
 ]
 
 OBJECTIVE_LABELS = _to_label_pairs(OBJECTIVE_SPECS)
-
-
-INVARIANT_SPECS = [
-    LabelSpec("monotonicity", "算法持续维护单调边界、单调指针、单调队列顺序或答案可行区间的单向推进时使用；仅有排序结果而没有维护过程不归入此标签。"),
-    LabelSpec("state_transition", "正确性依赖稳定的状态定义与转移关系，状态含义在全过程中保持一致时使用；泛泛提到 DP、搜索或递推而没有明确状态语义时不使用。"),
-    LabelSpec("additivity", "整体答案、代价或摘要可以拆成若干部分求和或独立累加时使用；只是把多个步骤顺次执行但不能分解贡献时不归入此标签。"),
-    LabelSpec("mergeability", "局部摘要、区间结果或子树信息可以通过固定规则稳定合并时使用；若只能重新扫描原数据才能得到全局结果，不使用。"),
-    LabelSpec("dependency_order", "节点、状态或子问题必须按稳定的依赖顺序处理，例如拓扑序、树的后序或按长度递增时使用；普通循环次序不归入此标签。"),
-    LabelSpec("conservation", "算法维护总量守恒、净变化平衡、流量守恒或等价的质量不变关系时使用；普通计数累计但没有守恒约束时不使用。"),
-    LabelSpec("dominance", "某些候选、状态或决策一旦被更优项稳定支配就可以永久删除时使用；暂时比较大小但不能安全删去时不归入此标签。"),
-    LabelSpec("exchange_argument", "替换局部选择后仍保持可行性或最优性，正确性建立在可交换、可替换关系上时使用；普通贪心直觉但没有交换依据时不使用。"),
-    LabelSpec("potential_function", "算法通过势函数、摊还记账或单调下降的代价函数证明过程有界时使用；只有复杂度结论但没有势能维护对象时不使用。"),
-    LabelSpec("convexity", "正确性依赖凸性、凹性、斜率顺序或包络结构稳定性时使用；题目含几何元素但算法不维护这类结构时不使用。"),
-    LabelSpec("symmetry", "算法利用对称性、镜像等价或交换变量后结果不变来减少情况时使用；普通相似写法但没有对称归约关系时不归入此标签。"),
-    LabelSpec("idempotency", "某类操作重复执行不会继续改变状态或结果，算法依赖这种重复作用稳定性时使用；仅仅因为最后一次赋值覆盖前值不构成此标签。"),
-    LabelSpec("equivalence_class", "算法稳定维护同余类、奇偶类、异或类、连通块代表或其他等价类划分时使用；一般分组但没有等价关系支撑时不使用。"),
-]
-
-INVARIANT_LABELS = _to_label_pairs(INVARIANT_SPECS)
-
 
 
 CONSTRAINT_SOURCE_SECTIONS = [

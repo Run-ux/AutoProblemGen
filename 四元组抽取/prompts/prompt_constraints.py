@@ -7,18 +7,12 @@ from typing import TYPE_CHECKING
 try:
     from ..label_vocab import (
         CONSTRAINT_SOURCE_SECTIONS,
-        CORE_CONSTRAINT_SPECS,
-        CORE_CONSTRAINT_LABELS,
-        build_label_reference,
     )
     from ..problem_schema import prepare_problem_record
     from .prompt_sections import build_problem_context
 except ImportError:
     from label_vocab import (
         CONSTRAINT_SOURCE_SECTIONS,
-        CORE_CONSTRAINT_SPECS,
-        CORE_CONSTRAINT_LABELS,
-        build_label_reference,
     )
     from problem_schema import prepare_problem_record
     from prompts.prompt_sections import build_problem_context
@@ -27,13 +21,8 @@ if TYPE_CHECKING:
     from typing import Any, Dict
 
 
-CORE_CONSTRAINT_NAMES = [name for name, _ in CORE_CONSTRAINT_LABELS]
-
-
 def build_system_prompt() -> str:
-    preferred_names = ", ".join(CORE_CONSTRAINT_NAMES)
-    constraint_reference = build_label_reference(CORE_CONSTRAINT_SPECS)
-    return f"""你是编程竞赛题目约束条件分析专家。
+    return """你是编程竞赛题目约束条件分析专家。
 
 你的任务是从题目全文中抽取核心语义约束。
 
@@ -44,13 +33,9 @@ def build_system_prompt() -> str:
 
 硬规则：
 1. 只输出严格 JSON 对象，不输出任何解释文字。
-2. name 必须优先复用规范约束词表：{preferred_names}。
-3. 若现有词表无法准确覆盖当前题目的约束语义，允许创建新的抽象标签。
-4. 新标签必须使用小写英文加下划线格式，并保持算法术语风格。
-5. 不得把题目情境词直接写进 name 或 source_sections。
-
-规范标签说明：
-{constraint_reference}
+2. name 是开放标签，必须使用稳定、抽象的小写英文加下划线格式。
+3. name 应概括约束的算法语义，不得写成题目情境词、具体数值或整句条件。
+4. source_sections 只能写证据所在的题面分节，不得写推理来源或代码来源。
 
 证据优先级：
 1. 题面全文中的任务描述
@@ -69,35 +54,31 @@ def build_system_prompt() -> str:
 - 题面没有可确认的核心语义约束时，返回 {{"constraints": []}}。
 
 判别边界：
-- range_bound 只用于具有语义作用的范围限制，不用于 n、m、q 或 a_i 的普通输入范围。
-- operation_limit 用于操作步数、修改次数或资源配额上界。
-- operation_type 用于允许哪些操作或禁止哪些操作。
-- state_transition 用于状态之间的合法转移规则，而非普通过程描述。
-- order_constraint 用于顺序、相对位置、单调排列等语义限制。
-- distinctness 用于互异性要求；排列特有约束优先归入 permutation_constraint。
-- 对抗式轮流行动与策略最优性，统一优先归入 optimal_play。
+- 具有语义作用的范围限制可以抽象为 range_bound 一类标签，但不要用于 n、m、q 或 a_i 的普通输入范围。
+- 操作步数、修改次数或资源配额上界应与允许操作类型区分命名。
+- 状态合法转移、顺序限制、互异性、覆盖、排除、包含、博弈最优性等不同语义应拆成不同抽象标签。
+- 对同义或近义约束使用同一个稳定标签，避免同一语义在一题内出现多种命名。
 """
 
 
 def build_user_prompt(problem: Dict[str, Any]) -> str:
     problem = prepare_problem_record(problem)
     context = build_problem_context(problem)
-    preferred_names = ", ".join(CORE_CONSTRAINT_NAMES)
     return f"""请根据下列题目信息抽取核心约束。
 
 {context}
 
 字段说明：
-1. constraints[].name 表示约束的抽象标签。现有词表能够覆盖时填写规范标签；只有明确存在语义缺口时才新建标签；没有约束项时不出现。常见误填：把具体数值、题目名词或整句限制直接写进 name。
+1. constraints[].name 表示约束的开放抽象标签。存在约束项时填写稳定的小写英文加下划线标签；没有约束项时不出现。常见误填：把具体数值、题目名词或整句限制直接写进 name。
 2. constraints[].description 表示该题中这条约束的具体语义内容。存在该约束项时始终填写；只有整条约束不存在时才不出现。常见误填：只写标签释义，不写当前题目的具体限制。
-3. constraints[].formal 表示便于归一化的形式化表达。题面存在清晰公式、逻辑式或边界表达时填写；没有必要时留空。常见误填：把自然语言 description 原样重复到 formal。
+3. constraints[].formal 表示便于机器解析或后续分析的形式化表达。题面存在清晰公式、逻辑式或边界表达时填写；没有必要时留空。常见误填：把自然语言 description 原样重复到 formal。
 4. constraints[].source_sections 表示证据出现在题面哪个分节。需要追溯证据位置时填写；无法明确定位时留空。常见误填：把推理来源、代码来源或不在允许集合中的值写进去。
 
 请输出 JSON：
 {{
   "constraints": [
     {{
-      "name": "优先复用规范标签，例如 {preferred_names}",
+      "name": "稳定抽象标签，例如 operation_limit",
       "description": "该题中的具体约束描述",
       "formal": "形式化表达，可留空",
       "source_sections": ["description", "input"]
@@ -107,8 +88,8 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
 
 要求：
 1. 字段说明优先于字段名直觉，不要仅凭命名猜测字段含义。
-2. name 优先对齐现有规范标签；若词表无法准确覆盖当前约束，允许新建一个抽象标签。
-3. 新标签保持小写英文加下划线格式，不创建实例化标签。
+2. name 使用开放标签，但必须稳定、抽象、小写英文加下划线。
+3. 不创建实例化标签，不把具体题目对象、数值、变量名写进 name。
 4. description 负责表达该题中的具体限制条件。
 5. formal 可选，source_sections 可选，且元素只能来自 description、input、output、constraints。
 6. 纯输入规模边界与时间内存限制不要抽取。

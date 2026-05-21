@@ -17,40 +17,33 @@
 
 ## Prompt 约定
 
-- 四个抽取维度与归一化维度的 user prompt 都会给关键 JSON 字段补充简短说明，固定说明字段含义、填写条件、留空条件与常见误填。
+- 四个抽取维度的 user prompt 都会给关键 JSON 字段补充简短说明，固定说明字段含义、填写条件、留空条件与常见误填。
 - JSON 示例继续保留，但改为中性结构骨架，用于约束层级与字段形状，不再用具体题型词汇暗示语义。
 - `input_structure.type` 只描述输入载体形态，既允许 `integer`、`float`、`char`、`boolean`、`tuple` 这类标量或定长记录类型，也允许数组、字符串、图、树等结构类型；`pair` 统一归入 `tuple`，集合语义仍归入 `array` 并通过 `properties` 表达，复合输入写入可选 `components`。
-- `input_structure.components` 是归一化最终结果中的正式字段。组件项包含 `role`、`role_description`、`type`、`length`、`value_range`、`properties`。模型单轮抽取出的组件结构会原样进入最终结果。
-- 当 `input_structure.type=composite` 时，`components` 必须为非空数组，且每个组件都必须提供非空 `role` 与 `role_description`。缺失时抽取阶段直接记为失败，不写入成功结果。
-- `core_constraints.name` 优先复用规范词表；存在明确语义缺口时允许新建抽象标签，具体题目限制写入 `description`、`formal` 与可选 `source_sections`。
-- `objective.type` 统一到目标词表，可选扩展 `target` 与 `requires_solution`。
-- `invariant` 只保留可由代码或题面支撑的稳定维护性质，不把算法范式直接当作不变量标签；优先复用规范词表，存在明确语义缺口时允许新建抽象标签；有代码时以代码为主证据，无充分证据时允许返回空数组。
-- `label_vocab.py` 中的预设标签描述已经扩展为可直接放入 prompt 的判定说明，覆盖适用场景与常见排除边界。
-- 四个维度的 system prompt 都加入科研定义、规范标签说明与标签判别边界，用于压缩标签漂移并提高单轮抽取一致性。
-- `input_structure` 额外把 `properties` 可复用键的语义说明注入 system prompt，降低把题目情境词误写成性质键的概率。
-- `prompt_normalize` 接收结构化原始条目，而不是裸标签字符串。Embedding 归一化入口保持不变，结构化信息只用于 LLM 归一化阶段。
+- `input_structure.components` 是正式输出字段。组件项包含 `role`、`role_description`、`type`、`length`、`value_range`、`properties`。模型单轮抽取出的组件结构会原样进入 raw 结果。
+- 当 `input_structure.type=composite` 时，`components` 必须为非空数组，且每个组件都必须提供非空 `role` 与 `role_description`。缺失时抽取阶段直接记为失败。
+- `core_constraints.name` 是开放抽象标签，应使用稳定的小写英文加下划线格式；具体题目限制写入 `description`、`formal` 与可选 `source_sections`。
+- `objective.type` 继续使用目标词表，可选扩展 `target` 与 `requires_solution`。
+- `invariant.name` 是开放抽象标签，应使用稳定的小写英文加下划线格式；只保留可由代码或题面支撑的稳定维护性质，不把算法范式直接当作不变量标签；有代码时以代码为主证据，无充分证据时允许返回空数组。
+- `label_vocab.py` 保留输入结构类型、输入结构性质键、目标类型和枚举常量说明，用于直接注入 I/O 维 prompt。
 
 ## 主流程
 
-单题抽取：
+主线入口由 `总流程` 统一调用：
 
 ```powershell
-python extract.py --input D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs\16_codeforces_1399_e1_weights_division_easy_version.json --output output\single\ --resume
+python D:\AutoProblemGen\总流程\main.py --workflow-config D:\AutoProblemGen\总流程\workflow.env
 ```
 
-目录批量抽取：
+`extract.py` 保留为总流程子进程入口。若单独调试该脚本，必须先提供总流程运行时 JSON 环境变量，不能再依赖本目录 `.env`。
+
+总流程调用时会传入：
 
 ```powershell
-python extract.py --input D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs --output output\batch\ --resume
+python extract.py --input D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs --output <run_dir>\tuple
 ```
 
-后续处理：
-
-```powershell
-python normalize.py --input output\batch\raw\ --output output\batch\normalized\ --embedding-threshold 0.85
-```
-
-`normalized\` 目录中的文件就是最终可消费结果。
+`raw\` 目录中的文件就是当前最终可消费结果。文件命名为 `raw\{problem_id}_{dimension}.json`，每题每维一个文件。
 
 ## CLI 参数
 
@@ -62,16 +55,7 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
 | `--output` | `str` | 是 | 无 | 输出目录路径，如 `output/pilot/` |
 | `--resume` | 开关 | 否 | 关闭 | 断点续传，跳过已存在的文件 |
 | `--log-level` | `str` | 否 | `INFO` | 日志级别，可选 `DEBUG`、`INFO`、`WARNING`、`ERROR` |
-| `--temperature` | `float` | 否 | `0.4` | LLM 采样温度，归一化阶段固定使用 `0.2` |
-
-### `normalize.py`
-
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-| --- | --- | --- | --- | --- |
-| `--input` | `str` | 是 | 无 | 原始抽取结果目录，如 `output/pilot/raw/` |
-| `--output` | `str` | 是 | 无 | 归一化输出目录，如 `output/pilot/normalized/` |
-| `--log-level` | `str` | 否 | `INFO` | 日志级别，可选 `DEBUG`、`INFO`、`WARNING`、`ERROR` |
-| `--embedding-threshold` | `float` | 否 | `0.85` | 向量相似度阈值 |
+| `--temperature` | `float` | 否 | `0.4` | LLM 采样温度 |
 
 ### `sample.py`
 
@@ -90,20 +74,8 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
    预处理会保留完整 `description`，切分 `input`、`output`、`constraints` 分节，把 `limits` 合并进 `constraints`，并在存在 `reference_solution.code` 时补出 `standard_solution_code`。
 3. 进行四维独立抽取。
    抽取阶段固定处理 `input_structure`、`core_constraints`、`objective`、`invariant` 四个维度。四个维度都会看到标题、题面全文、Input 分节、Output 分节、Constraints 分节。`invariant` 维额外把标准解法代码作为高优先级证据。
-4. 写出单轮原始结果。
-   每题每维调用一次模型，结果写入 `output/<run>/raw/{problem_id}_{dimension}.json`。每个文件包含 `problem_id`、`source`、`dimension`、`result`、`status`。
-5. 聚合同题四个维度。
-   `normalize.py` 读取 `raw/` 下的所有文件，按 `problem_id` 组装成单题对象。缺失维度保留默认失败状态，重复文件只保留首个文件。
-6. 加载并刷新标签注册表。
-   归一化阶段会先读取 `output/<run>/label_registry/` 中的已有注册表，再把 `label_vocab.py` 中的预设标签写入内存，作为本轮规范标签集合。
-7. 执行 embedding 归一化。
-   对每个维度，先提取原始标签名，与注册表中的规范标签名做 embedding 相似度比较。达到阈值的条目直接映射到已有规范标签。
-8. 执行 LLM 归一化。
-   embedding 未解决的条目进入 LLM 归一化。prompt 会同时提供维度策略、已有标签列表和结构化原始条目。`input_structure` 与 `objective` 采用强归并，`core_constraints` 与 `invariant` 采用半开放归并。模型返回映射关系和可能的新标签定义。
-9. 回写归一化结果与标签注册表。
-   归一化只统一标签字段。`input_structure` 与 `objective` 主要更新 `type`，`core_constraints` 与 `invariant` 主要更新每项的 `name`。新标签和别名会同步写回 `label_registry/<dimension>.json`。
-10. 生成最终四元组结果。
-    四个维度全部归一化完成后，系统会生成 `output/<run>/normalized/{problem_id}.json`。该文件只保留最终消费所需字段：`problem_id`、`source`、`input_structure`、`core_constraints`、`objective`、`invariant`。抽取失败的维度会落成默认空结构，例如 `objective.type=null`、`core_constraints.constraints=[]`。
+4. 写出 raw 结果。
+   每题每维调用一次模型，结果写入 `output/<run>/raw/{problem_id}_{dimension}.json`。每个文件包含 `problem_id`、`source`、`dimension`、`result`、`status`；失败时附带 `error`。
 
 ## 验证
 
@@ -127,21 +99,15 @@ python verify_prompts_structure.py
 python test_prompts_qa.py
 ```
 
-归一化单元测试：
+抽取单元测试：
 
 ```powershell
-python -m unittest test_normalize.py
+python -m unittest test_extract.py
 ```
 
 ## 环境要求
 
-- 运行时会先尝试读取当前模块目录下的 `.env` 文件，也就是 [四元组抽取/.env](/D:/AutoProblemGen/四元组抽取/.env)。
-- 运行时只读取这个 `.env` 文件中的配置，不再读取同名进程环境变量。
-- 可直接参考 [四元组抽取/.env.example](/D:/AutoProblemGen/四元组抽取/.env.example) 填写 [四元组抽取/.env](/D:/AutoProblemGen/四元组抽取/.env)。
-- 在 `.env` 中设置 `DASHSCOPE_API_KEY` 或 `QWEN_API_KEY`。
-- 可选模型环境变量：
-  - `QWEN_MODEL`：通用对话模型默认值。抽取阶段默认读取它，归一化阶段也会把它作为后备值。
-  - `QWEN_EXTRACT_MODEL`：只覆盖抽取阶段模型。
-  - `QWEN_NORMALIZE_MODEL`：只覆盖归一化阶段模型。未设置时默认 `qwen-flash`。
-  - `QWEN_EMBEDDING_MODEL`：覆盖 embedding 模型，默认 `text-embedding-v4`。
+- 本模块不再读取本地 `.env`、`.env.example`、`env_loader.py` 或模块级配置文件。
+- 抽取阶段只使用总流程注入的 generation LLM 配置。
+- 缺少运行时配置或 `API_KEY` 时会 fail-fast，并提示通过 `总流程/generation_llm.env` 配置。
 - 输入文件来自 `D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs`。

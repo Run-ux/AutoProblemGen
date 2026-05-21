@@ -10,9 +10,6 @@ GENERATION_DIR = Path(__file__).resolve().parents[2] / "生成题面"
 if str(GENERATION_DIR) not in sys.path:
     sys.path.append(str(GENERATION_DIR))
 
-from config import DEFAULT_API_KEY, DEFAULT_BASE_URL, DEFAULT_MODEL, DEFAULT_TIMEOUT_S
-from qwen_client import QwenClient
-
 from .judges import ProblemQualityJudge, SourceDivergenceJudge
 from .models import DivergenceResult, EvaluationReport, HardCheckResult, Issue
 from .original_problem_catalog import OriginalProblemCatalog
@@ -26,11 +23,11 @@ class ProblemEvaluator:
         original_problem_catalog: OriginalProblemCatalog | None = None,
         original_problem_output_dir: str | Path | None = None,
     ):
-        shared_client = judge_client or client or self._build_default_client()
+        shared_client = judge_client or client
         if shared_client is None:
             raise RuntimeError(
                 "当前版本的题目质量评价需要可用的 LLM Judge 接口。"
-                "请配置 QWEN_API_KEY 或 DASHSCOPE_API_KEY，或显式传入 judge_client。"
+                "请通过总流程注入 judge_client。"
             )
         self.judge_client = shared_client
         self.quality_judge = ProblemQualityJudge(client=self.judge_client)
@@ -214,16 +211,6 @@ class ProblemEvaluator:
             "suggested_revisions": list(suggested_revisions),
             "strengths_to_keep": [str(item) for item in strengths],
         }
-
-    def _build_default_client(self) -> Any | None:
-        if not DEFAULT_API_KEY:
-            return None
-        return QwenClient(
-            api_key=DEFAULT_API_KEY,
-            model=DEFAULT_MODEL,
-            base_url=DEFAULT_BASE_URL,
-            timeout_s=DEFAULT_TIMEOUT_S,
-        )
 
     def _load_json(self, path: str | Path) -> dict[str, Any]:
         target = Path(path)

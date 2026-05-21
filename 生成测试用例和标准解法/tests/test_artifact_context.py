@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import path_setup  # noqa: F401
 from artifact_context import build_prompt_payload, extract_generated_problem, extract_schema_snapshot
 
 
@@ -67,4 +68,3 @@ class ArtifactContextTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -59,10 +59,14 @@ def _assert_prompt_sections(user_prompt: str, problem: Dict[str, Any], include_c
         assert solution_code.strip() in user_prompt, "invariant prompt 缺少标准解法代码内容"
 
 
-def _assert_system_prompt_sections(system_prompt: str) -> None:
+def _assert_system_prompt_sections(
+    system_prompt: str,
+    expect_label_reference: bool,
+) -> None:
     assert "科研定义：" in system_prompt, "system_prompt 缺少科研定义"
     assert "判别边界：" in system_prompt, "system_prompt 缺少判别边界"
-    assert "规范标签说明：" in system_prompt, "system_prompt 缺少规范标签说明"
+    if expect_label_reference:
+        assert "规范标签说明：" in system_prompt, "system_prompt 缺少规范标签说明"
 
 
 def _assert_input_structure_schema(schema: Dict[str, Any]) -> None:
@@ -117,7 +121,10 @@ def verify_dimension(
     assert isinstance(system_prompt, str) and system_prompt.strip()
     assert isinstance(user_prompt, str) and user_prompt.strip()
     assert "JSON" in system_prompt or "json" in system_prompt
-    _assert_system_prompt_sections(system_prompt)
+    _assert_system_prompt_sections(
+        system_prompt,
+        expect_label_reference=dimension.startswith(("I", "O")),
+    )
 
     include_code = dimension.startswith("V")
     _assert_prompt_sections(user_prompt, problem, include_code=include_code)

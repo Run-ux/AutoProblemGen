@@ -19,25 +19,25 @@ from schema_tools import build_forbidden_reuse_list, compute_changed_axes, compu
 
 THEMES = [
     Theme(
-        theme_id="cyber_city",
-        name="赛博城市调度",
-        tone="冷静、工程化、略带未来感",
-        keywords=["节点", "数据流", "权限", "缓存", "链路", "控制台"],
-        mapping_hint="把原始结构映射成网络节点、任务包或访问记录。",
+        theme_id="community_services",
+        name="社区服务",
+        tone="温和、实用、贴近日常协作",
+        keywords=["住户", "服务点", "预约", "工单", "通知", "排班"],
+        mapping_hint="把原始结构映射成住户、服务点、预约记录、工单或排班流程。",
     ),
     Theme(
-        theme_id="arcane_lab",
-        name="奥术实验室",
-        tone="神秘、规则驱动、强调仪式感",
-        keywords=["符文", "法阵", "共鸣", "晶核", "炼成", "序列"],
-        mapping_hint="把状态变化映射成符文叠加、法阵拼接或能量共鸣。",
+        theme_id="home_organization",
+        name="家庭收纳",
+        tone="清晰、细致、强调整理与查找",
+        keywords=["柜子", "物品", "清单", "格子", "标签", "整理"],
+        mapping_hint="把原始结构映射成物品、收纳格、标签、清单或整理步骤。",
     ),
     Theme(
-        theme_id="interstellar_logistics",
-        name="星际物流",
-        tone="宏观、任务导向、强调资源与路径",
-        keywords=["货舱", "航线", "补给", "跃迁", "殖民地", "调度中心"],
-        mapping_hint="把对象映射成货物、航线、站点、任务波次。",
+        theme_id="urban_commute",
+        name="城市通勤",
+        tone="日常、节奏明确、强调路线与时段",
+        keywords=["公交", "站点", "换乘", "班次", "通勤", "闸机"],
+        mapping_hint="把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。",
     ),
     Theme(
         theme_id="campus_ops",
@@ -72,18 +72,15 @@ class VariantPlanner:
         self,
         client: QwenClient | None,
         rulebook: RuleBook,
-        seed: int | None = None,
     ):
         self.client = client
         self.rulebook = rulebook
-        self.seed = seed if seed is not None else random.randrange(1, 10**9)
 
     def build_plan(
         self,
         *,
         mode: str,
         variant_index: int,
-        theme_id: str | None,
         seed_schema: dict[str, Any] | None = None,
         original_problem: dict[str, Any] | None = None,
         seed_a_schema: dict[str, Any] | None = None,
@@ -97,8 +94,8 @@ class VariantPlanner:
             raise RuntimeError("未初始化 LLM 客户端，无法执行规则规划。")
 
         canonical_mode = _canonical_mode(mode)
-        rng = random.Random(self.seed + variant_index)
-        theme = self._select_theme(rng, theme_id)
+        theme_random_value = random.randrange(len(THEMES))
+        theme = self._select_theme(theme_random_value)
 
         if canonical_mode == "single_seed_extension":
             return self._build_single_plan(
@@ -106,6 +103,7 @@ class VariantPlanner:
                 original_problem=original_problem,
                 variant_index=variant_index,
                 theme=theme,
+                theme_random_value=theme_random_value,
                 allowed_rule_ids=allowed_rule_ids,
                 revision_context=revision_context,
             )
@@ -119,6 +117,7 @@ class VariantPlanner:
                 seed_b_problem=seed_b_problem,
                 variant_index=variant_index,
                 theme=theme,
+                theme_random_value=theme_random_value,
                 allowed_rule_ids=allowed_rule_ids,
                 revision_context=revision_context,
             )
@@ -131,6 +130,7 @@ class VariantPlanner:
         original_problem: dict[str, Any] | None,
         variant_index: int,
         theme: Theme,
+        theme_random_value: int,
         allowed_rule_ids: set[str] | None,
         revision_context: dict[str, Any] | None,
     ) -> VariantPlan:
@@ -144,6 +144,7 @@ class VariantPlanner:
             },
             original_refs=[_build_problem_reference(original_problem)],
             theme=theme,
+            theme_random_value=theme_random_value,
             variant_index=variant_index,
             forbidden_reuse=build_forbidden_reuse_list(original_problem),
             revision_context=revision_context,
@@ -158,6 +159,7 @@ class VariantPlanner:
         seed_b_problem: dict[str, Any],
         variant_index: int,
         theme: Theme,
+        theme_random_value: int,
         allowed_rule_ids: set[str] | None,
         revision_context: dict[str, Any] | None,
     ) -> VariantPlan:
@@ -179,6 +181,7 @@ class VariantPlanner:
                 _build_problem_reference(seed_b_problem),
             ],
             theme=theme,
+            theme_random_value=theme_random_value,
             variant_index=variant_index,
             forbidden_reuse=_merge_forbidden_reuse(seed_a_problem, seed_b_problem),
             revision_context=revision_context,
@@ -194,6 +197,7 @@ class VariantPlanner:
         schema_context: dict[str, Any],
         original_refs: list[dict[str, Any]],
         theme: Theme,
+        theme_random_value: int,
         variant_index: int,
         forbidden_reuse: list[str],
         revision_context: dict[str, Any] | None,
@@ -205,6 +209,7 @@ class VariantPlanner:
                 source_problem_ids=source_problem_ids,
                 source_schema=source_schema,
                 theme=theme,
+                theme_random_value=theme_random_value,
                 variant_index=variant_index,
                 selected_plan=None,
                 rejected_candidates=[],
@@ -229,6 +234,7 @@ class VariantPlanner:
                 source_problem_ids=source_problem_ids,
                 source_schema=source_schema,
                 theme=theme,
+                theme_random_value=theme_random_value,
                 variant_index=variant_index,
                 selected_plan=None,
                 rejected_candidates=[],
@@ -269,6 +275,7 @@ class VariantPlanner:
                     source_problem_ids=source_problem_ids,
                     source_schema=source_schema,
                     theme=theme,
+                    theme_random_value=theme_random_value,
                     variant_index=variant_index,
                     selected_plan=plan_result,
                     rejected_candidates=rejected_candidates,
@@ -300,6 +307,7 @@ class VariantPlanner:
             source_problem_ids=source_problem_ids,
             source_schema=source_schema,
             theme=theme,
+            theme_random_value=theme_random_value,
             variant_index=variant_index,
             selected_plan=None,
             rejected_candidates=rejected_candidates,
@@ -680,6 +688,7 @@ class VariantPlanner:
         source_problem_ids: list[str],
         source_schema: dict[str, Any],
         theme: Theme,
+        theme_random_value: int,
         variant_index: int,
         selected_plan: dict[str, Any] | None,
         rejected_candidates: list[dict[str, Any]],
@@ -717,7 +726,7 @@ class VariantPlanner:
             return VariantPlan(
                 problem_id="__".join(source_problem_ids),
                 variant_index=variant_index,
-                seed=self.seed + variant_index,
+                theme_random_value=theme_random_value,
                 mode=mode,
                 theme=theme,
                 source_problem_ids=source_problem_ids,
@@ -772,7 +781,7 @@ class VariantPlanner:
         return VariantPlan(
             problem_id=selected["problem_id"],
             variant_index=variant_index,
-            seed=self.seed + variant_index,
+            theme_random_value=theme_random_value,
             mode=mode,
             theme=theme,
             source_problem_ids=source_problem_ids,
@@ -803,13 +812,8 @@ class VariantPlanner:
             rule_snapshot=copy.deepcopy(selected.get("rule_snapshot", {})),
         )
 
-    def _select_theme(self, rng: random.Random, theme_id: str | None) -> Theme:
-        if theme_id:
-            for theme in THEMES:
-                if theme.theme_id == theme_id:
-                    return theme
-            raise ValueError(f"Unknown theme_id: {theme_id}")
-        return rng.choice(THEMES)
+    def _select_theme(self, theme_random_value: int) -> Theme:
+        return THEMES[theme_random_value]
 
     def _theme_payload(self, theme: Theme) -> dict[str, Any]:
         return {

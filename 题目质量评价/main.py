@@ -2,10 +2,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
+WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKFLOW_DIR))
+GENERATION_DIR = Path(__file__).resolve().parents[1] / "生成题面"
+if str(GENERATION_DIR) not in sys.path:
+    sys.path.insert(0, str(GENERATION_DIR))
+
+from runtime_config import RUNTIME_EMBEDDING_LLM_ENV, RUNTIME_GENERATION_LLM_ENV, llm_config_from_runtime_env
 from problem_quality import ProblemEvaluator
 from problem_quality.report_renderer import render_report_markdown
+from qwen_client import QwenClient
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -28,7 +38,12 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    evaluator = ProblemEvaluator()
+    evaluator = ProblemEvaluator(
+        judge_client=QwenClient(
+            generation_config=llm_config_from_runtime_env(RUNTIME_GENERATION_LLM_ENV),
+            embedding_config=llm_config_from_runtime_env(RUNTIME_EMBEDDING_LLM_ENV),
+        )
+    )
     report = evaluator.evaluate_problem(
         schema_path=args.schema,
         artifact_path=args.artifact,

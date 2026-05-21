@@ -11,7 +11,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
-from config import DEFAULT_DISTANCE_CACHE_DIR, DEFAULT_EMBEDDING_MODEL, PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_DISTANCE_CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 
 
 DISTANCE_VERSION = "v2"
@@ -45,9 +46,9 @@ class SimilarityBackend:
         if embedding_client is None or not hasattr(embedding_client, "embed_texts"):
             raise RuntimeError("embedding client unavailable")
         self.embedding_client = embedding_client
-        self.embedding_model = str(
-            getattr(embedding_client, "embedding_model", "") or DEFAULT_EMBEDDING_MODEL
-        )
+        self.embedding_model = str(getattr(embedding_client, "embedding_model", "")).strip()
+        if not self.embedding_model:
+            raise RuntimeError("embedding model unavailable")
         self.backend = "embedding"
         self._vector_cache: dict[str, list[float]] = {}
         self._cache_dirty = False

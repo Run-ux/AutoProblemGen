@@ -81,32 +81,29 @@ Judge 还会额外参考 `review_context`。该上下文由评测器从 artifact
 
 ## 运行
 
+主线入口由总流程统一调用：
+
+```powershell
+python D:\AutoProblemGen\总流程\main.py --workflow-config D:\AutoProblemGen\总流程\workflow.env
+```
+
+`main.py` 保留为总流程子进程和内部调试入口。单独调试时必须由总流程运行时 JSON 环境变量注入 generation / embedding LLM 配置，不能再依赖本目录 `.env` 或 `config.py`。
+
 ```bash
 python main.py ^
-  --schema D:\AutoProblemGen\四元组抽取\output\batch\normalized\CF1513D.json ^
+  --schema D:\AutoProblemGen\总流程\output\<run_id>\generation\source\CF1513D.json ^
   --artifact D:\AutoProblemGen\生成题面\artifacts\CF1513D_v1_campus_ops_20260409_225026.json
 
 # 如需覆盖自动查找结果，可显式提供原题 JSON
 python main.py ^
-  --schema D:\AutoProblemGen\四元组抽取\output\batch\normalized\CF1513D.json ^
+  --schema D:\AutoProblemGen\总流程\output\<run_id>\generation\source\CF1513D.json ^
   --artifact D:\AutoProblemGen\生成题面\artifacts\CF1513D_v1_campus_ops_20260409_225026.json ^
   --original-problem D:\AutoProblemGen\原题数据\CF1513D.json
 ```
 
-当前版本强制要求可用的 LLM Judge。若没有可用的 `QWEN_API_KEY`、`DASHSCOPE_API_KEY` 或显式传入的 `judge_client`，评测会直接报错。质量评审与反换皮评审一旦调用失败、超时或返回不合格 JSON，也会直接报错，不再回退到启发式评分。
+当前版本强制要求调用方显式提供 LLM Judge。Python 直接调用时必须传入 `ProblemEvaluator(judge_client=...)`；CLI 调试时由总流程运行时配置构造同一个 generation LLM client。质量评审与反换皮评审一旦调用失败、超时或返回不合格 JSON，会直接报错，不再回退到启发式评分。
 
 若从 Python 直接调用 `ProblemEvaluator.evaluate_problem`，还可以传入可选的 `round_index`。CLI 入口不暴露该参数，默认按 `1` 写入 `revision_brief.round_index`。
-
-评测器当前从本目录的 `config.py` 读取 Judge 配置。默认会继续读取本目录 `.env` 中的参数，常用项包括：
-
-- `QWEN_MODEL`
-- `QWEN_BASE_URL`
-- `QWEN_API_KEY`
-- `DASHSCOPE_API_KEY`
-- `QWEN_TIMEOUT_S`
-- `QWEN_EMBEDDING_MODEL`
-
-若未设置 `QWEN_MODEL`，默认使用 `qwen3.6-plus`。若未设置 `QWEN_BASE_URL`，默认使用 DashScope 兼容接口地址。
 
 默认情况下，评测器会按 `problem_id` 自动加载原题，查找顺序为：
 

@@ -10,6 +10,11 @@ from typing import Any, Dict
 current_dir = Path(__file__).resolve().parent
 project_root = current_dir.parent
 sys.path.insert(0, str(current_dir))
+workflow_dir = project_root / "总流程"
+if str(workflow_dir) not in sys.path:
+    sys.path.insert(0, str(workflow_dir))
+
+from runtime_config import RUNTIME_GENERATION_LLM_ENV, RuntimeConfigError, llm_config_from_runtime_env
 
 from label_vocab import (
     CONSTRAINT_SOURCE_SECTIONS,
@@ -40,10 +45,14 @@ from qwen_client import QwenClient
 OBJECTIVE_TYPES = {name for name, _ in OBJECTIVE_LABELS}
 
 
-def _assert_system_prompt_sections(system_prompt: str) -> None:
+def _assert_system_prompt_sections(
+    system_prompt: str,
+    expect_label_reference: bool,
+) -> None:
     assert "科研定义：" in system_prompt, "system_prompt 缺少科研定义"
     assert "判别边界：" in system_prompt, "system_prompt 缺少判别边界"
-    assert "规范标签说明：" in system_prompt, "system_prompt 缺少规范标签说明"
+    if expect_label_reference:
+        assert "规范标签说明：" in system_prompt, "system_prompt 缺少规范标签说明"
 
 
 def _assert_prompt_sections(user_prompt: str, problem: Dict[str, Any], include_code: bool) -> None:
@@ -128,7 +137,10 @@ def test_dimension(
 ) -> Dict[str, Any]:
     system_prompt = build_sys()
     user_prompt = build_usr(problem)
-    _assert_system_prompt_sections(system_prompt)
+    _assert_system_prompt_sections(
+        system_prompt,
+        expect_label_reference=dimension.startswith(("I", "O")),
+    )
     if dimension.startswith("I"):
         assert "性质键说明：" in system_prompt, "input_structure system_prompt 缺少性质键说明"
         assert "role_description" in system_prompt, "input_structure system_prompt 缺少 role_description 说明"
@@ -157,8 +169,9 @@ def main() -> None:
     }
 
     try:
-        client = QwenClient()
-    except RuntimeError as exc:
+        generation_config = llm_config_from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
+        client = QwenClient(llm_config=generation_config)
+    except (RuntimeError, RuntimeConfigError) as exc:
         evidence["status"] = "client_init_failed"
         evidence["error"] = str(exc)
         client = None

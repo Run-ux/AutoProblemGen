@@ -68,8 +68,6 @@ class GenerationPipeline:
         *,
         mode: str,
         problem_ids: list[str],
-        variants: int = 1,
-        theme_id: str | None = None,
         seed_a: str | None = None,
         seed_b: str | None = None,
         allowed_rule_ids: set[str] | None = None,
@@ -85,8 +83,6 @@ class GenerationPipeline:
         if canonical_mode == "single_seed_extension":
             return self._run_single(
                 problem_ids=problem_ids,
-                variants=variants,
-                theme_id=theme_id,
                 allowed_rule_ids=allowed_rule_ids,
                 batch_source_dir=batch_source_dir,
                 quality_iterations=quality_iterations,
@@ -95,8 +91,6 @@ class GenerationPipeline:
         return self._run_same_family(
             seed_a=seed_a,
             seed_b=seed_b,
-            variants=variants,
-            theme_id=theme_id,
             allowed_rule_ids=allowed_rule_ids,
         )
 
@@ -104,8 +98,6 @@ class GenerationPipeline:
         self,
         *,
         problem_ids: list[str],
-        variants: int,
-        theme_id: str | None,
         allowed_rule_ids: set[str] | None,
         batch_source_dir: Path | None,
         quality_iterations: int,
@@ -116,11 +108,9 @@ class GenerationPipeline:
         if batch_source_dir is None:
             self._emit_progress(f"[single] 开始生成，共 {len(target_problem_ids)} 题。")
             for problem_id in target_problem_ids:
-                records.extend(
+                records.append(
                     self._run_single_problem(
                         problem_id=problem_id,
-                        variants=variants,
-                        theme_id=theme_id,
                         allowed_rule_ids=allowed_rule_ids,
                         quality_iterations=quality_iterations,
                         quality_full_score_max_iterations=quality_full_score_max_iterations,
@@ -141,10 +131,8 @@ class GenerationPipeline:
                 self._emit_progress(
                     f"[batch] 第 {order}/{len(target_problem_ids)} 题：{problem_id}"
                 )
-                problem_records = self._run_single_problem(
+                record = self._run_single_problem(
                     problem_id=problem_id,
-                    variants=variants,
-                    theme_id=theme_id,
                     allowed_rule_ids=allowed_rule_ids,
                     quality_iterations=quality_iterations,
                     quality_full_score_max_iterations=quality_full_score_max_iterations,
@@ -156,25 +144,23 @@ class GenerationPipeline:
                         "problem_id": problem_id,
                         "status": "failed",
                         "error_reason": str(exc),
-                        "variant_records": [],
+                        "record": {},
                     }
                 )
                 self._emit_progress(f"[batch] {problem_id} 失败：{exc}")
                 continue
 
-            records.extend(problem_records)
+            records.append(record)
             batch_items.append(
                 {
                     "order": order,
                     "problem_id": problem_id,
                     "status": "completed",
                     "error_reason": "",
-                    "variant_records": problem_records,
+                    "record": record,
                 }
             )
-            self._emit_progress(
-                f"[batch] {problem_id} 完成，生成 {len(problem_records)} 个产物。"
-            )
+            self._emit_progress(f"[batch] {problem_id} 完成。")
 
         batch_paths = self._write_batch_summary(
             stem=batch_stem,
@@ -193,91 +179,78 @@ class GenerationPipeline:
         self,
         *,
         problem_id: str,
-        variants: int,
-        theme_id: str | None,
         allowed_rule_ids: set[str] | None,
         quality_iterations: int,
         quality_full_score_max_iterations: int,
-    ) -> list[dict[str, Any]]:
+    ) -> dict[str, Any]:
         self._emit_progress(f"[problem] {problem_id}：读取 schema 与原题信息。")
         seed_schema = self.loader.load(problem_id)
         original_problem = self._safe_get_problem(seed_schema, problem_id)
         report_sections = self._build_single_report_header(problem_id=problem_id)
 
-        problem_records: list[dict[str, Any]] = []
-        for variant_index in range(1, variants + 1):
-            if quality_iterations <= 0:
-                plan, generated, record = self._run_single_variant_once(
-                    problem_id=problem_id,
-                    variant_index=variant_index,
-                    theme_id=theme_id,
-                    seed_schema=seed_schema,
-                    original_problem=original_problem,
-                    allowed_rule_ids=allowed_rule_ids,
-                )
-            else:
-                plan, generated, record = self._run_single_variant_with_quality_iterations(
-                    problem_id=problem_id,
-                    variant_index=variant_index,
-                    theme_id=theme_id,
-                    seed_schema=seed_schema,
-                    original_problem=original_problem,
-                    allowed_rule_ids=allowed_rule_ids,
-                    requested_rounds=quality_iterations,
-                    full_score_max_iterations=quality_full_score_max_iterations,
-                )
-            problem_records.append(record)
-            report_sections.extend(
-                self._build_single_variant_report_sections(
-                    problem_id=problem_id,
-                    seed_schema=seed_schema,
-                    plan=plan,
-                    record=record,
-                    generated=generated.__dict__,
-                )
+        if quality_iterations <= 0:
+            plan, generated, record = self._run_single_generation_once(
+                problem_id=problem_id,
+                seed_schema=seed_schema,
+                original_problem=original_problem,
+                allowed_rule_ids=allowed_rule_ids,
             )
+        else:
+            plan, generated, record = self._run_single_generation_with_quality_iterations(
+                problem_id=problem_id,
+                seed_schema=seed_schema,
+                original_problem=original_problem,
+                allowed_rule_ids=allowed_rule_ids,
+                requested_rounds=quality_iterations,
+                full_score_max_iterations=quality_full_score_max_iterations,
+            )
+        report_sections.extend(
+            self._build_single_generation_report_sections(
+                problem_id=problem_id,
+                seed_schema=seed_schema,
+                plan=plan,
+                record=record,
+                generated=generated.__dict__,
+            )
+        )
 
         self._emit_progress(f"[problem] {problem_id}：写入过程报告。")
         report_path = self._write_problem_report(report_group=problem_id, report_name=problem_id, lines=report_sections)
-        for record in problem_records:
-            record["report_path"] = str(report_path)
+        record["report_path"] = str(report_path)
         self._emit_progress(f"[problem] {problem_id}：完成。report={report_path}")
-        return problem_records
+        return record
 
-    def _run_single_variant_once(
+    def _run_single_generation_once(
         self,
         *,
         problem_id: str,
-        variant_index: int,
-        theme_id: str | None,
         seed_schema: dict[str, Any],
         original_problem: dict[str, Any] | None,
         allowed_rule_ids: set[str] | None,
     ) -> tuple[VariantPlan, Any, dict[str, Any]]:
-        self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 进入规划。")
+        self._emit_progress(f"[problem] {problem_id}：进入规划。")
         plan = self.planner.build_plan(
             mode="single_seed_extension",
-            variant_index=variant_index,
-            theme_id=theme_id,
+            variant_index=1,
             seed_schema=seed_schema,
             original_problem=original_problem,
             allowed_rule_ids=allowed_rule_ids,
         )
-        stem = self._build_stem(plan.source_problem_ids, plan.variant_index, plan.theme.theme_id)
+        stem = self._build_stem(plan.source_problem_ids, plan.theme.theme_id)
         self._emit_progress(
-            f"[problem] {problem_id}：variant {variant_index} 规划完成，规则={plan.applied_rule or '无'}。"
+            f"[problem] {problem_id}：规划完成，规则={plan.applied_rule or '无'}，主题={plan.theme.theme_id}。"
         )
-        self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 进入题面生成。")
+        self._emit_progress(f"[problem] {problem_id}：进入题面生成。")
         generated = self.generator.generate(
             {"seed_schema": seed_schema},
             plan,
             original_problems=[item for item in [original_problem] if item],
         )
         self._emit_progress(
-            f"[problem] {problem_id}：variant {variant_index} 生成完成，status={generated.status}。"
+            f"[problem] {problem_id}：生成完成，status={generated.status}。"
         )
         markdown = render_problem_markdown(generated, plan)
-        self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 写入产物。")
+        self._emit_progress(f"[problem] {problem_id}：写入产物。")
         record = self._save_outputs(
             stem=stem,
             plan=plan,
@@ -286,12 +259,10 @@ class GenerationPipeline:
         )
         return plan, generated, record
 
-    def _run_single_variant_with_quality_iterations(
+    def _run_single_generation_with_quality_iterations(
         self,
         *,
         problem_id: str,
-        variant_index: int,
-        theme_id: str | None,
         seed_schema: dict[str, Any],
         original_problem: dict[str, Any] | None,
         allowed_rule_ids: set[str] | None,
@@ -324,26 +295,25 @@ class GenerationPipeline:
                 polish_round_index = full_score_polish_rounds
                 plan = last_plan
                 self._emit_progress(
-                    f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮进入满分打磨，复用上一轮规划。"
+                    f"[problem] {problem_id}：第 {round_index} 轮进入满分打磨，复用上一轮规划。"
                 )
             else:
-                self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮进入规划。")
+                self._emit_progress(f"[problem] {problem_id}：第 {round_index} 轮进入规划。")
                 plan = self.planner.build_plan(
                     mode="single_seed_extension",
-                    variant_index=variant_index,
-                    theme_id=theme_id,
+                    variant_index=1,
                     seed_schema=seed_schema,
                     original_problem=original_problem,
                     allowed_rule_ids=allowed_rule_ids,
                     revision_context=revision_context,
                 )
                 if not base_stem:
-                    base_stem = self._build_stem(plan.source_problem_ids, plan.variant_index, plan.theme.theme_id)
+                    base_stem = self._build_stem(plan.source_problem_ids, plan.theme.theme_id)
                     run_id = base_stem
                 self._emit_progress(
-                    f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮规划完成，规则={plan.applied_rule or '无'}。"
+                    f"[problem] {problem_id}：第 {round_index} 轮规划完成，规则={plan.applied_rule or '无'}，主题={plan.theme.theme_id}。"
                 )
-            self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮进入题面生成。")
+            self._emit_progress(f"[problem] {problem_id}：第 {round_index} 轮进入题面生成。")
             generated = self.generator.generate(
                 {"seed_schema": seed_schema},
                 plan,
@@ -351,10 +321,10 @@ class GenerationPipeline:
                 revision_context=revision_context,
             )
             self._emit_progress(
-                f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮生成完成，status={generated.status}。"
+                f"[problem] {problem_id}：第 {round_index} 轮生成完成，status={generated.status}。"
             )
             markdown = render_problem_markdown(generated, plan)
-            self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮写入产物。")
+            self._emit_progress(f"[problem] {problem_id}：第 {round_index} 轮写入产物。")
             record = self._save_outputs(
                 stem=base_stem,
                 plan=plan,
@@ -375,7 +345,7 @@ class GenerationPipeline:
                     ),
                 },
             )
-            self._emit_progress(f"[problem] {problem_id}：variant {variant_index} 第 {round_index} 轮进入质量评测。")
+            self._emit_progress(f"[problem] {problem_id}：第 {round_index} 轮进入质量评测。")
             quality_result = self._evaluate_quality_round(
                 problem_id=problem_id,
                 round_index=round_index,
@@ -461,8 +431,6 @@ class GenerationPipeline:
         *,
         seed_a: str | None,
         seed_b: str | None,
-        variants: int,
-        theme_id: str | None,
         allowed_rule_ids: set[str] | None,
     ) -> list[dict[str, Any]]:
         if not seed_a or not seed_b:
@@ -483,51 +451,46 @@ class GenerationPipeline:
             seed_schema_b=seed_schema_b,
         )
 
-        records: list[dict[str, Any]] = []
-        for variant_index in range(1, variants + 1):
-            plan = self.planner.build_plan(
-                mode="same_family_fusion",
-                variant_index=variant_index,
-                theme_id=theme_id,
-                seed_a_schema=seed_schema_a,
-                seed_b_schema=seed_schema_b,
-                seed_a_problem=original_problem_a or {},
-                seed_b_problem=original_problem_b or {},
-                allowed_rule_ids=allowed_rule_ids,
-            )
-            stem = self._build_stem(plan.source_problem_ids, plan.variant_index, plan.theme.theme_id)
-            generated = self.generator.generate(
-                {
-                    "seed_a_schema": seed_schema_a,
-                    "seed_b_schema": seed_schema_b,
-                },
-                plan,
-                original_problems=[item for item in [original_problem_a, original_problem_b] if item],
-            )
-            markdown = render_problem_markdown(generated, plan)
-            record = self._save_outputs(
-                stem=stem,
+        plan = self.planner.build_plan(
+            mode="same_family_fusion",
+            variant_index=1,
+            seed_a_schema=seed_schema_a,
+            seed_b_schema=seed_schema_b,
+            seed_a_problem=original_problem_a or {},
+            seed_b_problem=original_problem_b or {},
+            allowed_rule_ids=allowed_rule_ids,
+        )
+        stem = self._build_stem(plan.source_problem_ids, plan.theme.theme_id)
+        generated = self.generator.generate(
+            {
+                "seed_a_schema": seed_schema_a,
+                "seed_b_schema": seed_schema_b,
+            },
+            plan,
+            original_problems=[item for item in [original_problem_a, original_problem_b] if item],
+        )
+        markdown = render_problem_markdown(generated, plan)
+        record = self._save_outputs(
+            stem=stem,
+            plan=plan,
+            payload=generated.__dict__,
+            markdown=markdown,
+        )
+        report_sections.extend(
+            self._build_generation_report_sections(
                 plan=plan,
-                payload=generated.__dict__,
-                markdown=markdown,
+                record=record,
+                generated=generated.__dict__,
             )
-            records.append(record)
-            report_sections.extend(
-                self._build_variant_report_sections(
-                    plan=plan,
-                    record=record,
-                    generated=generated.__dict__,
-                )
-            )
+        )
 
         report_path = self._write_problem_report(
             report_group=report_key,
             report_name=report_key,
             lines=report_sections,
         )
-        for record in records:
-            record["report_path"] = str(report_path)
-        return records
+        record["report_path"] = str(report_path)
+        return [record]
 
     def _save_outputs(
         self,
@@ -548,7 +511,7 @@ class GenerationPipeline:
             "problem_id": plan.problem_id,
             "source_problem_ids": list(plan.source_problem_ids),
             "variant_index": plan.variant_index,
-            "seed": plan.seed,
+            "theme_random_value": plan.theme_random_value,
             "mode": plan.mode,
             "rule_version": plan.rule_version,
             "theme": {
@@ -608,7 +571,7 @@ class GenerationPipeline:
             "",
         ]
 
-    def _build_single_variant_report_sections(
+    def _build_single_generation_report_sections(
         self,
         *,
         problem_id: str,
@@ -618,7 +581,7 @@ class GenerationPipeline:
         generated: dict[str, Any],
     ) -> list[str]:
         status = str(generated.get("status", "ok") or "ok")
-        lines = [f"## Variant {plan.variant_index}", ""]
+        lines = ["## 生成结果", ""]
         if status == "ok":
             lines.extend(
                 self._build_single_success_report_sections(
@@ -804,7 +767,7 @@ class GenerationPipeline:
             "",
         ]
 
-    def _build_variant_report_sections(
+    def _build_generation_report_sections(
         self,
         *,
         plan: VariantPlan,
@@ -812,7 +775,7 @@ class GenerationPipeline:
         generated: dict[str, Any],
     ) -> list[str]:
         lines = [
-            f"## Variant {plan.variant_index}",
+            "## 生成结果",
             "",
             "### 规则规划",
             f"- mode: {plan.mode}",
@@ -922,7 +885,7 @@ class GenerationPipeline:
 
     def _get_quality_evaluator(self) -> Any:
         if self.quality_evaluator is None:
-            self.quality_evaluator = ProblemEvaluator()
+            raise RuntimeError("质量评价器必须由总流程注入，子模块不再自行读取 LLM 配置。")
         return self.quality_evaluator
 
     def _evaluate_quality_round(
@@ -1211,10 +1174,10 @@ class GenerationPipeline:
         except Exception:
             return None
 
-    def _build_stem(self, source_problem_ids: list[str], variant_index: int, theme_id: str) -> str:
+    def _build_stem(self, source_problem_ids: list[str], theme_id: str) -> str:
         base = "__".join(_slugify(problem_id) for problem_id in source_problem_ids if problem_id)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"{base}_v{variant_index}_{theme_id}_{timestamp}"
+        return f"{base}_{theme_id}_{timestamp}"
 
     def _build_batch_stem(self, started_at: datetime) -> str:
         return f"batch_{started_at.strftime('%Y%m%d_%H%M%S')}"

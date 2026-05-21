@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 import contextlib
 import io
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 
 MODULE_DIR = Path(__file__).resolve().parents[1]
@@ -16,6 +18,16 @@ if str(MODULE_DIR) not in sys.path:
 
 import main as workflow_main
 from orchestrator import CommandResult, TUPLE_DIMENSIONS, WorkflowConfig, run_workflow
+from runtime_config import (
+    ExecutionLimits,
+    LLMEndpointConfig,
+    RUNTIME_EMBEDDING_LLM_ENV,
+    RUNTIME_EXECUTION_ENV,
+    RUNTIME_GENERATION_LLM_ENV,
+    RuntimeConfigError,
+    execution_limits_from_runtime_env,
+    llm_config_from_runtime_env,
+)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -38,6 +50,97 @@ def _make_input(path: Path, problem_id: str = "A") -> None:
             "source": {"source_name": "codeforces"},
         },
     )
+
+
+def _make_workflow_config(
+    *,
+    input_path: Path,
+    output_root: Path,
+    run_id: str = "run",
+    quality_iterations: int = 3,
+    verification_timeout_seconds: float = 3600.0,
+) -> WorkflowConfig:
+    return WorkflowConfig(
+        input_path=input_path,
+        output_root=output_root,
+        run_id=run_id,
+        quality_iterations=quality_iterations,
+        verification_timeout_seconds=verification_timeout_seconds,
+        generation_llm=LLMEndpointConfig(
+            api_key="secret-generation-key",
+            base_url="https://generation.test/v1",
+            model="chat-model",
+            timeout_seconds=123.0,
+            max_retries=4,
+        ),
+        embedding_llm=LLMEndpointConfig(
+            api_key="secret-embedding-key",
+            base_url="https://embedding.test/v1",
+            model="embedding-model",
+            timeout_seconds=45.0,
+            max_retries=2,
+        ),
+        execution_limits=ExecutionLimits(
+            test_input_timeout_seconds=6.0,
+            test_input_memory_limit_mb=256,
+            bruteforce_timeout_seconds=7.0,
+            bruteforce_memory_limit_mb=384,
+            checker_timeout_seconds=8.0,
+            checker_memory_limit_mb=512,
+        ),
+    )
+
+
+def _write_workflow_files(temp: Path, input_path: Path, *, quality_iterations: int = 3) -> Path:
+    generation_path = temp / "generation_llm.env"
+    embedding_path = temp / "embedding_llm.env"
+    workflow_path = temp / f"workflow_{quality_iterations}.env"
+    generation_path.write_text(
+        "\n".join(
+            [
+                "API_KEY=secret-generation-key",
+                "BASE_URL=https://generation.test/v1",
+                "MODEL=chat-model",
+                "TIMEOUT_SECONDS=123",
+                "MAX_RETRIES=4",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    embedding_path.write_text(
+        "\n".join(
+            [
+                "API_KEY=secret-embedding-key",
+                "BASE_URL=https://embedding.test/v1",
+                "MODEL=embedding-model",
+                "TIMEOUT_SECONDS=45",
+                "MAX_RETRIES=2",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    workflow_path.write_text(
+        "\n".join(
+            [
+                f"INPUT_PATH={input_path}",
+                f"OUTPUT_ROOT={temp / 'out'}",
+                "RUN_ID=run",
+                f"QUALITY_ITERATIONS={quality_iterations}",
+                "QUALITY_FULL_SCORE_MAX_ITERATIONS=10",
+                "VERIFICATION_TIMEOUT_SECONDS=3600",
+                f"GENERATION_LLM_CONFIG={generation_path}",
+                f"EMBEDDING_LLM_CONFIG={embedding_path}",
+                "EXECUTION_TEST_INPUT_TIMEOUT_SECONDS=6",
+                "EXECUTION_TEST_INPUT_MEMORY_LIMIT_MB=256",
+                "EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS=7",
+                "EXECUTION_BRUTEFORCE_MEMORY_LIMIT_MB=384",
+                "EXECUTION_CHECKER_TIMEOUT_SECONDS=8",
+                "EXECUTION_CHECKER_MEMORY_LIMIT_MB=512",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return workflow_path
 
 
 class FakeCommandRunner:
@@ -68,6 +171,7 @@ class FakeCommandRunner:
         *,
         cwd: Path,
         log_path: Path,
+        env: dict[str, str] | None = None,
         timeout_seconds: float | None = None,
     ) -> CommandResult:
         self.calls.append(
@@ -75,15 +179,13 @@ class FakeCommandRunner:
                 "command": list(command),
                 "cwd": cwd,
                 "log_path": log_path,
+                "env": dict(env or {}),
                 "timeout_seconds": timeout_seconds,
             }
         )
         script = Path(command[1])
         if script.name == "extract.py":
             self._write_raw_outputs(command)
-            return self._result(command, cwd, log_path)
-        if script.name == "normalize.py":
-            self._write_normalized_outputs(command)
             return self._result(command, cwd, log_path)
         if script.name == "main.py" and script.parent.name == "生成题面":
             if self.generation_returncode:
@@ -139,72 +241,62 @@ class FakeCommandRunner:
                         "source": "codeforces",
                         "dimension": dimension,
                         "status": status,
-                        "result": {},
+                        "result": self._dimension_result(dimension),
                     },
                 )
 
-    def _write_normalized_outputs(self, command: list[str]) -> None:
-        output_dir = Path(_option(command, "--output"))
-        output_dir.mkdir(parents=True, exist_ok=True)
-        for problem_id in self.problem_ids:
-            _write_json(
-                output_dir / f"{problem_id}.json",
-                {
-                    "problem_id": problem_id,
-                    "source": "codeforces",
-                    "input_structure": {"type": "array"},
-                    "core_constraints": {"constraints": []},
-                    "objective": {"type": "optimization"},
-                    "invariant": {"invariants": []},
-                },
-            )
+    def _dimension_result(self, dimension: str) -> dict[str, Any]:
+        if dimension == "input_structure":
+            return {"type": "array", "length": {"min": 1, "max": 3}, "value_range": {"min": 0, "max": 9}}
+        if dimension == "core_constraints":
+            return {"constraints": [{"name": "limit", "description": "限制"}]}
+        if dimension == "objective":
+            return {"type": "optimization", "description": "最大化结果"}
+        if dimension == "invariant":
+            return {"invariants": [{"name": "state", "description": "状态不变量"}]}
+        return {}
 
     def _write_generation_outputs(self, command: list[str]) -> None:
         source_dir = Path(_option(command, "--source-dir"))
         artifact_dir = Path(_option(command, "--artifact-dir"))
         output_dir = Path(_option(command, "--output-dir"))
         report_dir = Path(_option(command, "--report-dir"))
-        variants = int(_option(command, "--variants"))
         problem_ids = [path.stem for path in sorted(source_dir.glob("*.json"))]
         items: list[dict[str, Any]] = []
         for problem_id in problem_ids:
-            variant_records: list[dict[str, Any]] = []
-            for variant_index in range(1, variants + 1):
-                stem = f"{problem_id}_v{variant_index}_campus_ops_20260101_round1"
-                artifact_path = artifact_dir / problem_id / f"{stem}.json"
-                markdown_path = output_dir / problem_id / f"{stem}.md"
-                quality_path = report_dir / problem_id / f"{stem}_quality_report.json"
-                iteration_summary_path = artifact_dir / problem_id / f"{problem_id}_v{variant_index}_summary.json"
-                _write_json(artifact_path, {"generated_problem": {"status": self.generated_status}})
-                markdown_path.parent.mkdir(parents=True, exist_ok=True)
-                markdown_path.write_text("# fake", encoding="utf-8")
-                _write_json(
-                    quality_path,
-                    {
-                        "overall": {
-                            "status": self.quality_status,
-                            "generated_status": self.generated_status,
-                        }
-                    },
-                )
-                _write_json(iteration_summary_path, {"stop_reason": self.stop_reason})
-                variant_records.append(
-                    {
-                        "artifact_path": str(artifact_path),
-                        "markdown_path": str(markdown_path),
-                        "quality_report_json_path": str(quality_path),
-                        "quality_report_md_path": str(quality_path.with_suffix(".md")),
-                        "iteration_summary_path": str(iteration_summary_path),
+            stem = f"{problem_id}_campus_ops_20260101_round1"
+            artifact_path = artifact_dir / problem_id / f"{stem}.json"
+            markdown_path = output_dir / problem_id / f"{stem}.md"
+            quality_path = report_dir / problem_id / f"{stem}_quality_report.json"
+            iteration_summary_path = artifact_dir / problem_id / f"{problem_id}_summary.json"
+            _write_json(artifact_path, {"generated_problem": {"status": self.generated_status}})
+            markdown_path.parent.mkdir(parents=True, exist_ok=True)
+            markdown_path.write_text("# fake", encoding="utf-8")
+            _write_json(
+                quality_path,
+                {
+                    "overall": {
+                        "status": self.quality_status,
                         "generated_status": self.generated_status,
-                        "final_round_index": 1,
                     }
-                )
+                },
+            )
+            _write_json(iteration_summary_path, {"stop_reason": self.stop_reason})
+            record = {
+                "artifact_path": str(artifact_path),
+                "markdown_path": str(markdown_path),
+                "quality_report_json_path": str(quality_path),
+                "quality_report_md_path": str(quality_path.with_suffix(".md")),
+                "iteration_summary_path": str(iteration_summary_path),
+                "generated_status": self.generated_status,
+                "final_round_index": 1,
+            }
             items.append(
                 {
                     "problem_id": problem_id,
                     "status": "completed",
                     "error_reason": "",
-                    "variant_records": variant_records,
+                    "record": record,
                 }
             )
         _write_json(artifact_dir / "batch_20260101_000000.json", {"items": items, "status": "completed"})
@@ -221,24 +313,67 @@ class FakeCommandRunner:
         return [call for call in self.calls if Path(call["command"][1]).name == script_name]
 
 
-class CliTests(unittest.TestCase):
-    def test_cli_defaults_and_rejects_disabled_quality_gate(self) -> None:
+class RuntimeConfigTests(unittest.TestCase):
+    def test_runtime_env_payload_round_trips_to_child_process_config(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            config = _make_workflow_config(input_path=input_path, output_root=temp / "out")
+
+            with mock.patch.dict(os.environ, config.runtime_env(), clear=False):
+                generation = llm_config_from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
+                embedding = llm_config_from_runtime_env(RUNTIME_EMBEDDING_LLM_ENV)
+                execution_limits = execution_limits_from_runtime_env()
+
+        self.assertEqual(generation.model, "chat-model")
+        self.assertEqual(generation.api_key, "secret-generation-key")
+        self.assertEqual(embedding.model, "embedding-model")
+        self.assertEqual(embedding.api_key, "secret-embedding-key")
+        self.assertEqual(execution_limits.test_input_timeout_seconds, 6.0)
+        self.assertEqual(execution_limits.checker_memory_limit_mb, 512)
+
+
+class CliTests(unittest.TestCase):
+    def test_cli_reads_workflow_config_and_rejects_disabled_quality_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
             input_path = Path(tempdir) / "A.json"
             _make_input(input_path)
+            workflow_path = _write_workflow_files(temp, input_path)
             parser = workflow_main.build_parser()
-            args = parser.parse_args(["--input", str(input_path)])
+            args = parser.parse_args(["--workflow-config", str(workflow_path)])
+            config = WorkflowConfig.from_file(args.workflow_config)
 
-            workflow_main.validate_args(parser, args)
+            workflow_main.validate_config(parser, config)
 
-            self.assertEqual(args.quality_iterations, 3)
-            self.assertEqual(args.quality_full_score_max_iterations, 10)
-            self.assertEqual(args.embedding_threshold, 0.85)
+            self.assertEqual(config.quality_iterations, 3)
+            self.assertEqual(config.quality_full_score_max_iterations, 10)
+            self.assertEqual(config.generation_llm.model, "chat-model")
+            self.assertEqual(config.embedding_llm.model, "embedding-model")
 
-            bad_args = parser.parse_args(["--input", str(input_path), "--quality-iterations", "0"])
+            bad_workflow_path = _write_workflow_files(temp, input_path, quality_iterations=0)
             with contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit):
-                    workflow_main.validate_args(parser, bad_args)
+                    workflow_main.validate_config(parser, WorkflowConfig.from_file(bad_workflow_path))
+
+    def test_workflow_config_rejects_removed_theme_and_variants(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+
+            workflow_path = _write_workflow_files(temp, input_path)
+            workflow_path.write_text(
+                workflow_path.read_text(encoding="utf-8") + "\nVARIANTS=2\nTHEME=campus_ops\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(RuntimeConfigError) as ctx:
+                WorkflowConfig.from_file(workflow_path)
+            message = str(ctx.exception)
+            self.assertIn("VARIANTS", message)
+            self.assertIn("THEME", message)
 
 
 class OrchestratorTests(unittest.TestCase):
@@ -250,7 +385,7 @@ class OrchestratorTests(unittest.TestCase):
             runner = FakeCommandRunner(failed_dimensions={"A": {"objective"}})
 
             summary = run_workflow(
-                WorkflowConfig(input_path=input_path, output_root=temp / "out", run_id="run"),
+                _make_workflow_config(input_path=input_path, output_root=temp / "out"),
                 command_runner=runner,
                 progress_writer=lambda _: None,
             )
@@ -269,11 +404,9 @@ class OrchestratorTests(unittest.TestCase):
             runner = FakeCommandRunner(quality_status="revise_quality", stop_reason="reached_requested_rounds")
 
             summary = run_workflow(
-                WorkflowConfig(
+                _make_workflow_config(
                     input_path=input_path,
                     output_root=temp / "out",
-                    run_id="run",
-                    variants=2,
                     quality_iterations=3,
                 ),
                 command_runner=runner,
@@ -289,11 +422,20 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(len(generation_calls), 1)
             command = generation_calls[0]["command"]
             self.assertEqual(_option(command, "--quality-iterations"), "3")
-            self.assertEqual(_option(command, "--variants"), "2")
+            self.assertNotIn("--variants", command)
+            self.assertNotIn("--theme", command)
             source_dir = Path(_option(command, "--source-dir"))
             self.assertEqual(source_dir, temp / "out" / "run" / "generation" / "source")
             self.assertTrue((source_dir / "A.json").exists())
+            source_payload = json.loads((source_dir / "A.json").read_text(encoding="utf-8"))
+            self.assertEqual(source_payload["input_structure"]["type"], "array")
+            self.assertEqual(source_payload["objective"]["type"], "optimization")
+            self.assertFalse(any(Path(call["command"][1]).name == "normalize.py" for call in runner.calls))
+            self.assertIn(RUNTIME_GENERATION_LLM_ENV, generation_calls[0]["env"])
+            self.assertIn(RUNTIME_EMBEDDING_LLM_ENV, generation_calls[0]["env"])
+            self.assertIn(RUNTIME_EXECUTION_ENV, generation_calls[0]["env"])
             self.assertEqual(summary["problems"][0]["status"], "quality_gate_failed")
+            self.assertEqual(summary["problems"][0]["generation"]["status"], "quality_gate_failed")
             self.assertFalse(any(Path(call["command"][1]).name == "verification_runner.py" for call in runner.calls))
 
     def test_quality_pass_runs_verification_and_records_result_path(self) -> None:
@@ -304,10 +446,9 @@ class OrchestratorTests(unittest.TestCase):
             runner = FakeCommandRunner()
 
             summary = run_workflow(
-                WorkflowConfig(
+                _make_workflow_config(
                     input_path=input_path,
                     output_root=temp / "out",
-                    run_id="run",
                     verification_timeout_seconds=12.5,
                 ),
                 command_runner=runner,
@@ -317,12 +458,16 @@ class OrchestratorTests(unittest.TestCase):
             verification_calls = [call for call in runner.calls if Path(call["command"][1]).name == "verification_runner.py"]
             self.assertEqual(len(verification_calls), 1)
             self.assertEqual(verification_calls[0]["timeout_seconds"], 12.5)
-            variant = summary["problems"][0]["variants"][0]
+            generation = summary["problems"][0]["generation"]
             self.assertEqual(summary["status"], "completed")
             self.assertEqual(summary["problems"][0]["status"], "verified")
-            self.assertEqual(variant["status"], "verified")
-            self.assertTrue(Path(variant["verification_result_path"]).exists())
+            self.assertEqual(generation["status"], "verified")
+            self.assertTrue(Path(generation["verification_result_path"]).exists())
             self.assertTrue((temp / "out" / "run" / "workflow_summary.json").exists())
+            summary_text = (temp / "out" / "run" / "workflow_summary.json").read_text(encoding="utf-8")
+            self.assertNotIn("secret-generation-key", summary_text)
+            self.assertNotIn("secret-embedding-key", summary_text)
+            self.assertIn("chat-model", summary_text)
 
     def test_generation_command_failure_is_recorded_as_stage_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -332,7 +477,7 @@ class OrchestratorTests(unittest.TestCase):
             runner = FakeCommandRunner(generation_returncode=1)
 
             summary = run_workflow(
-                WorkflowConfig(input_path=input_path, output_root=temp / "out", run_id="run"),
+                _make_workflow_config(input_path=input_path, output_root=temp / "out"),
                 command_runner=runner,
                 progress_writer=lambda _: None,
             )
@@ -350,14 +495,14 @@ class OrchestratorTests(unittest.TestCase):
             runner = FakeCommandRunner(verification_timed_out=True)
 
             summary = run_workflow(
-                WorkflowConfig(input_path=input_path, output_root=temp / "out", run_id="run"),
+                _make_workflow_config(input_path=input_path, output_root=temp / "out"),
                 command_runner=runner,
                 progress_writer=lambda _: None,
             )
 
             self.assertEqual(summary["status"], "completed_with_failures")
             self.assertEqual(summary["problems"][0]["status"], "verification_failed")
-            self.assertEqual(summary["problems"][0]["variants"][0]["status"], "verification_failed")
+            self.assertEqual(summary["problems"][0]["generation"]["status"], "verification_failed")
             self.assertTrue(summary["stages"][-1]["timed_out"])
 
 

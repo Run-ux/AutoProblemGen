@@ -7,7 +7,7 @@
 用法：
     from qwen_client import QwenClient
 
-    client = QwenClient()
+    client = QwenClient(llm_config=generation_llm_config)
     result = client.chat_json(system_prompt, user_prompt)
 """
 
@@ -18,29 +18,28 @@ import json
 import logging
 import re
 import socket
+import sys
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, Optional
 
-try:
-    from .env_loader import get_env_value
-except ImportError:
-    from env_loader import get_env_value
+WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKFLOW_DIR))
+
+from runtime_config import LLMEndpointConfig
 
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-DEFAULT_CHAT_MODEL = "qwen3.6-plus"
-DEFAULT_EMBEDDING_MODEL = "text-embedding-v4"
 
 
 @dataclass
 class QwenConfig:
     stage: str = "default"
-    timeout_s: int = 300
+    timeout_s: int | None = None
 
 
 class QwenJSONError(RuntimeError):
@@ -50,40 +49,49 @@ class QwenJSONError(RuntimeError):
 
 
 class QwenClient:
-    def __init__(self, cfg: Optional[QwenConfig] = None):
+    def __init__(
+        self,
+        cfg: Optional[QwenConfig] = None,
+        llm_config: LLMEndpointConfig | None = None,
+    ):
         cfg = cfg or QwenConfig()
-        base_url = get_env_value("QWEN_BASE_URL") or DEFAULT_BASE_URL
-        api_key = get_env_value("QWEN_API_KEY") or get_env_value("DASHSCOPE_API_KEY")
-
-        if not api_key:
+        if llm_config is None:
             raise RuntimeError(
-                "缺少 API Key：请在四元组抽取/.env 中设置 DASHSCOPE_API_KEY 或 QWEN_API_KEY。"
+                "缺少 generation LLM 配置：请通过总流程 generation_llm.env 配置，"
+                "并由调用方显式传入 QwenClient。"
+            )
+        resolved = llm_config
+
+        if not resolved.api_key:
+            raise RuntimeError(
+                "缺少 API Key：请通过总流程 generation_llm.env 配置 API_KEY。"
             )
 
-        self.base_url = base_url
-        self.api_key = api_key
-        self.model = _resolve_chat_model(cfg.stage)
-        self.embedding_model = get_env_value("QWEN_EMBEDDING_MODEL") or DEFAULT_EMBEDDING_MODEL
-        self.timeout_s = cfg.timeout_s
+        self.base_url = resolved.base_url
+        self.api_key = resolved.api_key
+        self.model = resolved.model
+        self.timeout_s = cfg.timeout_s or resolved.timeout_seconds
+        self.max_retries = resolved.max_retries
 
     def chat_json(
         self,
         system: str,
         user: str,
-        max_retries: int = 3,
+        max_retries: int | None = None,
         temperature: float = 0.2,
         request_label: str = "",
     ) -> Dict[str, Any]:
         last_err: Exception | None = None
         last_raw_text = ""
         label = request_label or "unnamed-request"
-        for attempt in range(1, max_retries + 1):
+        retries = max_retries or self.max_retries
+        for attempt in range(1, retries + 1):
             try:
                 logger.info(
                     "[Qwen] %s: 主请求第 %d/%d 次，timeout=%ss",
                     label,
                     attempt,
-                    max_retries,
+                    retries,
                     self.timeout_s,
                 )
                 content = self._chat_text(
@@ -115,7 +123,7 @@ class QwenClient:
                     "[Qwen] %s: 第 %d/%d 次失败，错误=%s: %s；%s %.1f 秒后重试",
                     label,
                     attempt,
-                    max_retries,
+                    retries,
                     type(e).__name__,
                     e,
                     "检测到超时，" if isinstance(e, (TimeoutError, socket.timeout)) else "",
@@ -130,7 +138,7 @@ class QwenClient:
                     "[Qwen] %s: 第 %d/%d 次失败，错误=%s: %s；%.1f 秒后重试",
                     label,
                     attempt,
-                    max_retries,
+                    retries,
                     type(e).__name__,
                     e,
                     delay,
@@ -138,39 +146,6 @@ class QwenClient:
                 time.sleep(delay)
 
         raise QwenJSONError(f"调用千问失败：{last_err}", raw_text=last_raw_text)
-
-    def embed_texts(self, texts: list[str], batch_size: int = 10) -> list[list[float]]:
-        """调用 embedding API，自动分批（DashScope 限制每批最多 10 条）。"""
-        if not texts:
-            return []
-        url = self.base_url.rstrip("/") + "/embeddings"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        all_embeddings: list[list[float]] = []
-        for start in range(0, len(texts), batch_size):
-            batch = texts[start : start + batch_size]
-            payload = {
-                "model": self.embedding_model,
-                "input": batch,
-            }
-            request = urllib.request.Request(
-                url=url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers=headers,
-                method="POST",
-            )
-            with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                data = json.loads(response.read().decode("utf-8"))
-            batch_embeddings = [
-                item.get("embedding", []) for item in data.get("data", [])
-            ]
-            all_embeddings.extend(batch_embeddings)
-            # 避免触发限速
-            if start + batch_size < len(texts):
-                time.sleep(0.3)
-        return all_embeddings
 
     def _chat_text(
         self,
@@ -224,15 +199,6 @@ class QwenClient:
         if isinstance(error, (TimeoutError, socket.timeout)):
             return 5.0 * attempt
         return 1.5 * attempt
-
-
-def _resolve_chat_model(stage: str) -> str:
-    normalized_stage = str(stage).strip().lower()
-    if normalized_stage == "extract":
-        return get_env_value("QWEN_EXTRACT_MODEL") or get_env_value("QWEN_MODEL") or DEFAULT_CHAT_MODEL
-    if normalized_stage == "normalize":
-        return get_env_value("QWEN_NORMALIZE_MODEL") or get_env_value("QWEN_MODEL") or "qwen-flash"
-    return get_env_value("QWEN_MODEL") or DEFAULT_CHAT_MODEL
 
 
 def _extract_first_json_object(text: str) -> Dict[str, Any]:

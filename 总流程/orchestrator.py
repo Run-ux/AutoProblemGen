@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import json
-import shutil
+import os
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Protocol
+
+from runtime_config import (
+    ExecutionLimits,
+    LLMEndpointConfig,
+    RuntimeConfigError,
+    load_env_values,
+    load_llm_endpoint_config,
+    runtime_env_payload,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -18,7 +27,6 @@ TUPLE_EXTRACT_DIR = PROJECT_ROOT / "四元组抽取"
 PROBLEM_GENERATION_DIR = PROJECT_ROOT / "生成题面"
 
 TUPLE_EXTRACT_SCRIPT = TUPLE_EXTRACT_DIR / "extract.py"
-TUPLE_NORMALIZE_SCRIPT = TUPLE_EXTRACT_DIR / "normalize.py"
 PROBLEM_GENERATION_SCRIPT = PROBLEM_GENERATION_DIR / "main.py"
 VERIFICATION_RUNNER_SCRIPT = MODULE_ROOT / "verification_runner.py"
 
@@ -37,15 +45,65 @@ class WorkflowError(RuntimeError):
 @dataclass(frozen=True)
 class WorkflowConfig:
     input_path: Path
+    generation_llm: LLMEndpointConfig
+    embedding_llm: LLMEndpointConfig
+    execution_limits: ExecutionLimits
     output_root: Path = DEFAULT_OUTPUT_ROOT
     run_id: str | None = None
-    variants: int = 1
-    theme: str | None = None
     quality_iterations: int = 3
     quality_full_score_max_iterations: int = 10
-    embedding_threshold: float = 0.85
     verification_timeout_seconds: float = 3600.0
     python_executable: str = sys.executable
+    workflow_config_path: Path | None = None
+
+    @classmethod
+    def from_file(cls, path: str | Path) -> "WorkflowConfig":
+        config_path = Path(path).resolve()
+        values = load_env_values(config_path)
+        base_dir = config_path.parent
+        source = str(config_path)
+        _reject_removed_workflow_keys(values, source=source)
+        generation_llm_path = _resolve_config_path(
+            _require_text(values, "GENERATION_LLM_CONFIG", source=source),
+            base_dir=base_dir,
+        )
+        embedding_llm_path = _resolve_config_path(
+            _require_text(values, "EMBEDDING_LLM_CONFIG", source=source),
+            base_dir=base_dir,
+        )
+        return cls(
+            input_path=_resolve_config_path(_require_text(values, "INPUT_PATH", source=source), base_dir=base_dir),
+            output_root=_resolve_config_path(
+                values.get("OUTPUT_ROOT", str(DEFAULT_OUTPUT_ROOT)) or str(DEFAULT_OUTPUT_ROOT),
+                base_dir=base_dir,
+            ),
+            run_id=_optional_text(values, "RUN_ID"),
+            quality_iterations=_read_int(values, "QUALITY_ITERATIONS", 3, source=source),
+            quality_full_score_max_iterations=_read_positive_int(
+                values,
+                "QUALITY_FULL_SCORE_MAX_ITERATIONS",
+                10,
+                source=source,
+            ),
+            verification_timeout_seconds=_read_positive_float(
+                values,
+                "VERIFICATION_TIMEOUT_SECONDS",
+                3600.0,
+                source=source,
+            ),
+            python_executable=_optional_text(values, "PYTHON_EXECUTABLE") or sys.executable,
+            generation_llm=load_llm_endpoint_config(generation_llm_path),
+            embedding_llm=load_llm_endpoint_config(embedding_llm_path),
+            execution_limits=ExecutionLimits.from_values(values, source=source),
+            workflow_config_path=config_path,
+        )
+
+    def runtime_env(self) -> dict[str, str]:
+        return runtime_env_payload(
+            generation_llm=self.generation_llm,
+            embedding_llm=self.embedding_llm,
+            execution_limits=self.execution_limits,
+        )
 
 
 @dataclass(frozen=True)
@@ -79,6 +137,7 @@ class CommandRunner(Protocol):
         *,
         cwd: Path,
         log_path: Path,
+        env: dict[str, str] | None = None,
         timeout_seconds: float | None = None,
     ) -> CommandResult:
         ...
@@ -89,14 +148,19 @@ def default_command_runner(
     *,
     cwd: Path,
     log_path: Path,
+    env: dict[str, str] | None = None,
     timeout_seconds: float | None = None,
 ) -> CommandResult:
     """执行外部阶段命令，并把完整 stdout/stderr 保存到总流程日志。"""
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    process_env = os.environ.copy()
+    if env:
+        process_env.update(env)
     try:
         completed = subprocess.run(
             command,
             cwd=str(cwd),
+            env=process_env,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -129,6 +193,9 @@ def default_command_runner(
         "",
         "# cwd",
         str(cwd),
+        "",
+        "# runtime_env_keys",
+        ", ".join(sorted(env.keys())) if env else "",
         "",
         "# returncode",
         str(result.returncode),
@@ -179,7 +246,6 @@ def run_workflow(
                 "status": "pending",
                 "tuple": {},
                 "generation": {},
-                "variants": [],
             }
             for item in problems
         ],
@@ -206,23 +272,21 @@ def run_workflow(
         progress(f"[workflow] 抽取完成，四维全成功题目数={len(eligible_after_extract)}。")
         if not eligible_after_extract:
             summary["status"] = "failed"
-            summary["error"] = "没有题目通过四维抽取，无法进入归一化和题面生成阶段。"
+            summary["error"] = "没有题目通过四维抽取，无法进入题面生成阶段。"
             return _finalize_summary(summary_path, summary)
 
-        progress("[workflow] 开始四元组归一化。")
-        _run_normalize_stage(config, runner, paths, summary)
-        _write_summary(summary_path, summary)
-
+        progress("[workflow] 开始组装生成题面输入。")
         generation_problem_ids = _prepare_generation_source(
-            normalized_dir=paths["tuple_normalized"],
+            raw_dir=paths["tuple_raw"],
             generation_source_dir=paths["generation_source"],
             eligible_problem_ids=eligible_after_extract,
             problem_map=problem_map,
         )
         if not generation_problem_ids:
             summary["status"] = "failed"
-            summary["error"] = "没有题目通过抽取与归一化，无法进入题面生成阶段。"
+            summary["error"] = "没有题目通过抽取结果组装，无法进入题面生成阶段。"
             return _finalize_summary(summary_path, summary)
+        _write_summary(summary_path, summary)
 
         progress(f"[workflow] 开始生成题面，题目数={len(generation_problem_ids)}。")
         _run_generation_stage(config, runner, paths, summary)
@@ -232,7 +296,7 @@ def run_workflow(
         _apply_generation_results(batch_summary, problem_map)
 
         progress("[workflow] 开始执行质量门槛与验证阶段。")
-        _run_verification_for_quality_passed_variants(
+        _run_verification_for_quality_passed_generations(
             config=config,
             runner=runner,
             paths=paths,
@@ -257,7 +321,6 @@ def _build_paths(run_dir: Path) -> dict[str, Path]:
         "run_dir": run_dir,
         "tuple_root": run_dir / "tuple",
         "tuple_raw": run_dir / "tuple" / "raw",
-        "tuple_normalized": run_dir / "tuple" / "normalized",
         "generation_root": run_dir / "generation",
         "generation_source": run_dir / "generation" / "source",
         "generation_output": run_dir / "generation" / "output",
@@ -289,11 +352,19 @@ def _config_summary(
     output_root: Path,
     run_id: str,
 ) -> dict[str, Any]:
-    payload = asdict(config)
-    payload["input_path"] = str(input_path)
-    payload["output_root"] = str(output_root)
-    payload["run_id"] = run_id
-    return payload
+    return {
+        "workflow_config_path": str(config.workflow_config_path) if config.workflow_config_path else "",
+        "input_path": str(input_path),
+        "output_root": str(output_root),
+        "run_id": run_id,
+        "quality_iterations": config.quality_iterations,
+        "quality_full_score_max_iterations": config.quality_full_score_max_iterations,
+        "verification_timeout_seconds": config.verification_timeout_seconds,
+        "python_executable": config.python_executable,
+        "generation_llm": config.generation_llm.to_safe_summary(),
+        "embedding_llm": config.embedding_llm.to_safe_summary(),
+        "execution_limits": asdict(config.execution_limits),
+    }
 
 
 def _load_input_problem_entries(input_path: Path) -> list[dict[str, str]]:
@@ -350,36 +421,11 @@ def _run_extract_stage(
         command,
         cwd=TUPLE_EXTRACT_DIR,
         log_path=paths["logs"] / "01_tuple_extract.log",
+        env=config.runtime_env(),
     )
     _append_stage(summary, "tuple_extract", result)
     if not result.ok:
         raise WorkflowError("四元组抽取阶段失败，详见日志：" + result.log_path)
-
-
-def _run_normalize_stage(
-    config: WorkflowConfig,
-    runner: CommandRunner,
-    paths: dict[str, Path],
-    summary: dict[str, Any],
-) -> None:
-    command = [
-        config.python_executable,
-        str(TUPLE_NORMALIZE_SCRIPT),
-        "--input",
-        str(paths["tuple_raw"]),
-        "--output",
-        str(paths["tuple_normalized"]),
-        "--embedding-threshold",
-        str(config.embedding_threshold),
-    ]
-    result = runner(
-        command,
-        cwd=TUPLE_EXTRACT_DIR,
-        log_path=paths["logs"] / "02_tuple_normalize.log",
-    )
-    _append_stage(summary, "tuple_normalize", result)
-    if not result.ok:
-        raise WorkflowError("四元组归一化阶段失败，详见日志：" + result.log_path)
 
 
 def _run_generation_stage(
@@ -401,20 +447,17 @@ def _run_generation_stage(
         str(paths["generation_artifacts"]),
         "--report-dir",
         str(paths["generation_reports"]),
-        "--variants",
-        str(config.variants),
         "--quality-iterations",
         str(config.quality_iterations),
         "--quality-full-score-max-iterations",
         str(config.quality_full_score_max_iterations),
     ]
-    if config.theme:
-        command.extend(["--theme", config.theme])
 
     result = runner(
         command,
         cwd=PROBLEM_GENERATION_DIR,
         log_path=paths["logs"] / "03_problem_generation.log",
+        env=config.runtime_env(),
     )
     _append_stage(summary, "problem_generation", result)
     if not result.ok:
@@ -461,7 +504,7 @@ def _collect_tuple_raw_status(raw_dir: Path, problem_map: dict[str, dict[str, An
 
 def _prepare_generation_source(
     *,
-    normalized_dir: Path,
+    raw_dir: Path,
     generation_source_dir: Path,
     eligible_problem_ids: list[str],
     problem_map: dict[str, dict[str, Any]],
@@ -469,20 +512,69 @@ def _prepare_generation_source(
     generation_source_dir.mkdir(parents=True, exist_ok=True)
     ready: list[str] = []
     for problem_id in eligible_problem_ids:
-        source = normalized_dir / f"{problem_id}.json"
         target = generation_source_dir / f"{problem_id}.json"
         entry = problem_map[problem_id]
-        if not source.exists():
-            entry["status"] = "normalization_failed"
-            entry["tuple"]["normalized_path"] = ""
-            entry["tuple"]["normalization_error"] = f"缺少归一化结果：{source}"
+        try:
+            payload = _build_generation_source_from_raw(raw_dir, problem_id)
+        except WorkflowError as exc:
+            entry["status"] = "tuple_assembly_failed"
+            entry["tuple"]["generation_source_path"] = ""
+            entry["tuple"]["assembly_error"] = str(exc)
             continue
-        shutil.copy2(source, target)
+        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         entry["status"] = "ready_for_generation"
-        entry["tuple"]["normalized_path"] = str(source)
         entry["tuple"]["generation_source_path"] = str(target)
         ready.append(problem_id)
     return ready
+
+
+def _build_generation_source_from_raw(raw_dir: Path, problem_id: str) -> dict[str, Any]:
+    dimensions: dict[str, dict[str, Any]] = {}
+    source = ""
+    for dimension in TUPLE_DIMENSIONS:
+        raw_path = raw_dir / f"{problem_id}_{dimension}.json"
+        if not raw_path.exists():
+            raise WorkflowError(f"缺少四元组 raw 结果：{raw_path}")
+        try:
+            payload = json.loads(raw_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise WorkflowError(f"四元组 raw JSON 解析失败：{raw_path}；{exc.msg}") from exc
+        if payload.get("status") != "success":
+            raise WorkflowError(f"四元组 raw 结果不是 success：{raw_path}")
+        result = payload.get("result", {})
+        if not isinstance(result, dict):
+            raise WorkflowError(f"四元组 raw result 必须是对象：{raw_path}")
+        dimensions[dimension] = _final_dimension_result(result, dimension)
+        if not source:
+            source_value = payload.get("source", "")
+            source = source_value if isinstance(source_value, str) else str(source_value)
+
+    return {
+        "problem_id": problem_id,
+        "source": source,
+        "input_structure": dimensions["input_structure"],
+        "core_constraints": dimensions["core_constraints"],
+        "objective": dimensions["objective"],
+        "invariant": dimensions["invariant"],
+    }
+
+
+def _final_dimension_result(result: dict[str, Any], dimension: str) -> dict[str, Any]:
+    if dimension == "input_structure":
+        normalized = dict(result)
+        normalized.setdefault("type", None)
+        return normalized
+    if dimension == "objective":
+        normalized = dict(result)
+        normalized.setdefault("type", None)
+        return normalized
+    if dimension == "core_constraints":
+        constraints = result.get("constraints")
+        return {"constraints": constraints if isinstance(constraints, list) else []}
+    if dimension == "invariant":
+        invariants = result.get("invariants")
+        return {"invariants": invariants if isinstance(invariants, list) else []}
+    return dict(result)
 
 
 def _load_generation_batch_summary(artifact_dir: Path) -> dict[str, Any]:
@@ -514,15 +606,15 @@ def _apply_generation_results(batch_summary: dict[str, Any], problem_map: dict[s
             "batch_status": item.get("status", ""),
             "error_reason": item.get("error_reason", ""),
         }
-        variant_records = item.get("variant_records", [])
+        record = item.get("record")
         if item.get("status") != "completed":
             entry["status"] = "generation_failed"
             continue
-        if not isinstance(variant_records, list) or not variant_records:
+        if not isinstance(record, dict) or not record:
             entry["status"] = "generation_failed"
-            entry["generation"]["error_reason"] = "生成题面 batch item 缺少 variant_records。"
+            entry["generation"]["error_reason"] = "生成题面 batch item 缺少 record。"
             continue
-        entry["variants"] = [_build_variant_entry(record) for record in variant_records if isinstance(record, dict)]
+        entry["generation"].update(_build_generation_entry(record))
         entry["status"] = "generated"
 
     for problem_id, entry in problem_map.items():
@@ -531,7 +623,7 @@ def _apply_generation_results(batch_summary: dict[str, Any], problem_map: dict[s
             entry["generation"] = {"error_reason": "生成题面 batch summary 中缺少该题记录。"}
 
 
-def _build_variant_entry(record: dict[str, Any]) -> dict[str, Any]:
+def _build_generation_entry(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "status": "generated",
         "artifact_path": str(record.get("artifact_path", "")),
@@ -544,7 +636,7 @@ def _build_variant_entry(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _run_verification_for_quality_passed_variants(
+def _run_verification_for_quality_passed_generations(
     *,
     config: WorkflowConfig,
     runner: CommandRunner,
@@ -556,57 +648,54 @@ def _run_verification_for_quality_passed_variants(
     for problem in summary["problems"]:
         if problem.get("status") != "generated":
             continue
-        problem_verified = True
-        any_verified = False
-        for variant in problem.get("variants", []):
-            gate = _quality_gate_result(variant)
-            variant["quality_gate"] = gate
-            if not gate["passed"]:
-                variant["status"] = "quality_gate_failed"
-                problem_verified = False
-                continue
+        generation = problem.get("generation", {})
+        if not isinstance(generation, dict):
+            problem["status"] = "generation_failed"
+            problem["generation"] = {"status": "generation_failed", "error_reason": "generation 必须是对象。"}
+            continue
 
-            artifact_path = Path(variant["artifact_path"])
-            output_path = _verification_output_path(paths["verification"], problem["problem_id"], artifact_path)
-            progress(f"[workflow] {problem['problem_id']} 通过质量门槛，开始验证：{artifact_path.name}")
-            command = [
-                config.python_executable,
-                str(VERIFICATION_RUNNER_SCRIPT),
-                "--artifact",
-                str(artifact_path),
-                "--output",
-                str(output_path),
-            ]
-            result = runner(
-                command,
-                cwd=PROJECT_ROOT,
-                log_path=paths["logs"]
-                / f"04_verify_{_safe_path_part(problem['problem_id'])}_{_safe_path_part(artifact_path.stem)}.log",
-                timeout_seconds=config.verification_timeout_seconds,
-            )
-            stage_name = f"verification:{problem['problem_id']}:{artifact_path.stem}"
-            _append_stage(summary, stage_name, result)
-            variant["verification_result_path"] = str(output_path)
-            variant["verification_log_path"] = result.log_path
-            if result.ok:
-                variant["status"] = "verified"
-                any_verified = True
-            else:
-                variant["status"] = "verification_failed"
-                variant["verification_error"] = "验证阶段失败或超时，详见日志。"
-                problem_verified = False
+        gate = _quality_gate_result(generation)
+        generation["quality_gate"] = gate
+        if not gate["passed"]:
+            generation["status"] = "quality_gate_failed"
+            problem["status"] = "quality_gate_failed"
+            continue
 
-        if any_verified and problem_verified:
+        artifact_path = Path(generation["artifact_path"])
+        output_path = _verification_output_path(paths["verification"], problem["problem_id"], artifact_path)
+        progress(f"[workflow] {problem['problem_id']} 通过质量门槛，开始验证：{artifact_path.name}")
+        command = [
+            config.python_executable,
+            str(VERIFICATION_RUNNER_SCRIPT),
+            "--artifact",
+            str(artifact_path),
+            "--output",
+            str(output_path),
+        ]
+        result = runner(
+            command,
+            cwd=PROJECT_ROOT,
+            log_path=paths["logs"]
+            / f"04_verify_{_safe_path_part(problem['problem_id'])}_{_safe_path_part(artifact_path.stem)}.log",
+            env=config.runtime_env(),
+            timeout_seconds=config.verification_timeout_seconds,
+        )
+        stage_name = f"verification:{problem['problem_id']}:{artifact_path.stem}"
+        _append_stage(summary, stage_name, result)
+        generation["verification_result_path"] = str(output_path)
+        generation["verification_log_path"] = result.log_path
+        if result.ok:
+            generation["status"] = "verified"
             problem["status"] = "verified"
-        elif any_verified:
-            problem["status"] = "partially_verified"
         else:
-            problem["status"] = _first_variant_failure_status(problem.get("variants", []))
+            generation["status"] = "verification_failed"
+            generation["verification_error"] = "验证阶段失败或超时，详见日志。"
+            problem["status"] = "verification_failed"
 
 
-def _quality_gate_result(variant: dict[str, Any]) -> dict[str, Any]:
-    quality_path_text = str(variant.get("quality_report_json_path", "")).strip()
-    iteration_summary_path_text = str(variant.get("iteration_summary_path", "")).strip()
+def _quality_gate_result(generation: dict[str, Any]) -> dict[str, Any]:
+    quality_path_text = str(generation.get("quality_report_json_path", "")).strip()
+    iteration_summary_path_text = str(generation.get("iteration_summary_path", "")).strip()
     if not quality_path_text:
         return {"passed": False, "reason": "缺少质量报告路径。"}
     if not iteration_summary_path_text:
@@ -623,7 +712,7 @@ def _quality_gate_result(variant: dict[str, Any]) -> dict[str, Any]:
     iteration_summary = json.loads(iteration_summary_path.read_text(encoding="utf-8"))
     overall = quality_report.get("overall", {}) if isinstance(quality_report, dict) else {}
     quality_status = str(overall.get("status", ""))
-    generated_status = str(overall.get("generated_status", variant.get("generated_status", "")))
+    generated_status = str(overall.get("generated_status", generation.get("generated_status", "")))
     stop_reason = str(iteration_summary.get("stop_reason", ""))
     passed = (
         generated_status == "ok"
@@ -645,14 +734,6 @@ def _verification_output_path(verification_root: Path, problem_id: str, artifact
     return problem_dir / f"{artifact_path.stem}_verified_artifacts.json"
 
 
-def _first_variant_failure_status(variants: list[dict[str, Any]]) -> str:
-    for variant in variants:
-        status = str(variant.get("status", ""))
-        if status:
-            return status
-    return "generation_failed"
-
-
 def _derive_overall_status(problems: list[dict[str, Any]]) -> str:
     if problems and all(problem.get("status") == "verified" for problem in problems):
         return "completed"
@@ -671,9 +752,10 @@ def _build_counts(problems: list[dict[str, Any]]) -> dict[str, int]:
     for problem in problems:
         status = str(problem.get("status", "unknown"))
         counts[status] = counts.get(status, 0) + 1
-        for variant in problem.get("variants", []):
-            variant_status = "variant_" + str(variant.get("status", "unknown"))
-            counts[variant_status] = counts.get(variant_status, 0) + 1
+        generation = problem.get("generation", {})
+        if isinstance(generation, dict) and generation.get("status"):
+            generation_status = "generation_" + str(generation.get("status", "unknown"))
+            counts[generation_status] = counts.get(generation_status, 0) + 1
     return counts
 
 
@@ -697,3 +779,61 @@ def _ensure_text(value: Any) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return str(value)
+
+
+def _resolve_config_path(value: str, *, base_dir: Path) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return (base_dir / path).resolve()
+
+
+def _reject_removed_workflow_keys(values: dict[str, str], *, source: str) -> None:
+    removed = [key for key in ("THEME", "VARIANTS") if key in values]
+    if removed:
+        names = "、".join(removed)
+        raise RuntimeConfigError(
+            f"{source} 配置 {names} 已移除：主题由生成模块内部随机选择，每题固定生成 1 个结果。"
+        )
+
+
+def _optional_text(values: dict[str, str], key: str) -> str | None:
+    value = values.get(key, "").strip()
+    return value or None
+
+
+def _require_text(values: dict[str, str], key: str, *, source: str) -> str:
+    value = values.get(key, "").strip()
+    if not value:
+        raise RuntimeConfigError(f"{source} 缺少必要配置 {key}。")
+    return value
+
+
+def _read_int(values: dict[str, str], key: str, default: int, *, source: str) -> int:
+    raw = values.get(key, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise RuntimeConfigError(f"{source} 配置 {key} 必须是整数。") from exc
+
+
+def _read_positive_int(values: dict[str, str], key: str, default: int, *, source: str) -> int:
+    value = _read_int(values, key, default, source=source)
+    if value <= 0:
+        raise RuntimeConfigError(f"{source} 配置 {key} 必须大于 0。")
+    return value
+
+
+def _read_positive_float(values: dict[str, str], key: str, default: float, *, source: str) -> float:
+    raw = values.get(key, "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise RuntimeConfigError(f"{source} 配置 {key} 必须是数字。") from exc
+    if value <= 0:
+        raise RuntimeConfigError(f"{source} 配置 {key} 必须大于 0。")
+    return value

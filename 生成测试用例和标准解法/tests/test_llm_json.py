@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import path_setup  # noqa: F401
 from llm_json import (
     LLMResponseError,
     parse_json_object,

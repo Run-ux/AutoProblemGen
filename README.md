@@ -6,7 +6,7 @@
 | --------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------- |
 | `论文`                    | 研究资料、论文阅读、Problem Schema 设计与改编思路                                              | 研究设计层             |
 | `爬取题目`                | 从 Codeforces、AtCoder、Luogu、ICPC 等来源采集题目并落盘                                       | 数据入口               |
-| `四元组抽取`              | 从单题 schema JSON 抽取并归一化 `input_structure / core_constraints / objective / invariant` | 当前生成链路的默认上游 |
+| `四元组抽取`              | 从单题 schema JSON 抽取 `input_structure / core_constraints / objective / invariant` | 当前生成链路的默认上游 |
 | `finiteness_verification` | 通过 Pilot、Phase 1、Phase 2 验证四维标签集合是否有限、稳定、可覆盖                            | 标签体系验证           |
 | `生成题面`                | 基于四元组、规则文件和两阶段 LLM 规划生成结构化题面                                            | 当前生成器             |
 | `题目质量评价`            | 对生成 artifact 做题面质量评分、反换皮判定、硬约束检查，并输出 `revision_brief`              | 当前质量闭环           |
@@ -18,26 +18,24 @@
 `总流程` 提供从原始单题 schema JSON 到最终验证产物的一键编排入口，固定串联：
 
 ```text
-原始 schema -> 四元组抽取 -> 四元组归一化 -> 生成题面 -> 题目质量评价 -> 生成测试用例和标准解法
+原始 schema -> 四元组抽取 -> 组装四维 schema -> 生成题面 -> 题目质量评价 -> 生成测试用例和标准解法
 ```
 
 运行示例：
 
 ```powershell
 python D:\AutoProblemGen\总流程\main.py ^
-  --input D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs ^
-  --run-id demo_run ^
-  --quality-iterations 3
+  --workflow-config D:\AutoProblemGen\总流程\workflow.env
 ```
 
-总流程 v1 只支持 `single_seed_extension`，不包含爬取阶段，也不串 `same_family_fusion`。输入可以是单个原始 schema JSON，或包含多个 schema JSON 的目录。`--quality-iterations` 必须为 `1`、`2` 或 `3`，不能关闭质量评价；只有最终质量报告满足 `generated_status=ok`、`overall.status=pass`，且迭代摘要 `stop_reason=pass` 的题目才会进入测试用例与标准解法验证阶段。
+总流程 v1 只支持 `single_seed_extension`，不包含爬取阶段，也不串 `same_family_fusion`。输入可以是单个原始 schema JSON，或包含多个 schema JSON 的目录。流程参数全部从 `workflow.env` 读取，`QUALITY_ITERATIONS` 必须为 `1`、`2` 或 `3`，不能关闭质量评价；只有最终质量报告满足 `generated_status=ok`、`overall.status=pass`，且迭代摘要 `stop_reason=pass` 的题目才会进入测试用例与标准解法验证阶段。
 
 默认输出位于：
 
 ```text
 总流程/output/<run_id>/
 ├── tuple/raw/
-├── tuple/normalized/
+├── generation/source/
 ├── generation/output/
 ├── generation/artifacts/
 ├── generation/reports/
@@ -68,28 +66,14 @@ python D:\AutoProblemGen\总流程\main.py ^
 爬取题目/output/imandra_curated_schema_inputs/*.json
 ```
 
-它把单题题面与可选标准解法抽取成四个稳定维度：
+它把单题题面与可选标准解法抽取成四个稳定维度。主线入口只支持通过 `总流程` 调用，LLM 配置由总流程注入：
 
 - `input_structure`：输入载体、组件、长度、取值范围与结构性质
 - `core_constraints`：题目必须满足的核心约束
 - `objective`：求解目标、目标类型与目标对象
 - `invariant`：题面或代码可支撑的稳定维护性质
 
-典型流程：
-
-```powershell
-cd D:\AutoProblemGen\四元组抽取
-
-python extract.py --input D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs --output output\batch\ --resume
-
-python normalize.py --input output\batch\raw\ --output output\batch\normalized\ --embedding-threshold 0.85
-```
-
-最终可消费结果位于：
-
-```text
-四元组抽取/output/batch/normalized/*.json
-```
+总流程会将 `tuple/raw/*.json` 直接组装为 `generation/source/*.json`，后续生成器消费该目录。
 
 详细字段约定见 [`四元组抽取/README.md`](四元组抽取/README.md)。
 
@@ -108,7 +92,7 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
 
 ### 4. `生成题面`
 
-`生成题面` 是当前正式生成器。它读取归一化四元组，结合 `planning_rules.json` 和规则 handler 完成规则资格审查、规划校验、题面生成、题面审查与产物落盘。
+`生成题面` 是当前正式生成器。它读取总流程组装出的四维 schema，结合 `planning_rules.json` 和规则 handler 完成规则资格审查、规划校验、题面生成、题面审查与产物落盘。
 
 当前支持的运行模式：
 
@@ -119,31 +103,7 @@ python normalize.py --input output\batch\raw\ --output output\batch\normalized\ 
 
 `cross_family_fusion` 仅保留规则文件占位，当前不宣称支持运行。
 
-单题生成示例：
-
-```powershell
-cd D:\AutoProblemGen\生成题面
-
-python main.py --mode single --problem-ids CF25E --variants 1
-```
-
-目录批量生成示例：
-
-```powershell
-python main.py --mode single --source-dir D:\AutoProblemGen\四元组抽取\output\batch\normalized
-```
-
-同类融合示例：
-
-```powershell
-python main.py --mode same_family --seed-a CF25E --seed-b CF360C --variants 1
-```
-
-可选质量闭环：
-
-```powershell
-python main.py --mode single --problem-ids CF25E --quality-iterations 3
-```
+`生成题面/main.py` 保留为总流程子进程入口，不再作为独立用户入口承诺本地配置能力。生成参数由 `总流程/workflow.env` 统一提供。
 
 质量闭环只在 `single_seed_extension` 中启用。正常阶段最多执行 `--quality-iterations` 指定的 1 到 3 轮；`revise_quality` 和 `reject_as_retheme` 会把结构化 `revision_brief` 回流给下一轮规划与题面生成。若某轮 `overall.status` 为 `pass`，生成器还会检查五个质量维度 `variant_fidelity`、`spec_completeness`、`cross_section_consistency`、`sample_quality`、`oj_readability` 是否全部为 5 分。
 
@@ -178,15 +138,7 @@ artifact 会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_select
 
 评估器还会输出结构化 `revision_brief`。当 `生成题面` 启用 `--quality-iterations` 时，该摘要会回流给下一轮规划和题面生成；默认单轮生成不会强制进入闭环。
 
-运行示例：
-
-```powershell
-cd D:\AutoProblemGen\题目质量评价
-
-python main.py ^
-  --schema D:\AutoProblemGen\四元组抽取\output\batch\normalized\CF1513D.json ^
-  --artifact D:\AutoProblemGen\生成题面\artifacts\CF1513D\CF1513D_v1_campus_ops_20260420_215028_round1.json
-```
+`题目质量评价/main.py` 保留为总流程子进程/内部调试入口，必须由总流程注入 LLM Judge 配置，不再读取模块级 `.env`。
 
 详细合同见 [`题目质量评价/README.md`](题目质量评价/README.md)。
 
@@ -205,64 +157,51 @@ python main.py ^
 
 当前已实现 artifact 字段抽取、prompt 组织、LLM JSON 调用、严格 JSON 解析、输出合同校验、生成后本地验证闭环、错误解池增强验证和单元测试。暂未实现独立 CLI、题包流水线和落盘式输出目录。
 
-只生成产物时使用：
-
-```powershell
-cd D:\AutoProblemGen\生成测试用例和标准解法
-
-python -c "import json; from generation_pipeline import generate_all_artifacts; from llm_config import LLMConfig; artifact=json.load(open(r'D:\AutoProblemGen\生成题面\artifacts\...\round1.json', encoding='utf-8')); result=generate_all_artifacts(artifact, LLMConfig.from_dotenv()); print(result.keys())"
-```
-
-需要执行测试输入、暴力解、checker 与错误解池验证闭环时，调用 `generate_verified_artifacts`：
-
-```python
-from generation_pipeline import generate_verified_artifacts
-from llm_config import LLMConfig
-
-config = LLMConfig.from_dotenv()
-result = generate_verified_artifacts(artifact, config)
-```
+总流程会在质量门槛通过后调用 `generate_verified_artifacts`，并显式传入 generation LLM 配置与执行限制。该模块不再读取本地 `.env`。
 
 验证入口会在受限子进程中执行生成代码，并把修复后的暴力解法与 checker 写回返回结果；它不自动修改上游题面，也不承担题面歧义修订。详细说明见 [`生成测试用例和标准解法/README.md`](生成测试用例和标准解法/README.md)。
 
 ## 环境配置
 
-当前几个主线模块都采用模块级 `.env` 配置，优先读取各自目录下的 `.env`，可参考对应 `.env.example`：
+主线模块只从 `总流程` 读取配置。复制以下三个模板并填写真实值：
 
-- `四元组抽取/.env.example`
-- `生成题面/.env.example`
-- `题目质量评价/.env.example`
-- `生成测试用例和标准解法/.env.example`
+- `总流程/workflow.env.example` -> `总流程/workflow.env`
+- `总流程/generation_llm.env.example` -> `总流程/generation_llm.env`
+- `总流程/embedding_llm.env.example` -> `总流程/embedding_llm.env`
 
-`四元组抽取`、`生成题面`、`题目质量评价` 使用 Qwen / DashScope 兼容配置，常用项如下：
-
-```dotenv
-DASHSCOPE_API_KEY=your_key
-QWEN_API_KEY=your_key
-QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-QWEN_MODEL=qwen3.6-plus
-QWEN_EMBEDDING_MODEL=text-embedding-v4
-QWEN_TIMEOUT_S=360
-```
-
-`生成测试用例和标准解法` 使用 OpenAI 兼容配置，常用项如下：
+`workflow.env` 负责流程参数和两个 LLM 配置文件路径：
 
 ```dotenv
-OPENAI_API_KEY=your_key
-OPENAI_BASE_URL=https://example.com/v1
-OPENAI_MODEL=your-model
-OPENAI_TEMPERATURE=0.2
-OPENAI_TIMEOUT_SECONDS=1200
-OPENAI_MAX_RETRIES=3
-EXECUTION_TEST_INPUT_TIMEOUT_SECONDS=5
-EXECUTION_TEST_INPUT_MEMORY_LIMIT_MB=512
-EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS=5
-EXECUTION_BRUTEFORCE_MEMORY_LIMIT_MB=512
-EXECUTION_CHECKER_TIMEOUT_SECONDS=5
-EXECUTION_CHECKER_MEMORY_LIMIT_MB=512
+INPUT_PATH=D:\AutoProblemGen\爬取题目\output\imandra_curated_schema_inputs
+OUTPUT_ROOT=D:\AutoProblemGen\总流程\output
+RUN_ID=
+QUALITY_ITERATIONS=3
+QUALITY_FULL_SCORE_MAX_ITERATIONS=10
+VERIFICATION_TIMEOUT_SECONDS=3600
+GENERATION_LLM_CONFIG=D:\AutoProblemGen\总流程\generation_llm.env
+EMBEDDING_LLM_CONFIG=D:\AutoProblemGen\总流程\embedding_llm.env
 ```
 
-不同模块的默认模型、超时与输出目录以各自 `config.py` 或 `llm_config.py`、`execution_config.py` 为准。
+`generation_llm.env` 负责抽取、题面生成、质量评价和验证产物生成：
+
+```dotenv
+API_KEY=your_key
+BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+MODEL=qwen3.6-plus
+TIMEOUT_SECONDS=360
+MAX_RETRIES=3
+TEMPERATURE=0.2
+```
+
+`embedding_llm.env` 只负责 schema 距离等 embedding 调用：
+
+```dotenv
+API_KEY=your_key
+BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+MODEL=text-embedding-v4
+TIMEOUT_SECONDS=360
+MAX_RETRIES=3
+```
 
 ## 测试
 
@@ -284,5 +223,5 @@ python -m unittest discover -s D:\AutoProblemGen\总流程\tests -v
 cd D:\AutoProblemGen\四元组抽取
 
 python verify_prompts_structure.py
-python -m unittest test_normalize.py
+python -m unittest test_extract.py
 ```

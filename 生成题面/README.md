@@ -1,6 +1,6 @@
 # 生成题面
 
-该目录实现了“规则驱动的四元组生成器”。当前版本采用“规则声明 + 代码执行”架构：规则文件负责声明元信息、审计标签与合同入口，`rule_handlers.py` 负责组织资格判断、规划校验、题面校验与审计事件生成。资格判断阶段会先调用 LLM，并通过角色审查式提示词完成单规则准入审查；规划校验和题面校验会先经过代码级通用硬门槛，再由每条规则各自的 LLM 审查提示词完成专属语义审查。默认输入来自 `D:/AutoProblemGen/四元组抽取/output/batch/normalized/*.json`，生成链路围绕四元组 `input_structure / core_constraints / objective / invariant` 展开，输出包括：
+该目录实现了“规则驱动的四元组生成器”。当前版本采用“规则声明 + 代码执行”架构：规则文件负责声明元信息、审计标签与合同入口，`rule_handlers.py` 负责组织资格判断、规划校验、题面校验与审计事件生成。资格判断阶段会先调用 LLM，并通过角色审查式提示词完成单规则准入审查；规划校验和题面校验会先经过代码级通用硬门槛，再由每条规则各自的 LLM 审查提示词完成专属语义审查。主线输入来自总流程组装出的 `总流程/output/<run_id>/generation/source/*.json`，生成链路围绕四元组 `input_structure / core_constraints / objective / invariant` 展开，输出包括：
 
 - `output/<problem_id>/*.md`：最终 Markdown 题面；`same_family` 模式使用 `output/<seed_a>__<seed_b>/`
 - `artifacts/<problem_id>/*.json`：规则决策轨迹、实例化四元组、模型返回结果与迭代摘要；`same_family` 模式使用 `artifacts/<seed_a>__<seed_b>/`
@@ -32,44 +32,36 @@
 pip install -r requirements.txt
 ```
 
-配置环境变量。运行时只读取 [生成题面/.env](/D:/AutoProblemGen/生成题面/.env) 中的这些值。可直接参考 [生成题面/.env.example](/D:/AutoProblemGen/生成题面/.env.example)：
+主线入口只支持通过总流程调用，LLM 与路径参数均由 `总流程/workflow.env` 及其引用的 `generation_llm.env`、`embedding_llm.env` 提供。本目录不再读取本地 `.env`、`.env.example`、`env_loader.py` 或 `config.py`。
 
-```dotenv
-DASHSCOPE_API_KEY=your_key
-QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-QWEN_MODEL=qwen3.5-plus
-QWEN_EMBEDDING_MODEL=text-embedding-v4
-QWEN_TIMEOUT_S=180
+```powershell
+python D:\AutoProblemGen\总流程\main.py --workflow-config D:\AutoProblemGen\总流程\workflow.env
 ```
+
+`main.py` 保留为总流程子进程入口。若单独调试，必须显式传入输入、输出、artifact、report 与规则文件路径，并由总流程运行时 JSON 环境变量注入 generation / embedding 两套 LLM 配置。
 
 单题扩展：
 
 ```bash
-python main.py --mode single --problem-ids CF25E CF360C --variants 2
+python main.py --mode single --problem-ids CF25E CF360C
 ```
 
-目录批量生成：
+目录批量生成调试：
 
 ```bash
-python main.py --mode single --source-dir D:/AutoProblemGen/四元组抽取/output/batch/normalized
+python main.py --mode single --source-dir D:/AutoProblemGen/总流程/output/<run_id>/generation/source
 ```
 
 同类融合：
 
 ```bash
-python main.py --mode same_family --seed-a CF25E --seed-b CF360C --variants 1
+python main.py --mode same_family --seed-a CF25E --seed-b CF360C
 ```
 
 指定规则：
 
 ```bash
 python main.py --mode single --problem-ids CF25E --rule-override canonical_witness
-```
-
-自定义超时：
-
-```bash
-python main.py --mode single --problem-ids CF25E --timeout 360
 ```
 
 启用最多 3 轮的质量闭环：
@@ -82,13 +74,13 @@ python main.py --mode single --problem-ids CF25E --quality-iterations 3
 
 `--quality-iterations` 只对 `single` 模式生效：
 
-- `0`：关闭质量闭环，保持旧行为
+- `0`：仅保留给子进程调试，主线总流程不会传入该值
 - `1`：生成 1 轮并产出质量报告与迭代摘要
 - `2`、`3`：分别表示正常质量闭环最多执行 2 轮或 3 轮；若任一轮 `reject_invalid`、`schema_insufficient` 或 `difference_insufficient`，流程会提前停止
 
 当某轮 `overall.status` 为 `pass` 时，系统还会检查五个质量维度 `variant_fidelity`、`spec_completeness`、`cross_section_consistency`、`sample_quality`、`oj_readability` 是否全部为 5 分。若未满分，会进入满分打磨阶段：复用同一个 `new_schema` 与上一轮规划，不再重新规划，只重写题面内容并继续评测；追加轮数由 `--quality-full-score-max-iterations` 控制。
 
-运行过程中，控制台会输出当前阶段提示，包括参数校验、进入流水线、当前题、当前 variant、规划、题面生成、产物写入与批量完成状态。
+运行过程中，控制台会输出当前阶段提示，包括参数校验、进入流水线、当前题、规划、题面生成、产物写入与批量完成状态。
 
 ## CLI
 
@@ -100,19 +92,22 @@ python main.py --mode single --problem-ids CF25E --quality-iterations 3
 | `--problem-ids <id...>`                      | `single` 模式下指定待生成的 `problem id` 列表；省略时进入目录批量生成                        | 空列表                                                   | 仅 `single`          |
 | `--seed-a <id>`                              | `same_family` 模式下的第一个种子题 `problem id`                                              | 无                                                       | 仅 `same_family`     |
 | `--seed-b <id>`                              | `same_family` 模式下的第二个种子题 `problem id`                                              | 无                                                       | 仅 `same_family`     |
-| `--variants <数量>`                          | 每个任务生成的变体数                                                                             | `1`                                                    | 全局                   |
-| `--theme <theme id>`                         | 固定主题，当前可选 `cyber_city`、`arcane_lab`、`interstellar_logistics`、`campus_ops`    | 无                                                       | 全局                   |
-| `--source-dir <schema目录>`                  | 原始 schema JSON 目录                                                                            | `D:/AutoProblemGen/四元组抽取/output/batch/normalized` | 全局                   |
-| `--output-dir <md输出目录>`                  | Markdown 题面输出目录                                                                            | 见 `config.py`                                         | 全局                   |
-| `--artifact-dir <json输出目录>`              | 结构化产物输出目录                                                                               | 见 `config.py`                                         | 全局                   |
-| `--report-dir <过程报告目录>`                | 过程说明 Markdown 输出目录                                                                       | 见 `config.py`                                         | 全局                   |
-| `--rule-file <规则文件>`                     | 规则 JSON 文件路径                                                                               | 见 `config.py`                                         | 全局                   |
-| `--timeout <秒数>`                           | 模型接口请求超时秒数                                                                             | `QWEN_TIMEOUT_S` 或 `180`                            | 全局                   |
-| `--temperature <采样温度>`                   | 题面生成采样温度                                                                                 | `0.2`                                                  | 全局                   |
-| `--seed <随机种子>`                          | 规则规划随机种子                                                                                 | `20260312`                                             | 全局                   |
+| `--source-dir <schema目录>`                  | 四维 schema JSON 目录；主线由总流程传入                                                          | 总流程显式传入                                         | 全局                   |
+| `--output-dir <md输出目录>`                  | Markdown 题面输出目录                                                                            | 总流程显式传入                                         | 全局                   |
+| `--artifact-dir <json输出目录>`              | 结构化产物输出目录                                                                               | 总流程显式传入                                         | 全局                   |
+| `--report-dir <过程报告目录>`                | 过程说明 Markdown 输出目录                                                                       | 总流程显式传入                                         | 全局                   |
+| `--rule-file <规则文件>`                     | 规则 JSON 文件路径                                                                               | 本目录 `planning_rules.json`                         | 全局                   |
+| `--temperature <采样温度>`                   | 题面生成采样温度；省略时使用 generation LLM 配置中的 `TEMPERATURE`                              | `generation_llm.env`                                  | 全局                   |
 | `--quality-iterations <轮数>`                | 质量闭环轮数，只支持 `0`、`1`、`2`、`3`                                                  | `0`                                                    | 仅 `single`          |
 | `--quality-full-score-max-iterations <轮数>` | `pass` 后五维质量未满分时的题面打磨追加轮数上限                                                | `10`                                                   | 仅 `single` 质量闭环 |
 | `--rule-override <rule id>`                  | 限定可用规则 id，可重复传入，也可用逗号分隔                                                      | 空列表                                                   | 全局                   |
+
+题面主题由程序内部随机选择，不再通过命令行固定，也不再暴露随机种子参数。每次规划会生成一个 `theme_random_value`，并直接映射到当前主题列表：
+
+- `community_services`：社区服务
+- `home_organization`：家庭收纳
+- `urban_commute`：城市通勤
+- `campus_ops`：校园运营
 
 参数校验规则：
 
@@ -182,7 +177,6 @@ python main.py --mode single --problem-ids CF25E --quality-iterations 3
 - `construct_or_obstruction`
 - `existence_to_counting`
 - `minimum_guarantee_under_perturbation`
-- `static_to_online_queries`
 - `feasibility_to_extremal_threshold`
 - `single_objective_to_tradeoff_frontier`
 - `forward_solution_to_inverse_design`
@@ -460,7 +454,7 @@ invariant_match_distance = min(1.0, min_assignment_cost / max(len(left_invariant
 - `previous_quality_report_path`
 - `revision_context_snapshot`（包含历史 `revision_brief` 与聚合摘要）
 
-各轮题面和 artifact 会分别以 `_round<轮次>` 结尾落盘。正常质量闭环最多到 `_round3`；若进入满分打磨阶段，轮次可能继续增加，例如 `_round4`。每个 variant 还会额外写出 `*_iteration_summary.json`，其中包含：
+各轮题面和 artifact 会分别以 `_round<轮次>` 结尾落盘。正常质量闭环最多到 `_round3`；若进入满分打磨阶段，轮次可能继续增加，例如 `_round4`。每个生成结果还会额外写出 `*_iteration_summary.json`，其中包含：
 
 - 每轮 artifact 路径
 - 每轮 markdown 路径

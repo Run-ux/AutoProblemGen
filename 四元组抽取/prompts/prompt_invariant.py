@@ -7,18 +7,12 @@ from typing import TYPE_CHECKING
 try:
     from ..label_vocab import (
         INVARIANT_EVIDENCE_SOURCES,
-        INVARIANT_SPECS,
-        INVARIANT_LABELS,
-        build_label_reference,
     )
     from ..problem_schema import prepare_problem_record
     from .prompt_sections import build_problem_context
 except ImportError:
     from label_vocab import (
         INVARIANT_EVIDENCE_SOURCES,
-        INVARIANT_SPECS,
-        INVARIANT_LABELS,
-        build_label_reference,
     )
     from problem_schema import prepare_problem_record
     from prompts.prompt_sections import build_problem_context
@@ -32,13 +26,9 @@ SOLUTION_CODE_KEYS = [
     "reference_solution",
 ]
 
-INVARIANT_NAMES = [name for name, _ in INVARIANT_LABELS]
-
 
 def build_system_prompt() -> str:
-    invariant_names = ", ".join(INVARIANT_NAMES)
-    invariant_reference = build_label_reference(INVARIANT_SPECS)
-    return f"""你是编程竞赛算法不变量分析专家。
+    return """你是编程竞赛算法不变量分析专家。
 
 你的任务是抽取标准解法对应的关键算法不变量。
 
@@ -50,13 +40,10 @@ def build_system_prompt() -> str:
 
 硬规则：
 1. 只输出严格 JSON 对象，不输出任何解释文字。
-2. name 必须优先复用规范不变量词表：{invariant_names}。
-3. 若现有词表无法准确覆盖当前题目的关键稳定性质，允许创建新的抽象标签。
-4. 新标签必须使用小写英文加下划线格式，并保持算法术语风格。
-5. 不得把题目情境词直接写进 name、properties 的键名或 evidence_source。
-
-规范标签说明：
-{invariant_reference}
+2. name 是开放标签，必须使用稳定、抽象的小写英文加下划线格式。
+3. name 应概括算法维护的稳定性质，不得写成算法范式、题目情境词、变量名或整句描述。
+4. properties 的键名也应保持抽象、稳定，不得使用题目情境词。
+5. evidence_source 只能使用 statement、solution_code、both。
 
 证据优先级：
 1. 标准解法代码
@@ -75,15 +62,10 @@ def build_system_prompt() -> str:
 - evidence_source 只允许使用 statement、solution_code、both。
 
 判别边界：
-- monotonicity 用于指针、边界、答案下界或决策前沿沿单一方向推进的性质。
-- state_transition 用于状态定义与转移关系构成的稳定维护规律。
-- additivity 用于目标量、代价或摘要可以按分块分解并相加的性质。
-- mergeability 用于局部摘要、区间摘要或子结果可以稳定合并的性质。
-- dependency_order 用于节点、状态或子问题必须按依赖先后处理的稳定顺序。
-- conservation 用于流量守恒、质量守恒、计数平衡或等价的净变化守恒关系。
-- dominance 用于某类状态、决策或候选被另一类稳定支配后可以安全丢弃。
-- exchange_argument 只在替换某个局部选择后仍能保持可行性或最优性时使用。
+- 指针、边界、答案下界或决策前沿沿单一方向推进时，可抽象为 monotonicity 一类标签。
+- 状态定义与转移关系、可合并摘要、依赖处理顺序、守恒关系、支配关系、交换论证等应区分命名。
 - 最优子结构、贪心选择或分治范式若无法落实为稳定维护关系，不单列为不变量标签，应写入 description。
+- 对同义或近义不变量使用同一个稳定标签，避免同一语义在一题内出现多种命名。
 """
 
 
@@ -103,13 +85,12 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
     problem = prepare_problem_record(problem)
     solution_code = _get_standard_solution_code(problem)
     context = build_problem_context(problem, solution_code=solution_code)
-    invariant_names = ", ".join(INVARIANT_NAMES)
     return f"""请根据下列题目信息抽取关键算法不变量。
 
 {context}
 
 字段说明：
-1. invariants[].name 表示不变量的抽象标签。现有词表能够覆盖时填写规范标签；只有明确存在语义缺口时才新建标签；证据不足时整条不变量不出现。常见误填：把贪心、二分、DP 这类算法范式直接写进 name。
+1. invariants[].name 表示不变量的开放抽象标签。存在不变量项时填写稳定的小写英文加下划线标签；证据不足时整条不变量不出现。常见误填：把贪心、二分、DP 这类算法范式直接写进 name。
 2. invariants[].description 表示该不变量为何成立以及它稳定约束了什么。存在该不变量项时始终填写；只有整条不变量不存在时才不出现。常见误填：复述代码步骤，却没有说明稳定维护的性质。
 3. invariants[].properties 表示可机械理解的细粒度事实。能够明确抽出稳定布尔性质或局部结构事实时填写；拿不准时写空对象。常见误填：把长句解释、变量名或题目情境词塞进 properties。
 4. invariants[].evidence_source 表示证据来自题面、标准解法代码或两者。证据来源清晰时填写；返回空数组时不出现。常见误填：把置信度、推理过程或不在允许集合中的值写进去。
@@ -118,7 +99,7 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
 {{
   "invariants": [
     {{
-      "name": "优先复用规范标签，例如 {invariant_names}",
+      "name": "稳定抽象标签，例如 monotonicity",
       "description": "该不变量为何成立，以及它约束了什么",
       "properties": {{}},
       "evidence_source": "solution_code"
@@ -129,8 +110,8 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
 要求：
 1. 字段说明优先于字段名直觉，不要仅凭命名猜测字段含义。
 2. 有标准解法代码时，代码是主证据；没有代码时，只保留题面可直接支撑的结构性质。
-3. name 优先对齐现有规范标签；若词表无法准确覆盖当前不变量，允许新建一个抽象标签。
-4. 新标签保持小写英文加下划线格式，不写题目情境词。
+3. name 使用开放标签，但必须稳定、抽象、小写英文加下划线。
+4. 不把算法范式、具体题目对象、变量名或题目情境词写进 name。
 5. 变量名、模板封装、宏定义、输入输出写法不计入不变量。
 6. 重点读取状态定义、循环推进方向、维护量、转移关系、合并规则。
 7. properties 拿不准就写空对象。

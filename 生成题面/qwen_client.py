@@ -2,34 +2,49 @@ from __future__ import annotations
 
 import json
 import socket
+import sys
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
 
-from config import DEFAULT_DISTANCE_CACHE_DIR, DEFAULT_EMBEDDING_MODEL
+WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKFLOW_DIR))
+
+from runtime_config import LLMEndpointConfig
+
+
+DEFAULT_DISTANCE_CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 
 
 class QwenClient:
     def __init__(
         self,
-        api_key: str,
-        model: str,
-        base_url: str,
-        timeout_s: int = 180,
-        embedding_model: str = DEFAULT_EMBEDDING_MODEL,
+        generation_config: LLMEndpointConfig | None = None,
+        embedding_config: LLMEndpointConfig | None = None,
         distance_cache_path: Path | None = None,
     ):
-        if not api_key:
-            raise RuntimeError(
-                "缺少 API Key，请在生成题面/.env 中设置 DASHSCOPE_API_KEY 或 QWEN_API_KEY。"
-            )
-        self.api_key = api_key
-        self.model = model
-        self.embedding_model = embedding_model
-        self.base_url = base_url.rstrip("/")
-        self.timeout_s = timeout_s
+        if generation_config is None:
+            raise RuntimeError("缺少 generation LLM 配置：请通过总流程 generation_llm.env 注入。")
+        if embedding_config is None:
+            raise RuntimeError("缺少 embedding LLM 配置：请通过总流程 embedding_llm.env 注入。")
+
+        self.generation_config = generation_config
+        self.embedding_config = embedding_config
+        if not self.generation_config.api_key:
+            raise RuntimeError("缺少 API Key：请通过总流程 generation_llm.env 配置 API_KEY。")
+        if not self.embedding_config.api_key:
+            raise RuntimeError("缺少 API Key：请通过总流程 embedding_llm.env 配置 API_KEY。")
+
+        self.api_key = self.generation_config.api_key
+        self.model = self.generation_config.model
+        self.base_url = self.generation_config.base_url.rstrip("/")
+        self.timeout_s = self.generation_config.timeout_seconds
+        self.embedding_model = self.embedding_config.model
+        self.embedding_base_url = self.embedding_config.base_url.rstrip("/")
+        self.embedding_timeout_s = self.embedding_config.timeout_seconds
         self.distance_cache_path = distance_cache_path or (DEFAULT_DISTANCE_CACHE_DIR / "schema_distance_embeddings.json")
 
     def chat_json(
@@ -37,7 +52,7 @@ class QwenClient:
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.7,
-        max_retries: int = 3,
+        max_retries: int | None = None,
     ) -> dict[str, Any]:
         url = f"{self.base_url}/chat/completions"
         payload = {
@@ -49,7 +64,14 @@ class QwenClient:
             "temperature": temperature,
             "response_format": {"type": "json_object"},
         }
-        raw = self._post_json(url=url, payload=payload, max_retries=max_retries)
+        raw = self._post_json(
+            url=url,
+            payload=payload,
+            api_key=self.api_key,
+            timeout_s=self.timeout_s,
+            max_retries=max_retries or self.generation_config.max_retries,
+            model=self.model,
+        )
         content = json.loads(raw)["choices"][0]["message"]["content"]
         return _extract_json_object(content)
 
@@ -58,20 +80,28 @@ class QwenClient:
         texts: list[str],
         model: str | None = None,
         dimensions: int | None = None,
-        max_retries: int = 3,
+        max_retries: int | None = None,
     ) -> list[list[float]]:
         if not texts:
             return []
 
+        active_model = model or self.embedding_model
         payload: dict[str, Any] = {
-            "model": model or self.embedding_model,
+            "model": active_model,
             "input": texts,
         }
         if dimensions is not None:
             payload["dimensions"] = dimensions
 
-        url = f"{self.base_url}/embeddings"
-        raw = self._post_json(url=url, payload=payload, max_retries=max_retries)
+        url = f"{self.embedding_base_url}/embeddings"
+        raw = self._post_json(
+            url=url,
+            payload=payload,
+            api_key=self.embedding_config.api_key,
+            timeout_s=self.embedding_timeout_s,
+            max_retries=max_retries or self.embedding_config.max_retries,
+            model=active_model,
+        )
         data = json.loads(raw).get("data", [])
         if not isinstance(data, list):
             raise RuntimeError("Embedding 接口返回结构异常，缺少 data 列表。")
@@ -95,10 +125,13 @@ class QwenClient:
         *,
         url: str,
         payload: dict[str, Any],
+        api_key: str,
+        timeout_s: float,
         max_retries: int,
+        model: str,
     ) -> str:
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
 
@@ -113,7 +146,7 @@ class QwenClient:
                     headers=headers,
                     method="POST",
                 )
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                with urllib.request.urlopen(request, timeout=timeout_s) as response:
                     return response.read().decode("utf-8")
             except (
                 TimeoutError,
@@ -126,11 +159,10 @@ class QwenClient:
                 last_error = exc
                 time.sleep(1.5 * attempt)
         raise RuntimeError(
-            "调用 Qwen 失败: "
-            f"model={self.model}; url={url}; timeout_s={self.timeout_s}; "
+            "调用 LLM 失败: "
+            f"model={model}; url={url}; timeout_s={timeout_s}; "
             f"max_retries={max_retries}; payload_bytes={payload_size}; error={last_error}"
         )
-
 
 def _extract_json_object(text: str) -> dict[str, Any]:
     text = text.strip()

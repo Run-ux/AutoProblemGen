@@ -677,23 +677,6 @@ class MinimumGuaranteeUnderPerturbationHandler(RuleHandler):
         return "确认题面是否写清扰动来源、最坏情况语义，以及要求求出最小保底值或等价的鲁棒目标。"
 
 
-class StaticToOnlineQueriesHandler(RuleHandler):
-    def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
-        return "你扮演一名在线查询扩展审查官，重点判断静态种子题是否存在可局部更新且可维护的核心状态。"
-
-    def plan_review_role(self, *, mode: str, rule: dict[str, Any]) -> str:
-        return "你扮演一名动态查询规划审查官，重点确认规划是否真正引入更新-查询操作流和动态状态维护责任。"
-
-    def plan_review_brief(self, *, mode: str, rule: dict[str, Any]) -> str:
-        return "确认规划是否把输入改成操作流，让查询依赖此前更新后的状态，而不是把原题重复运行多次。"
-
-    def problem_review_role(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
-        return "你扮演一名在线查询题面审查官，重点确认题面是否清楚写出更新、查询和当前状态语义。"
-
-    def problem_review_brief(self, *, plan: VariantPlan, rule: dict[str, Any]) -> str:
-        return "确认题面是否要求维护动态状态并回答查询，且更新会真实影响后续答案。"
-
-
 class FeasibilityToExtremalThresholdHandler(RuleHandler):
     def eligibility_role(self, *, mode: str, rule: dict[str, Any]) -> str:
         return "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。"
@@ -1040,7 +1023,6 @@ _RULE_HANDLER_REGISTRY = {
     "construct_or_obstruction": ConstructOrObstructionHandler,
     "existence_to_counting": ExistenceToCountingHandler,
     "minimum_guarantee_under_perturbation": MinimumGuaranteeUnderPerturbationHandler,
-    "static_to_online_queries": StaticToOnlineQueriesHandler,
     "feasibility_to_extremal_threshold": FeasibilityToExtremalThresholdHandler,
     "single_objective_to_tradeoff_frontier": SingleObjectiveToTradeoffFrontierHandler,
     "forward_solution_to_inverse_design": ForwardSolutionToInverseDesignHandler,

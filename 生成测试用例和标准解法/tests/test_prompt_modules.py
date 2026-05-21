@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import path_setup  # noqa: F401
 from prompts.bruteforce_solution import prompt_bruteforce_solution
 from prompts.standard_solution import prompt_standard_solution
 from prompts.tool_generation import (

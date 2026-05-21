@@ -92,7 +92,9 @@ class VerificationError(RuntimeError):
 def _build_client(config: LLMConfig | None, client: ChatLLMClient | None) -> tuple[LLMConfig | None, ChatLLMClient]:
     if client is not None:
         return config, client
-    resolved_config = config or LLMConfig.from_dotenv()
+    if config is None:
+        raise RuntimeError("LLMConfig 必须由总流程注入，子模块不再读取本地 .env。")
+    resolved_config = config
     return resolved_config, OpenAIChatLLMClient(resolved_config)
 
 
@@ -1483,7 +1485,9 @@ def generate_verified_artifacts(
     """生成全部产物，并执行测试输入、暴力解法和 checker 验证闭环。"""
 
     resolved_config, active_client = _build_client(config, client)
-    active_execution_config = execution_config or ExecutionConfig.from_dotenv()
+    if execution_config is None:
+        raise RuntimeError("ExecutionConfig 必须由总流程注入，子模块不再读取本地 .env。")
+    active_execution_config = execution_config
     generated_artifacts = generate_all_artifacts(artifact, resolved_config, client=active_client)
 
     verified_test_inputs = collect_verified_test_inputs(

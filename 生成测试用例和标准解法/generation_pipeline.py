@@ -76,7 +76,9 @@ def _call_prompt(
 def _build_client(config: LLMConfig | None, client: ChatLLMClient | None) -> tuple[LLMConfig | None, ChatLLMClient]:
     if client is not None:
         return config, client
-    resolved_config = config or LLMConfig.from_dotenv()
+    if config is None:
+        raise RuntimeError("LLMConfig 必须由总流程注入，子模块不再读取本地 .env。")
+    resolved_config = config
     return resolved_config, OpenAIChatLLMClient(resolved_config)
 
 

@@ -6,6 +6,8 @@ import sys
 import traceback
 from pathlib import Path
 
+from runtime_config import RUNTIME_GENERATION_LLM_ENV, execution_limits_from_runtime_env
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_MODULE_DIR = PROJECT_ROOT / "生成测试用例和标准解法"
@@ -27,12 +29,14 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         sys.path.insert(0, str(ARTIFACT_MODULE_DIR))
+        from execution_config import ExecutionConfig
         from generation_pipeline import generate_verified_artifacts
         from llm_config import LLMConfig
 
         artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
-        config = LLMConfig.from_dotenv()
-        result = generate_verified_artifacts(artifact, config)
+        llm_config = LLMConfig.from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
+        execution_config = ExecutionConfig.from_runtime_limits(execution_limits_from_runtime_env())
+        result = generate_verified_artifacts(artifact, llm_config, execution_config=execution_config)
         output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[OK] verified artifacts saved to: {output_path}")
         return 0
@@ -51,4 +55,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

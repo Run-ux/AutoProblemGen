@@ -10,7 +10,7 @@ def render_problem_markdown(problem: GeneratedProblem, plan: VariantPlan) -> str
     lines: list[str] = [
         f"# {problem.title}",
         "",
-        f"> Variant: `{plan.problem_id}` / `v{plan.variant_index}` / theme `{plan.theme.theme_id}`",
+        f"> 生成任务：`{plan.problem_id}` / theme `{plan.theme.theme_id}`",
         "",
         "## 题目描述",
         "",
@@ -65,7 +65,7 @@ def render_problem_markdown(problem: GeneratedProblem, plan: VariantPlan) -> str
 
 def _render_generation_failure(problem: GeneratedProblem, plan: VariantPlan) -> str:
     return (
-        f"# {plan.problem_id} / v{plan.variant_index}\n\n"
+        f"# {plan.problem_id}\n\n"
         f"> 状态：`{problem.status}`\n\n"
         "## 生成中止原因\n\n"
         f"{problem.error_reason or '未提供具体原因。'}\n\n"

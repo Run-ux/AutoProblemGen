@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import path_setup  # noqa: F401
 from local_execution import (
     EXECUTION_ERROR,
     EXECUTION_MEMORY_LIMIT,

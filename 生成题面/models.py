@@ -71,7 +71,7 @@ class RuleValidationOutcome:
 class VariantPlan:
     problem_id: str
     variant_index: int
-    seed: int
+    theme_random_value: int
     mode: str
     theme: Theme
     source_problem_ids: list[str]

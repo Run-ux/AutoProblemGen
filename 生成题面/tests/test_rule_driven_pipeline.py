@@ -14,6 +14,9 @@ ROOT = Path(__file__).resolve().parents[2]
 GEN_DIR = ROOT / "生成题面"
 if str(GEN_DIR) not in sys.path:
     sys.path.insert(0, str(GEN_DIR))
+WORKFLOW_DIR = ROOT / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.append(str(WORKFLOW_DIR))
 
 from main import _load_batch_problem_ids, _normalize_rule_overrides, _target_problem_ids, _validate_args, build_parser
 from models import DifferencePlan, GeneratedProblem, NewSchema, Theme, VariantPlan
@@ -22,8 +25,9 @@ from problem_generator import ProblemGenerator
 from qwen_client import QwenClient
 from rule_handlers import get_rule_handler
 from rulebook import RuleBook
+from runtime_config import LLMEndpointConfig
 from schema_tools import _objective_type_prompt, compute_schema_distance
-from variant_planner import VariantPlanner
+from variant_planner import THEMES, VariantPlanner
 
 
 SINGLE_RULE_IDS = (
@@ -31,7 +35,6 @@ SINGLE_RULE_IDS = (
     "construct_or_obstruction",
     "existence_to_counting",
     "minimum_guarantee_under_perturbation",
-    "static_to_online_queries",
     "feasibility_to_extremal_threshold",
     "single_objective_to_tradeoff_frontier",
     "forward_solution_to_inverse_design",
@@ -48,6 +51,11 @@ SAME_FAMILY_RULE_IDS = (
 
 ALL_RULE_IDS = SINGLE_RULE_IDS + SAME_FAMILY_RULE_IDS
 SAME_FAMILY_RULE_ID_SET = set(SAME_FAMILY_RULE_IDS)
+THEME_IDS = {theme.theme_id for theme in THEMES}
+
+
+def _matches_theme_stem(file_name: str, problem_id: str) -> bool:
+    return any(file_name.startswith(f"{problem_id}_{theme_id}_") for theme_id in THEME_IDS)
 
 
 def _mode_for_rule_id(rule_id: str) -> str:
@@ -375,7 +383,6 @@ class SingleSeedExtensionTests(unittest.TestCase):
         planner = VariantPlanner(
             client=FakePlannerClient(responses),
             rulebook=self.rulebook,
-            seed=7,
         )
 
         for rule_id in responses:
@@ -383,7 +390,6 @@ class SingleSeedExtensionTests(unittest.TestCase):
                 plan = planner.build_plan(
                     mode="single_seed_extension",
                     variant_index=1,
-                    theme_id="campus_ops",
                     seed_schema=self.source_schema,
                     original_problem=self.original_problem,
                     allowed_rule_ids={rule_id},
@@ -408,7 +414,6 @@ class SingleSeedExtensionTests(unittest.TestCase):
         planner = VariantPlanner(
             client=FakePlannerClient(responses),
             rulebook=self.rulebook,
-            seed=11,
         )
 
         for rule_id in responses:
@@ -416,7 +421,6 @@ class SingleSeedExtensionTests(unittest.TestCase):
                 plan = planner.build_plan(
                     mode="single",
                     variant_index=1,
-                    theme_id="campus_ops",
                     seed_schema=self.source_schema,
                     original_problem=self.original_problem,
                     allowed_rule_ids={rule_id},
@@ -437,13 +441,11 @@ class SingleSeedExtensionTests(unittest.TestCase):
         planner = VariantPlanner(
             client=client,
             rulebook=self.rulebook,
-            seed=19,
         )
 
         plan = planner.build_plan(
             mode="single_seed_extension",
             variant_index=1,
-            theme_id="campus_ops",
             seed_schema=self.source_schema,
             original_problem=self.original_problem,
         )
@@ -474,13 +476,11 @@ class SingleSeedExtensionTests(unittest.TestCase):
         planner = VariantPlanner(
             client=client,
             rulebook=self.rulebook,
-            seed=31,
         )
 
         plan = planner.build_plan(
             mode="single_seed_extension",
             variant_index=1,
-            theme_id="campus_ops",
             seed_schema=self.source_schema,
             original_problem=self.original_problem,
         )
@@ -517,13 +517,11 @@ class SingleSeedExtensionTests(unittest.TestCase):
         planner = VariantPlanner(
             client=client,
             rulebook=self.rulebook,
-            seed=23,
         )
 
         plan = planner.build_plan(
             mode="single_seed_extension",
             variant_index=1,
-            theme_id="campus_ops",
             seed_schema=self.source_schema,
             original_problem=self.original_problem,
         )
@@ -533,11 +531,34 @@ class SingleSeedExtensionTests(unittest.TestCase):
         self.assertIn("所有规则都只能形成浅改", plan.rule_selection_reason)
         self.assertEqual(client.calls, ["select"])
 
+    def test_theme_selection_uses_single_internal_random_value(self) -> None:
+        client = FakePlannerClient(
+            responses={
+                "construct_or_obstruction": make_single_payload("construct_or_obstruction"),
+            },
+            selection_response=make_rule_selection_payload("construct_or_obstruction"),
+        )
+        planner = VariantPlanner(
+            client=client,
+            rulebook=self.rulebook,
+        )
+
+        with mock.patch("variant_planner.random.randrange", return_value=2) as randrange:
+            plan = planner.build_plan(
+                mode="single_seed_extension",
+                variant_index=1,
+                seed_schema=self.source_schema,
+                original_problem=self.original_problem,
+            )
+
+        randrange.assert_called_once_with(len(THEMES))
+        self.assertEqual(plan.theme_random_value, 2)
+        self.assertEqual(plan.theme.theme_id, THEMES[2].theme_id)
+
     def test_validate_candidate_rejects_unexpected_new_schema_fields(self) -> None:
         planner = VariantPlanner(
             client=None,
             rulebook=self.rulebook,
-            seed=29,
         )
         payload = make_single_payload("canonical_witness")
         payload["new_schema"]["selected_input_options"] = ["legacy_option"]
@@ -593,7 +614,6 @@ class SameFamilyFusionTests(unittest.TestCase):
         planner = VariantPlanner(
             client=FakePlannerClient(responses),
             rulebook=self.rulebook,
-            seed=13,
         )
 
         for rule_id in responses:
@@ -601,7 +621,6 @@ class SameFamilyFusionTests(unittest.TestCase):
                 plan = planner.build_plan(
                     mode="same_family_fusion",
                     variant_index=1,
-                    theme_id="campus_ops",
                     seed_a_schema=self.seed_a_schema,
                     seed_b_schema=self.seed_b_schema,
                     seed_a_problem=self.seed_a_problem,
@@ -638,12 +657,10 @@ class SameFamilyFusionTests(unittest.TestCase):
                 },
             ),
             rulebook=self.rulebook,
-            seed=17,
         )
         plan = planner.build_plan(
             mode="same_family",
             variant_index=1,
-            theme_id="campus_ops",
             seed_a_schema=self.seed_a_schema,
             seed_b_schema=self.seed_b_schema,
             seed_a_problem=self.seed_a_problem,
@@ -1010,7 +1027,7 @@ class PipelineArtifactTests(unittest.TestCase):
         plan = VariantPlan(
             problem_id="A__B_FUSED",
             variant_index=1,
-            seed=99,
+            theme_random_value=3,
             mode="same_family_fusion",
             theme=theme,
             source_problem_ids=["A", "B"],
@@ -1074,8 +1091,6 @@ class PipelineArtifactTests(unittest.TestCase):
             records = pipeline.run(
                 mode="same_family",
                 problem_ids=[],
-                variants=1,
-                theme_id="campus_ops",
                 seed_a="A",
                 seed_b="B",
             )
@@ -1106,9 +1121,13 @@ class PipelineArtifactTests(unittest.TestCase):
             "selection_trace",
             "validation_trace",
             "candidate_attempts",
+            "theme_random_value",
         ):
             self.assertIn(key, artifact)
+        self.assertNotIn("seed", artifact)
+        self.assertEqual(artifact["theme_random_value"], 3)
         self.assertEqual(artifact["mode"], "same_family_fusion")
+        self.assertIn(artifact["theme"]["id"], THEME_IDS)
         self.assertEqual(artifact["generated_problem"]["status"], "ok")
         self.assertEqual(
             set(artifact["distance_breakdown"]),
@@ -1164,16 +1183,14 @@ class BatchPipelineTests(unittest.TestCase):
             pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
             )
 
         joined = "\n".join(messages)
         self.assertIn("[single] 开始生成", joined)
         self.assertIn("[problem] A：读取 schema 与原题信息。", joined)
-        self.assertIn("[problem] A：variant 1 进入规划。", joined)
-        self.assertIn("[problem] A：variant 1 进入题面生成。", joined)
-        self.assertIn("[problem] A：variant 1 写入产物。", joined)
+        self.assertIn("[problem] A：进入规划。", joined)
+        self.assertIn("[problem] A：进入题面生成。", joined)
+        self.assertIn("[problem] A：写入产物。", joined)
         self.assertIn("[problem] A：完成。report=", joined)
 
     def test_batch_single_run_writes_summary_outputs_in_sorted_order(self) -> None:
@@ -1202,8 +1219,6 @@ class BatchPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A", "B"],
-                variants=1,
-                theme_id="campus_ops",
                 batch_source_dir=source_dir,
             )
 
@@ -1224,6 +1239,8 @@ class BatchPipelineTests(unittest.TestCase):
         self.assertEqual(batch_payload["task_order"], ["A", "B"])
         self.assertEqual(batch_payload["completed_count"], 2)
         self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B"])
+        self.assertTrue(all("record" in item for item in batch_payload["items"]))
+        self.assertTrue(all("variant_records" not in item for item in batch_payload["items"]))
 
     def test_batch_single_run_continues_after_failure_and_persists_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -1251,8 +1268,6 @@ class BatchPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A", "B", "C"],
-                variants=1,
-                theme_id="campus_ops",
                 batch_source_dir=source_dir,
             )
 
@@ -1269,11 +1284,13 @@ class BatchPipelineTests(unittest.TestCase):
         self.assertEqual(batch_payload["failed_count"], 1)
         self.assertEqual(batch_payload["failed_problem_id"], "B")
         self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B", "C"])
+        self.assertTrue(all("record" in item for item in batch_payload["items"]))
+        self.assertTrue(all("variant_records" not in item for item in batch_payload["items"]))
         self.assertEqual([record["source_problem_ids"] for record in records], [["A"], ["C"]])
         self.assertEqual(len(markdown_paths), 2)
         self.assertEqual(markdown_parent_names, ["A", "C"])
-        self.assertTrue(markdown_paths[0].startswith("A_v1_campus_ops_"))
-        self.assertTrue(markdown_paths[1].startswith("C_v1_campus_ops_"))
+        self.assertTrue(_matches_theme_stem(markdown_paths[0], "A"))
+        self.assertTrue(_matches_theme_stem(markdown_paths[1], "C"))
 
     def test_batch_single_run_continues_after_embedding_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -1301,8 +1318,6 @@ class BatchPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A", "B", "C"],
-                variants=1,
-                theme_id="campus_ops",
                 batch_source_dir=source_dir,
             )
 
@@ -1315,6 +1330,8 @@ class BatchPipelineTests(unittest.TestCase):
         self.assertEqual(batch_payload["failed_count"], 1)
         self.assertEqual(batch_payload["failed_problem_id"], "B")
         self.assertEqual([item["problem_id"] for item in batch_payload["items"]], ["A", "B", "C"])
+        self.assertTrue(all("record" in item for item in batch_payload["items"]))
+        self.assertTrue(all("variant_records" not in item for item in batch_payload["items"]))
         failed_item = next(item for item in batch_payload["items"] if item["problem_id"] == "B")
         self.assertEqual(failed_item["status"], "failed")
         self.assertIn("embedding service unavailable", failed_item["error_reason"])
@@ -1351,8 +1368,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=2,
             )
 
@@ -1422,8 +1437,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=1,
             )
 
@@ -1488,8 +1501,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=1,
             )
 
@@ -1546,8 +1557,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=2,
             )
 
@@ -1607,8 +1616,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=2,
             )
 
@@ -1705,8 +1712,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=3,
             )
 
@@ -1805,8 +1810,6 @@ class QualityIterationPipelineTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
                 quality_iterations=2,
             )
 
@@ -1849,8 +1852,6 @@ class ReportRenderingTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
             )
 
             report_text = Path(records[0]["report_path"]).read_text(encoding="utf-8")
@@ -1927,8 +1928,6 @@ class ReportRenderingTests(unittest.TestCase):
             records = pipeline.run(
                 mode="single",
                 problem_ids=["A"],
-                variants=1,
-                theme_id="campus_ops",
             )
 
             report_text = Path(records[0]["report_path"]).read_text(encoding="utf-8")
@@ -1957,8 +1956,6 @@ class CliAndDocumentationTests(unittest.TestCase):
                 "--problem-ids",
                 "CF1",
                 "CF2",
-                "--timeout",
-                "360",
                 "--quality-iterations",
                 "3",
             ]
@@ -1966,9 +1963,10 @@ class CliAndDocumentationTests(unittest.TestCase):
         _validate_args(parser, single_args)
         self.assertEqual(single_args.mode, "single")
         self.assertEqual(single_args.problem_ids, ["CF1", "CF2"])
-        self.assertEqual(single_args.timeout, 360)
         self.assertEqual(single_args.quality_iterations, 3)
         self.assertEqual(single_args.quality_full_score_max_iterations, 10)
+        self.assertFalse(hasattr(single_args, "theme"))
+        self.assertFalse(hasattr(single_args, "seed"))
 
         same_family_args = parser.parse_args(
             [
@@ -1989,6 +1987,18 @@ class CliAndDocumentationTests(unittest.TestCase):
             _normalize_rule_overrides(same_family_args.rule_override),
             {"interlocked_constraints", "shared_core_objective_upgrade"},
         )
+
+    def test_cli_rejects_removed_theme_and_random_seed_options(self) -> None:
+        parser = build_parser()
+
+        with self.assertRaises(SystemExit):
+            parser.parse_args(["--mode", "single", "--problem-ids", "CF1", "--theme", "campus_ops"])
+
+        with self.assertRaises(SystemExit):
+            parser.parse_args(["--mode", "single", "--problem-ids", "CF1", "--variants", "2"])
+
+        with self.assertRaises(SystemExit):
+            parser.parse_args(["--mode", "single", "--problem-ids", "CF1", "--seed", "20260312"])
 
     def test_cli_rejects_invalid_quality_iteration_settings(self) -> None:
         parser = build_parser()
@@ -2073,13 +2083,6 @@ class CliAndDocumentationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "显式提供 problem_id"):
                 _load_batch_problem_ids(source_dir)
 
-    def test_cli_rejects_non_positive_timeout(self) -> None:
-        parser = build_parser()
-        args = parser.parse_args(["--mode", "single", "--problem-ids", "CF1", "--timeout", "0"])
-
-        with self.assertRaises(SystemExit):
-            _validate_args(parser, args)
-
     def test_readmes_describe_rule_driven_four_tuple_flow(self) -> None:
         generator_readme = (GEN_DIR / "README.md").read_text(encoding="utf-8")
         rules_doc = (GEN_DIR / "RULES.md").read_text(encoding="utf-8")
@@ -2111,12 +2114,7 @@ class CliAndDocumentationTests(unittest.TestCase):
 
 class QwenClientTests(unittest.TestCase):
     def test_chat_json_retries_on_timeout_error(self) -> None:
-        client = QwenClient(
-            api_key="test-key",
-            model="test-model",
-            base_url="https://example.com/v1",
-            timeout_s=5,
-        )
+        client = _make_qwen_client(generation_max_retries=2)
 
         with mock.patch("qwen_client.time.sleep") as mocked_sleep:
             with mock.patch("qwen_client.urllib.request.urlopen") as mocked_urlopen:
@@ -2130,7 +2128,46 @@ class QwenClientTests(unittest.TestCase):
 
         self.assertEqual(payload, {"status": "ok"})
         self.assertEqual(mocked_urlopen.call_count, 2)
+        request = mocked_urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "https://generation.example.test/v1/chat/completions")
+        self.assertEqual(json.loads(request.data.decode("utf-8"))["model"], "generation-model")
         mocked_sleep.assert_called_once()
+
+    def test_embed_texts_uses_embedding_endpoint_config(self) -> None:
+        client = _make_qwen_client()
+
+        with mock.patch("qwen_client.urllib.request.urlopen") as mocked_urlopen:
+            mocked_response = mock.MagicMock()
+            mocked_response.__enter__.return_value.read.return_value = (
+                b'{"data":[{"index":0,"embedding":[0.1,0.2]}]}'
+            )
+            mocked_urlopen.return_value = mocked_response
+
+            vectors = client.embed_texts(["hello"], max_retries=1)
+
+        self.assertEqual(vectors, [[0.1, 0.2]])
+        request = mocked_urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "https://embedding.example.test/v1/embeddings")
+        self.assertEqual(json.loads(request.data.decode("utf-8"))["model"], "embedding-model")
+
+
+def _make_qwen_client(*, generation_max_retries: int = 3) -> QwenClient:
+    return QwenClient(
+        generation_config=LLMEndpointConfig(
+            api_key="generation-key",
+            base_url="https://generation.example.test/v1",
+            model="generation-model",
+            timeout_seconds=5,
+            max_retries=generation_max_retries,
+        ),
+        embedding_config=LLMEndpointConfig(
+            api_key="embedding-key",
+            base_url="https://embedding.example.test/v1",
+            model="embedding-model",
+            timeout_seconds=7,
+            max_retries=4,
+        ),
+    )
 
 
 class StubEmbeddingClient:
@@ -2339,7 +2376,7 @@ class ProblemAwarePlanner:
         plan.variant_index = variant_index
         plan.source_problem_ids = [source_problem_id]
         plan.new_schema_snapshot.problem_id = f"{source_problem_id}_GEN"
-        plan.seed = 20260409
+        plan.theme_random_value = 0
         return plan
 
 
@@ -2358,7 +2395,7 @@ class RevisionAwarePlanner:
         plan.variant_index = variant_index
         plan.source_problem_ids = [source_problem_id]
         plan.new_schema_snapshot.problem_id = f"{source_problem_id}_GEN_R{round_index}"
-        plan.seed = 20260409 + round_index
+        plan.theme_random_value = round_index % len(THEMES)
         self.calls.append(
             {
                 "round_index": round_index,
@@ -2651,7 +2688,6 @@ def _single_rule_objective(rule_id: str) -> dict[str, str]:
         "construct_or_obstruction": {"type": "construction", "description": "输出合法构造；若不存在，则输出可局部检查的阻碍证书。"},
         "existence_to_counting": {"type": "counting", "description": "统计所有不同合法方案数。"},
         "minimum_guarantee_under_perturbation": {"type": "minimize_value", "description": "求任意合法扰动下仍能保证成功的最小保底阈值。"},
-        "static_to_online_queries": {"type": "value_computation", "description": "在更新和查询交错的操作流中输出每次查询的当前答案。"},
         "feasibility_to_extremal_threshold": {"type": "minimize_value", "description": "求使可行性成立的最小临界阈值。"},
         "single_objective_to_tradeoff_frontier": {"type": "maximize_value", "description": "在预算限制下最大化收益，并输出不可支配权衡结果。"},
         "forward_solution_to_inverse_design": {"type": "construction", "description": "构造最小修改方案，使给定目标结果成立。"},
@@ -2911,7 +2947,7 @@ def make_validation_plan(rule_id: str) -> VariantPlan:
     return VariantPlan(
         problem_id=new_schema.problem_id,
         variant_index=1,
-        seed=1,
+        theme_random_value=3,
         mode=mode,
         theme=theme,
         source_problem_ids=["A", "B"] if mode == "same_family_fusion" else ["A"],
@@ -3004,15 +3040,6 @@ def make_valid_problem_cases() -> dict[str, GeneratedProblem]:
             constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
             samples=[{"input": "1\n2\n3", "output": "5", "explanation": "样例。"}, {"input": "3\n2\n1", "output": "7", "explanation": "样例。"}],
             notes="需要考虑最坏情况。",
-        ),
-        "static_to_online_queries": GeneratedProblem(
-            title="在线查询",
-            description="给定更新和查询交错的操作流，每次查询都必须基于此前所有更新后的当前状态输出答案。",
-            input_format="输入操作数量以及每个 update 或 query 操作。",
-            output_format="对每个 query 输出当前答案。",
-            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
-            samples=[{"input": "3\nquery\nupdate 1 2\nquery", "output": "1\n2", "explanation": "第二次查询受更新影响。"}, {"input": "2\nupdate 1 3\nquery", "output": "3", "explanation": "样例。"}],
-            notes="不能把每次查询当成独立静态输入。",
         ),
         "feasibility_to_extremal_threshold": GeneratedProblem(
             title="临界阈值",
