@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_dc4cc6ae84e3",
+  "title": "binary trees with factors",
+  "description": "Given an array of unique integers, each integer is strictly greater than 1.\nWe make a binary tree using these integers and each number may be used for any number of times.\nEach non-leaf node's value should be equal to the product of the values of it's children.\nHow many binary trees can we make?  Return the answer modulo 10 ** 9 + 7.\nExample 1:\nInput: A = [2, 4]\nOutput: 3\nExplanation: We can make these trees: [2], [4], [4, 2, 2]\nExample 2:\nInput: A = [2, 4, 5, 10]\nOutput: 7\nExplanation: We can make these trees: [2], [4], [5], [10], [4, 2, 2], [10, 2, 5], [10, 5, 2].\n \nNote:\n\n1 <= A.length <= 1000.\n2 <= A[i] <= 10 ^ 9.",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef numFactoredBinaryTrees(self, A: List[int]) -> int:\n\t\tmod = 10 ** 9 + 7\n\t\tnums_set = set(A)\n\t\tnums = A.copy()\n\t\tnums.sort()\n\t\tcounts = {}\n\t\ttotal = 0\n\t\tfor n in nums:\n\t\t\tn_count = 1\n\t\t\tfor d in nums:\n\t\t\t\tif d * d > n:\n\t\t\t\t\tbreak\n\t\t\t\tif n % d != 0:\n\t\t\t\t\tcontinue\n\t\t\t\te = n // d\n\t\t\t\tif e not in nums_set:\n\t\t\t\t\tcontinue\n\t\t\t\tsubtrees = counts[d] * counts[e] % mod\n\t\t\t\tif d != e:\n\t\t\t\t\tsubtrees = subtrees * 2 % mod\n\t\t\t\tn_count = (n_count + subtrees) % mod\n\t\t\tcounts[n] = n_count % mod\n\t\t\ttotal = (total + n_count) % mod\n\t\treturn total"
+}
