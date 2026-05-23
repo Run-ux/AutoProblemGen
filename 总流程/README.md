@@ -7,7 +7,7 @@
 3. 调用本目录 `verification_runner.py`，再转入同级目录 `生成测试用例和标准解法` 生成并验证测试产物。
 4. 在输出目录写入日志、阶段结果和 `workflow_summary.json`。
 
-当 `INPUT_PATH` 是目录时，总流程按题串行执行完整流水线：第 1 题完成抽取、题面生成、质量门槛和验证后，才开始第 2 题。这样中断后更容易续跑，也能从终端直接看清当前卡在哪一道题、哪一次 LLM 调用。
+当 `INPUT_PATH` 是目录时，总流程按题串行执行完整流水线：第 1 题完成抽取、题面生成、质量门槛和验证后，才开始第 2 题。这样中断后更容易续跑，也能从终端直接看清当前卡在哪一道题、哪个阶段；LLM 调用细节统一查看 `logs/llm_calls.jsonl`。
 
 ## 目录要求
 
@@ -121,9 +121,9 @@ OUTPUT_ROOT\RUN_ID
 
 - 启动摘要：`run_id` 来源、输入模式、题目总数、可跳过数、待处理数、summary 路径和 LLM 详细日志路径。
 - 每题进度：题号、`problem_id`、输入文件、每个阶段的开始/完成/跳过原因。
-- LLM 摘要：每次调用的阶段、任务、模型、temperature、timeout、attempt、输入输出规模、耗时、HTTP 状态、JSON 解析状态和结果摘要。
+- LLM 异常信号：重试和最终失败会即时显示，正常调用不逐次打印。
 
-完整 prompt 和完整 response 只写入 `logs/llm_calls.jsonl`，终端默认只显示摘要。运行结束后，命令行会输出总状态、状态计数、未验证题目列表和 summary 路径，例如：
+正常调用的模型、prompt、response、usage、耗时、HTTP 状态、JSON 解析状态和结果摘要只写入 `logs/llm_calls.jsonl`。运行结束后，命令行会输出总状态、状态计数、未验证题目列表和 summary 路径，例如：
 
 ```text
 [workflow] status=completed

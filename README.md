@@ -47,7 +47,7 @@ python D:\AutoProblemGen\总流程\main.py ^
 └── workflow_summary.json
 ```
 
-`workflow_summary.json` 会按题记录输入 hash、抽取、生成、质量门槛和验证状态。若某题抽取四维中任一维失败，该题会标记为 `skipped_before_generation`，不会进入题面生成；若质量门槛未通过，则不会生成下游测试与标准解法产物。终端会输出每题阶段进度和每次 LLM 调用摘要；完整 prompt、完整 response、usage、重试和错误信息写入 `logs/llm_calls.jsonl`，且不会记录 API Key。
+`workflow_summary.json` 会按题记录输入 hash、抽取、生成、质量门槛和验证状态。若某题抽取四维中任一维失败，该题会标记为 `skipped_before_generation`，不会进入题面生成；若质量门槛未通过，则不会生成下游测试与标准解法产物。终端会输出每题阶段进度和 LLM 重试/失败等异常信号；正常 LLM 调用的模型、prompt、response、usage、耗时和解析结果写入 `logs/llm_calls.jsonl`，且不会记录 API Key。
 
 ## 主线流程
 

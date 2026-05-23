@@ -394,7 +394,11 @@ class LLMTraceTests(unittest.TestCase):
 
             terminal = stdout.getvalue()
             self.assertIn("[llm call", terminal)
-            self.assertIn("system_chars=", terminal)
+            self.assertIn("第 1/2 次未成功", terminal)
+            self.assertIn("调用失败", terminal)
+            self.assertNotIn("开始", terminal)
+            self.assertNotIn("system_chars=", terminal)
+            self.assertNotIn("返回成功", terminal)
             self.assertNotIn("SYSTEM_PROMPT_SECRET", terminal)
             self.assertNotIn("USER_PROMPT_SECRET", terminal)
             events = [

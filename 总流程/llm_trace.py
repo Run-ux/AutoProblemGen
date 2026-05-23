@@ -65,21 +65,6 @@ def start_call(
         }
     )
     _write_event(event)
-    _emit(
-        [
-            f"[llm call {call_id}] 开始",
-            (
-                f"[llm] 阶段={event['stage']}；任务={task_name}；problem_id={event['problem_id']}；"
-                f"model={model}；temperature={temperature}；timeout={timeout_seconds}s；"
-                f"attempt={attempt}/{max_retries}"
-            ),
-            (
-                f"[llm] 请求规模：system_chars={len(system_prompt)}；"
-                f"user_chars={len(user_prompt)}；payload_bytes={payload_bytes}"
-            ),
-            f"[llm] 完整 prompt/response 记录：{_trace_path_text()}",
-        ]
-    )
     return started
 
 
@@ -147,17 +132,6 @@ def finish_call(
         }
     )
     _write_event(event)
-    usage_text = _format_usage(usage or {})
-    _emit(
-        [
-            f"[llm call {call_id}] 返回成功",
-            (
-                f"[llm] 耗时={elapsed_seconds:.2f}s；http_status={http_status or 'unknown'}；"
-                f"response_chars={len(response_text)}；json_parse={json_parse}"
-            ),
-            f"[llm] 返回摘要：{_format_summary(summary or summarize_value(raw_response))}{usage_text}",
-        ]
-    )
 
 
 def fail_call(
