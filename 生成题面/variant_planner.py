@@ -386,6 +386,7 @@ class VariantPlanner:
                     revision_context=revision_context,
                 ),
                 temperature=0.05,
+                request_label="rule_selection",
             )
             status = str(payload.get("status", "difference_insufficient"))
             if status != "ok":
@@ -449,6 +450,7 @@ class VariantPlanner:
                 revision_context=revision_context,
             ),
             temperature=0.15,
+            request_label=f"variant_planning.{normalize_rule_id(rule.get('id', 'unknown'))}",
         )
         accepted, normalized, rejection_reason, validation_trace, reason_code = self._validate_candidate(
             mode=mode,

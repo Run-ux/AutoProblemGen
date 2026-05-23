@@ -178,7 +178,12 @@ def extract_single_dimension(
     rate_limiter.wait()
 
     try:
-        result = client.chat_json(system_prompt, user_prompt, temperature=temperature)
+        result = client.chat_json(
+            system_prompt,
+            user_prompt,
+            temperature=temperature,
+            request_label=f"tuple_extract.{dimension_name}",
+        )
         if dimension_name == "input_structure":
             validate_input_structure_result(result)
         return {

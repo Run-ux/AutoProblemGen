@@ -31,6 +31,7 @@ if str(WORKFLOW_DIR) not in sys.path:
     sys.path.insert(0, str(WORKFLOW_DIR))
 
 from runtime_config import LLMEndpointConfig
+from llm_trace import fail_call, finish_call, new_call_id, retry_call, start_call, summarize_value
 
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,28 @@ class QwenClient:
         last_raw_text = ""
         label = request_label or "unnamed-request"
         retries = max_retries or self.max_retries
+        call_id = new_call_id()
         for attempt in range(1, retries + 1):
+            started = start_call(
+                call_id=call_id,
+                task_name=label,
+                model=self.model,
+                endpoint=self.base_url.rstrip("/") + "/chat/completions",
+                temperature=temperature,
+                timeout_seconds=self.timeout_s,
+                attempt=attempt,
+                max_retries=retries,
+                system_prompt=system,
+                user_prompt=user,
+                payload={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                    "temperature": temperature,
+                },
+            )
             try:
                 logger.info(
                     "[Qwen] %s: 主请求第 %d/%d 次，timeout=%ss",
@@ -94,21 +116,55 @@ class QwenClient:
                     retries,
                     self.timeout_s,
                 )
-                content = self._chat_text(
+                response_meta = self._chat_text(
                     messages=[
                         {"role": "system", "content": system},
                         {"role": "user", "content": user},
                     ],
                     temperature=temperature,
                 )
+                content = str(response_meta["content"])
                 last_raw_text = content
                 try:
-                    return _extract_first_json_object(content)
+                    parsed = _extract_first_json_object(content)
+                    finish_call(
+                        call_id=call_id,
+                        task_name=label,
+                        elapsed_seconds=time.perf_counter() - started,
+                        http_status=response_meta.get("http_status"),
+                        response_text=content,
+                        raw_response=response_meta.get("raw_response"),
+                        usage=response_meta.get("usage", {}),
+                        json_parse="success",
+                        summary=summarize_value(parsed),
+                    )
+                    return parsed
                 except ValueError:
                     logger.warning("[Qwen] %s: 主请求返回内容不是合法 JSON，进入 JSON 修复", label)
+                    retry_call(
+                        call_id=call_id,
+                        task_name=label,
+                        attempt=attempt,
+                        max_retries=retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error="模型返回内容不是合法 JSON，进入 JSON 修复",
+                        retry_delay_seconds=0.0,
+                    )
                     repaired = self._repair_json_content(content, request_label=label)
                     last_raw_text = repaired
-                    return _extract_first_json_object(repaired)
+                    parsed = _extract_first_json_object(repaired)
+                    finish_call(
+                        call_id=call_id,
+                        task_name=label,
+                        elapsed_seconds=time.perf_counter() - started,
+                        http_status=response_meta.get("http_status"),
+                        response_text=repaired,
+                        raw_response={"original": content, "repaired": repaired},
+                        usage=response_meta.get("usage", {}),
+                        json_parse="repaired",
+                        summary=summarize_value(parsed),
+                    )
+                    return parsed
             except (
                 urllib.error.URLError,
                 urllib.error.HTTPError,
@@ -129,6 +185,25 @@ class QwenClient:
                     "检测到超时，" if isinstance(e, (TimeoutError, socket.timeout)) else "",
                     delay,
                 )
+                if attempt < retries:
+                    retry_call(
+                        call_id=call_id,
+                        task_name=label,
+                        attempt=attempt,
+                        max_retries=retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error=e,
+                        retry_delay_seconds=delay,
+                    )
+                else:
+                    fail_call(
+                        call_id=call_id,
+                        task_name=label,
+                        attempt=attempt,
+                        max_retries=retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error=e,
+                    )
                 time.sleep(delay)
             except QwenJSONError as e:
                 last_err = e
@@ -143,6 +218,25 @@ class QwenClient:
                     e,
                     delay,
                 )
+                if attempt < retries:
+                    retry_call(
+                        call_id=call_id,
+                        task_name=label,
+                        attempt=attempt,
+                        max_retries=retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error=e,
+                        retry_delay_seconds=delay,
+                    )
+                else:
+                    fail_call(
+                        call_id=call_id,
+                        task_name=label,
+                        attempt=attempt,
+                        max_retries=retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error=e,
+                    )
                 time.sleep(delay)
 
         raise QwenJSONError(f"调用千问失败：{last_err}", raw_text=last_raw_text)
@@ -152,7 +246,7 @@ class QwenClient:
         messages: list[dict[str, str]],
         temperature: float,
         model: str | None = None,
-    ) -> str:
+    ) -> dict[str, Any]:
         url = self.base_url.rstrip("/") + "/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -170,8 +264,14 @@ class QwenClient:
             method="POST",
         )
         with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+            http_status = response.getcode()
             data = json.loads(response.read().decode("utf-8"))
-        return data["choices"][0]["message"]["content"]
+        return {
+            "content": data["choices"][0]["message"]["content"],
+            "raw_response": data,
+            "http_status": http_status,
+            "usage": data.get("usage", {}) if isinstance(data, dict) else {},
+        }
 
     def _repair_json_content(self, broken_text: str, request_label: str = "") -> str:
         repair_system = (
@@ -185,14 +285,57 @@ class QwenClient:
         )
         try:
             logger.info("[Qwen] %s: 发起 JSON 修复请求，timeout=%ss", request_label or "unnamed-request", self.timeout_s)
-            return self._chat_text(
+            label = f"{request_label or 'unnamed-request'}.json_repair"
+            call_id = new_call_id()
+            started = start_call(
+                call_id=call_id,
+                task_name=label,
+                model=self.model,
+                endpoint=self.base_url.rstrip("/") + "/chat/completions",
+                temperature=0.0,
+                timeout_seconds=self.timeout_s,
+                attempt=1,
+                max_retries=1,
+                system_prompt=repair_system,
+                user_prompt=repair_user,
+                payload={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": repair_system},
+                        {"role": "user", "content": repair_user},
+                    ],
+                    "temperature": 0.0,
+                },
+            )
+            response_meta = self._chat_text(
                 messages=[
                     {"role": "system", "content": repair_system},
                     {"role": "user", "content": repair_user},
                 ],
                 temperature=0.0,
             )
+            content = str(response_meta["content"])
+            finish_call(
+                call_id=call_id,
+                task_name=label,
+                elapsed_seconds=time.perf_counter() - started,
+                http_status=response_meta.get("http_status"),
+                response_text=content,
+                raw_response=response_meta.get("raw_response"),
+                usage=response_meta.get("usage", {}),
+                json_parse="unchecked",
+                summary={"repair_response_chars": len(content)},
+            )
+            return content
         except Exception as exc:
+            fail_call(
+                call_id=call_id if "call_id" in locals() else new_call_id(),
+                task_name=f"{request_label or 'unnamed-request'}.json_repair",
+                attempt=1,
+                max_retries=1,
+                elapsed_seconds=time.perf_counter() - started if "started" in locals() else 0.0,
+                error=exc,
+            )
             raise QwenJSONError(f"JSON 修复失败：{exc}", raw_text=broken_text) from exc
 
     def _retry_delay_seconds(self, error: Exception, attempt: int) -> float:

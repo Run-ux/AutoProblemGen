@@ -10,7 +10,7 @@ class FakeClient:
     def __init__(self, result):
         self.result = result
 
-    def chat_json(self, system_prompt, user_prompt, temperature=0.4):
+    def chat_json(self, system_prompt, user_prompt, temperature=0.4, **_):
         return self.result
 
 

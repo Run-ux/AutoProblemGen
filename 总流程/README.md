@@ -7,6 +7,8 @@
 3. 调用本目录 `verification_runner.py`，再转入同级目录 `生成测试用例和标准解法` 生成并验证测试产物。
 4. 在输出目录写入日志、阶段结果和 `workflow_summary.json`。
 
+当 `INPUT_PATH` 是目录时，总流程按题串行执行完整流水线：第 1 题完成抽取、题面生成、质量门槛和验证后，才开始第 2 题。这样中断后更容易续跑，也能从终端直接看清当前卡在哪一道题、哪一次 LLM 调用。
+
 ## 目录要求
 
 请确保项目目录结构至少包含：
@@ -76,9 +78,24 @@ PYTHON_EXECUTABLE=D:\path\to\venv\Scripts\python.exe
 `INPUT_PATH` 支持两种形式：
 
 - 单个 JSON 文件。
-- 一个目录，目录中每个 `.json` 文件表示一道题；目录模式会跳过 `manifest.json`。
+- 一个目录，目录中每个 `.json` 文件表示一道题；目录模式会跳过 `manifest.json`，且只处理顶层文件，不递归子目录。
 
 每个输入 JSON 至少需要包含非空的 `problem_id`。如果多个输入文件中出现重复 `problem_id`，流程会直接失败。
+
+## 断点续传
+
+如果 `workflow.env` 中 `RUN_ID` 留空，总流程会基于 `INPUT_PATH` 的规范化绝对路径生成稳定运行标识，例如：
+
+```text
+input_sample_400_autoproblemgen_a13f92c8
+```
+
+因此重跑同一个输入目录会回到同一个输出目录。启动时程序会读取已有 `workflow_summary.json`，只有同时满足以下条件的题会被跳过：
+
+- 该题上次状态为 `verified`。
+- 该题输入文件内容 hash 与上次一致。
+
+未完成、失败或输入内容变化的题会从四元组抽取开始完整重跑。若需要重新做一次完整实验或保留多次实验结果，请显式填写新的 `RUN_ID`。
 
 ## 输出位置
 
@@ -88,17 +105,25 @@ PYTHON_EXECUTABLE=D:\path\to\venv\Scripts\python.exe
 OUTPUT_ROOT\RUN_ID
 ```
 
-下生成结果。如果 `RUN_ID` 留空，程序会自动使用当前时间生成运行标识。
+下生成结果。如果 `RUN_ID` 留空，程序会使用 `INPUT_PATH` 稳定指纹生成运行标识。
 
 典型输出包括：
 
-- `logs/`：各阶段日志。
+- `logs/`：各阶段日志，每题会有独立的抽取、生成和验证日志。
+- `logs/llm_calls.jsonl`：所有 LLM 请求的结构化明细，包含完整 prompt、完整 response、重试、耗时、usage 和解析结果；不会记录 API Key。
 - `tuple/`：四元组抽取结果。
-- `generation/`：题面生成的输入、Markdown、artifact 和质量报告。
+- `generation/source/<problem_id>/`：每题隔离的题面生成输入，避免目录输入时重复生成已处理题。
+- `generation/`：题面生成的 Markdown、artifact 和质量报告。
 - `verification/`：验证阶段输出。
 - `workflow_summary.json`：本次运行的总览结果、阶段状态和各题状态。
 
-运行结束后，命令行会输出总状态和 summary 路径，例如：
+运行时终端会输出：
+
+- 启动摘要：`run_id` 来源、输入模式、题目总数、可跳过数、待处理数、summary 路径和 LLM 详细日志路径。
+- 每题进度：题号、`problem_id`、输入文件、每个阶段的开始/完成/跳过原因。
+- LLM 摘要：每次调用的阶段、任务、模型、temperature、timeout、attempt、输入输出规模、耗时、HTTP 状态、JSON 解析状态和结果摘要。
+
+完整 prompt 和完整 response 只写入 `logs/llm_calls.jsonl`，终端默认只显示摘要。运行结束后，命令行会输出总状态、状态计数、未验证题目列表和 summary 路径，例如：
 
 ```text
 [workflow] status=completed
@@ -110,8 +135,11 @@ OUTPUT_ROOT\RUN_ID
 - `INPUT_PATH 不存在`：检查 `workflow.env` 中的输入路径是否正确。
 - `缺少必要配置 API_KEY`：检查 `generation_llm.env` 或 `embedding_llm.env` 是否已填写密钥。
 - `QUALITY_ITERATIONS 必须是 1、2 或 3`：质量评价不能关闭，只能配置为 `1`、`2` 或 `3`。
-- `四元组抽取阶段失败`、`生成题面阶段失败`：先查看输出目录下 `logs/` 中对应阶段日志。
+- `四元组抽取子进程失败`、`生成题面子进程失败`：先查看输出目录下 `logs/` 中对应题目的阶段日志。
+- `skipped_before_generation`：该题四元组抽取有维度失败，流程会继续处理下一题。
+- `quality_gate_failed`：该题生成完成但质量门槛未通过，不会进入验证阶段，流程会继续处理下一题。
 - `验证失败` 或 `verification_failed`：查看 `verification/` 下对应题目的验证结果 JSON，以及 `logs/` 中的验证日志。
+- LLM 调用卡住、重试或返回非法 JSON：查看 `logs/llm_calls.jsonl` 中对应 `call_id` 的完整请求和返回。
 
 ## 运行测试
 

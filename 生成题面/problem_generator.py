@@ -86,6 +86,7 @@ class ProblemGenerator:
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=max(0.1, base_temperature - 0.05 * (attempt - 1)),
+                request_label=f"problem_statement_round{attempt}",
             )
             problem = self._normalize_payload(payload, plan)
             if problem.status in {"schema_insufficient", "difference_insufficient"}:

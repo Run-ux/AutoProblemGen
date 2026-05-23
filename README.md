@@ -28,7 +28,9 @@ python D:\AutoProblemGen\总流程\main.py ^
   --workflow-config D:\AutoProblemGen\总流程\workflow.env
 ```
 
-总流程 v1 只支持 `single_seed_extension`，不包含爬取阶段，也不串 `same_family_fusion`。输入可以是单个原始 schema JSON，或包含多个 schema JSON 的目录。流程参数全部从 `workflow.env` 读取，`QUALITY_ITERATIONS` 必须为 `1`、`2` 或 `3`，不能关闭质量评价；只有最终质量报告满足 `generated_status=ok`、`overall.status=pass`，且迭代摘要 `stop_reason=pass` 的题目才会进入测试用例与标准解法验证阶段。
+总流程 v1 只支持 `single_seed_extension`，不包含爬取阶段，也不串 `same_family_fusion`。输入可以是单个原始 schema JSON，或包含多个 schema JSON 的目录；目录输入会按题串行跑完整流水线，即一题完成四元组抽取、题面生成、质量门槛和验证后，再开始下一题。流程参数全部从 `workflow.env` 读取，`QUALITY_ITERATIONS` 必须为 `1`、`2` 或 `3`，不能关闭质量评价；只有最终质量报告满足 `generated_status=ok`、`overall.status=pass`，且迭代摘要 `stop_reason=pass` 的题目才会进入测试用例与标准解法验证阶段。
+
+`RUN_ID` 留空时，总流程会基于 `INPUT_PATH` 的规范化绝对路径生成稳定运行标识，用于断点续传。重跑同一个输入目录会读取已有 `workflow_summary.json`，跳过已 `verified` 且输入文件 hash 未变化的题；未完成、失败或输入变化的题会从四元组抽取开始完整重跑。如需保留多次完整实验，请手动设置新的 `RUN_ID`。
 
 默认输出位于：
 
@@ -41,10 +43,11 @@ python D:\AutoProblemGen\总流程\main.py ^
 ├── generation/reports/
 ├── verification/<problem_id>/
 ├── logs/
+│   └── llm_calls.jsonl
 └── workflow_summary.json
 ```
 
-`workflow_summary.json` 会按题记录抽取、生成、质量门槛和验证状态。若某题抽取四维中任一维失败，该题会标记为 `skipped_before_generation`，不会进入题面生成；若质量门槛未通过，则不会生成下游测试与标准解法产物。
+`workflow_summary.json` 会按题记录输入 hash、抽取、生成、质量门槛和验证状态。若某题抽取四维中任一维失败，该题会标记为 `skipped_before_generation`，不会进入题面生成；若质量门槛未通过，则不会生成下游测试与标准解法产物。终端会输出每题阶段进度和每次 LLM 调用摘要；完整 prompt、完整 response、usage、重试和错误信息写入 `logs/llm_calls.jsonl`，且不会记录 API Key。
 
 ## 主线流程
 
@@ -181,6 +184,8 @@ VERIFICATION_TIMEOUT_SECONDS=3600
 GENERATION_LLM_CONFIG=D:\AutoProblemGen\总流程\generation_llm.env
 EMBEDDING_LLM_CONFIG=D:\AutoProblemGen\总流程\embedding_llm.env
 ```
+
+`RUN_ID=` 留空表示按 `INPUT_PATH` 稳定续传；同一输入目录会复用同一输出目录。需要重新完整运行时，请填写新的 `RUN_ID`。
 
 `generation_llm.env` 负责抽取、题面生成、质量评价和验证产物生成：
 

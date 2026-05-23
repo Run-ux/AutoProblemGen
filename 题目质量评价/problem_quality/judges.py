@@ -110,6 +110,7 @@ class ProblemQualityJudge:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             temperature=0.1,
+            request_label="quality_judge",
         )
         return _validate_quality_result(result)
 
@@ -229,6 +230,7 @@ verdict 规则：
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             temperature=0.1,
+            request_label="divergence_judge",
         )
         return _validate_divergence_result(result)
 

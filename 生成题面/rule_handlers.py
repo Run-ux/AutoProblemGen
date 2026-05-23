@@ -58,6 +58,7 @@ class RuleHandler:
                 global_redlines=global_redlines,
             ),
             temperature=0.05,
+            request_label=f"rule_eligibility.{self.rule_id}",
         )
         status = str(payload.get("status", "ineligible")).strip().lower()
         accepted = status == "eligible"
@@ -450,6 +451,7 @@ class RuleHandler:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             temperature=0.05,
+            request_label=f"rule_review.{self.rule_id}.{stage}",
         )
         return self._review_payload_to_outcome(
             stage=stage,

@@ -14,6 +14,7 @@ if str(WORKFLOW_DIR) not in sys.path:
     sys.path.insert(0, str(WORKFLOW_DIR))
 
 from runtime_config import LLMEndpointConfig
+from llm_trace import fail_call, finish_call, new_call_id, retry_call, start_call, summarize_value
 
 
 DEFAULT_DISTANCE_CACHE_DIR = Path(__file__).resolve().parent / ".cache"
@@ -53,6 +54,7 @@ class QwenClient:
         user_prompt: str,
         temperature: float = 0.7,
         max_retries: int | None = None,
+        request_label: str = "chat_json",
     ) -> dict[str, Any]:
         url = f"{self.base_url}/chat/completions"
         payload = {
@@ -71,6 +73,7 @@ class QwenClient:
             timeout_s=self.timeout_s,
             max_retries=max_retries or self.generation_config.max_retries,
             model=self.model,
+            task_name=request_label,
         )
         content = json.loads(raw)["choices"][0]["message"]["content"]
         return _extract_json_object(content)
@@ -101,6 +104,7 @@ class QwenClient:
             timeout_s=self.embedding_timeout_s,
             max_retries=max_retries or self.embedding_config.max_retries,
             model=active_model,
+            task_name="embedding",
         )
         data = json.loads(raw).get("data", [])
         if not isinstance(data, list):
@@ -129,6 +133,7 @@ class QwenClient:
         timeout_s: float,
         max_retries: int,
         model: str,
+        task_name: str,
     ) -> str:
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -138,7 +143,22 @@ class QwenClient:
         last_error: Exception | None = None
         payload_json = json.dumps(payload, ensure_ascii=False)
         payload_size = len(payload_json.encode("utf-8"))
+        call_id = new_call_id()
+        system_prompt, user_prompt = _extract_prompts(payload)
         for attempt in range(1, max_retries + 1):
+            started = start_call(
+                call_id=call_id,
+                task_name=task_name,
+                model=model,
+                endpoint=url,
+                temperature=_payload_temperature(payload),
+                timeout_seconds=timeout_s,
+                attempt=attempt,
+                max_retries=max_retries,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                payload=payload,
+            )
             try:
                 request = urllib.request.Request(
                     url=url,
@@ -147,7 +167,21 @@ class QwenClient:
                     method="POST",
                 )
                 with urllib.request.urlopen(request, timeout=timeout_s) as response:
-                    return response.read().decode("utf-8")
+                    http_status = response.getcode()
+                    raw_text = response.read().decode("utf-8")
+                summary, response_text, usage, json_parse = _summarize_raw_response(raw_text, payload)
+                finish_call(
+                    call_id=call_id,
+                    task_name=task_name,
+                    elapsed_seconds=time.perf_counter() - started,
+                    http_status=http_status,
+                    response_text=response_text,
+                    raw_response=_safe_json_loads(raw_text),
+                    usage=usage,
+                    json_parse=json_parse,
+                    summary=summary,
+                )
+                return raw_text
             except (
                 TimeoutError,
                 socket.timeout,
@@ -157,7 +191,27 @@ class QwenClient:
                 ValueError,
             ) as exc:
                 last_error = exc
-                time.sleep(1.5 * attempt)
+                delay = 1.5 * attempt
+                if attempt < max_retries:
+                    retry_call(
+                        call_id=call_id,
+                        task_name=task_name,
+                        attempt=attempt,
+                        max_retries=max_retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error=exc,
+                        retry_delay_seconds=delay,
+                    )
+                else:
+                    fail_call(
+                        call_id=call_id,
+                        task_name=task_name,
+                        attempt=attempt,
+                        max_retries=max_retries,
+                        elapsed_seconds=time.perf_counter() - started,
+                        error=exc,
+                    )
+                time.sleep(delay)
         raise RuntimeError(
             "调用 LLM 失败: "
             f"model={model}; url={url}; timeout_s={timeout_s}; "
@@ -189,3 +243,51 @@ def _extract_json_object(text: str) -> dict[str, Any]:
             if depth == 0:
                 return json.loads(text[start : index + 1])
     raise ValueError("模型返回的 JSON 对象不完整。")
+
+
+def _extract_prompts(payload: dict[str, Any]) -> tuple[str, str]:
+    messages = payload.get("messages")
+    if not isinstance(messages, list):
+        return "", ""
+    system_prompt = ""
+    user_prompt = ""
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role", ""))
+        content = str(message.get("content", ""))
+        if role == "system" and not system_prompt:
+            system_prompt = content
+        elif role == "user" and not user_prompt:
+            user_prompt = content
+    return system_prompt, user_prompt
+
+
+def _payload_temperature(payload: dict[str, Any]) -> float | None:
+    value = payload.get("temperature")
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def _safe_json_loads(text: str) -> Any:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
+
+
+def _summarize_raw_response(raw_text: str, payload: dict[str, Any]) -> tuple[dict[str, Any], str, dict[str, Any], str]:
+    data = _safe_json_loads(raw_text)
+    if not isinstance(data, dict):
+        return summarize_value(data), raw_text, {}, "failed"
+    usage = data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {}
+    if "embeddings" in str(payload.get("model", "")).lower() or "input" in payload and "messages" not in payload:
+        return summarize_value(data), raw_text, usage, "success"
+    try:
+        content = str(data["choices"][0]["message"]["content"])
+    except (KeyError, IndexError, TypeError):
+        return summarize_value(data), raw_text, usage, "failed"
+    try:
+        parsed = _extract_json_object(content)
+    except Exception:
+        return summarize_value(data), content, usage, "failed"
+    return summarize_value(parsed), content, usage, "success"

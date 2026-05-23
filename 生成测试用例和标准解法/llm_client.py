@@ -1,12 +1,30 @@
 from __future__ import annotations
 
 import logging
+import json
+import sys
+import time
+from pathlib import Path
 from typing import Protocol
 
 try:  # 兼容包内导入与当前目录直接运行两种方式。
     from .llm_config import LLMConfig
 except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导入。
     from llm_config import LLMConfig
+
+WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
+if str(WORKFLOW_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKFLOW_DIR))
+
+from llm_trace import (
+    fail_call,
+    finish_call,
+    new_call_id,
+    retry_call,
+    start_call,
+    summarize_value,
+    usage_from_openai_response,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +52,8 @@ class OpenAIChatLLMClient:
         client_kwargs = {
             "api_key": config.api_key,
             "timeout": config.timeout_seconds,
-            "max_retries": config.max_retries,
+            # 重试由本模块显式处理，确保每次 attempt 都进入统一 LLM 日志。
+            "max_retries": 0,
         }
         if config.base_url:
             client_kwargs["base_url"] = config.base_url
@@ -47,28 +66,102 @@ class OpenAIChatLLMClient:
             self.config.model,
             bool(self.config.base_url),
         )
-        try:
-            response = self._client.chat.completions.create(
+        call_id = new_call_id()
+        payload = {
+            "model": self.config.model,
+            "temperature": self.config.temperature,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        }
+        attempts = max(1, self.config.max_retries)
+        for attempt in range(1, attempts + 1):
+            started = start_call(
+                call_id=call_id,
+                task_name=task_name,
                 model=self.config.model,
+                endpoint=str(self.config.base_url or "openai-default"),
                 temperature=self.config.temperature,
-                response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
+                timeout_seconds=self.config.timeout_seconds,
+                attempt=attempt,
+                max_retries=attempts,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                payload=payload,
             )
-        except Exception as exc:
-            logger.exception("LLM 调用失败: task=%s model=%s", task_name, self.config.model)
-            raise LLMCallError(f"LLM 调用失败: {task_name}") from exc
+            try:
+                response = self._client.chat.completions.create(
+                    model=self.config.model,
+                    temperature=self.config.temperature,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                )
 
-        choices = getattr(response, "choices", None)
-        if not choices:
-            raise LLMCallError(f"LLM 响应缺少 choices: {task_name}")
+                choices = getattr(response, "choices", None)
+                if not choices:
+                    raise LLMCallError(f"LLM 响应缺少 choices: {task_name}")
 
-        content = getattr(choices[0].message, "content", None)
-        if not isinstance(content, str) or not content.strip():
-            raise LLMCallError(f"LLM 响应内容为空: {task_name}")
+                content = getattr(choices[0].message, "content", None)
+                if not isinstance(content, str) or not content.strip():
+                    raise LLMCallError(f"LLM 响应内容为空: {task_name}")
 
-        logger.info("LLM 调用成功: task=%s model=%s", task_name, self.config.model)
-        return content
+                logger.info("LLM 调用成功: task=%s model=%s", task_name, self.config.model)
+                try:
+                    parsed = json.loads(content)
+                    json_parse = "success"
+                except json.JSONDecodeError:
+                    parsed = content
+                    json_parse = "failed"
+                finish_call(
+                    call_id=call_id,
+                    task_name=task_name,
+                    elapsed_seconds=time.perf_counter() - started,
+                    http_status="sdk",
+                    response_text=content,
+                    raw_response=parsed,
+                    usage=usage_from_openai_response(response),
+                    json_parse=json_parse,
+                    summary=summarize_value(parsed),
+                )
+                return content
+            except Exception as exc:
+                elapsed = time.perf_counter() - started
+                if attempt < attempts:
+                    delay = 1.5 * attempt
+                    logger.warning(
+                        "LLM 调用第 %d/%d 次失败: task=%s model=%s error=%s",
+                        attempt,
+                        attempts,
+                        task_name,
+                        self.config.model,
+                        exc,
+                    )
+                    retry_call(
+                        call_id=call_id,
+                        task_name=task_name,
+                        attempt=attempt,
+                        max_retries=attempts,
+                        elapsed_seconds=elapsed,
+                        error=exc,
+                        retry_delay_seconds=delay,
+                    )
+                    time.sleep(delay)
+                    continue
 
+                logger.exception("LLM 调用失败: task=%s model=%s", task_name, self.config.model)
+                fail_call(
+                    call_id=call_id,
+                    task_name=task_name,
+                    attempt=attempt,
+                    max_retries=attempts,
+                    elapsed_seconds=elapsed,
+                    error=exc,
+                )
+                raise LLMCallError(f"LLM 调用失败: {task_name}") from exc
+
+        raise LLMCallError(f"LLM 调用失败: {task_name}")

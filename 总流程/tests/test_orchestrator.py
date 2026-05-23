@@ -17,6 +17,14 @@ if str(MODULE_DIR) not in sys.path:
     sys.path.insert(0, str(MODULE_DIR))
 
 import main as workflow_main
+from llm_trace import (
+    WORKFLOW_LLM_TRACE_PATH,
+    fail_call,
+    finish_call,
+    new_call_id,
+    retry_call,
+    start_call,
+)
 from orchestrator import CommandResult, TUPLE_DIMENSIONS, WorkflowConfig, run_workflow
 from runtime_config import (
     ExecutionLimits,
@@ -56,7 +64,7 @@ def _make_workflow_config(
     *,
     input_path: Path,
     output_root: Path,
-    run_id: str = "run",
+    run_id: str | None = "run",
     quality_iterations: int = 3,
     verification_timeout_seconds: float = 3600.0,
 ) -> WorkflowConfig:
@@ -334,6 +342,73 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertEqual(execution_limits.checker_memory_limit_mb, 512)
 
 
+class LLMTraceTests(unittest.TestCase):
+    def test_llm_trace_records_events_without_api_key_and_keeps_terminal_compact(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            trace_path = Path(tempdir) / "llm_calls.jsonl"
+            stdout = io.StringIO()
+            with mock.patch.dict(os.environ, {WORKFLOW_LLM_TRACE_PATH: str(trace_path)}, clear=False):
+                with contextlib.redirect_stdout(stdout):
+                    call_id = new_call_id()
+                    started = start_call(
+                        call_id=call_id,
+                        task_name="unit_task",
+                        model="chat-model",
+                        endpoint="https://example.test/v1/chat/completions",
+                        temperature=0.2,
+                        timeout_seconds=30,
+                        attempt=1,
+                        max_retries=2,
+                        system_prompt="SYSTEM_PROMPT_SECRET",
+                        user_prompt="USER_PROMPT_SECRET",
+                        payload={"api_key": "secret-generation-key", "messages": []},
+                    )
+                    retry_call(
+                        call_id=call_id,
+                        task_name="unit_task",
+                        attempt=1,
+                        max_retries=2,
+                        elapsed_seconds=0.1,
+                        error="temporary",
+                        retry_delay_seconds=1.5,
+                    )
+                    finish_call(
+                        call_id=call_id,
+                        task_name="unit_task",
+                        elapsed_seconds=0.2,
+                        http_status=200,
+                        response_text='{"status":"ok"}',
+                        raw_response={"status": "ok", "api_key": "secret-generation-key"},
+                        usage={"prompt_tokens": 1, "completion_tokens": 2, "total_tokens": 3},
+                        json_parse="success",
+                        summary={"status": "ok"},
+                    )
+                    fail_call(
+                        call_id=call_id,
+                        task_name="unit_task",
+                        attempt=2,
+                        max_retries=2,
+                        elapsed_seconds=0.3,
+                        error="final",
+                    )
+
+            terminal = stdout.getvalue()
+            self.assertIn("[llm call", terminal)
+            self.assertIn("system_chars=", terminal)
+            self.assertNotIn("SYSTEM_PROMPT_SECRET", terminal)
+            self.assertNotIn("USER_PROMPT_SECRET", terminal)
+            events = [
+                json.loads(line)
+                for line in trace_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            self.assertEqual([event["event"] for event in events], ["start", "retry", "success", "failed"])
+            trace_text = trace_path.read_text(encoding="utf-8")
+            self.assertIn("SYSTEM_PROMPT_SECRET", trace_text)
+            self.assertNotIn("secret-generation-key", trace_text)
+            self.assertIn("[REDACTED]", trace_text)
+
+
 class CliTests(unittest.TestCase):
     def test_cli_reads_workflow_config_and_rejects_disabled_quality_gate(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -390,7 +465,7 @@ class OrchestratorTests(unittest.TestCase):
                 progress_writer=lambda _: None,
             )
 
-            self.assertEqual(summary["status"], "failed")
+            self.assertEqual(summary["status"], "completed_with_failures")
             self.assertEqual(summary["problems"][0]["status"], "skipped_before_generation")
             self.assertFalse(
                 any(Path(call["command"][1]).parent.name == "生成题面" for call in runner.calls)
@@ -425,7 +500,7 @@ class OrchestratorTests(unittest.TestCase):
             self.assertNotIn("--variants", command)
             self.assertNotIn("--theme", command)
             source_dir = Path(_option(command, "--source-dir"))
-            self.assertEqual(source_dir, temp / "out" / "run" / "generation" / "source")
+            self.assertEqual(source_dir, temp / "out" / "run" / "generation" / "source" / "A")
             self.assertTrue((source_dir / "A.json").exists())
             source_payload = json.loads((source_dir / "A.json").read_text(encoding="utf-8"))
             self.assertEqual(source_payload["input_structure"]["type"], "array")
@@ -437,6 +512,108 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(summary["problems"][0]["status"], "quality_gate_failed")
             self.assertEqual(summary["problems"][0]["generation"]["status"], "quality_gate_failed")
             self.assertFalse(any(Path(call["command"][1]).name == "verification_runner.py" for call in runner.calls))
+
+    def test_empty_run_id_uses_stable_input_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+
+            first = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=FakeCommandRunner(),
+                progress_writer=lambda _: None,
+            )
+            second = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=FakeCommandRunner(),
+                progress_writer=lambda _: None,
+            )
+
+            self.assertEqual(first["run_id"], second["run_id"])
+            self.assertTrue(first["run_id"].startswith("input_A.json_"))
+            self.assertEqual(first["run_id_source"], "INPUT_PATH 稳定指纹")
+
+    def test_resume_skips_verified_problem_when_input_hash_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+
+            first_runner = FakeCommandRunner()
+            first = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=first_runner,
+                progress_writer=lambda _: None,
+            )
+            second_runner = FakeCommandRunner()
+            second = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=second_runner,
+                progress_writer=lambda _: None,
+            )
+
+            self.assertEqual(first["status"], "completed")
+            self.assertEqual(second["status"], "completed")
+            self.assertEqual(second_runner.calls, [])
+            self.assertTrue(second["problems"][0]["skipped_this_run"])
+
+    def test_resume_reprocesses_verified_problem_when_input_hash_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=FakeCommandRunner(),
+                progress_writer=lambda _: None,
+            )
+            _make_input(input_path, problem_id="A")
+            payload = json.loads(input_path.read_text(encoding="utf-8"))
+            payload["description"] = "题面已变化"
+            _write_json(input_path, payload)
+
+            runner = FakeCommandRunner()
+            summary = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=runner,
+                progress_writer=lambda _: None,
+            )
+
+            self.assertEqual(summary["status"], "completed")
+            self.assertGreater(len(runner.calls), 0)
+            self.assertFalse(summary["problems"][0].get("skipped_this_run", False))
+
+    def test_directory_input_runs_full_workflow_per_problem_in_order(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_dir = temp / "input"
+            _make_input(input_dir / "A.json", "A")
+            _make_input(input_dir / "B.json", "B")
+            runner = FakeCommandRunner()
+
+            summary = run_workflow(
+                _make_workflow_config(input_path=input_dir, output_root=temp / "out"),
+                command_runner=runner,
+                progress_writer=lambda _: None,
+            )
+
+            self.assertEqual(summary["status"], "completed")
+            stage_names = [stage["name"] for stage in summary["stages"]]
+            self.assertEqual(stage_names[0], "tuple_extract:A")
+            self.assertEqual(stage_names[1], "problem_generation:A")
+            self.assertTrue(stage_names[2].startswith("verification:A:"))
+            self.assertEqual(stage_names[3], "tuple_extract:B")
+            self.assertEqual(stage_names[4], "problem_generation:B")
+            self.assertTrue(stage_names[5].startswith("verification:B:"))
+            generation_sources = [
+                Path(_option(call["command"], "--source-dir"))
+                for call in runner.calls
+                if Path(call["command"][1]).name == "main.py"
+                and Path(call["command"][1]).parent.name == "生成题面"
+            ]
+            self.assertEqual([path.name for path in generation_sources], ["A", "B"])
+            self.assertTrue(all(len(list(path.glob("*.json"))) == 1 for path in generation_sources))
 
     def test_quality_pass_runs_verification_and_records_result_path(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -485,11 +662,13 @@ class OrchestratorTests(unittest.TestCase):
 
             self.assertEqual(summary["status"], "completed")
             self.assertTrue(messages)
-            self.assertIn("已加载 1 题，开始执行", messages[0])
-            self.assertTrue(any("1/4 四元组抽取开始" in message for message in messages))
-            self.assertTrue(any("3/4 生成题面开始" in message for message in messages))
-            self.assertTrue(any("4/4 质量门槛与验证开始" in message for message in messages))
-            self.assertTrue(any("验证完成，结果=verified" in message for message in messages))
+            self.assertTrue(any("运行开始" in message for message in messages))
+            self.assertTrue(any("题目总数=1" in message for message in messages))
+            self.assertTrue(any("[problem 1/1] 开始处理" in message for message in messages))
+            self.assertTrue(any("[stage 1/5] 四元组抽取开始" in message for message in messages))
+            self.assertTrue(any("[stage 3/5] 题面生成开始" in message for message in messages))
+            self.assertTrue(any("[stage 5/5] 验证完成" in message for message in messages))
+            self.assertTrue(any("LLM 详细调用日志" in message for message in messages))
 
     def test_generation_command_failure_is_recorded_as_stage_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -505,9 +684,9 @@ class OrchestratorTests(unittest.TestCase):
             )
 
             self.assertEqual(summary["status"], "failed")
-            self.assertEqual(summary["stages"][-1]["name"], "problem_generation")
+            self.assertEqual(summary["stages"][-1]["name"], "problem_generation:A")
             self.assertEqual(summary["stages"][-1]["status"], "failed")
-            self.assertIn("生成题面阶段失败", summary["error"])
+            self.assertIn("生成题面子进程失败", summary["error"])
 
     def test_verification_timeout_marks_variant_failed_without_hiding_reason(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

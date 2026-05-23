@@ -2223,7 +2223,13 @@ class FakePlannerClient:
         self.embedding_model = "stub-embedding-v1"
         self.distance_cache_path = None
 
-    def chat_json(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> dict:
+    def chat_json(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.0,
+        **_: object,
+    ) -> dict:
         if '"review_type": "eligibility"' in user_prompt:
             rule_id = _extract_rule_under_review_id(user_prompt)
             if rule_id in self.eligibility_responses:
