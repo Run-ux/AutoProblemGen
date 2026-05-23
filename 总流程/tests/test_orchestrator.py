@@ -469,6 +469,28 @@ class OrchestratorTests(unittest.TestCase):
             self.assertNotIn("secret-embedding-key", summary_text)
             self.assertIn("chat-model", summary_text)
 
+    def test_workflow_emits_stage_progress_messages(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            runner = FakeCommandRunner()
+            messages: list[str] = []
+
+            summary = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out"),
+                command_runner=runner,
+                progress_writer=messages.append,
+            )
+
+            self.assertEqual(summary["status"], "completed")
+            self.assertTrue(messages)
+            self.assertIn("已加载 1 题，开始执行", messages[0])
+            self.assertTrue(any("1/4 四元组抽取开始" in message for message in messages))
+            self.assertTrue(any("3/4 生成题面开始" in message for message in messages))
+            self.assertTrue(any("4/4 质量门槛与验证开始" in message for message in messages))
+            self.assertTrue(any("验证完成，结果=verified" in message for message in messages))
+
     def test_generation_command_failure_is_recorded_as_stage_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp = Path(tempdir)

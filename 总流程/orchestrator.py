@@ -255,8 +255,10 @@ def run_workflow(
     summary_path = paths["summary"]
 
     try:
-        progress(f"[workflow] run_id={run_id}，开始四元组抽取。")
+        progress(f"[workflow] run_id={run_id}，已加载 {len(problems)} 题，开始执行。")
+        progress(f"[workflow] 1/4 四元组抽取开始，输入={input_path}。")
         _run_extract_stage(config, runner, paths, input_path, summary)
+        progress(f"[workflow] 1/4 四元组抽取完成，日志={paths['logs'] / '01_tuple_extract.log'}。")
         _write_summary(summary_path, summary)
 
         tuple_status = _collect_tuple_raw_status(paths["tuple_raw"], problem_map)
@@ -269,13 +271,13 @@ def run_workflow(
             if not status["success"]:
                 entry["status"] = "skipped_before_generation"
 
-        progress(f"[workflow] 抽取完成，四维全成功题目数={len(eligible_after_extract)}。")
+        progress(f"[workflow] 四元组抽取统计完成，可进入生成阶段的题目数={len(eligible_after_extract)}。")
         if not eligible_after_extract:
             summary["status"] = "failed"
             summary["error"] = "没有题目通过四维抽取，无法进入题面生成阶段。"
             return _finalize_summary(summary_path, summary)
 
-        progress("[workflow] 开始组装生成题面输入。")
+        progress(f"[workflow] 2/4 组装题面生成输入开始，输出目录={paths['generation_source']}。")
         generation_problem_ids = _prepare_generation_source(
             raw_dir=paths["tuple_raw"],
             generation_source_dir=paths["generation_source"],
@@ -286,16 +288,21 @@ def run_workflow(
             summary["status"] = "failed"
             summary["error"] = "没有题目通过抽取结果组装，无法进入题面生成阶段。"
             return _finalize_summary(summary_path, summary)
+        progress(f"[workflow] 2/4 题面生成输入组装完成，准备生成的题目数={len(generation_problem_ids)}。")
         _write_summary(summary_path, summary)
 
-        progress(f"[workflow] 开始生成题面，题目数={len(generation_problem_ids)}。")
+        progress(
+            f"[workflow] 3/4 生成题面开始，题目数={len(generation_problem_ids)}，"
+            f"日志={paths['logs'] / '03_problem_generation.log'}。"
+        )
         _run_generation_stage(config, runner, paths, summary)
+        progress("[workflow] 3/4 生成题面完成。")
         _write_summary(summary_path, summary)
 
         batch_summary = _load_generation_batch_summary(paths["generation_artifacts"])
         _apply_generation_results(batch_summary, problem_map)
 
-        progress("[workflow] 开始执行质量门槛与验证阶段。")
+        progress("[workflow] 4/4 质量门槛与验证开始。")
         _run_verification_for_quality_passed_generations(
             config=config,
             runner=runner,
@@ -304,6 +311,7 @@ def run_workflow(
             problem_map=problem_map,
             progress=progress,
         )
+        progress(f"[workflow] 4/4 汇总结果并写入 summary：{summary_path}。")
         summary["status"] = _derive_overall_status(summary["problems"])
         return _finalize_summary(summary_path, summary)
     except WorkflowError as exc:
@@ -657,13 +665,17 @@ def _run_verification_for_quality_passed_generations(
         gate = _quality_gate_result(generation)
         generation["quality_gate"] = gate
         if not gate["passed"]:
+            progress(f"[workflow] {problem['problem_id']} 未通过质量门槛，跳过验证。")
             generation["status"] = "quality_gate_failed"
             problem["status"] = "quality_gate_failed"
             continue
 
         artifact_path = Path(generation["artifact_path"])
         output_path = _verification_output_path(paths["verification"], problem["problem_id"], artifact_path)
-        progress(f"[workflow] {problem['problem_id']} 通过质量门槛，开始验证：{artifact_path.name}")
+        progress(
+            f"[workflow] {problem['problem_id']} 通过质量门槛，开始验证：{artifact_path.name}，"
+            f"输出={output_path.name}。"
+        )
         command = [
             config.python_executable,
             str(VERIFICATION_RUNNER_SCRIPT),
@@ -687,10 +699,15 @@ def _run_verification_for_quality_passed_generations(
         if result.ok:
             generation["status"] = "verified"
             problem["status"] = "verified"
+            progress(f"[workflow] {problem['problem_id']} 验证完成，结果=verified。")
         else:
             generation["status"] = "verification_failed"
             generation["verification_error"] = "验证阶段失败或超时，详见日志。"
             problem["status"] = "verification_failed"
+            if result.timed_out:
+                progress(f"[workflow] {problem['problem_id']} 验证超时，已记为失败。")
+            else:
+                progress(f"[workflow] {problem['problem_id']} 验证失败，已记为失败。")
 
 
 def _quality_gate_result(generation: dict[str, Any]) -> dict[str, Any]:
