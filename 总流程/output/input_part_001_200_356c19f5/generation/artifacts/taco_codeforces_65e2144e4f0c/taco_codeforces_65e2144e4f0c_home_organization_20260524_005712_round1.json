@@ -1,0 +1,1054 @@
+{
+  "problem_id": "canonical_witness_home_org_01",
+  "source_problem_ids": [
+    "taco_codeforces_65e2144e4f0c"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "不要暴露原题编号、出处或链接。",
+      "不要复写原题的叙事结构、输入输出关系或任务定义。"
+    ],
+    "rationale": "输出从数值变为带证明的规范解，主约束新增规范产出要求，不变量增加对规范性的证明承诺。",
+    "summary": "输出对象从单个整数变为包含最少人数与规范移动序列的元组，并校验方案规范性与最优性。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3694,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3694,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4832,
+      "O": 0.4903,
+      "V": 0.5094
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4832,
+      "objective_type_distance": 0.4855,
+      "objective_text_distance": 0.4975,
+      "invariant_match_distance": 0.5094
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "produce_canonical_solution",
+    "description": "对每个测试用例，输出一个规范整理方案。若无法拦截，输出-1；否则输出第一行为最少数m，接着m行，每行为一名整理员的编号、起始格、然后一连串移动到的相邻格子（中间用空格分隔），直到拦截发生。方案必须满足 canonical_solution_definition 中的规范，且附带正确性证明（隐含在输出格式合规性与后续校验中）。",
+    "target": "规范方案元组(m, list of (org_id, path))",
+    "requires_canonical_proof": true
+  },
+  "rule_selection_reason": "该规则将原题从正向求解最小朋友子集大小彻底翻转为给定目标后的反向设计（修改最少朋友位置使最小所需朋友数等于给定k），在改变主轴的同时保留树‑朋友核心规律，创新度与难度均胜过多目标权衡（后者易退化）和规范解输出（接近浅改）；construct_or_obstruction因不存在可直接局部检查的失败证据而不适用。；创新度判断：引入反向目标（指定最小朋友数k）、定义修改操作（改变朋友位置）和最小性证明，把核心义务从判定最小集合大小转向构造性反设计，迫使原题惯性扭转成参数驱动的最优修改问题。；难度判断：主求解责任变为：先计算原布局的最小朋友数作为基准，再搜索修改位置以达到目标k并证明修改数最小；算法需同时考虑树距离、拦截条件与修改耦合，显著抬高设计难度。；风险判断：主要风险在于修改操作能否保持与原核心规律的紧密连接，以及反问题是否可能引入无解或爆炸的搜索空间；但修改朋友位置直接源于原输入对象，通过限制修改操作（如不重合、不改树）可控制可行性，并需确保生成题有可计算路径。",
+  "new_schema_snapshot": {
+    "problem_id": "canonical_witness_home_org_01",
+    "source": "derived_from_codeforces_65e2144e4f0c",
+    "input_structure": {
+      "type": "composite",
+      "length": {},
+      "value_range": {},
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case_count",
+          "role_description": "number of test cases t",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        },
+        {
+          "role": "test_cases",
+          "role_description": "sequence of test cases, each describing a storage system with cells, organizers, and channels",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {},
+          "properties": {
+            "ordered": true
+          },
+          "components": [
+            {
+              "role": "total_cells",
+              "role_description": "number of cells n",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 2,
+                "max": 200000
+              },
+              "properties": {}
+            },
+            {
+              "role": "organizer_count",
+              "role_description": "number of organizers k",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 1,
+                "max": null
+              },
+              "properties": {}
+            },
+            {
+              "role": "organizer_positions",
+              "role_description": "list of cells initially occupied by organizers",
+              "type": "array",
+              "length": {},
+              "value_range": {
+                "min": 2,
+                "max": null
+              },
+              "properties": {
+                "distinct": true
+              }
+            },
+            {
+              "role": "channels",
+              "role_description": "undirected edges connecting cells, forming a tree",
+              "type": "tree",
+              "length": null,
+              "value_range": null,
+              "properties": {
+                "connected": true,
+                "acyclic": true,
+                "simple": true,
+                "directed": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "storage_tree_topology",
+          "description": "储物系统由格子与通道构成一棵无向树，格子数为n，通道数为n-1。",
+          "formal": "G = (V, E) 为树，|V|=n, |E|=n-1，连通无环。"
+        },
+        {
+          "name": "target_item_start",
+          "description": "目标物品从1号格子进入系统。",
+          "formal": "start_item = 1"
+        },
+        {
+          "name": "item_escape_condition",
+          "description": "物品到达除1号以外的任意叶子格子即视为逃脱成功。",
+          "formal": "win_item ≡ ∃ leaf l ≠ 1 且物品在整理员拦截前到达l。"
+        },
+        {
+          "name": "organizers_initial_positions",
+          "description": "有k名整理员初始位于2..n中互异的格子。",
+          "formal": "∀ i≠j, pos_i ≠ pos_j, pos_i ∈ [2,n]"
+        },
+        {
+          "name": "simultaneous_unit_moves",
+          "description": "所有参与方同时移动；每单位时间最多沿一条通道移动至邻接格子。",
+          "formal": "每个时刻，每个参与方选择相邻节点移动或停留，移动并行。"
+        },
+        {
+          "name": "optional_stay",
+          "description": "参与方可以选择不走动。",
+          "formal": "action ∈ {move to neighbor, stay}"
+        },
+        {
+          "name": "unlimited_cell_capacity",
+          "description": "每个格子可容纳任意数量的参与方。",
+          "formal": "capacity = ∞"
+        },
+        {
+          "name": "organizer_capture_condition",
+          "description": "若在物品逃脱前有整理员与物品在同一格子或通道上相遇，则拦截成功。",
+          "formal": "win_organizer ≡ ∃t, ∃org，位置(org,t)与位置(item,t)相同（节点或边）且物品未在此之前逃脱。"
+        },
+        {
+          "name": "minimal_organizer_subset",
+          "description": "要求输出方案使用的整理员人数必须等于保证拦截所需的最少人数m；若无方案输出-1。",
+          "formal": "方案人数 = min_{S⊆orgs}确保拦截的|S|，或-1若不可拦截。"
+        },
+        {
+          "name": "canonical_solution_definition",
+          "description": "规范方案要求：选中的m名整理员按编号升序分配，每名整理员的移动路径必须是从起始格子到拦截点的最短路径；拦截时间戳（即路径长度）按整理员编号非降序排列，且整体方案在满足前述条件下字典序最小。",
+          "formal": "对选中整理员标号o1<o2<...<om，令d_i为oi到其拦截点的距离，要求d_1 ≤ d_2 ≤ ... ≤ d_m；同时oi的路径必须是所有可能拦截方案中按编号顺序的最短路径，且整体路径序列（按编号）字典序最小。"
+        },
+        {
+          "name": "canonical_constraint_priority",
+          "description": "规范输出的约束优先于单纯的最小人数查找；解法必须同时满足最小性和规范性，且在状态搜索中规范性作为硬约束参与剪枝。",
+          "formal": "在任意可行拦截方案上叠加规范顺序约束，合法解集合缩小，但仍保持最小性可达。"
+        }
+      ]
+    },
+    "objective": {
+      "type": "produce_canonical_solution",
+      "description": "对每个测试用例，输出一个规范整理方案。若无法拦截，输出-1；否则输出第一行为最少数m，接着m行，每行为一名整理员的编号、起始格、然后一连串移动到的相邻格子（中间用空格分隔），直到拦截发生。方案必须满足 canonical_solution_definition 中的规范，且附带正确性证明（隐含在输出格式合规性与后续校验中）。",
+      "target": "规范方案元组(m, list of (org_id, path))",
+      "requires_canonical_proof": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "canonical_solution_existence_invariant",
+          "description": "基于原题算法不变式，当拦截可行时，总存在至少一个规范方案；算法在寻找最小子集的过程中保证能够构造出这样的规范方案。",
+          "properties": {
+            "existence_guaranteed": true,
+            "constructible_from_dp": true
+          }
+        },
+        {
+          "name": "canonical_ordering_proof_obligation",
+          "description": "输出的路径序列必须可证明满足编号顺序的距离非降以及字典序最小性。",
+          "properties": {
+            "proof_obligation": "order_and_lexical_minimality"
+          }
+        },
+        {
+          "name": "optimality_proof_obligation",
+          "description": "所输出的方案人数必须与经典最小拦截子集大小一致，且规范处理未造成人数膨胀。",
+          "properties": {
+            "proof_obligation": "minimality_preserved"
+          }
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "medium_hard"
+  },
+  "applied_rule": "canonical_witness",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "树形DP或双BFS：计算每个节点到最近朋友的距离，自底向上贪心选取叶子处需要增补的朋友，得到最小子集大小。",
+    "reusable_subroutines": "节点到最近朋友距离计算、叶子必要性判断、自底向上DP框架。",
+    "new_solver_core": "在DP过程中同时对每个必要拦截点记录最早可拦截的整理员候选；计算完后按整理员编号排序，对每个选中的整理员追溯其从初始位置到拦截点的最短路径（需保持距离序列非降，通过调整同距离整理员的分配顺序或细微路径选择满足字典序）。最后输出序列。",
+    "new_proof_obligation": "证明按编号排序后距离非降的整理员分配总是存在，且当多个整理员距离相同时通过路径细节调整可达到字典序最小；进一步证明该规范方案不改变最少人数。",
+    "why_direct_reuse_fails": "原算法仅输出整数，未保留具体拦截分配，且规范顺序要求对整理员进行全局排序与路径字典序比较，单靠原DP回溯无法直接获得规范解。"
+  },
+  "anti_shallow_rationale": "输出形态从数值彻底变为带严格规范顺序的方案对象，核心约束显式增加了 canonical_solution_definition 和规范优先级，迫使解法在搜索最小集时同步维护顺序证明，不再仅仅是数值计算。收纳背景仅作为术语映射，不改变这一质变。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "canonical_order_pressure",
+      "selection_reason": "规则要求将规范顺序推入主状态演化，避免输出后处理。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints中添加canonical_solution_definition与canonical_constraint_priority",
+        "objective改为produce_canonical_solution且明确规范顺序要求",
+        "invariant增加canonical_ordering_proof_obligation"
+      ],
+      "innovation_reason": "输出对象不再是选择集合，而是附加强排序条件的路径序列；解法必须内化顺序证明。",
+      "difficulty_reason": "要求解法在DP过程中预先考虑分配顺序，增加了状态表示与证明复杂度。"
+    },
+    {
+      "id": "proof_bearing_output",
+      "selection_reason": "输出对象需升级为带证明责任的规范解。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective新增强制要求附带正确性证明（通过隐含校验）",
+        "invariant新增optimality_proof_obligation"
+      ],
+      "innovation_reason": "题目不再接受无证明的方案输出；正确性必须可凭输出格式直接核验。",
+      "difficulty_reason": "求解器需额外生成路径证据并确保其与规范不矛盾，提高了实现门槛。"
+    },
+    {
+      "id": "constraint_reweighting",
+      "selection_reason": "规范产出要求必须进入主约束优先级。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints中加入canonical_constraint_priority，明确规范约束在搜索中优先",
+        "invariant体现新的约束主次关系"
+      ],
+      "innovation_reason": "搜索空间不再只由拦截可行性定义，规范性条件成为核心剪枝依据。",
+      "difficulty_reason": "算法必须同时处理拦截可行性、最小性和规范顺序三层约束，状态转移更复杂。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "CANONICAL_WITNESS_FEASIBLE",
+      "selection_reason": "原题仅输出最小朋友数，其背后有明确解对象（需拦截的朋友子集），可定义规范顺序（如按房间号升序）；改为输出字典序最小的该子集，使题目从纯数值升级为构造+规范性要求，能迫使算法显式处理字典序最优，而非简单回溯。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 的 objective 为 minimize_value，不要求构造输出；core_constraints 定义了拦截条件与最小子集；helper 规则要求 canconical_order_pressure 进入最优性定义，proof_bearing_output 将输出升级为带证明责任的规范解，constraint_reweighting 使规范要求进入主约束，这些均可通过字典序最小子集实现。",
+        "feedback": "规则应用后需确保规范要求（字典序最小）不是表面格式，而是深度影响搜索/DP 状态的顺序选择，并在 invariant 中体现字典序最小性的维护。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "local_certificate_exists",
+      "selection_reason": "无解情形可输出一个叶子节点及其距离不等式作为可局部检查的冲突证据，成功分支输出具体朋友子集方案，符合规则对失败语义输出合同的要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题中无解条件（-1）等价于存在叶子l使得对所有朋友f满足dist(1,l)<dist(f,l)；该条件可通过输出l及距离关系构成局部证据，直接检查验证，满足规则required_seed_properties。原题核心约束已包含距离和拦截条件，obstruction可嵌入主约束。",
+        "feedback": "规则transform将数值优化改为构造/证明双分支输出，能显著改变题目难度与校验方式，未触发全局红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "The minimal feasible subset appears to be unique due to the invariant that 'needed' set is required for any valid interception, making the count almost always 0 or 1, thus the counting problem degenerates and lacks algorithmic novelty.",
+      "risk_tags": [
+        "trivial_count",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "Invariant 3: 'needed 集合是任意可行拦截方案都必须包含的朋友集合,其势即为所求的最小朋友数' implies that any minimum feasible subset is exactly the needed set, hence the count is 1 when answer > 0, which yields trivial counting.",
+        "feedback": "Switch to a different seed problem where the optimal solution is not unique or where counting inherently requires non-trivial combinatorial reasoning."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题已经是一个对抗性最坏情况保证问题，Vlad的移动策略是唯一的不确定性来源，且已被目标函数直接处理。不存在其他可被独立放大且仍属原题语义的原生扰动（如输入数据波动、资源随机性），强行引入额外扰动模型将落入“硬造对手”或“外层包一层阈值”的红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 的约束明确：Vlad 可以选择任意合法路径 (simultaneous_unit_moves, optional_stay)，目标是最小化保证捕获的朋友子集大小 (minimal_friend_subset)。这已经将 Vlad 的移动建模为最坏情况对手，且没有给出朋友初始位置或树结构的任何不确定性。规则要求的“原题自带的不确定性”仅止于此，无法在不脱离原题语义的前提下构造新的扰动模型。",
+        "feedback": "建议检查是否可通过修改问题语义（如允许朋友位置微扰）制造真正的保底要求，但当前种子不具备稳定、原生的可放大扰动源。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "already_optimization",
+      "selection_reason": "种子题已经是求最小朋友数的优化问题，并非可行性判定，无法通过阈值优化进一步升级为极值求解。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'minimize_value'，目标本身即为最小阈值，不符合规则所要求的从可行性判定升级的前提。规则声明中正例为‘把判断是否存在合法方案改成求允许合法方案存在的最小容量’，但种子题已直接输出最小朋友数，无判定升级空间。",
+        "feedback": "该题不适合作为此规则的种子，建议选取判断是否存在方案的判定题，再通过参数单调性构造最小阈值。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_conflicting_metric_found",
+      "selection_reason": "原题目最小化所需朋友数量，扩展第二指标“抓住Vlad的最少时间”与朋友数量存在真实冲突（更多朋友可更快抓住），且该指标来自原题移动与拦截过程，非后处理可得。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题核心约束包括同时移动、拦截条件；目标为 minimize_subset_size。规则要求引入冲突第二指标，此处抓住时间（最小步数）是树拦截问题中自然产生的性能维度，与朋友数量直接冲突，可形成 Pareto 前沿。且不变量 indispensable_blocking_set 可扩展至时间维度的支配证明。",
+        "feedback": "建议将规则推进至规划阶段，需明确时间指标的定义（如确保抓住的最少步数）及支配比较口径，同时注意与原有状态耦合，避免退化为两个独立最优化。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "forward_solution_to_inverse_design",
+      "selection_reason": "原题输出（最少朋友数）可作为反向目标指定；树结构、朋友初始位置为修改操作提供了与核心规律紧密相关的自由度；可定义可验证目标并承担最小性证明责任。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题 objective 为最小化子集大小（可做目标）；schema 中树拓扑约束、朋友位置等为可修改元素；规则 helper 要求的目标绑定、编辑操作契约与最小性证明均可基于树操作（增删边、移动朋友）实现；符合 eligibility 的 required_seed_properties 且未触发 forbidden 或红线。",
+        "feedback": "风险在于反向设计可能仍需复用原题核心解法（如 BFS 拦截判断），需在规划阶段加强算法差异声明。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题为树状追及游戏，朋友间通过同时移动与捕获条件天然全局耦合，不存在可独立处理的局部单元，无法通过该规则扩展成共享资源题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束中，朋友同时移动、捕获条件依赖全局相遇，且目标为最小化朋友子集，始终需要整体决策。规则要求“原题存在可分解的局部单元”，但schema中未见任何可独立求解的分量（如独立区间或互不干扰的子问题）。",
+        "feedback": "此题已是全局耦合设计，不符合规则所依赖的“独立分量可分解”前提。强行应用会导致非自然约束或同质化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_already_game",
+      "selection_reason": "原题已经是双方最优行动的博弈（Vlad与朋友在树上同时移动对抗），不是单人确定性过程，不符合规则要求的种子性质。强行应用只会导致同义反复，无法产生有价值的变换。",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束明确包含同时移动、朋友捕获条件、Vlad逃脱条件，并定义最小朋友子集保证捕获（minimal_friend_subset），本质上是两方零和博弈；规则要求将单人确定性选择扩展为双方博弈，但原题无单人决策过程可转化。",
+        "feedback": "建议选择具有自然单人顺序操作（如取石子、遍历顺序）的种子题，该规则才能有效创造新博弈。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题已经是最小子集拦截（覆盖）问题，核心语义与规则目标高度重叠，应用本规则难以产生实质差异，很可能退化为简单重述。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints 中明确要求 “Determine the minimum size of a subset of friends such that they can always catch Vlad”，objective 为 “minimize the minimum number of friends required to guarantee catching Vlad”，这本身就是一个全局覆盖/支配问题。规则的核心转换要求从单个局部对象升级为全局覆盖，但种子题的局部对象族（朋友位置）已天然构成覆盖关系。",
+        "feedback": "种子题已具备覆盖语义，不建议继续使用本规则，否则新题将缺乏本质改变，违反 required_axis_changes 和 helper 的 redlines。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "missing_required_seed_property",
+      "selection_reason": "原题不是计数问题，目标是最小化朋友子集大小，不存在明确有限的计数对象，因此不满足规则所要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'minimize_value'，描述为最小化朋友数；core_constraints 中所有约束均围绕树上的移动与捕获，没有任何计数总数或分类统计；invariant 也仅涉及拦截条件与最小集合。原题明显不是计数题。",
+        "feedback": "规则要求原题已有明确有限的计数对象且存在自然权重或统计量，但本题是一个博弈优化问题，无法满足这些前置条件，故不能进入下一阶段。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "CANONICAL_WITNESS_FEASIBLE",
+      "message": "原题仅输出最小朋友数，其背后有明确解对象（需拦截的朋友子集），可定义规范顺序（如按房间号升序）；改为输出字典序最小的该子集，使题目从纯数值升级为构造+规范性要求，能迫使算法显式处理字典序最优，而非简单回溯。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 的 objective 为 minimize_value，不要求构造输出；core_constraints 定义了拦截条件与最小子集；helper 规则要求 canconical_order_pressure 进入最优性定义，proof_bearing_output 将输出升级为带证明责任的规范解，constraint_reweighting 使规范要求进入主约束，这些均可通过字典序最小子集实现。",
+        "feedback": "规则应用后需确保规范要求（字典序最小）不是表面格式，而是深度影响搜索/DP 状态的顺序选择，并在 invariant 中体现字典序最小性的维护。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_certificate_exists",
+      "message": "无解情形可输出一个叶子节点及其距离不等式作为可局部检查的冲突证据，成功分支输出具体朋友子集方案，符合规则对失败语义输出合同的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题中无解条件（-1）等价于存在叶子l使得对所有朋友f满足dist(1,l)<dist(f,l)；该条件可通过输出l及距离关系构成局部证据，直接检查验证，满足规则required_seed_properties。原题核心约束已包含距离和拦截条件，obstruction可嵌入主约束。",
+        "feedback": "规则transform将数值优化改为构造/证明双分支输出，能显著改变题目难度与校验方式，未触发全局红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "The minimal feasible subset appears to be unique due to the invariant that 'needed' set is required for any valid interception, making the count almost always 0 or 1, thus the counting problem degenerates and lacks algorithmic novelty.",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.2,
+        "risk_tags": [
+          "trivial_count",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "Invariant 3: 'needed 集合是任意可行拦截方案都必须包含的朋友集合,其势即为所求的最小朋友数' implies that any minimum feasible subset is exactly the needed set, hence the count is 1 when answer > 0, which yields trivial counting.",
+        "feedback": "Switch to a different seed problem where the optimal solution is not unique or where counting inherently requires non-trivial combinatorial reasoning."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题已经是一个对抗性最坏情况保证问题，Vlad的移动策略是唯一的不确定性来源，且已被目标函数直接处理。不存在其他可被独立放大且仍属原题语义的原生扰动（如输入数据波动、资源随机性），强行引入额外扰动模型将落入“硬造对手”或“外层包一层阈值”的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 的约束明确：Vlad 可以选择任意合法路径 (simultaneous_unit_moves, optional_stay)，目标是最小化保证捕获的朋友子集大小 (minimal_friend_subset)。这已经将 Vlad 的移动建模为最坏情况对手，且没有给出朋友初始位置或树结构的任何不确定性。规则要求的“原题自带的不确定性”仅止于此，无法在不脱离原题语义的前提下构造新的扰动模型。",
+        "feedback": "建议检查是否可通过修改问题语义（如允许朋友位置微扰）制造真正的保底要求，但当前种子不具备稳定、原生的可放大扰动源。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "already_optimization",
+      "message": "种子题已经是求最小朋友数的优化问题，并非可行性判定，无法通过阈值优化进一步升级为极值求解。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'minimize_value'，目标本身即为最小阈值，不符合规则所要求的从可行性判定升级的前提。规则声明中正例为‘把判断是否存在合法方案改成求允许合法方案存在的最小容量’，但种子题已直接输出最小朋友数，无判定升级空间。",
+        "feedback": "该题不适合作为此规则的种子，建议选取判断是否存在方案的判定题，再通过参数单调性构造最小阈值。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_conflicting_metric_found",
+      "message": "原题目最小化所需朋友数量，扩展第二指标“抓住Vlad的最少时间”与朋友数量存在真实冲突（更多朋友可更快抓住），且该指标来自原题移动与拦截过程，非后处理可得。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题核心约束包括同时移动、拦截条件；目标为 minimize_subset_size。规则要求引入冲突第二指标，此处抓住时间（最小步数）是树拦截问题中自然产生的性能维度，与朋友数量直接冲突，可形成 Pareto 前沿。且不变量 indispensable_blocking_set 可扩展至时间维度的支配证明。",
+        "feedback": "建议将规则推进至规划阶段，需明确时间指标的定义（如确保抓住的最少步数）及支配比较口径，同时注意与原有状态耦合，避免退化为两个独立最优化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "forward_solution_to_inverse_design",
+      "message": "原题输出（最少朋友数）可作为反向目标指定；树结构、朋友初始位置为修改操作提供了与核心规律紧密相关的自由度；可定义可验证目标并承担最小性证明责任。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题 objective 为最小化子集大小（可做目标）；schema 中树拓扑约束、朋友位置等为可修改元素；规则 helper 要求的目标绑定、编辑操作契约与最小性证明均可基于树操作（增删边、移动朋友）实现；符合 eligibility 的 required_seed_properties 且未触发 forbidden 或红线。",
+        "feedback": "风险在于反向设计可能仍需复用原题核心解法（如 BFS 拦截判断），需在规划阶段加强算法差异声明。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题为树状追及游戏，朋友间通过同时移动与捕获条件天然全局耦合，不存在可独立处理的局部单元，无法通过该规则扩展成共享资源题。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束中，朋友同时移动、捕获条件依赖全局相遇，且目标为最小化朋友子集，始终需要整体决策。规则要求“原题存在可分解的局部单元”，但schema中未见任何可独立求解的分量（如独立区间或互不干扰的子问题）。",
+        "feedback": "此题已是全局耦合设计，不符合规则所依赖的“独立分量可分解”前提。强行应用会导致非自然约束或同质化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "seed_already_game",
+      "message": "原题已经是双方最优行动的博弈（Vlad与朋友在树上同时移动对抗），不是单人确定性过程，不符合规则要求的种子性质。强行应用只会导致同义反复，无法产生有价值的变换。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束明确包含同时移动、朋友捕获条件、Vlad逃脱条件，并定义最小朋友子集保证捕获（minimal_friend_subset），本质上是两方零和博弈；规则要求将单人确定性选择扩展为双方博弈，但原题无单人决策过程可转化。",
+        "feedback": "建议选择具有自然单人顺序操作（如取石子、遍历顺序）的种子题，该规则才能有效创造新博弈。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题已经是最小子集拦截（覆盖）问题，核心语义与规则目标高度重叠，应用本规则难以产生实质差异，很可能退化为简单重述。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints 中明确要求 “Determine the minimum size of a subset of friends such that they can always catch Vlad”，objective 为 “minimize the minimum number of friends required to guarantee catching Vlad”，这本身就是一个全局覆盖/支配问题。规则的核心转换要求从单个局部对象升级为全局覆盖，但种子题的局部对象族（朋友位置）已天然构成覆盖关系。",
+        "feedback": "种子题已具备覆盖语义，不建议继续使用本规则，否则新题将缺乏本质改变，违反 required_axis_changes 和 helper 的 redlines。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "missing_required_seed_property",
+      "message": "原题不是计数问题，目标是最小化朋友子集大小，不存在明确有限的计数对象，因此不满足规则所要求的种子属性。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'minimize_value'，描述为最小化朋友数；core_constraints 中所有约束均围绕树上的移动与捕获，没有任何计数总数或分类统计；invariant 也仅涉及拦截条件与最小集合。原题明显不是计数题。",
+        "feedback": "规则要求原题已有明确有限的计数对象且存在自然权重或统计量，但本题是一个博弈优化问题，无法满足这些前置条件，故不能进入下一阶段。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "core_constraints",
+          "invariant",
+          "objective"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_contract_fulfilled",
+      "message": "规划成功将原题从输出最小数值升级为输出带规范顺序和证明责任的整理方案，规范解定义、比较口径与校验方式明确，C/O/V 轴均已深度变化，所有 helper 均已兑现其 redlines。",
+      "details": {
+        "review_role": "你扮演一名规范解规划审查官，重点确认规划是否真正把输出责任升级为可比较、可校验的规范解。",
+        "review_brief": "确认规划是否明确了规范解的定义、比较口径与校验方式，并且规范性会改变主要求解责任。",
+        "evidence": "candidate_schema.core_constraints 新增 canonical_solution_definition 与 canonical_constraint_priority，objective 改为 produce_canonical_solution 并声明 requires_canonical_proof，invariant 增加 canonical_ordering_proof_obligation 与 optimality_proof_obligation；applied_helpers 中三个 helper 的 schema_changes 与红线性均被满足，如 canonical_order_pressure 将顺序推入 DP 过程而非后处理，proof_bearing_output 将证明责任内建于输出格式，constraint_reweighting 使规范约束成为硬剪枝条件。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_contract_fulfilled",
+      "message": "题面明确要求输出一个规范的可校验构造方案，包含了规范解定义、字典序比较规则，且三个helper语义均已在描述与输出约定中写实，没有违反红线的表面修改。",
+      "details": {
+        "review_role": "你扮演一名规范解题面审查官，重点确认题面是否要求输出一个规范且可检查的构造。",
+        "review_brief": "确认题面是否写清规范解、字典序或统一比较规则，并要求输出一个可校验的构造方案。",
+        "evidence": "题面描述中规定了‘选中的人按编号从小到大行动…路径长度非降…字典序最小’，输出格式要求‘按编号升序输出且必须满足规范顺序的定义’，附带注释细化字典序比较方法；样例展示了规范输出，满足proof_bearing_output和canonical_order_pressure的写实要求；主约束已包括最少人数与规范条件，实现constraint_reweighting。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.82,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "规范整理行动",
+    "description": "在一座由柜格和通道构成的储物系统中，有一件需要紧急处理的物品从1号格子进入。系统中有k名整理员，初始分布在编号2到n的格子中，且位置互不相同。整个储物系统的连接结构是一棵树，格子编号为1到n，通道为双向边。\n\n游戏规则：\n- 物品与整理员在每一单位时间同时移动，每次可以沿一条通道移动到相邻格子，或停留在原地。\n- 格子容量无限，任意人数可共存于同一格子。\n- 物品的目标是到达一个不是1号的叶子格子（仅有一条通道相连的格子）。一旦物品在某个时刻到达这样的叶子且之前未被拦截，则视为物品\"逃脱\"成功，整理员失败。\n- 整理员的目标是在物品逃脱前拦截它。若在某个时刻存在至少一名整理员与物品出现在同一格子或同一条通道上（在移动过程中相遇也算），则拦截成功。\n\n你是总调度官，需要决定出动最少数量的整理员来保证拦截。同时，为了让后续复盘清晰，必须为选中的整理员制定一份规范行动记录：\n- 选中的人按编号从小到大行动。\n- 每个选中者必须从自己的起始格子沿最短路径移动到拦截发生的位置（拦截格或边上的某一端），且移动步数（路径长度）即为他的拦截用时。\n- 设选中序列为o1<o2<…<om，其路径长度分别为d1,…,dm，必须满足d1 ≤ d2 ≤ … ≤ dm。\n- 在满足上述条件下，要求整体路径序列的字典序最小。这里路径序列定义为将每人路径上的格子编号顺次拼接得到的整数序列，比较时按编号顺序先比o1的完整路径，相同则比o2的，以此类推。\n\n如果无论如何都无法拦截物品，请报告失败。",
+    "input_format": "第一行一个整数t，表示测试用例组数。接下来依次描述t组数据。\n\n每组数据格式：\n第一行两个整数n, k，表示格子总数和整理员人数。\n第二行k个互异的整数，表示每名整理员的初始所在格子编号（均在2到n之间）。\n接下来n-1行，每行两个整数u, v，表示格子u和v之间有一条通道。\n\n保证输入的图是一棵树，所有测试用例的∑n ≤ 200000。",
+    "output_format": "对于每组测试用例：\n\n如果不能保证拦截物品，输出一行 -1。\n\n否则：\n第一行输出一个整数m，表示所需的最少整理员人数。\n接下来m行，第i行输出选中整理员的方案。\n每行先输出该整理员在输入中的编号（输入给出的顺序，从1到k），然后是他在输入中的初始格子，然后是一条从初始格子到拦截发生格子的最短路径上的格子序列（包括起点和终点），每两个格子之间用空格分隔。\n\n选中者必须按编号升序输出，且必须满足题目中规范顺序的定义。",
+    "constraints": [
+      "1 ≤ t ≤ 10000",
+      "2 ≤ n ≤ 200000",
+      "1 ≤ k ≤ n",
+      "初始整理员位置均为[2,n]内的互异整数",
+      "所有测试用例的∑n ≤ 200000",
+      "时间限制：2秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n7 3\n2 4 6\n1 2\n2 3\n3 4\n4 5\n5 6\n6 7",
+        "output": "2\n1 2 2 1\n2 4 4 3 2 1",
+        "explanation": "储物系统为一条链，物品从1出发想到达7号叶子。整理员位置2,4,6。最少需要2人。\n选中编号1(初始2)和编号2(初始4)。方案规范：编号1路径2→1（在1号格拦截，步长1）；编号2路径4→3→2→1（在移动到1时物品恰好到达，步长3，满足d1=1≤d2=3）。整体路径序列 [2,1, 4,3,2,1] 在该条件下字典序最小。"
+      },
+      {
+        "input": "1\n5 2\n2 3\n1 2\n2 3\n3 4\n3 5",
+        "output": "2\n1 2 2 1\n2 3 3 2 1",
+        "explanation": "树呈星形，叶子有4,5，1也是叶子但物品从1出发不能去自己。整理员在2和3。最少需要2人。编号1(2)路径2→1，编号2(3)路径3→2→1，d1=1, d2=2。"
+      },
+      {
+        "input": "1\n4 1\n3\n1 2\n2 3\n3 4",
+        "output": "-1",
+        "explanation": "唯一整理员在3，物品从1出发，可径直走到4逃脱，无法拦截。"
+      }
+    ],
+    "notes": "规范方案定义要点：\n1. 每名选中整理员必须使用从初始位置到拦截点的某条最短路径（树中路径唯一，因此路径固定）。\n2. 整理员按编号升序排列，他们的路径长度（即经过的边数）必须非递减。\n3. 在所有满足前两条的方案中，按编号顺序将每个整理员的路径拼接成一个整数序列，选择字典序最小的那个。字典序比较方法：第一次出现不同格子的位置，格子编号较小的方案更小。\n4. 若某组数据无解，仅输出-1。\n5. 输入中的整理员编号从1开始计，对应输入顺序。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_65e2144e4f0c_home_organization_20260524_005712",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

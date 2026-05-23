@@ -1,0 +1,933 @@
+{
+  "problem_id": "taco_campus_seating_canonical_witness_v1",
+  "source_problem_ids": [
+    "taco_codeforces_43dc8145a4f7"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "不要暴露原题编号、出处或链接。",
+      "不要复写原题的叙事结构、输入输出关系或任务定义。"
+    ],
+    "rationale": "核心约束增加字典序最小要求，目标从判断变为构造并输出最优解，不变量从单纯可行性转为贪心构造的合法性保持。",
+    "summary": "增加规范解输出义务，将字典序最小提升为主约束，并引入相应的构造不变量。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3534,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3534,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.451,
+      "O": 0.3041,
+      "V": 0.7102
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.451,
+      "objective_type_distance": 0.2913,
+      "objective_text_distance": 0.3232,
+      "invariant_match_distance": 0.7102
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construction",
+    "description": "如果存在合法安排，输出字典序最小的座位分配序列（n 行，每行 8 个整数代表组号）；否则输出 -1。",
+    "target": "字典序最小合法安排",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "existence_to_counting 能将原题的可行性判定彻底转换为计数问题，完全刷新求解目标，且种子题的解空间有限、去重规则清晰，易于落地。相比之下，canonical_witness 容易退化为‘先判定再构造规范解’的反串联，feasibility_to_extremal_threshold 极易滑向二分判定机械串接，两者创新度与稳定性均不及计数。；创新度判断：从存在性到计数，把核心义务从简单的是/否判定改变为精确计算所有合法安排的数量，迫使重新定义解空间、等价类与计数单元，显著偏离原题的归约思路。；难度判断：原题的贪心归约和可行性证明无法直接支持计数，必须设计全新的状态描述（如动态规划或组合计数），并要求显式处理去重和组合汇总，大幅提升算法设计的复杂度。；风险判断：主要风险在于去重规则的完整性定义和避免取模后语义丢失，但种子题已具备明确的座位-组映射关系，通过“同排相邻同组、不同安排当且仅当映射不同”即可严格定义，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_campus_seating_canonical_witness_v1",
+    "source": "canonical_witness",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "parameters",
+          "role_description": "教室行数 n 和组数 k",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "group_sizes",
+          "role_description": "k 个整数，表示每组学生人数",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "adjacent_seat_exclusion",
+          "description": "教室内每排座位中，{1,2}、{3,4}、{4,5}、{5,6}、{7,8} 为相邻座位，不同组学生不得坐在相邻座位上。",
+          "formal": "对于所有座位对 (u,v) 若 u 与 v 相邻，则座位 u 和 v 上的学生必须属于同一组。",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "group_cardinalities",
+          "description": "每组 i 必须恰好占用 a_i 个座位，即所有学生必须被安置在座位上。",
+          "formal": "设分配给组 i 的座位数为 x_i，则要求 x_i = a_i 对所有 i 成立。",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "lexicographically_minimal_output",
+          "description": "输出的座位分配序列（按行优先，每行从左到右的顺序组成序列）必须在所有合法安排中字典序最小。",
+          "formal": "设分配序列 S，若存在合法安排 T 且 T <_lex S，则输出必须等于 S。",
+          "priority": "high",
+          "source_sections": [
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construction",
+      "description": "如果存在合法安排，输出字典序最小的座位分配序列（n 行，每行 8 个整数代表组号）；否则输出 -1。",
+      "target": "字典序最小合法安排",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "partial_lex_min_invariant",
+          "description": "在构造过程中，每一步选择最小可行组号时，剩余座位仍可完成合法安排的前提不变；同时保持已填部分为当前前缀中的最小可能值，从而保证最终序列的全局字典序最小性。",
+          "properties": {},
+          "evidence_source": "solution_design"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium_hard"
+  },
+  "applied_rule": "canonical_witness",
+  "rejected_candidates": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.2884，落地轴=C, O, V。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "原题使用贪心归约：统计四座块和两座块数量，进行可行性判定，不构造分配。",
+    "reusable_subroutines": "可行性判定部分（计算剩余需求能否被剩余座位容纳）可复用为构造过程中的预判断。",
+    "new_solver_core": "在可行性预判基础上，逐座位贪心尝试最小可能组号，每步检查剩余空间是否仍可行，若可行则填入并更新计数。若全部填完，输出序列。",
+    "new_proof_obligation": "证明贪心放置最小可行组号不会导致后续不可行（利用原可行性不变式变换后证明）；若存在可行解，最终输出序列是字典序最小的（因为任何更小的序列会在第一个不同位置使用更小组号，贪心已尝试且若可行会采用，不可行则说明该序列不合法）。",
+    "why_direct_reuse_fails": "原解只维护计数，没有顺序概念，无法直接输出字典序最小的分配方案；直接复用将丢失顺序信息，且无法保证输出最小性。"
+  },
+  "anti_shallow_rationale": "本题不是简单换皮：核心从决策变为优化构造，输出对象从 YES/NO 变为字典序最小的具体分配；主约束增加了字典序要求并提升优先级；解法完全改变，需要结合可行性回退与顺序选择，证明义务显著加重。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "canonical_order_pressure",
+      "selection_reason": "字典序最小必须影响状态转移，而非仅输出后处理。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 中引入 lexicographically_minimal_output 约束；",
+        "objective 改为输出字典序最小安排；",
+        "invariant 包含字典序保持性质。"
+      ],
+      "innovation_reason": "让顺序要求进入主逻辑，迫使解法在每一步都考虑全局最优性。",
+      "difficulty_reason": "增加了正确性证明的复杂度，需论证贪心选择的充分性。"
+    },
+    {
+      "id": "proof_bearing_output",
+      "selection_reason": "输出本身需成为可校验的规范解，而不仅是任意方案。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 增加 requires_solution 和校验要求；",
+        "invariant 包含输出合法且最小的证明责任。"
+      ],
+      "innovation_reason": "输出成为携带证明的对象，需要满足全局最优性。",
+      "difficulty_reason": "要求解题者设计能同时保证合法性和最优性的构造算法。"
+    },
+    {
+      "id": "constraint_reweighting",
+      "selection_reason": "将字典序从隐含要求提升为显式主约束，改变优化目标优先级。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 中增加 lexicographically_minimal_output 并设为高优先级；",
+        "invariant 反映新的约束主次关系。"
+      ],
+      "innovation_reason": "改变了算法设计的核心驱动，不能仅依赖可行性判断。",
+      "difficulty_reason": "迫使状态设计同时处理可行性和最优性，增加推理深度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "seed_has_constructible_solution_with_canonical_order",
+      "selection_reason": "原题是决策问题，其解对象（座位安排）有明确的自然顺序可以定义规范解（如字典序最小安排）；且原解并非直接回溯可得，有升级空间。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标类型为 decision，不要求构造；约束定义了座位相邻关系，可在其基础上定义组ID序列的字典序作为规范；原 invariant 基于贪婪缩减保持可行性，但未直接给出构造方法，故规范解输出会引入新算法责任，可改变 C/O/V 轴。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "seed_schema_lacks_critical_details",
+      "selection_reason": "无法从现有种子题摘要中确认无解情形是否能稳定地写成可局部检查的冲突证据。seat graph 的具体结构（排数、排内座位连接方式、相邻关系跨排限制等）未披露，且缺少任何无解实例的示例，因此无法判断不可满足原因是否可局部化。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "schema_insufficient",
+        "evidence": "schema_context 中 core_constraints 仅给出了不同组不得相邻的声明式约束，未提供完整的座位邻接图；invariant 仅描述了算法归约性质，未说明不可满足时的具体表现；original_problem_references 为空，无样例或边界情况可供分析。",
+        "feedback": "补齐种子题完整描述（特别是座位的具体布局和不可满足情形的示例）后可重新审查。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "eligible_counting_feasibility",
+      "selection_reason": "种子题解空间有限（固定座位数和组大小），不同解的等价关系明确（座位分配矩阵相等），原题已有按四座块拆分的结构（见 invariant modular_fill_invariant），满足规则要求的‘解空间有限、等价关系清楚、可按单元拆分汇总’，且不触犯任何禁止性质，适合改造为计数题。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "Schema 中 core_constraints 定义固定组大小和解空间边界；invariant 中 modular_fill_invariant 描述了按四座块拆分策略，证明解空间可结构化汇总；规则声明中 required_seed_properties 包含‘解空间有限’、‘等价关系能说清楚’、‘可按某种单元拆分并汇总’，种子题均满足。",
+        "feedback": "建议在规划阶段将去重规则明确写入新约束，例如‘两个安排不同当且仅当存在某座位分配的组不同’，并明确计数对象为完整分配方案而非部分解。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题是静态组合可行性判定，输入固定，无顺序不确定、资源波动或局部选择差异等可被放大的原生扰动来源，规则要求的最小保底优化强依赖此类语义基础，强行引入将违背全局红线（只换故事背景或硬造对手）",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为不同组相邻排除和固定组大小，目标为判定存在性，不变量基于模运算的贪婪减缩，未涉及任何扰动、不确定或顺序依赖；规则 eligibility 明确要求种子需有‘顺序不确定、资源波动或局部选择差异’，原题 schema 中未体现这些属性",
+        "feedback": "建议检查是否可重新解读原题中的局部选择（如多解性）为扰动源，但目前 scheme 不支撑。若不可行，则放弃该种子适应该规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "natural_critical_parameter",
+      "selection_reason": "原题是判定是否存在合法座位安排，参数 n（排数）控制总座位容量，可行性关于 n 单调递增：若 n 排可行，则任何更大的 n 也必然可行（可空出多余排）。因此可自然升级为求允许安排存在的最小 n，n 成为临界参数。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标为 decision 类型（seed_schema.objective.type=decision），核心约束（seed_schema.core_constraints）以给定 n 为前提定义相邻与容量限制；单调性由容量增加保证：增加排数仅引入额外座位，不破坏原有可行解。原题不变量（seed_schema.invariant.modular_fill_invariant）透露可行性可通过贪心缩减，暗示单调分层结构。",
+        "feedback": "规则适配良好，但需在规划阶段确保阈值 n 进入核心约束定义，并建立起临界性证明（最小值的存在性与不可达下界）。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_primary_objective",
+      "selection_reason": "种子题是决策问题（是否存在合法座位安排），没有可优化的目标，无法引入冲突的第二指标构成权衡前沿。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为decision，description为'Determine if a valid seating arrangement exists'，无优化目标。",
+        "feedback": "该规则要求原题具备单目标最优性质，但此题仅判定可行性，缺少可量化的基础目标，故不适合扩展为多目标权衡题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_inverse_target_and_edit_ops",
+      "selection_reason": "原题决策结果（是否存在有效座位安排）可明确作为反向设计的目标（使安排成立或不成立），修改士兵组大小是原题核心对象（组）的自然参数调整，且与核心约束‘固定组大小’直接关联，设计自由度充分，满足所有轴变化要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束中的‘固定组大小’允许将组大小定义为可修改参数，原题目标为决策问题，可翻转为目标驱动的设计问题；helper‘target_result_binding’要求将可行性结果作为目标，helper‘edit_operation_contract’可基于士兵组这一核心对象定义修改操作（如增减组内人数）；不变量‘modular_fill_invariant’提供可行性保持缩减，可用于验证修改后的目标状态；轴变化C（从固定组大小变为允许有代价的修改）、O（从判定变为最小代价优化）、V（从可行/不可行变为最小修改量证明）均显著改变。",
+        "feedback": "规则完全适用于该种子题，反向目标清晰自然，修改空间充分且与核心规律强相关，最小性证明可依托原不变量进行拓展。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "SEED_FITS_GLOBAL_COUPLING",
+      "selection_reason": "原题存在多个独立士兵组，每组需求可局部处理，但全体共享有限的4座块与2座块数量，构成自然的全局耦合基础，完全满足规则对种子属性的要求。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "Core constraint 'fixed_group_cardinalities' defines independent groups with local demands; invariant 'modular_fill_invariant' shows groups can be greedily reduced independently; shared global resources (number of 4-seat and 2-seat blocks) bind these local decisions into a global feasibility check.",
+        "feedback": "种子题的局部单元清晰，共享资源明显，非常适合应用此规则。规划时需注意增强跨组件依赖，避免仅简单复刻总量约束。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_sequential_choice",
+      "selection_reason": "原题是静态的组合存在性问题，不存在可轮流选择、拿取或移动的操作序列，无法自然转化为双方轮流博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "no_natural_game_structure"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为判断给定组大小的士兵能否分配到飞机座位满足相邻约束，输入为组大小列表，操作空间为一次性分配而非顺序选择。schema中core_constraints仅包含相邻排他和固定基数约束，没有任何状态转移或操作序列。",
+        "feedback": "该规则要求种子题存在自然的轮流操作过程（如取物、移动），但本题是组合可行性判定，任何对抗化尝试都需要强行引入与原始语义无关的操作，违反了博弈化审查的核心原则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_required_local_structures",
+      "selection_reason": "种子题为组合分配问题，无路径、区间或子树等局部结构，无法扩展为覆盖或割问题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中核心约束为座位邻接限制和组分配，不存在单个路径对象。",
+        "feedback": "规则要求原题核心对象具有路径、区间、子树等局部结构，但种子题是座位安排可行性判定，没有此类结构。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题是可行性决策，不是计数题，不存在计数对象，无法应用带权计数规则。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题objective.type为decision，描述为'Determine if a valid seating arrangement exists'，核心约束是存在性条件，没有计数目标；题目输入和输出均无计数语义，不存在'明确有限的计数对象'，因此不满足规则eligibility.required_seed_properties第一条。",
+        "feedback": "该规则仅适用于已有明确计数对象的题目，建议更换种子题或修改规则前置条件。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_has_constructible_solution_with_canonical_order",
+      "message": "原题是决策问题，其解对象（座位安排）有明确的自然顺序可以定义规范解（如字典序最小安排）；且原解并非直接回溯可得，有升级空间。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标类型为 decision，不要求构造；约束定义了座位相邻关系，可在其基础上定义组ID序列的字典序作为规范；原 invariant 基于贪婪缩减保持可行性，但未直接给出构造方法，故规范解输出会引入新算法责任，可改变 C/O/V 轴。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_schema_lacks_critical_details",
+      "message": "无法从现有种子题摘要中确认无解情形是否能稳定地写成可局部检查的冲突证据。seat graph 的具体结构（排数、排内座位连接方式、相邻关系跨排限制等）未披露，且缺少任何无解实例的示例，因此无法判断不可满足原因是否可局部化。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "schema_insufficient",
+        "evidence": "schema_context 中 core_constraints 仅给出了不同组不得相邻的声明式约束，未提供完整的座位邻接图；invariant 仅描述了算法归约性质，未说明不可满足时的具体表现；original_problem_references 为空，无样例或边界情况可供分析。",
+        "feedback": "补齐种子题完整描述（特别是座位的具体布局和不可满足情形的示例）后可重新审查。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "eligible_counting_feasibility",
+      "message": "种子题解空间有限（固定座位数和组大小），不同解的等价关系明确（座位分配矩阵相等），原题已有按四座块拆分的结构（见 invariant modular_fill_invariant），满足规则要求的‘解空间有限、等价关系清楚、可按单元拆分汇总’，且不触犯任何禁止性质，适合改造为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "Schema 中 core_constraints 定义固定组大小和解空间边界；invariant 中 modular_fill_invariant 描述了按四座块拆分策略，证明解空间可结构化汇总；规则声明中 required_seed_properties 包含‘解空间有限’、‘等价关系能说清楚’、‘可按某种单元拆分并汇总’，种子题均满足。",
+        "feedback": "建议在规划阶段将去重规则明确写入新约束，例如‘两个安排不同当且仅当存在某座位分配的组不同’，并明确计数对象为完整分配方案而非部分解。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题是静态组合可行性判定，输入固定，无顺序不确定、资源波动或局部选择差异等可被放大的原生扰动来源，规则要求的最小保底优化强依赖此类语义基础，强行引入将违背全局红线（只换故事背景或硬造对手）",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为不同组相邻排除和固定组大小，目标为判定存在性，不变量基于模运算的贪婪减缩，未涉及任何扰动、不确定或顺序依赖；规则 eligibility 明确要求种子需有‘顺序不确定、资源波动或局部选择差异’，原题 schema 中未体现这些属性",
+        "feedback": "建议检查是否可重新解读原题中的局部选择（如多解性）为扰动源，但目前 scheme 不支撑。若不可行，则放弃该种子适应该规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_critical_parameter",
+      "message": "原题是判定是否存在合法座位安排，参数 n（排数）控制总座位容量，可行性关于 n 单调递增：若 n 排可行，则任何更大的 n 也必然可行（可空出多余排）。因此可自然升级为求允许安排存在的最小 n，n 成为临界参数。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标为 decision 类型（seed_schema.objective.type=decision），核心约束（seed_schema.core_constraints）以给定 n 为前提定义相邻与容量限制；单调性由容量增加保证：增加排数仅引入额外座位，不破坏原有可行解。原题不变量（seed_schema.invariant.modular_fill_invariant）透露可行性可通过贪心缩减，暗示单调分层结构。",
+        "feedback": "规则适配良好，但需在规划阶段确保阈值 n 进入核心约束定义，并建立起临界性证明（最小值的存在性与不可达下界）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_primary_objective",
+      "message": "种子题是决策问题（是否存在合法座位安排），没有可优化的目标，无法引入冲突的第二指标构成权衡前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为decision，description为'Determine if a valid seating arrangement exists'，无优化目标。",
+        "feedback": "该规则要求原题具备单目标最优性质，但此题仅判定可行性，缺少可量化的基础目标，故不适合扩展为多目标权衡题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "natural_inverse_target_and_edit_ops",
+      "message": "原题决策结果（是否存在有效座位安排）可明确作为反向设计的目标（使安排成立或不成立），修改士兵组大小是原题核心对象（组）的自然参数调整，且与核心约束‘固定组大小’直接关联，设计自由度充分，满足所有轴变化要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束中的‘固定组大小’允许将组大小定义为可修改参数，原题目标为决策问题，可翻转为目标驱动的设计问题；helper‘target_result_binding’要求将可行性结果作为目标，helper‘edit_operation_contract’可基于士兵组这一核心对象定义修改操作（如增减组内人数）；不变量‘modular_fill_invariant’提供可行性保持缩减，可用于验证修改后的目标状态；轴变化C（从固定组大小变为允许有代价的修改）、O（从判定变为最小代价优化）、V（从可行/不可行变为最小修改量证明）均显著改变。",
+        "feedback": "规则完全适用于该种子题，反向目标清晰自然，修改空间充分且与核心规律强相关，最小性证明可依托原不变量进行拓展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "SEED_FITS_GLOBAL_COUPLING",
+      "message": "原题存在多个独立士兵组，每组需求可局部处理，但全体共享有限的4座块与2座块数量，构成自然的全局耦合基础，完全满足规则对种子属性的要求。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "Core constraint 'fixed_group_cardinalities' defines independent groups with local demands; invariant 'modular_fill_invariant' shows groups can be greedily reduced independently; shared global resources (number of 4-seat and 2-seat blocks) bind these local decisions into a global feasibility check.",
+        "feedback": "种子题的局部单元清晰，共享资源明显，非常适合应用此规则。规划时需注意增强跨组件依赖，避免仅简单复刻总量约束。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_sequential_choice",
+      "message": "原题是静态的组合存在性问题，不存在可轮流选择、拿取或移动的操作序列，无法自然转化为双方轮流博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "no_natural_game_structure"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为判断给定组大小的士兵能否分配到飞机座位满足相邻约束，输入为组大小列表，操作空间为一次性分配而非顺序选择。schema中core_constraints仅包含相邻排他和固定基数约束，没有任何状态转移或操作序列。",
+        "feedback": "该规则要求种子题存在自然的轮流操作过程（如取物、移动），但本题是组合可行性判定，任何对抗化尝试都需要强行引入与原始语义无关的操作，违反了博弈化审查的核心原则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_required_local_structures",
+      "message": "种子题为组合分配问题，无路径、区间或子树等局部结构，无法扩展为覆盖或割问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中核心约束为座位邻接限制和组分配，不存在单个路径对象。",
+        "feedback": "规则要求原题核心对象具有路径、区间、子树等局部结构，但种子题是座位安排可行性判定，没有此类结构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题是可行性决策，不是计数题，不存在计数对象，无法应用带权计数规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题objective.type为decision，描述为'Determine if a valid seating arrangement exists'，核心约束是存在性条件，没有计数目标；题目输入和输出均无计数语义，不存在'明确有限的计数对象'，因此不满足规则eligibility.required_seed_properties第一条。",
+        "feedback": "该规则仅适用于已有明确计数对象的题目，建议更换种子题或修改规则前置条件。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.2884,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.3911,
+            "O": 0.3523,
+            "V": 0.4148
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.3911,
+            "objective_type_distance": 0.3236,
+            "objective_text_distance": 0.3954,
+            "invariant_match_distance": 0.4148
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将决策问题改造为输出规范解，引入字典序最小作为核心约束，并定义构造不变量，输出成为可校验的规范方案，满足所有 helper 的 redlines。",
+      "details": {
+        "review_role": "你扮演一名规范解规划审查官，重点确认规划是否真正把输出责任升级为可比较、可校验的规范解。",
+        "review_brief": "确认规划是否明确了规范解的定义、比较口径与校验方式，并且规范性会改变主要求解责任。",
+        "evidence": "candidate_schema 中 core_constraints 增加高优先级 lexicographically_minimal_output (helper constraint_reweighting)，objective 改为 construction 且 requires_solution (helper proof_bearing_output)，invariant 变为 partial_lex_min_invariant 确保构造顺序 (helper canonical_order_pressure)。planner_payload 的 algorithmic_delta_claim 描述了新贪心构造算法，每步检查最小可行组号，剩余可行性依赖原 invariant 变换，证明输出全局最优，非表面修改。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "chex_rule_ok",
+      "message": "题面明确要求输出字典序最小的规范构造，并将该要求嵌入核心约束、目标和不变量，使规范解成为主要算法逻辑的一部分，完全兑现了 canonical_witness 规则的专属合同。",
+      "details": {
+        "review_role": "你扮演一名规范解题面审查官，重点确认题面是否要求输出一个规范且可检查的构造。",
+        "review_brief": "确认题面是否写清规范解、字典序或统一比较规则，并要求输出一个可校验的构造方案。",
+        "evidence": "题面描述中写明“如果存在满足上述条件的座次安排，你还需要输出字典序最小的安排方案（按行优先将座位编号展开成序列……）”，输出格式强制“输出应为所有合法安排中字典序最小的”，样例解释中对比并论证了最小性（如样例1说明“任何其他合法安排都会导致字典序更大”）。此外，notes 中提示了贪心构造与可行性预判的算法框架，将规范顺序压力推进到状态转移。new_schema 的 core_constraints 中 lexicographically_minimal_output 约束设为高优先级，invariant 中包含 partial_lex_min_invariant，明确了规范解对约束权重和不变量设计的实质性影响，满足所有 helper 的红线要求。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.2884，落地轴=C, O, V。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "社团排座",
+    "description": "学校有 n 个教室，每个教室有 8 个固定座位。座位编号从左到右为 1 到 8。根据规定，以下座位被认定为相邻座位：{1,2}、{3,4}、{4,5}、{5,6}、{7,8}。\n现在有 k 个社团准备在教室里开展活动，第 i 个社团有 a_i 名学生。学校要求：\n1. 所有学生必须被分配到某个座位上，每个座位恰好坐一名学生；\n2. 任意相邻座位上的学生必须来自同一个社团。\n如果存在满足上述条件的座次安排，你还需要输出字典序最小的安排方案（按行优先将座位编号展开成序列，字典序比较规则为从左到右第一个不同位置值较小的序列更小）。\n如果没有任何可行的安排，输出 -1。",
+    "input_format": "第一行包含两个整数 n 和 k（1 ≤ n ≤ 100000，1 ≤ k ≤ 100），分别表示教室数量和社团数量。\n第二行包含 k 个空格分隔的整数 a_1, a_2, ..., a_k（1 ≤ a_i ≤ 10000），表示每个社团的学生人数。保证总和等于 8n。",
+    "output_format": "如果存在合法安排，输出 n 行，每行 8 个用空格分隔的整数，表示该排从左到右每个座位所属的社团编号（从 1 到 k）。输出应为所有合法安排中字典序最小的。\n如果无解，输出一行 -1。",
+    "constraints": [
+      "1 ≤ n ≤ 100000",
+      "1 ≤ k ≤ 100",
+      "1 ≤ a_i ≤ 10000",
+      "∑ a_i = 8n",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1 2\n4 4",
+        "output": "1 1 2 2 2 2 1 1",
+        "explanation": "只有一个教室，两个社团各4人。可行的安排必须满足相邻座位同社团。字典序最小的序列如输出所示：前两个座位为社团1，中间四个座位为社团2，最后两个座位为社团1。检查相邻：1-2同组，3-4同组，4-5同组，5-6同组，7-8同组，满足规则。任何其他合法安排都会导致字典序更大。"
+      },
+      {
+        "input": "2 2\n8 8",
+        "output": "1 1 1 1 1 1 1 1\n2 2 2 2 2 2 2 2",
+        "explanation": "两个教室，两个社团各8人。为使字典序最小，让第一个教室全部分配给社团1，第二个教室全部分配给社团2，这样展开序列的前8个值全为1，必然是最小的。"
+      },
+      {
+        "input": "1 2\n1 7",
+        "output": "-1",
+        "explanation": "总人数8，但社团1只有1人。由于最小相邻块大小为2（座位对{1,2}或{7,8}），无法安排一个单独的座位给社团1，因此不存在合法方案。"
+      }
+    ],
+    "notes": "注意：总人数必须恰好等于 8n。如果输入不满足该条件，同样应输出 -1。\n构造字典序最小安排时，可以考虑从第一个座位开始，尝试放置编号最小的社团，并利用可行性判定判断剩余座位是否仍可完成合法安排，若能则放置并进入下一座位，否则尝试下一个社团。证明这样的贪心策略能得到全局字典序最小的方案是本题的关键之一。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_43dc8145a4f7_campus_ops_20260524_003058",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}
