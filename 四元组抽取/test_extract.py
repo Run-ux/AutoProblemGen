@@ -1,17 +1,34 @@
 from __future__ import annotations
 
+import copy
 import logging
 import unittest
 
-from extract import RateLimiter, extract_single_dimension, validate_input_structure_result
+from extract import (
+    RateLimiter,
+    extract_single_dimension,
+    normalize_input_structure_result,
+    validate_input_structure_result,
+)
 
 
 class FakeClient:
     def __init__(self, result):
         self.result = result
+        self.calls = []
 
     def chat_json(self, system_prompt, user_prompt, temperature=0.4, **_):
-        return self.result
+        self.calls.append(
+            {
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
+                "temperature": temperature,
+            }
+        )
+        if isinstance(self.result, list):
+            index = min(len(self.calls) - 1, len(self.result) - 1)
+            return copy.deepcopy(self.result[index])
+        return copy.deepcopy(self.result)
 
 
 class InputStructureValidationTests(unittest.TestCase):
@@ -66,6 +83,136 @@ class InputStructureValidationTests(unittest.TestCase):
                 "value_range": {"min": 0, "max": 20},
                 "properties": {},
             }
+        )
+
+    def test_normalize_input_structure_fills_unknown_component_ranges(self) -> None:
+        normalized = normalize_input_structure_result(
+            {
+                "type": "composite",
+                "length": None,
+                "value_range": {"min": None},
+                "properties": {},
+                "components": [
+                    {
+                        "role": "queries",
+                        "role_description": "online query stream",
+                        "type": "array",
+                        "length": None,
+                        "properties": {},
+                    }
+                ],
+            }
+        )
+
+        self.assertEqual(normalized["length"], {"min": None, "max": None})
+        self.assertEqual(normalized["value_range"], {"min": None, "max": None})
+        self.assertEqual(
+            normalized["components"][0]["length"],
+            {"min": None, "max": None},
+        )
+        self.assertEqual(
+            normalized["components"][0]["value_range"],
+            {"min": None, "max": None},
+        )
+        validate_input_structure_result(normalized)
+
+    def test_extract_single_dimension_normalizes_range_shape_without_repair(self) -> None:
+        client = FakeClient(
+            {
+                "type": "composite",
+                "length": {"min": None, "max": None},
+                "value_range": {"min": None, "max": None},
+                "properties": {},
+                "components": [
+                    {
+                        "role": "queries",
+                        "role_description": "online query stream",
+                        "type": "array",
+                        "length": None,
+                        "value_range": None,
+                        "properties": {},
+                    }
+                ],
+            }
+        )
+
+        result = extract_single_dimension(
+            client=client,
+            problem={
+                "problem_id": "demo",
+                "source": {"source_name": "cf"},
+                "title": "",
+                "description": "",
+            },
+            dimension_name="input_structure",
+            rate_limiter=RateLimiter(min_interval=0.0),
+            logger=logging.getLogger("extract-test"),
+            temperature=0.0,
+        )
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(client.calls), 1)
+        self.assertEqual(
+            result["result"]["components"][0]["value_range"],
+            {"min": None, "max": None},
+        )
+
+    def test_extract_single_dimension_repairs_failed_input_structure_once(self) -> None:
+        client = FakeClient(
+            [
+                {
+                    "type": "composite",
+                    "length": {"min": None, "max": None},
+                    "value_range": {"min": None, "max": None},
+                    "properties": {},
+                    "components": [
+                        {
+                            "role": "queries",
+                            "type": "array",
+                            "length": {"min": 1, "max": 5},
+                            "value_range": {"min": 0, "max": 20},
+                            "properties": {},
+                        }
+                    ],
+                },
+                {
+                    "type": "composite",
+                    "length": {"min": None, "max": None},
+                    "value_range": {"min": None, "max": None},
+                    "properties": {},
+                    "components": [
+                        {
+                            "role": "queries",
+                            "role_description": "online query stream",
+                            "type": "array",
+                            "length": {"min": 1, "max": 5},
+                            "value_range": {"min": 0, "max": 20},
+                            "properties": {},
+                        }
+                    ],
+                },
+            ]
+        )
+
+        result = extract_single_dimension(
+            client=client,
+            problem={
+                "problem_id": "demo",
+                "source": {"source_name": "cf"},
+                "title": "",
+                "description": "",
+            },
+            dimension_name="input_structure",
+            rate_limiter=RateLimiter(min_interval=0.0),
+            logger=logging.getLogger("extract-test"),
+            temperature=0.0,
+        )
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(client.calls), 2)
+        self.assertEqual(
+            result["result"]["components"][0]["role_description"],
+            "online query stream",
         )
 
     def test_extract_single_dimension_marks_invalid_composite_as_failed(self) -> None:

@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import logging
 import sys
@@ -104,6 +105,36 @@ def _validate_range_field(value: Any, field_path: str) -> None:
         raise ValueError(f"{field_path}.max 必须是整数或 null")
 
 
+def _normalize_range_field(container: Dict[str, Any], field_name: str) -> None:
+    value = container.get(field_name)
+    if value is None:
+        container[field_name] = {"min": None, "max": None}
+        return
+    if isinstance(value, dict):
+        value.setdefault("min", None)
+        value.setdefault("max", None)
+
+
+def normalize_input_structure_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    """修复无语义争议的范围字段形状，避免 null/缺字段导致校验失败。"""
+    if not isinstance(result, dict):
+        return result
+
+    normalized = copy.deepcopy(result)
+    _normalize_range_field(normalized, "length")
+    _normalize_range_field(normalized, "value_range")
+
+    components = normalized.get("components")
+    if isinstance(components, list):
+        for component in components:
+            if not isinstance(component, dict):
+                continue
+            _normalize_range_field(component, "length")
+            _normalize_range_field(component, "value_range")
+
+    return normalized
+
+
 def validate_input_structure_result(result: Dict[str, Any]) -> None:
     structure_type = result.get("type")
     if structure_type != "composite":
@@ -139,6 +170,42 @@ def validate_input_structure_result(result: Dict[str, Any]) -> None:
         component_properties = component.get("properties")
         if not isinstance(component_properties, dict):
             raise ValueError(f"{field_prefix}.properties 必须是对象")
+
+
+def repair_input_structure_result(
+    client: QwenClient,
+    *,
+    original_result: Dict[str, Any],
+    validation_error: str,
+    temperature: float,
+) -> Dict[str, Any]:
+    repair_system = """你是编程竞赛输入结构 JSON 修复器。
+
+你的唯一任务是修复用户提供的 input_structure JSON，使它满足既有字段格式。
+只输出严格 JSON 对象，不输出解释，不输出 Markdown 代码块。
+不得改变输入结构语义，不得新增题面没有证据的约束。"""
+
+    repair_user = f"""下面的 input_structure JSON 未通过本地校验。
+
+校验错误：
+{validation_error}
+
+原始 JSON：
+{json.dumps(original_result, ensure_ascii=False, indent=2)}
+
+修复要求：
+1. 保留原有 type、properties、components 的语义。
+2. 所有 length 与 value_range 字段都必须是对象：{{"min": 整数或 null, "max": 整数或 null}}。
+3. 如果范围未知，字段本身不能写 null，必须写 {{"min": null, "max": null}}。
+4. 如果 components 存在，每个组件都必须包含 role、role_description、type、length、value_range、properties。
+5. 只输出修复后的 JSON 对象。"""
+
+    return client.chat_json(
+        repair_system,
+        repair_user,
+        temperature=min(temperature, 0.1),
+        request_label="tuple_extract.input_structure.schema_repair",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +252,22 @@ def extract_single_dimension(
             request_label=f"tuple_extract.{dimension_name}",
         )
         if dimension_name == "input_structure":
-            validate_input_structure_result(result)
+            result = normalize_input_structure_result(result)
+            try:
+                validate_input_structure_result(result)
+            except Exception as validation_error:
+                logger.warning(
+                    "    input_structure 首次校验失败，尝试结构修复：%s",
+                    validation_error,
+                )
+                repaired = repair_input_structure_result(
+                    client,
+                    original_result=result,
+                    validation_error=str(validation_error),
+                    temperature=temperature,
+                )
+                result = normalize_input_structure_result(repaired)
+                validate_input_structure_result(result)
         return {
             "problem_id": problem["problem_id"],
             "source": problem.get("source", ""),
