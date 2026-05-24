@@ -12,7 +12,7 @@ from prompt_builder import (
     build_rule_problem_validation_system_prompt,
     build_rule_problem_validation_user_prompt,
 )
-from qwen_client import QwenClient
+from qwen_client import LLMResponseFormatError, QwenClient
 from rulebook import normalize_rule_id
 from schema_tools import dataclass_to_dict
 
@@ -447,12 +447,24 @@ class RuleHandler:
         system_prompt: str,
         user_prompt: str,
     ) -> RuleValidationOutcome:
-        payload = client.chat_json(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            temperature=0.05,
-            request_label=f"rule_review.{self.rule_id}.{stage}",
-        )
+        try:
+            payload = client.chat_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=0.05,
+                request_label=f"rule_review.{self.rule_id}.{stage}",
+            )
+        except LLMResponseFormatError as exc:
+            return self._invalid_review_outcome(
+                stage=stage,
+                review_role=review_role,
+                review_brief=review_brief,
+                message="规则专属审查返回非法 JSON，客户端重试后仍无法解析。",
+                payload={
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                },
+            )
         return self._review_payload_to_outcome(
             stage=stage,
             payload=payload,

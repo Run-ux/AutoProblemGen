@@ -1,6 +1,6 @@
 # 生成题面
 
-该目录实现了“规则驱动的四元组生成器”。当前版本采用“规则声明 + 代码执行”架构：规则文件负责声明元信息、审计标签与合同入口，`rule_handlers.py` 负责组织资格判断、规划校验、题面校验与审计事件生成。资格判断阶段会先调用 LLM，并通过角色审查式提示词完成单规则准入审查；规划校验和题面校验会先经过代码级通用硬门槛，再由每条规则各自的 LLM 审查提示词完成专属语义审查。主线输入来自总流程组装出的 `总流程/output/<run_id>/generation/source/*.json`，生成链路围绕四元组 `input_structure / core_constraints / objective / invariant` 展开，输出包括：
+该目录实现了“规则驱动的四元组生成器”。当前版本采用“规则声明 + 代码执行”架构：规则文件负责声明元信息、审计标签与合同入口，`rule_handlers.py` 负责组织资格判断、规划校验、题面校验与审计事件生成。资格判断阶段会先调用 LLM，并通过角色审查式提示词完成单规则准入审查；规划校验和题面校验会先经过代码级通用硬门槛，再由每条规则各自的 LLM 审查提示词完成专属语义审查。主线输入来自总流程组装出的 `总流程/output/<run_id>/generation/source/*.json`，生成链路围绕四元组 `input_structure / core_constraints / objective / invariant` 展开，并优先使用 source 中的 `original_problem` 作为原题文本；若该字段不存在，才回退到题库索引查询。输出包括：
 
 - `output/<problem_id>/*.md`：最终 Markdown 题面；`same_family` 模式使用 `output/<seed_a>__<seed_b>/`
 - `artifacts/<problem_id>/*.json`：规则决策轨迹、实例化四元组、模型返回结果与迭代摘要；`same_family` 模式使用 `artifacts/<seed_a>__<seed_b>/`
@@ -92,7 +92,7 @@ python main.py --mode single --problem-ids CF25E --quality-iterations 3
 | `--problem-ids <id...>`                      | `single` 模式下指定待生成的 `problem id` 列表；省略时进入目录批量生成                        | 空列表                                                   | 仅 `single`          |
 | `--seed-a <id>`                              | `same_family` 模式下的第一个种子题 `problem id`                                              | 无                                                       | 仅 `same_family`     |
 | `--seed-b <id>`                              | `same_family` 模式下的第二个种子题 `problem id`                                              | 无                                                       | 仅 `same_family`     |
-| `--source-dir <schema目录>`                  | 四维 schema JSON 目录；主线由总流程传入                                                          | 总流程显式传入                                         | 全局                   |
+| `--source-dir <schema目录>`                  | 四维 schema JSON 目录；可包含 `original_problem` 原题文本，主线由总流程传入                       | 总流程显式传入                                         | 全局                   |
 | `--output-dir <md输出目录>`                  | Markdown 题面输出目录                                                                            | 总流程显式传入                                         | 全局                   |
 | `--artifact-dir <json输出目录>`              | 结构化产物输出目录                                                                               | 总流程显式传入                                         | 全局                   |
 | `--report-dir <过程报告目录>`                | 过程说明 Markdown 输出目录                                                                       | 总流程显式传入                                         | 全局                   |

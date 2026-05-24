@@ -607,7 +607,11 @@ def _prepare_generation_source_for_problem(
     generation_source_dir.mkdir(parents=True, exist_ok=True)
     target = generation_source_dir / f"{problem_id}.json"
     try:
-        payload = _build_generation_source_from_raw(raw_dir, problem_id)
+        original_problem = _load_original_problem_for_generation(
+            input_path=Path(str(problem.get("input_path", ""))),
+            expected_problem_id=problem_id,
+        )
+        payload = _build_generation_source_payload(raw_dir, problem_id, original_problem=original_problem)
     except WorkflowError as exc:
         problem["status"] = "tuple_assembly_failed"
         problem["tuple"]["generation_source_path"] = ""
@@ -846,6 +850,15 @@ def _prepare_generation_source(
 
 
 def _build_generation_source_from_raw(raw_dir: Path, problem_id: str) -> dict[str, Any]:
+    return _build_generation_source_payload(raw_dir, problem_id, original_problem=None)
+
+
+def _build_generation_source_payload(
+    raw_dir: Path,
+    problem_id: str,
+    *,
+    original_problem: dict[str, Any] | None,
+) -> dict[str, Any]:
     dimensions: dict[str, dict[str, Any]] = {}
     source = ""
     for dimension in TUPLE_DIMENSIONS:
@@ -873,7 +886,29 @@ def _build_generation_source_from_raw(raw_dir: Path, problem_id: str) -> dict[st
         "core_constraints": dimensions["core_constraints"],
         "objective": dimensions["objective"],
         "invariant": dimensions["invariant"],
+        "original_problem": original_problem,
     }
+
+
+def _load_original_problem_for_generation(input_path: Path, expected_problem_id: str) -> dict[str, Any]:
+    if not input_path.exists():
+        raise WorkflowError(f"原题输入 JSON 不存在，无法组装原题文本：{input_path}")
+    try:
+        payload = json.loads(input_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise WorkflowError(f"原题输入 JSON 读取失败：{input_path}；{exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise WorkflowError(f"原题输入 JSON 解析失败：{input_path}；{exc.msg}") from exc
+    if not isinstance(payload, dict):
+        raise WorkflowError(f"原题输入 JSON 顶层必须是对象：{input_path}")
+
+    problem_id = str(payload.get("problem_id", "")).strip()
+    if problem_id and problem_id != expected_problem_id:
+        raise WorkflowError(
+            "原题输入 JSON 的 problem_id 与当前题不一致："
+            f"{input_path}；期望={expected_problem_id}；实际={problem_id}"
+        )
+    return dict(payload)
 
 
 def _final_dimension_result(result: dict[str, Any], dimension: str) -> dict[str, Any]:

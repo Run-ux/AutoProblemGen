@@ -20,6 +20,10 @@ from llm_trace import fail_call, finish_call, new_call_id, retry_call, start_cal
 DEFAULT_DISTANCE_CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 
 
+class LLMResponseFormatError(ValueError):
+    """LLM HTTP 调用成功，但返回内容无法解析为约定 JSON。"""
+
+
 class QwenClient:
     def __init__(
         self,
@@ -74,9 +78,21 @@ class QwenClient:
             max_retries=max_retries or self.generation_config.max_retries,
             model=self.model,
             task_name=request_label,
+            require_json_parse=True,
         )
-        content = json.loads(raw)["choices"][0]["message"]["content"]
-        return _extract_json_object(content)
+        try:
+            content = json.loads(raw)["choices"][0]["message"]["content"]
+            return _extract_json_object(content)
+        except (json.JSONDecodeError, KeyError, IndexError, TypeError, ValueError) as exc:
+            raise LLMResponseFormatError(
+                _format_response_parse_error(
+                    task_name=request_label,
+                    attempt=max_retries or self.generation_config.max_retries,
+                    max_retries=max_retries or self.generation_config.max_retries,
+                    summary={"parse_error": str(exc)},
+                    response_text=raw,
+                )
+            ) from exc
 
     def embed_texts(
         self,
@@ -134,6 +150,7 @@ class QwenClient:
         max_retries: int,
         model: str,
         task_name: str,
+        require_json_parse: bool = False,
     ) -> str:
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -181,6 +198,16 @@ class QwenClient:
                     json_parse=json_parse,
                     summary=summary,
                 )
+                if require_json_parse and json_parse != "success":
+                    raise LLMResponseFormatError(
+                        _format_response_parse_error(
+                            task_name=task_name,
+                            attempt=attempt,
+                            max_retries=max_retries,
+                            summary=summary,
+                            response_text=response_text,
+                        )
+                    )
                 return raw_text
             except (
                 TimeoutError,
@@ -212,6 +239,8 @@ class QwenClient:
                         error=exc,
                     )
                 time.sleep(delay)
+        if isinstance(last_error, LLMResponseFormatError):
+            raise last_error
         raise RuntimeError(
             "调用 LLM 失败: "
             f"model={model}; url={url}; timeout_s={timeout_s}; "
@@ -275,19 +304,53 @@ def _safe_json_loads(text: str) -> Any:
         return text
 
 
+def _preview_text(text: str, max_chars: int = 240) -> str:
+    normalized = " ".join(str(text).split())
+    if len(normalized) <= max_chars:
+        return normalized
+    return normalized[:max_chars] + "..."
+
+
+def _format_response_parse_error(
+    *,
+    task_name: str,
+    attempt: int,
+    max_retries: int,
+    summary: dict[str, Any],
+    response_text: str,
+) -> str:
+    parse_error = str(summary.get("parse_error", "") or "unknown")
+    return (
+        "LLM 返回非法 JSON："
+        f"request_label={task_name}; "
+        f"attempt={attempt}/{max_retries}; "
+        f"parse_error={parse_error}; "
+        f"response_preview={_preview_text(response_text)}"
+    )
+
+
 def _summarize_raw_response(raw_text: str, payload: dict[str, Any]) -> tuple[dict[str, Any], str, dict[str, Any], str]:
     data = _safe_json_loads(raw_text)
     if not isinstance(data, dict):
-        return summarize_value(data), raw_text, {}, "failed"
+        summary = summarize_value(data)
+        summary["parse_error"] = "响应整体不是 JSON 对象。"
+        summary["response_preview"] = _preview_text(raw_text)
+        return summary, raw_text, {}, "failed"
     usage = data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {}
     if "embeddings" in str(payload.get("model", "")).lower() or "input" in payload and "messages" not in payload:
         return summarize_value(data), raw_text, usage, "success"
     try:
         content = str(data["choices"][0]["message"]["content"])
-    except (KeyError, IndexError, TypeError):
-        return summarize_value(data), raw_text, usage, "failed"
+    except (KeyError, IndexError, TypeError) as exc:
+        summary = summarize_value(data)
+        summary["parse_error"] = str(exc)
+        summary["response_preview"] = _preview_text(raw_text)
+        return summary, raw_text, usage, "failed"
     try:
         parsed = _extract_json_object(content)
-    except Exception:
-        return summarize_value(data), content, usage, "failed"
+    except Exception as exc:
+        summary = summarize_value(data)
+        summary["parse_error"] = str(exc)
+        summary["response_preview"] = _preview_text(content)
+        return summary, content, usage, "failed"
     return summarize_value(parsed), content, usage, "success"

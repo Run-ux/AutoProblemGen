@@ -1,0 +1,923 @@
+{
+  "problem_id": "canonical_witness_matrix_median",
+  "source_problem_ids": [
+    "taco_codechef_fa0a3447dc85"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "不要暴露原题编号、出处或链接。",
+      "不要复写原题的叙事结构、输入输出关系或任务定义。"
+    ],
+    "rationale": "必须改变核心约束以引入规范顺序与字典序最小的定义，改变目标从求值到输出具体方案，改变不变量以支撑逐行贪心构造字典序解的正确性。这些改动相互关联，共同实现从答案输出到规范解输出的升级。",
+    "summary": "C、O、V均发生实质性变化：C新增规范顺序定义与字典序最小要求，O变为输出构造解，V调整为保障字典序构造的正确性。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4855,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4855,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.8108,
+      "O": 0.5642,
+      "V": 0.5061
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.8108,
+      "objective_type_distance": 0.7186,
+      "objective_text_distance": 0.3326,
+      "invariant_match_distance": 0.5061
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construct_canonical_witness",
+    "description": "输出一个 n × n 矩阵，代表对原矩阵每行重排后的结果。要求：1) 满足代价约束和排列合法性；2) 最小中位数（goodness）最大化；3) 在所有达成最大 good 的方案中，按照每行内升序、行优先比较的字典序最小。",
+    "target": "canonical_solution",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "existence_to_counting最自然地将原优化问题转化为计数义务，与核心操作一致，无新增无关约束；canonical_witness可能因原题已有顺手回溯方案而适用性差；inverse_design需引入元素修改操作，违反global_redlines中“与原核心规律无关的额外约束”。；创新度判断：将核心义务从寻找最大最小值彻底替换为统计达到该值的所有行排列方案，引入去重与有限性证明，迫使状态设计围绕计数单元拆解。；难度判断：要求解法在原来贪心二分的基础上重构为带去重的组合计数DP，处理等价类划分和模数，显著提升算法设计复杂度。；风险判断：主要风险在于去重规则定义模糊可能导致题意不清，但可通过明确‘按行排列结果相同则视为同解’规避；计数可能退化为后处理的风险由counting_obligation_lock helper锁定主目标来控制。",
+  "new_schema_snapshot": {
+    "problem_id": "canonical_witness_matrix_median",
+    "source": "codechef_extension",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "matrix_size",
+          "role_description": "dimension n of the square matrix",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {}
+        },
+        {
+          "role": "cost_limit",
+          "role_description": "upper bound k for rearrangement cost",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000000000000
+          },
+          "properties": {}
+        },
+        {
+          "role": "matrix",
+          "role_description": "n x n matrix of integers",
+          "type": "matrix",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "valid_permuted_rows",
+          "description": "输出的每一行必须是输入对应行的一个排列。",
+          "formal": "对于每个 i，输出行 i 是输入行 i 的一个重排。",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "cost_upper_bound",
+          "description": "重排后所有行中位数的总和不超过 k。中位数定义为该行元素按升序排列后的第 m = ⌈n/2⌉ 个元素。",
+          "formal": "∑_{i=1}^{n} median(row_i) ≤ k",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "canonical_ordering",
+          "description": "规范解要求每行内的元素以升序排列输出。整个矩阵的字典序定义为按行优先、行内从左到右的顺序比较。",
+          "formal": "输出行 i 必须满足 a_{i,1} ≤ a_{i,2} ≤ ... ≤ a_{i,n}。",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "optimality_and_lexicographic_min",
+          "description": "输出方案必须使得所有合法排列中的最小中位数尽可能大，并且在所有达到该最大值的方案中，按上述规范顺序的字典序最小。",
+          "formal": "令 goodness(A) = min_i median(row_i)。输出方案的质量 goodness 必须最大化，且在所有最大化 good 的方案中，其整矩阵序列字典序最小。",
+          "source_sections": [
+            "objective"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construct_canonical_witness",
+      "description": "输出一个 n × n 矩阵，代表对原矩阵每行重排后的结果。要求：1) 满足代价约束和排列合法性；2) 最小中位数（goodness）最大化；3) 在所有达成最大 good 的方案中，按照每行内升序、行优先比较的字典序最小。",
+      "target": "canonical_solution",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "decision_monotonicity",
+          "description": "对于阈值 X，能否在代价 ≤ k 的条件下使每行中位数 ≥ X 的可行性关于 X 单调非增。该性质保证二分搜索正确，并且原可行性检查过程不受输出规范影响。",
+          "properties": {},
+          "evidence_source": "inherited_from_seed"
+        },
+        {
+          "name": "suffix_feasibility_bounded",
+          "description": "在逐行贪心构造字典序最小解的过程中，当固定前 i-1 行的选择后，剩余行的最小可能代价（基于原贪心计算）能够被预先计算。如果当前已用代价加上后缀最小代价 > k，则不可能完成构造。这一不变式保证剪枝的正确性。",
+          "properties": {},
+          "evidence_source": "new_proof"
+        },
+        {
+          "name": "greedy_lexicographic_progress",
+          "description": "对于当前行 i，在所有满足局部字典序最小且可扩展（即后缀可行性成立）的候选中，选择最小的行序列不会丢失全局字典序最小解。这是因为若两个候选的行序列前缀不同，字典序更小的若可扩展，则更优；若字典序相同，则可任选。需要证明可扩展性测试是充分的。",
+          "properties": {},
+          "evidence_source": "new_proof"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium_hard"
+  },
+  "applied_rule": "canonical_witness",
+  "rejected_candidates": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "二分答案 + 贪心可行性检查：对于阈值 X，对每一行贪心选择最小的中位数（在保证该行至少 ⌈n/2⌉ 个元素 ≥ X 的前提下），计算总代价，检查是否 ≤ k。",
+    "reusable_subroutines": "阈值 X 下的单行最小代价计算（给定行和 X，在升序排列中找最小的满足中位数 ≥ X 的代价），可用于计算后缀最小代价总和。",
+    "new_solver_core": "先二分得到最优 goodness 值 G。然后从第一行开始，逐行枚举该行所有可能的、符合规范顺序（升序）且中位数 ≥ G 的排列子集。对每个候选，使用后缀最小代价判断是否仍可能满足总代价限制。在第一组可行的候选行中选择字典序最小的整行序列；若不可行则取消上一行选择并回溯，但利用强大的剪枝可以避免状态爆炸。最终构造出字典序最小的完整方案。",
+    "new_proof_obligation": "需要证明：1) 在最优 G 下，逐行贪心选择过程中，仅凭后缀最小代价剪枝不会错过字典序更小的方案；2) 规范升序排列下，行内字典序比较与整行选择的最小性是一致的（即不存在通过非升序排列获得更小整矩阵字典序的可能性）；3) 贪心过程不会陷入需要回溯的状态，或者就算有回溯，其复杂度仍在可控范围内（需要具体分析）。",
+    "why_direct_reuse_fails": "原解只输出一个数字，对具体排列的顺序完全没有要求；即使能记录出任意一个可行方案，也无法证明其字典序最小。要实现字典序最小的规范解，必须引入行内选择空间的排序与搜索，并在全局代价限制下进行前瞻剪枝，这不是原解顺手就能完成的。"
+  },
+  "anti_shallow_rationale": "新题不是简单地“在求出答案后任意输出一种方案”。它明确要求输出的排列必须是所有最优解中规范顺序字典序最小的，这迫使算法不仅要知道可行域，还要对解空间进行字典序排序并证明选取的正确性。原题的核心贪心仅关心代价的最小化，而新题要在字典序的意义下重新平衡每行的选择，导致状态设计和正确性证明彻底翻新，避免了表面换皮。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "canonical_order_pressure",
+      "selection_reason": "需要定义规范顺序并让其影响最优性，从而改变目标和约束的本质。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Core_constraints 新增“规范顺序（每行升序）”定义，并将字典序比较规则纳入约束。",
+        "Objective 由最大化最小值改为输出字典序最小的最优规范解。",
+        "Invariant 增加针对规范顺序下字典序构造的正确性证明项。"
+      ],
+      "innovation_reason": "规范顺序的定义直接嵌入到可行解的表示和比较中，输出对象不再只是任意可行方案，而是带有全局顺序偏好的规范解，迫使解法重新权衡行内元素的选择，从而离开原题只需最小化中位数代价的路径。",
+      "difficulty_reason": "引入了字典序最小要求后，解法必须进行更复杂的搜索或动态规划，不能停留在原贪心可行性判定的简单逻辑上，难度显著增加。"
+    },
+    {
+      "id": "proof_bearing_output",
+      "selection_reason": "要求输出对象本身可校验，且证明责任不能仅靠题面解释。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Objective 改为 construct_canonical_witness，明确输出要求为可独立验证的方案。",
+        "Invariant 中添加了贪心构造正确性的证明义务，该不变量必须在新解法中被维护和证明。"
+      ],
+      "innovation_reason": "输出从单一数值升级为一个带有证书性质的完整解，解题者不仅要构造解，还要在逻辑上确信（或通过算法步骤隐含证明）它满足全局最优和字典序最小，这完全改变了题目的交互性质。",
+      "difficulty_reason": "解题者需要设计过程以生成可验证的解，同时证明过程合理，这比直接输出值的难度更高。"
+    },
+    {
+      "id": "constraint_reweighting",
+      "selection_reason": "需要让字典序最小的要求成为核心优化目标的一部分，而不只是附加条件。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Core_constraints 中，优化目标的层次被重排：首要最大化 min median，其次最小化字典序，代价上限则成为硬约束。",
+        "Invariant 中反映了新的主次关系：可行性首先受限于代价，再受限于字典序贪心；后缀可行性剪枝体现了这一点。"
+      ],
+      "innovation_reason": "通过显式提升字典序最小到次要优化目标，改变了解空间的结构，原题主要关心可行性，新题在同样的代价约束下必须处理字典序偏序，这从根本上改变了约束的优先级组织。",
+      "difficulty_reason": "解法需要在满足代价约束的同时，处理字典序这个第二目标，一般需要额外的状态或前瞻，增加了算法设计难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "canonical_construction_space",
+      "selection_reason": "原题仅要求输出最优值，具有明确的解对象且可定义字典序规范；改为输出字典序最小的可行排列后，主要解法需超越可行性回溯，设计新的构造策略以满足全局规范顺序，符合规则要求的输出升级与轴变化。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示objective.type为maximize_value且requires_solution为false，输出仅为数值；invariant表明原解通过贪心构造部分解，存在顺手回溯风险，但引入字典序最小要求后，需重新设计构造过程，不再属于简单回溯；规则required_seed_properties要求有明确解对象且可定义规范顺序，种子题每行排列可自然定义字典序，符合条件。",
+        "feedback": "种子题具备升级空间，规范解输出将迫使解法在状态转移中处理全局字典序约束，提升难度，但可能需注意helper中‘不能退化为输出后处理’的红线。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_failure_case",
+      "selection_reason": "种子题目标为最大化最小值，不存在无法构造合法方案的“做不到”情形，无法落成冲突证据输出。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求当无法构造方案时输出局部冲突证据，但种子题 schema 显示 objective 为 maximize_value，无不可行状态；solution_code 中的二分判定仅用于搜索，最终总是输出一个值，不存在无解输出。",
+        "feedback": "规则与种子题输出语义不兼容，无法产生冲突证据，建议选择有不可行判定的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "clear_counting_conditions",
+      "selection_reason": "种子题有明确定义的有限重排空间、清晰的最优值目标，可将求解最大goodness改为统计达到该goodness的不同重排方案数。去重规则按矩阵相等自然成立，解空间可分解为分行决策的单元，适合进行计数改造。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "input_structure中n上限1000且矩阵元素值域有限，保证重排总数有限；core_constraints提供代价上限；invariant中的单调性可支撑计数时的状态汇总。",
+        "feedback": "建议在后续规划中明确方案等价定义（按重排后矩阵完全相同），并指定计数结果的模数以处理大数问题。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是基于确定矩阵和确定成本上限的优化问题，输入固定，选手可以自由选择排列，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。强行引入扰动将属于硬造对手，违反规则禁止项。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束'sum of medians <= k'和目标是'maximize the minimum median'，没有提及任何扰动；输入结构是固定的矩阵和成本上限，没有不确定性参数。规则要求原题必须自然存在不确定性，但本题语义是纯确定性优化。",
+        "feedback": "规则无法应用于本种子题，因为没有可放大的原生扰动来源，任何强制扰动都会脱离原题语义，导致新题与种子关联薄弱。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "already_extremal",
+      "selection_reason": "种子题目标为最大化最小中位数，已是通过单调可行性判定二分搜索临界阈值的标准阈值优化题。规则要求从判定性扩展为极值求解，但原题已完成此升级，新规应用仅相当于重复原题结构，无法产生实质性差异。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema.objective.type='maximize_value'，目标为 goodness（最大最小中位数）；invariant 明确基于二分搜索的决策单调性；原题已定义参数化可行性阈值并寻求极值。规则 positive example 描述与本 seed 高度同构，negative example 警告的“外面套一层二分”与本 seed 扩展可能相同。",
+        "feedback": "该种子题已经是典型的阈值优化题，直接应用此规则无法带来有意义的轴变换或难度升级，建议选择仅有可行性判定的种子题以发挥规则价值。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "post_processing_feasible",
+      "selection_reason": "种子题的目标（最大化最小中位数）与总成本（各行中位数之和）构成自然冲突，但原输入已包含成本上限k，且目标在给定k下求解。若移除k并改为生成帕累托前沿，则完全可通过枚举不同k并复用原算法实现，属于规则明确禁止的‘权衡关系可由原答案直接后处理得到’，无法保证算法核心发生实质性改变。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema中cost_limit是输入的一部分（role: cost_limit），目标为maximize goodness subject to ∑ m_i ≤ k；第二指标总成本即为∑ m_i。通过扫描不同k调用原算法即可输出cost-goodness曲线，无需修改状态或约束，不满足规则要求的coupled_state_expansion和防范后处理的红线。",
+        "feedback": "虽然存在自然的冲突指标（总成本），但现行规则要求对权衡关系的算法实现进行耦合状态重设计，而非外部枚举后处理。此种子题更适合其他不禁止后处理的变换规则，或不适合该特定规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "eligible_inverse_design",
+      "selection_reason": "原题最大化最小中位数的目标可以作为反向目标值，修改矩阵元素是自然操作，可设计为最小修改问题，满足要求且能应用所有 helper 和红线。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.description 显示目标为 maximize the minimum median，因此反向目标可绑定为该值；input_structure.components 包含 matrix 组件，自然允许修改操作；规则 examples.positive 给出“给定目标答案，求最少修改几个元素使原性质成立”与本方向一致；required_seed_properties 均满足，forbidden_seed_properties 未违反；validation_contract.hard_checks 均能通过全局 redlines 未涉及。",
+        "feedback": "建议在修改操作定义中明确修改单个元素的代价和允许的修改范围，并确保最小性证明的不变量可构造。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "already_globally_coupled",
+      "selection_reason": "原题中所有行的中位数通过共享成本上界k耦合，局部单元（行）非独立，已具备全局约束，扩展无法引入有意义的额外全局耦合，违反规则要求的“可独立处理的分量”前提。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中core_constraints定义了rearrangement_cost_upper_bound：∑_{i=1}^{n} m_i ≤ k，即各行的中位数之和受限，这本质是共享资源约束。原题目标maximize the minimum median，解法依赖全局可行性检查，表明各单元非独立。",
+        "feedback": "种子题已经是耦合题，不再具备可分解的局部单元，该规则不适用。请选择存在真正独立单元的种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_seed_operation",
+      "selection_reason": "原题是纯组合优化问题（求排列使中位数和不超过k的最大最小中位数），没有可供轮流选择、拿取、移动或改变状态的自然操作。强行构造双方博弈会变成硬造玩家，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "forced_player_creation"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 明确要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”。原题摘要仅涉及矩阵排列求解，无任何逐次决策动作的描述。输入结构为矩阵和代价上限，核心约束为中位数和不超过k，均为静态优化条件，不具备可轮流代理的操作语义。",
+        "feedback": "建议更换种子题，选择具有明确决策步骤且允许交替选择的问题（如取石子、走格子、选数字等）。当前种子题的优化结构无法在不扭曲核心约束的情况下转化为对抗博弈。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题中各行是独立集合，仅靠总代价约束关联，不存在天然的覆盖、割或支配关系，强行扩展会违反规则禁止属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束为rearrangement_cost_upper_bound，即每行中位数之和不超过k，是代价聚合而非覆盖语义。输入结构中行是对象，但对象族之间无覆盖或割的结构。方案依赖单调性构造，无全局覆盖验证。",
+        "feedback": "规则要求种子题具有可组合的局部对象族并能形成覆盖/割关系，但本题不满足，建议更换种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是一个最大化最小值优化问题，没有明确的计数对象，因此无法应用该规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最大化最小中位数，不是计数；input_structure中没有计数对象；core_constraints是代价上限，与计数无关。",
+        "feedback": "该规则要求原题已有明确有限的计数对象，但此题是优化问题，不存在计数基础，无法定义带权分布。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_construction_space",
+      "message": "原题仅要求输出最优值，具有明确的解对象且可定义字典序规范；改为输出字典序最小的可行排列后，主要解法需超越可行性回溯，设计新的构造策略以满足全局规范顺序，符合规则要求的输出升级与轴变化。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.87,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示objective.type为maximize_value且requires_solution为false，输出仅为数值；invariant表明原解通过贪心构造部分解，存在顺手回溯风险，但引入字典序最小要求后，需重新设计构造过程，不再属于简单回溯；规则required_seed_properties要求有明确解对象且可定义规范顺序，种子题每行排列可自然定义字典序，符合条件。",
+        "feedback": "种子题具备升级空间，规范解输出将迫使解法在状态转移中处理全局字典序约束，提升难度，但可能需注意helper中‘不能退化为输出后处理’的红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_failure_case",
+      "message": "种子题目标为最大化最小值，不存在无法构造合法方案的“做不到”情形，无法落成冲突证据输出。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求当无法构造方案时输出局部冲突证据，但种子题 schema 显示 objective 为 maximize_value，无不可行状态；solution_code 中的二分判定仅用于搜索，最终总是输出一个值，不存在无解输出。",
+        "feedback": "规则与种子题输出语义不兼容，无法产生冲突证据，建议选择有不可行判定的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_conditions",
+      "message": "种子题有明确定义的有限重排空间、清晰的最优值目标，可将求解最大goodness改为统计达到该goodness的不同重排方案数。去重规则按矩阵相等自然成立，解空间可分解为分行决策的单元，适合进行计数改造。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "input_structure中n上限1000且矩阵元素值域有限，保证重排总数有限；core_constraints提供代价上限；invariant中的单调性可支撑计数时的状态汇总。",
+        "feedback": "建议在后续规划中明确方案等价定义（按重排后矩阵完全相同），并指定计数结果的模数以处理大数问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是基于确定矩阵和确定成本上限的优化问题，输入固定，选手可以自由选择排列，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。强行引入扰动将属于硬造对手，违反规则禁止项。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束'sum of medians <= k'和目标是'maximize the minimum median'，没有提及任何扰动；输入结构是固定的矩阵和成本上限，没有不确定性参数。规则要求原题必须自然存在不确定性，但本题语义是纯确定性优化。",
+        "feedback": "规则无法应用于本种子题，因为没有可放大的原生扰动来源，任何强制扰动都会脱离原题语义，导致新题与种子关联薄弱。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "already_extremal",
+      "message": "种子题目标为最大化最小中位数，已是通过单调可行性判定二分搜索临界阈值的标准阈值优化题。规则要求从判定性扩展为极值求解，但原题已完成此升级，新规应用仅相当于重复原题结构，无法产生实质性差异。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema.objective.type='maximize_value'，目标为 goodness（最大最小中位数）；invariant 明确基于二分搜索的决策单调性；原题已定义参数化可行性阈值并寻求极值。规则 positive example 描述与本 seed 高度同构，negative example 警告的“外面套一层二分”与本 seed 扩展可能相同。",
+        "feedback": "该种子题已经是典型的阈值优化题，直接应用此规则无法带来有意义的轴变换或难度升级，建议选择仅有可行性判定的种子题以发挥规则价值。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "post_processing_feasible",
+      "message": "种子题的目标（最大化最小中位数）与总成本（各行中位数之和）构成自然冲突，但原输入已包含成本上限k，且目标在给定k下求解。若移除k并改为生成帕累托前沿，则完全可通过枚举不同k并复用原算法实现，属于规则明确禁止的‘权衡关系可由原答案直接后处理得到’，无法保证算法核心发生实质性改变。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema中cost_limit是输入的一部分（role: cost_limit），目标为maximize goodness subject to ∑ m_i ≤ k；第二指标总成本即为∑ m_i。通过扫描不同k调用原算法即可输出cost-goodness曲线，无需修改状态或约束，不满足规则要求的coupled_state_expansion和防范后处理的红线。",
+        "feedback": "虽然存在自然的冲突指标（总成本），但现行规则要求对权衡关系的算法实现进行耦合状态重设计，而非外部枚举后处理。此种子题更适合其他不禁止后处理的变换规则，或不适合该特定规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible_inverse_design",
+      "message": "原题最大化最小中位数的目标可以作为反向目标值，修改矩阵元素是自然操作，可设计为最小修改问题，满足要求且能应用所有 helper 和红线。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.description 显示目标为 maximize the minimum median，因此反向目标可绑定为该值；input_structure.components 包含 matrix 组件，自然允许修改操作；规则 examples.positive 给出“给定目标答案，求最少修改几个元素使原性质成立”与本方向一致；required_seed_properties 均满足，forbidden_seed_properties 未违反；validation_contract.hard_checks 均能通过全局 redlines 未涉及。",
+        "feedback": "建议在修改操作定义中明确修改单个元素的代价和允许的修改范围，并确保最小性证明的不变量可构造。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "already_globally_coupled",
+      "message": "原题中所有行的中位数通过共享成本上界k耦合，局部单元（行）非独立，已具备全局约束，扩展无法引入有意义的额外全局耦合，违反规则要求的“可独立处理的分量”前提。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中core_constraints定义了rearrangement_cost_upper_bound：∑_{i=1}^{n} m_i ≤ k，即各行的中位数之和受限，这本质是共享资源约束。原题目标maximize the minimum median，解法依赖全局可行性检查，表明各单元非独立。",
+        "feedback": "种子题已经是耦合题，不再具备可分解的局部单元，该规则不适用。请选择存在真正独立单元的种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_seed_operation",
+      "message": "原题是纯组合优化问题（求排列使中位数和不超过k的最大最小中位数），没有可供轮流选择、拿取、移动或改变状态的自然操作。强行构造双方博弈会变成硬造玩家，违反规则红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "forced_player_creation"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 明确要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”。原题摘要仅涉及矩阵排列求解，无任何逐次决策动作的描述。输入结构为矩阵和代价上限，核心约束为中位数和不超过k，均为静态优化条件，不具备可轮流代理的操作语义。",
+        "feedback": "建议更换种子题，选择具有明确决策步骤且允许交替选择的问题（如取石子、走格子、选数字等）。当前种子题的优化结构无法在不扭曲核心约束的情况下转化为对抗博弈。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题中各行是独立集合，仅靠总代价约束关联，不存在天然的覆盖、割或支配关系，强行扩展会违反规则禁止属性。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束为rearrangement_cost_upper_bound，即每行中位数之和不超过k，是代价聚合而非覆盖语义。输入结构中行是对象，但对象族之间无覆盖或割的结构。方案依赖单调性构造，无全局覆盖验证。",
+        "feedback": "规则要求种子题具有可组合的局部对象族并能形成覆盖/割关系，但本题不满足，建议更换种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是一个最大化最小值优化问题，没有明确的计数对象，因此无法应用该规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最大化最小中位数，不是计数；input_structure中没有计数对象；core_constraints是代价上限，与计数无关。",
+        "feedback": "该规则要求原题已有明确有限的计数对象，但此题是优化问题，不存在计数基础，无法定义带权分布。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "RULE_CONTRACT_FULFILLED",
+      "message": "规划已兑现 canonical_witness 规则专属合同：输出从最大值升级为字典序最小的规范排列矩阵，核心约束新增规范顺序与字典序最小要求，目标变为构造可校验的规范解，不变量新增支撑字典序构造正确性的证明项，所有必需轴 C、O、V 均发生实质性变化，三个 helper 全部照实落地并推动了解法创新。",
+      "details": {
+        "review_role": "你扮演一名规范解规划审查官，重点确认规划是否真正把输出责任升级为可比较、可校验的规范解。",
+        "review_brief": "确认规划是否明确了规范解的定义、比较口径与校验方式，并且规范性会改变主要求解责任。",
+        "evidence": "candidate_schema.core_constraints 新增 canonical_ordering（每行升序）与 optimality_and_lexicographic_min（最大化goodness且字典序最小），objective 变为 construct_canonical_witness，invariant 新增 suffix_feasibility_bounded 和 greedy_lexicographic_progress。planner_payload.applied_helpers 中 canonical_order_pressure 使规范顺序进入可行解定义并影响最优性，proof_bearing_output 将输出责任升级为可验证的规范解，constraint_reweighting 显式提升字典序最小到次级优化目标，三个 helper 对应的 schema_changes 与 affected_axes 均指向 C、O、V 对应的变化，且 algorithmic_delta_claim 说明原贪心可行检查无法直接复用，必须引入逐行构造与前瞻剪枝，避免浅层修改。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.87,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "该规则适用，种子题具有明确的解对象（排列方案）且可定义规范顺序，原解并不随手可得，因此可以生成输出规范解的新题。",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "schema_insufficient",
+    "error_reason": "new_schema中core_constraints的canonical_ordering强制输出每行升序排列，与valid_permuted_rows结合导致每一行的升序排列唯一且中位数固定，无法实现objective中的最大化最小中位数和字典序选择，算法自由于此丧失，无法构造合理题目。",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_fa0a3447dc85_campus_ops_20260524_130801",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

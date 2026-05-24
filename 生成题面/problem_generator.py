@@ -113,8 +113,14 @@ class ProblemGenerator:
 
     def _normalize_payload(self, payload: dict[str, Any], plan: VariantPlan) -> GeneratedProblem:
         status = self._clean_text(str(payload.get("status", "ok"))) or "ok"
+        raw_samples = payload.get("samples", [])
+        if not isinstance(raw_samples, list):
+            raw_samples = []
+        raw_constraints = payload.get("constraints", [])
+        if not isinstance(raw_constraints, list):
+            raw_constraints = []
         samples = []
-        for item in payload.get("samples", []):
+        for item in raw_samples:
             if not isinstance(item, dict):
                 continue
             samples.append(
@@ -131,7 +137,7 @@ class ProblemGenerator:
             output_format=self._clean_text(str(payload.get("output_format", ""))),
             constraints=[
                 self._clean_text(str(item))
-                for item in payload.get("constraints", [])
+                for item in raw_constraints
                 if self._clean_text(str(item))
             ],
             samples=samples,
@@ -252,7 +258,12 @@ class ProblemGenerator:
     ) -> list[str]:
         combined = "\n".join([problem.description, problem.notes, "\n".join(problem.constraints)]).lower()
         errors: list[str] = []
-        properties = schema.get("input_structure", {}).get("properties", {}) or {}
+        input_structure = schema.get("input_structure", {})
+        if not isinstance(input_structure, dict):
+            input_structure = {}
+        properties = input_structure.get("properties", {}) or {}
+        if not isinstance(properties, dict):
+            properties = {}
         if properties.get("ordered") and not any(token in combined for token in ("顺序", "依次", "in order")):
             errors.append("new_schema 带有顺序语义，但题面没有明确说明顺序约束。")
         if properties.get("cyclic") and not any(token in combined for token in ("循环", "首尾相接", "环", "cyclic")):

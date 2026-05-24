@@ -112,7 +112,7 @@ OUTPUT_ROOT\RUN_ID
 - `logs/`：各阶段日志，每题会有独立的抽取、生成和验证日志。
 - `logs/llm_calls.jsonl`：所有 LLM 请求的结构化明细，包含完整 prompt、完整 response、重试、耗时、usage 和解析结果；不会记录 API Key。
 - `tuple/`：四元组抽取结果。
-- `generation/source/<problem_id>/`：每题隔离的题面生成输入，避免目录输入时重复生成已处理题。
+- `generation/source/<problem_id>/`：每题隔离的题面生成输入，包含四元组和 `original_problem` 原题文本，避免目录输入时重复生成已处理题。
 - `generation/`：题面生成的 Markdown、artifact 和质量报告。
 - `verification/`：验证阶段输出。
 - `workflow_summary.json`：本次运行的总览结果、阶段状态和各题状态。

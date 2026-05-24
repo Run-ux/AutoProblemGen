@@ -509,6 +509,8 @@ class OrchestratorTests(unittest.TestCase):
             source_payload = json.loads((source_dir / "A.json").read_text(encoding="utf-8"))
             self.assertEqual(source_payload["input_structure"]["type"], "array")
             self.assertEqual(source_payload["objective"]["type"], "optimization")
+            self.assertEqual(source_payload["original_problem"]["title"], "示例题")
+            self.assertIn("题面", source_payload["original_problem"]["description"])
             self.assertFalse(any(Path(call["command"][1]).name == "normalize.py" for call in runner.calls))
             self.assertIn(RUNTIME_GENERATION_LLM_ENV, generation_calls[0]["env"])
             self.assertIn(RUNTIME_EMBEDDING_LLM_ENV, generation_calls[0]["env"])

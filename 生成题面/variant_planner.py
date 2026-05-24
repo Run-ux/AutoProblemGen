@@ -14,7 +14,13 @@ from prompt_builder import (
 from qwen_client import QwenClient
 from rule_handlers import get_rule_handler, selection_result_to_event
 from rulebook import RuleBook, normalize_mode_name, normalize_rule_id
-from schema_tools import build_forbidden_reuse_list, compute_changed_axes, compute_schema_distance, dataclass_to_dict
+from schema_tools import (
+    build_forbidden_reuse_list,
+    compute_changed_axes,
+    compute_schema_distance,
+    dataclass_to_dict,
+    normalize_schema_shape,
+)
 
 
 THEMES = [
@@ -250,8 +256,12 @@ class VariantPlanner:
 
         rejected_candidates: list[dict[str, Any]] = []
         candidate_attempts: list[dict[str, Any]] = []
-        validation_trace: list[dict[str, Any]] = list(selection.get("validation_trace", []))
-        ranked_candidates = list(selection.get("ranked_rules", []))[: self.MAX_RULE_ATTEMPTS]
+        validation_trace: list[dict[str, Any]] = [
+            item for item in _as_list(selection.get("validation_trace")) if isinstance(item, dict)
+        ]
+        ranked_candidates = [
+            item for item in _as_list(selection.get("ranked_rules")) if isinstance(item, dict)
+        ][: self.MAX_RULE_ATTEMPTS]
 
         for attempt_index, candidate in enumerate(ranked_candidates, start=1):
             plan_result = self._generate_candidate(
@@ -523,7 +533,8 @@ class VariantPlanner:
                 "planner_rejected",
             )
 
-        unexpected_fields = _find_unexpected_new_schema_fields(payload.get("new_schema", {}))
+        new_schema_payload = _as_dict(payload.get("new_schema"))
+        unexpected_fields = _find_unexpected_new_schema_fields(new_schema_payload)
         if unexpected_fields:
             trace.append(
                 AuditTraceEvent(
@@ -543,7 +554,7 @@ class VariantPlanner:
                 "unexpected_schema_fields",
             )
 
-        new_schema = _normalize_new_schema(payload.get("new_schema", {}), theme_payload)
+        new_schema = _normalize_new_schema(new_schema_payload, theme_payload)
         if not new_schema:
             trace.append(
                 AuditTraceEvent(
@@ -563,7 +574,12 @@ class VariantPlanner:
             embedding_client=self.client,
             distance=distance,
         )
-        declared_axes = {str(item) for item in payload.get("difference_plan", {}).get("changed_axes", []) if str(item).strip()}
+        difference_plan_payload = _as_dict(payload.get("difference_plan"))
+        declared_axes = {
+            str(item)
+            for item in _as_list(difference_plan_payload.get("changed_axes"))
+            if str(item).strip()
+        }
         if declared_axes and declared_axes != set(changed_axes):
             trace.append(
                 AuditTraceEvent(
@@ -648,6 +664,8 @@ class VariantPlanner:
 
         plan_problem_id = new_schema.get("problem_id") or "__".join(source_problem_ids)
         difficulty = new_schema.get("difficulty") or _infer_difficulty(new_schema)
+        shared_core_anchors = _as_dict(payload.get("shared_core_anchors"))
+        fusion_ablation = _as_dict(payload.get("fusion_ablation"))
         normalized = {
             "problem_id": plan_problem_id,
             "source_problem_ids": list(source_problem_ids),
@@ -659,24 +677,24 @@ class VariantPlanner:
             "new_schema": NewSchema(**new_schema),
             "distance": distance,
             "changed_axes": changed_axes,
-            "difference_rationale": str(payload.get("difference_plan", {}).get("rationale", "")),
-            "difference_summary": str(payload.get("difference_plan", {}).get("summary", "")),
-            "algorithmic_delta_claim": _normalize_algorithmic_delta(payload.get("algorithmic_delta_claim", {})),
+            "difference_rationale": str(difference_plan_payload.get("rationale", "")),
+            "difference_summary": str(difference_plan_payload.get("summary", "")),
+            "algorithmic_delta_claim": _normalize_algorithmic_delta(payload.get("algorithmic_delta_claim")),
             "anti_shallow_rationale": str(payload.get("anti_shallow_rationale", "")),
             "applied_rule": str(rule.get("id", "")),
             "shared_core_summary": str(payload.get("shared_core_summary", "")),
             "shared_core_anchors": {
-                "shared_state": str(payload.get("shared_core_anchors", {}).get("shared_state", "")),
-                "shared_transition": str(payload.get("shared_core_anchors", {}).get("shared_transition", "")),
-                "shared_decision_basis": str(payload.get("shared_core_anchors", {}).get("shared_decision_basis", "")),
+                "shared_state": str(shared_core_anchors.get("shared_state", "")),
+                "shared_transition": str(shared_core_anchors.get("shared_transition", "")),
+                "shared_decision_basis": str(shared_core_anchors.get("shared_decision_basis", "")),
             },
             "seed_contributions": {
                 "seed_a": str(payload.get("seed_a_indispensable_obligation", "")),
                 "seed_b": str(payload.get("seed_b_indispensable_obligation", "")),
             },
             "fusion_ablation": {
-                "without_seed_a": str(payload.get("fusion_ablation", {}).get("without_seed_a", "")),
-                "without_seed_b": str(payload.get("fusion_ablation", {}).get("without_seed_b", "")),
+                "without_seed_a": str(fusion_ablation.get("without_seed_a", "")),
+                "without_seed_b": str(fusion_ablation.get("without_seed_b", "")),
             },
             "applied_helpers": _normalize_applied_helpers(payload.get("applied_helpers", [])),
             "rule_snapshot": copy.deepcopy(rule),
@@ -705,6 +723,7 @@ class VariantPlanner:
         validation_trace: list[dict[str, Any]] | None = None,
         candidate_attempts: list[dict[str, Any]] | None = None,
     ) -> VariantPlan:
+        source_schema = normalize_schema_shape(source_schema)
         if selected_plan is None:
             fallback_schema = NewSchema(
                 problem_id="__".join(source_problem_ids),
@@ -836,15 +855,19 @@ def _normalize_new_schema(payload: dict[str, Any], theme_payload: dict[str, Any]
         return {}
     if not all(key in payload for key in REQUIRED_NEW_SCHEMA_FIELDS):
         return {}
+    schema = normalize_schema_shape(payload)
+    theme = payload.get("theme", theme_payload)
+    if not isinstance(theme, dict):
+        theme = theme_payload
     return {
-        "problem_id": str(payload.get("problem_id", "")).strip(),
-        "source": str(payload.get("source", "")).strip(),
-        "input_structure": copy.deepcopy(payload.get("input_structure", {})),
-        "core_constraints": copy.deepcopy(payload.get("core_constraints", {"constraints": []})),
-        "objective": copy.deepcopy(payload.get("objective", {})),
-        "invariant": copy.deepcopy(payload.get("invariant", {"invariants": []})),
-        "theme": copy.deepcopy(payload.get("theme", theme_payload)) or copy.deepcopy(theme_payload),
-        "difficulty": str(payload.get("difficulty", "")).strip() or _infer_difficulty(payload),
+        "problem_id": str(schema.get("problem_id", "")).strip(),
+        "source": str(schema.get("source", "")).strip(),
+        "input_structure": copy.deepcopy(schema.get("input_structure", {})),
+        "core_constraints": copy.deepcopy(schema.get("core_constraints", {"constraints": []})),
+        "objective": copy.deepcopy(schema.get("objective", {})),
+        "invariant": copy.deepcopy(schema.get("invariant", {"invariants": []})),
+        "theme": copy.deepcopy(theme) or copy.deepcopy(theme_payload),
+        "difficulty": str(payload.get("difficulty", "")).strip() or _infer_difficulty(schema),
     }
 
 
@@ -854,7 +877,8 @@ def _find_unexpected_new_schema_fields(payload: Any) -> list[str]:
     return sorted(str(field) for field in payload if str(field) not in ALLOWED_NEW_SCHEMA_FIELDS)
 
 
-def _normalize_algorithmic_delta(payload: dict[str, Any]) -> dict[str, Any]:
+def _normalize_algorithmic_delta(payload: Any) -> dict[str, Any]:
+    payload = _as_dict(payload)
     return {
         "seed_solver_core": str(payload.get("seed_solver_core", "")),
         "reusable_subroutines": str(payload.get("reusable_subroutines", "")),
@@ -878,13 +902,21 @@ def _normalize_applied_helpers(payload: Any) -> list[dict[str, Any]]:
             {
                 "id": helper_id,
                 "selection_reason": str(item.get("selection_reason", "")).strip(),
-                "affected_axes": [str(axis).strip() for axis in item.get("affected_axes", []) if str(axis).strip()],
-                "schema_changes": [str(change).strip() for change in item.get("schema_changes", []) if str(change).strip()],
+                "affected_axes": [str(axis).strip() for axis in _as_list(item.get("affected_axes")) if str(axis).strip()],
+                "schema_changes": [str(change).strip() for change in _as_list(item.get("schema_changes")) if str(change).strip()],
                 "innovation_reason": str(item.get("innovation_reason", "")).strip(),
                 "difficulty_reason": str(item.get("difficulty_reason", "")).strip(),
             }
         )
     return normalized
+
+
+def _as_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
 
 
 def _summarize_rule_selection(payload: dict[str, Any]) -> str:
@@ -912,7 +944,7 @@ def _summarize_rule_selection(payload: dict[str, Any]) -> str:
 def _extract_ranked_rule_ids(payload: dict[str, Any], ranked_results: list[RuleSelectionResult]) -> list[str]:
     ranked_rule_ids = [
         normalize_rule_id(item)
-        for item in payload.get("ranked_rule_ids", [])
+        for item in _as_list(payload.get("ranked_rule_ids"))
         if normalize_rule_id(item)
     ]
     if not ranked_rule_ids:
@@ -974,7 +1006,7 @@ def _build_problem_reference(problem: dict[str, Any] | None) -> dict[str, Any]:
         "input_summary": _truncate_text(problem.get("input", ""), 200),
         "output_summary": _truncate_text(problem.get("output", ""), 200),
         "constraints_summary": _truncate_text(problem.get("constraints", ""), 200),
-        "tags": list(problem.get("tags", [])),
+        "tags": list(_as_list(problem.get("tags"))),
     }
 
 
@@ -986,6 +1018,8 @@ def _truncate_text(text: str, limit: int) -> str:
 
 
 def _merge_seed_schemas(seed_a_schema: dict[str, Any], seed_b_schema: dict[str, Any]) -> dict[str, Any]:
+    seed_a_schema = normalize_schema_shape(seed_a_schema)
+    seed_b_schema = normalize_schema_shape(seed_b_schema)
     return {
         "problem_id": f"{seed_a_schema.get('problem_id', 'seed_a')}__{seed_b_schema.get('problem_id', 'seed_b')}",
         "source": f"{seed_a_schema.get('source', '')}+{seed_b_schema.get('source', '')}",
@@ -1006,31 +1040,43 @@ def _merge_forbidden_reuse(seed_a_problem: dict[str, Any], seed_b_problem: dict[
 
 
 def _summarize_input_structure(data: dict[str, Any]) -> str:
+    data = _as_dict(data)
     input_type = data.get("type", "unknown")
-    length = data.get("length", {})
-    value_range = data.get("value_range", {})
+    length = _as_dict(data.get("length"))
+    value_range = _as_dict(data.get("value_range"))
     parts = [f"类型={input_type}"]
     if length:
         parts.append(f"长度范围={length.get('min', '?')}..{length.get('max', '?')}")
     if value_range:
         parts.append(f"值范围={value_range.get('min', '?')}..{value_range.get('max', '?')}")
-    properties = data.get("properties", {})
+    properties = _as_dict(data.get("properties"))
     if properties:
         parts.append("属性=" + ", ".join(f"{key}={value}" for key, value in properties.items()))
     return "；".join(parts)
 
 
 def _summarize_constraints(constraints: list[dict[str, Any]]) -> list[str]:
-    return [str(item.get("description", "")) for item in constraints if str(item.get("description", "")).strip()]
+    constraints = _as_list(constraints)
+    return [
+        str(item.get("description", ""))
+        for item in constraints
+        if isinstance(item, dict) and str(item.get("description", "")).strip()
+    ]
 
 
 def _summarize_invariants(invariants: list[dict[str, Any]]) -> list[str]:
-    return [str(item.get("description", "")) for item in invariants if str(item.get("description", "")).strip()]
+    invariants = _as_list(invariants)
+    return [
+        str(item.get("description", ""))
+        for item in invariants
+        if isinstance(item, dict) and str(item.get("description", "")).strip()
+    ]
 
 
 def _infer_difficulty(schema: dict[str, Any]) -> str:
-    invariants = schema.get("invariant", {}).get("invariants", [])
-    constraints = schema.get("core_constraints", {}).get("constraints", [])
+    schema = _as_dict(schema)
+    invariants = _as_list(_as_dict(schema.get("invariant")).get("invariants"))
+    constraints = _as_list(_as_dict(schema.get("core_constraints")).get("constraints"))
     score = len(invariants) + len(constraints)
     if score <= 2:
         return "Easy"

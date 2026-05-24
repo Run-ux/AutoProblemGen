@@ -1166,6 +1166,9 @@ class GenerationPipeline:
         schema: dict[str, Any],
         fallback_problem_id: str,
     ) -> dict[str, Any] | None:
+        embedded_original = schema.get("original_problem")
+        if isinstance(embedded_original, dict) and embedded_original:
+            return embedded_original
         try:
             return self.problem_repository.get_problem(
                 source=schema.get("source", ""),

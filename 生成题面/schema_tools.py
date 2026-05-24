@@ -233,33 +233,95 @@ def compute_changed_axes(
     return axes
 
 
+def normalize_schema_shape(raw_schema: dict[str, Any]) -> dict[str, Any]:
+    """把模型/上游 schema 归一成距离计算可安全消费的稳定形状。"""
+    return _normalize_schema(raw_schema)
+
+
 def _normalize_schema(raw_schema: dict[str, Any]) -> dict[str, Any]:
     schema = dataclass_to_dict(raw_schema)
     if not isinstance(schema, dict):
         return {}
 
     if any(key in schema for key in ("input_structure", "core_constraints", "objective", "invariant")):
-        schema.setdefault("core_constraints", {"constraints": []})
-        schema.setdefault("objective", {})
-        schema.setdefault("invariant", {"invariants": []})
-        return schema
+        return {
+            "problem_id": schema.get("problem_id", ""),
+            "source": schema.get("source", ""),
+            "input_structure": _normalize_input_structure(schema.get("input_structure", {})),
+            "core_constraints": _normalize_core_constraints(schema.get("core_constraints", {})),
+            "objective": _normalize_objective(schema.get("objective", {})),
+            "invariant": _normalize_invariant(schema.get("invariant", {})),
+        }
 
     normalized = {
         "problem_id": schema.get("problem_id", ""),
         "source": schema.get("source", ""),
-        "input_structure": schema.get("input_structure") or schema.get("I") or {},
-        "core_constraints": schema.get("core_constraints")
-        or {"constraints": schema.get("C", []) if isinstance(schema.get("C"), list) else []},
-        "objective": schema.get("objective") or schema.get("O") or {},
-        "invariant": schema.get("invariant")
-        or {"invariants": schema.get("V", []) if isinstance(schema.get("V"), list) else []},
+        "input_structure": _normalize_input_structure(schema.get("input_structure") or schema.get("I") or {}),
+        "core_constraints": _normalize_core_constraints(
+            schema.get("core_constraints")
+            or {"constraints": schema.get("C", []) if isinstance(schema.get("C"), list) else []}
+        ),
+        "objective": _normalize_objective(schema.get("objective") or schema.get("O") or {}),
+        "invariant": _normalize_invariant(
+            schema.get("invariant")
+            or {"invariants": schema.get("V", []) if isinstance(schema.get("V"), list) else []}
+        ),
     }
-    if isinstance(normalized["objective"], str):
-        normalized["objective"] = {"type": normalized["objective"], "description": normalized["objective"]}
-    if isinstance(normalized["core_constraints"], list):
-        normalized["core_constraints"] = {"constraints": normalized["core_constraints"]}
-    if isinstance(normalized["invariant"], list):
-        normalized["invariant"] = {"invariants": normalized["invariant"]}
+    return normalized
+
+
+def _normalize_input_structure(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    normalized = copy.deepcopy(value)
+    normalized["length"] = _normalize_min_max(value.get("length"))
+    normalized["value_range"] = _normalize_min_max(value.get("value_range"))
+    if not isinstance(normalized.get("properties"), dict):
+        normalized["properties"] = {}
+    if "components" in normalized and not isinstance(normalized.get("components"), list):
+        normalized["components"] = []
+    return normalized
+
+
+def _normalize_min_max(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {"min": None, "max": None}
+    return {"min": value.get("min"), "max": value.get("max")}
+
+
+def _normalize_core_constraints(value: Any) -> dict[str, Any]:
+    if isinstance(value, list):
+        constraints = value
+        normalized: dict[str, Any] = {}
+    elif isinstance(value, dict):
+        constraints = value.get("constraints", [])
+        normalized = copy.deepcopy(value)
+    else:
+        constraints = []
+        normalized = {}
+    normalized["constraints"] = [dict(item) for item in constraints if isinstance(item, dict)]
+    return normalized
+
+
+def _normalize_objective(value: Any) -> dict[str, Any]:
+    if isinstance(value, str):
+        return {"type": value, "description": value}
+    if isinstance(value, dict):
+        return copy.deepcopy(value)
+    return {}
+
+
+def _normalize_invariant(value: Any) -> dict[str, Any]:
+    if isinstance(value, list):
+        invariants = value
+        normalized: dict[str, Any] = {}
+    elif isinstance(value, dict):
+        invariants = value.get("invariants", [])
+        normalized = copy.deepcopy(value)
+    else:
+        invariants = []
+        normalized = {}
+    normalized["invariants"] = [dict(item) for item in invariants if isinstance(item, dict)]
     return normalized
 
 
@@ -301,6 +363,8 @@ def _build_input_tree(input_structure: dict[str, Any]) -> InputTreeNode:
     root = InputTreeNode(kind="root", label="input_structure")
     if not isinstance(input_structure, dict):
         return root
+    length = _normalize_min_max(input_structure.get("length"))
+    value_range = _normalize_min_max(input_structure.get("value_range"))
 
     root.children.append(
         InputTreeNode(
@@ -314,8 +378,8 @@ def _build_input_tree(input_structure: dict[str, Any]) -> InputTreeNode:
             kind="section",
             label="length",
             children=[
-                InputTreeNode(kind="numeric", label="min", value=input_structure.get("length", {}).get("min")),
-                InputTreeNode(kind="numeric", label="max", value=input_structure.get("length", {}).get("max")),
+                InputTreeNode(kind="numeric", label="min", value=length.get("min")),
+                InputTreeNode(kind="numeric", label="max", value=length.get("max")),
             ],
         )
     )
@@ -324,8 +388,8 @@ def _build_input_tree(input_structure: dict[str, Any]) -> InputTreeNode:
             kind="section",
             label="value_range",
             children=[
-                InputTreeNode(kind="numeric", label="min", value=input_structure.get("value_range", {}).get("min")),
-                InputTreeNode(kind="numeric", label="max", value=input_structure.get("value_range", {}).get("max")),
+                InputTreeNode(kind="numeric", label="min", value=value_range.get("min")),
+                InputTreeNode(kind="numeric", label="max", value=value_range.get("max")),
             ],
         )
     )

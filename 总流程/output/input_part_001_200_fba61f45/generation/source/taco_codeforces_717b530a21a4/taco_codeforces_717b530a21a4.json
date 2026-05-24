@@ -1,0 +1,108 @@
+{
+  "problem_id": "taco_codeforces_717b530a21a4",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "graph",
+    "length": {
+      "min": 3,
+      "max": 3000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 3000
+    },
+    "properties": {
+      "directed": false,
+      "weighted": false,
+      "connected": true,
+      "simple": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "no_self_loop",
+        "description": "No station is connected to itself; xi ≠ yi.",
+        "formal": "xi ≠ yi",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "no_multiple_edges",
+        "description": "Between each pair of stations there is at most one passage.",
+        "formal": "no duplicate edges",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "undirected_graph",
+        "description": "Passages can be used to travel in both directions; the graph is undirected.",
+        "formal": "undirected",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "graph_connectivity",
+        "description": "One can reach any station from any other station along the passages.",
+        "formal": "connected graph",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "exactly_one_cycle",
+        "description": "The subway scheme contains exactly one simple cycle (ringroad) that does not repeat any station.",
+        "formal": "exactly one simple cycle",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "value_computation",
+    "description": "Compute the shortest distance from each node to the unique cycle in the graph",
+    "target": "distance",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "unique_cycle",
+        "description": "The input graph contains exactly one simple cycle, and the rest of the graph forms trees attached to that cycle. This property is guaranteed by the problem statement and is relied upon by the algorithm to identify the single cycle and then compute distances outward from it.",
+        "properties": {
+          "graph_type": "unicyclic",
+          "cycle_size": "at least 3",
+          "remaining_components": "acyclic trees rooted at cycle vertices"
+        },
+        "evidence_source": "statement"
+      },
+      {
+        "name": "dfs_visit_state_progression",
+        "description": "In the first DFS, each vertex follows a strict state order: 0 (unvisited) → 1 (in recursion stack) → 2 (fully processed). No state ever transitions backward. A cycle is detected when the DFS encounters an edge to a neighbor that is already in state 1 and is not the immediate parent.",
+        "properties": {
+          "state_machine": "0 -> 1 -> 2",
+          "no_backward_transition": "1 never becomes 0, 2 never becomes 1 or 0",
+          "cycle_detection_condition": "back-edge to a state-1 non-parent"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "distance_increasing_property",
+        "description": "During the second DFS (or BFS), distances are assigned so that all cycle vertices have distance 0, and for any tree-edge (u,v) where u is already visited, dist[v] = dist[u] + 1. This ensures each vertex's final distance equals its shortest-path distance to the cycle.",
+        "properties": {
+          "base_distance": "0 for all cycle vertices",
+          "propagation_rule": "dist[v] = dist[u] + 1 for tree-edge (u,v) when u is visited first",
+          "optimality": "each vertex's distance equals the minimum number of edges to any cycle vertex"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  }
+}

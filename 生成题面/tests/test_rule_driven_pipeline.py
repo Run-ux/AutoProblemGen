@@ -22,7 +22,7 @@ from main import _load_batch_problem_ids, _normalize_rule_overrides, _target_pro
 from models import DifferencePlan, GeneratedProblem, NewSchema, Theme, VariantPlan
 from pipeline import GenerationPipeline
 from problem_generator import ProblemGenerator
-from qwen_client import QwenClient
+from qwen_client import LLMResponseFormatError, QwenClient
 from rule_handlers import get_rule_handler
 from rulebook import RuleBook
 from runtime_config import LLMEndpointConfig
@@ -346,6 +346,32 @@ class SchemaDistanceTests(unittest.TestCase):
 
         self.assertGreater(two_extra_distance["axis_scores"]["C"], one_extra_distance["axis_scores"]["C"])
 
+    def test_schema_distance_tolerates_null_input_range_fields(self) -> None:
+        base = make_schema(problem_id="BASE")
+        candidate = copy.deepcopy(base)
+        candidate["input_structure"]["length"] = None
+        candidate["input_structure"]["value_range"] = None
+        candidate["input_structure"]["properties"] = None
+
+        distance = compute_schema_distance(base, candidate, embedding_client=StubEmbeddingClient())
+
+        self.assertEqual(distance["distance_version"], "v2")
+        self.assertIn("I", distance["axis_scores"])
+        self.assertGreaterEqual(distance["axis_scores"]["I"], 0.0)
+
+    def test_schema_distance_tolerates_null_schema_sections(self) -> None:
+        base = make_schema(problem_id="BASE")
+        candidate = copy.deepcopy(base)
+        candidate["core_constraints"] = None
+        candidate["invariant"] = None
+        candidate["objective"] = None
+
+        distance = compute_schema_distance(base, candidate, embedding_client=StubEmbeddingClient())
+
+        self.assertEqual(distance["distance_version"], "v2")
+        self.assertEqual(set(distance["axis_scores"]), {"I", "C", "O", "V"})
+        self.assertGreaterEqual(distance["total"], 0.0)
+
     def test_embedding_failure_raises_runtime_error(self) -> None:
         left = make_schema(problem_id="LEFT")
         right = copy.deepcopy(left)
@@ -580,6 +606,56 @@ class SingleSeedExtensionTests(unittest.TestCase):
         self.assertFalse(accepted)
         self.assertIn("额外字段", reason)
         self.assertIn("selected_input_options", reason)
+
+    def test_validate_candidate_handles_null_new_schema_range_fields(self) -> None:
+        planner = VariantPlanner(
+            client=FakePlannerClient(responses={}),
+            rulebook=self.rulebook,
+        )
+        payload = make_single_payload("forward_solution_to_inverse_design")
+        payload["new_schema"]["input_structure"]["length"] = None
+        payload["new_schema"]["input_structure"]["value_range"] = None
+        rule = self.rulebook.rule("single_seed_extension", "forward_solution_to_inverse_design")
+
+        accepted, _, reason, _, reason_code = planner._validate_candidate(
+            mode="single_seed_extension",
+            rule=rule,
+            payload=payload,
+            source_schema=self.source_schema,
+            source_problem_ids=["SINGLE"],
+            theme_payload={"id": "campus_ops", "name": "校园运营"},
+        )
+
+        self.assertFalse(accepted)
+        self.assertEqual(reason_code, "declared_axes_mismatch")
+        self.assertNotIn("NoneType", reason)
+
+    def test_build_plan_handles_null_optional_planner_dicts(self) -> None:
+        payload = make_single_payload("forward_solution_to_inverse_design")
+        payload["new_schema"]["input_structure"]["length"] = None
+        payload["new_schema"]["input_structure"]["value_range"] = None
+        payload["difference_plan"] = None
+        payload["shared_core_anchors"] = None
+        payload["fusion_ablation"] = None
+        planner = VariantPlanner(
+            client=FakePlannerClient(
+                responses={"forward_solution_to_inverse_design": payload},
+                selection_response=make_rule_selection_payload("forward_solution_to_inverse_design"),
+            ),
+            rulebook=self.rulebook,
+        )
+
+        plan = planner.build_plan(
+            mode="single_seed_extension",
+            variant_index=1,
+            seed_schema=self.source_schema,
+            original_problem=self.original_problem,
+            allowed_rule_ids={"forward_solution_to_inverse_design"},
+        )
+
+        self.assertIn(plan.planning_status, {"ok", "difference_insufficient"})
+        self.assertNotIn("NoneType", plan.planning_error_reason)
+        self.assertTrue(plan.candidate_attempts)
 
 
 class SameFamilyFusionTests(unittest.TestCase):
@@ -828,6 +904,28 @@ class RuleHandlerTests(unittest.TestCase):
         self.assertFalse(outcome.accepted)
         self.assertNotIn("plan_review:canonical_witness", client.calls)
 
+    def test_rule_review_invalid_json_becomes_structured_failure(self) -> None:
+        handler = get_rule_handler({"id": "construct_or_obstruction", "handler": "construct_or_obstruction"})
+        client = mock.Mock()
+        client.chat_json.side_effect = LLMResponseFormatError(
+            "LLM 返回非法 JSON：request_label=rule_review.construct_or_obstruction.problem_validation"
+        )
+
+        outcome = handler._run_validation_review(
+            client=client,
+            stage="problem_validation",
+            review_role="题面规则审查官",
+            review_brief="检查题面是否兑现规则合同。",
+            default_reason_code="construct_or_obstruction_problem_review_failed",
+            system_prompt="system",
+            user_prompt='{"review_type": "rule_problem_validation"}',
+        )
+
+        self.assertFalse(outcome.accepted)
+        self.assertEqual(outcome.reason_code, "llm_review_invalid")
+        self.assertIn("非法 JSON", outcome.message)
+        self.assertEqual(outcome.events[0].details["raw_payload"]["error_type"], "LLMResponseFormatError")
+
     def test_interlocked_constraints_plan_validation_allows_objective_axis_to_stay_unchanged(self) -> None:
         rule = self.rulebook.rule("same_family_fusion", "interlocked_constraints")
         payload = make_same_family_payload("interlocked_constraints")
@@ -981,6 +1079,30 @@ class RuleHandlerTests(unittest.TestCase):
                 outcome = handler.validate_problem(client=client, problem=problem, plan=make_validation_plan(rule_id))
                 self.assertTrue(outcome.accepted)
                 self.assertIn(f"problem_review:{rule_id}", client.calls)
+
+
+class ProblemGeneratorTests(unittest.TestCase):
+    def test_normalize_payload_tolerates_null_list_fields(self) -> None:
+        generator = ProblemGenerator(client=None)
+        plan = make_validation_plan("canonical_witness")
+
+        problem = generator._normalize_payload(
+            {
+                "status": "ok",
+                "title": "题目",
+                "description": "请完成任务。",
+                "input_format": "输入三行。",
+                "output_format": "输出答案。",
+                "constraints": None,
+                "samples": None,
+                "notes": "",
+            },
+            plan,
+        )
+
+        self.assertEqual(problem.constraints, [])
+        self.assertEqual(problem.samples, [])
+        self.assertEqual(problem.status, "ok")
 
 
 class PipelineArtifactTests(unittest.TestCase):
@@ -2132,6 +2254,89 @@ class QwenClientTests(unittest.TestCase):
         self.assertEqual(request.full_url, "https://generation.example.test/v1/chat/completions")
         self.assertEqual(json.loads(request.data.decode("utf-8"))["model"], "generation-model")
         mocked_sleep.assert_called_once()
+
+    def test_chat_json_retries_when_message_content_is_invalid_json(self) -> None:
+        client = _make_qwen_client(generation_max_retries=2)
+        invalid_content = (
+            '{\n'
+            '  "status": "pass",\n'
+            '  "reason_code": "ok",\n'
+            '  "message": "审查通过。",\n'
+            '  "errors": [],\n'
+            '  "evidence": "题面明确 "逃脱证据条件" 但引号未转义。"\n'
+            '}'
+        )
+        valid_content = json.dumps(
+            {
+                "status": "pass",
+                "reason_code": "ok",
+                "message": "审查通过。",
+                "errors": [],
+                "evidence": "题面明确逃脱证据条件。",
+            },
+            ensure_ascii=False,
+        )
+
+        with mock.patch("qwen_client.time.sleep") as mocked_sleep:
+            with mock.patch("qwen_client.urllib.request.urlopen") as mocked_urlopen:
+                bad_response = mock.MagicMock()
+                bad_response.__enter__.return_value.getcode.return_value = 200
+                bad_response.__enter__.return_value.read.return_value = json.dumps(
+                    {"choices": [{"message": {"content": invalid_content}}]},
+                    ensure_ascii=False,
+                ).encode("utf-8")
+                good_response = mock.MagicMock()
+                good_response.__enter__.return_value.getcode.return_value = 200
+                good_response.__enter__.return_value.read.return_value = json.dumps(
+                    {"choices": [{"message": {"content": valid_content}}]},
+                    ensure_ascii=False,
+                ).encode("utf-8")
+                mocked_urlopen.side_effect = [bad_response, good_response]
+
+                payload = client.chat_json(
+                    system_prompt="system",
+                    user_prompt="user",
+                    max_retries=2,
+                    request_label="rule_review.construct_or_obstruction.problem_validation",
+                )
+
+        self.assertEqual(payload["status"], "pass")
+        self.assertEqual(mocked_urlopen.call_count, 2)
+        mocked_sleep.assert_called_once()
+
+    def test_chat_json_raises_format_error_after_invalid_json_retries(self) -> None:
+        client = _make_qwen_client(generation_max_retries=2)
+        invalid_content = (
+            '{\n'
+            '  "status": "pass",\n'
+            '  "reason_code": "ok",\n'
+            '  "message": "审查通过。",\n'
+            '  "errors": [],\n'
+            '  "evidence": "题面明确 "逃脱证据条件" 但引号未转义。"\n'
+            '}'
+        )
+
+        with mock.patch("qwen_client.time.sleep"):
+            with mock.patch("qwen_client.urllib.request.urlopen") as mocked_urlopen:
+                response = mock.MagicMock()
+                response.__enter__.return_value.getcode.return_value = 200
+                response.__enter__.return_value.read.return_value = json.dumps(
+                    {"choices": [{"message": {"content": invalid_content}}]},
+                    ensure_ascii=False,
+                ).encode("utf-8")
+                mocked_urlopen.return_value = response
+
+                with self.assertRaises(LLMResponseFormatError) as raised:
+                    client.chat_json(
+                        system_prompt="system",
+                        user_prompt="user",
+                        max_retries=2,
+                        request_label="rule_review.construct_or_obstruction.problem_validation",
+                    )
+
+        self.assertIn("非法 JSON", str(raised.exception))
+        self.assertIn("request_label=rule_review.construct_or_obstruction.problem_validation", str(raised.exception))
+        self.assertNotIn("Expecting ',' delimiter", type(raised.exception).__name__)
 
     def test_embed_texts_uses_embedding_endpoint_config(self) -> None:
         client = _make_qwen_client()
