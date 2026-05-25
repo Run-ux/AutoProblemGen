@@ -150,7 +150,12 @@ def build_forbidden_reuse_list(original_problem: dict[str, Any] | None) -> list[
             "不要只替换实体名称后保留同样的输入输出关系。",
         ]
     )
-    return [item for item in items if item]
+    return [item for item in items if item and not _is_single_ascii_letter(item)]
+
+
+def _is_single_ascii_letter(value: str) -> bool:
+    token = value.strip()
+    return len(token) == 1 and token.isascii() and token.isalpha()
 
 
 def compute_schema_distance(

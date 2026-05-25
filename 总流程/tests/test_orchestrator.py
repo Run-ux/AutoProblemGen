@@ -519,6 +519,30 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(summary["problems"][0]["generation"]["status"], "quality_gate_failed")
             self.assertFalse(any(Path(call["command"][1]).name == "verification_runner.py" for call in runner.calls))
 
+    def test_non_ok_generated_status_skips_quality_gate_paths_and_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            runner = FakeCommandRunner(
+                quality_status="pass",
+                generated_status="difference_insufficient",
+                stop_reason="difference_insufficient",
+            )
+
+            summary = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out"),
+                command_runner=runner,
+                progress_writer=lambda _: None,
+            )
+
+            generation = summary["problems"][0]["generation"]
+            self.assertEqual(summary["problems"][0]["status"], "quality_gate_failed")
+            self.assertEqual(generation["status"], "quality_gate_failed")
+            self.assertFalse(generation["quality_gate"]["passed"])
+            self.assertIn("difference_insufficient", generation["quality_gate"]["reason"])
+            self.assertFalse(any(Path(call["command"][1]).name == "verification_runner.py" for call in runner.calls))
+
     def test_empty_run_id_uses_stable_input_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp = Path(tempdir)
@@ -640,11 +664,13 @@ class OrchestratorTests(unittest.TestCase):
 
             verification_calls = [call for call in runner.calls if Path(call["command"][1]).name == "verification_runner.py"]
             self.assertEqual(len(verification_calls), 1)
-            self.assertEqual(verification_calls[0]["timeout_seconds"], 12.5)
+            self.assertIsNone(verification_calls[0]["timeout_seconds"])
             generation = summary["problems"][0]["generation"]
             self.assertEqual(summary["status"], "completed")
             self.assertEqual(summary["problems"][0]["status"], "verified")
             self.assertEqual(generation["status"], "verified")
+            self.assertFalse(summary["config"]["verification_outer_timeout_enabled"])
+            self.assertEqual(summary["config"]["verification_timeout_seconds"], 12.5)
             self.assertTrue(Path(generation["verification_result_path"]).exists())
             self.assertTrue((temp / "out" / "run" / "workflow_summary.json").exists())
             summary_text = (temp / "out" / "run" / "workflow_summary.json").read_text(encoding="utf-8")

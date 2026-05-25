@@ -162,7 +162,7 @@ artifact 会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_select
 
 总流程会在质量门槛通过后调用 `generate_verified_artifacts`，并显式传入 generation LLM 配置与执行限制。该模块不再读取本地 `.env`。
 
-验证入口会在受限子进程中执行生成代码，并把修复后的暴力解法与 checker 写回返回结果；它不自动修改上游题面，也不承担题面歧义修订。详细说明见 [`生成测试用例和标准解法/README.md`](生成测试用例和标准解法/README.md)。
+验证入口会在受限子进程中执行生成代码，并把修复后的暴力解法与 checker 写回返回结果；它不自动修改上游题面，也不承担题面歧义修订。验证阶段不再设置外层总超时，而是分别使用 LLM 调用超时/重试、本地测试输入生成、暴力解和 checker 的执行超时。终端会输出 `[verification 2/7]`、`[verification 4/7]`、`[verification 5/7]`、`[verification 6/7]` 等关键阶段，以及 LLM 修复循环的当前轮次。详细说明见 [`生成测试用例和标准解法/README.md`](生成测试用例和标准解法/README.md)。
 
 ## 环境配置
 
@@ -172,6 +172,12 @@ artifact 会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_select
 - `总流程/generation_llm.env.example` -> `总流程/generation_llm.env`
 - `总流程/embedding_llm.env.example` -> `总流程/embedding_llm.env`
 
+验证模块生成的随机/对抗输入代码要求当前 Python 环境安装 `cyaron==0.7.0`，推荐使用：
+
+```powershell
+python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\requirements.txt
+```
+
 `workflow.env` 负责流程参数和两个 LLM 配置文件路径：
 
 ```dotenv
@@ -180,10 +186,11 @@ OUTPUT_ROOT=D:\AutoProblemGen\总流程\output
 RUN_ID=
 QUALITY_ITERATIONS=3
 QUALITY_FULL_SCORE_MAX_ITERATIONS=10
-VERIFICATION_TIMEOUT_SECONDS=3600
 GENERATION_LLM_CONFIG=D:\AutoProblemGen\总流程\generation_llm.env
 EMBEDDING_LLM_CONFIG=D:\AutoProblemGen\总流程\embedding_llm.env
 ```
+
+`VERIFICATION_TIMEOUT_SECONDS` 是废弃兼容项；即使旧配置文件保留该项，也不再控制验证子进程生命周期。验证耗时由 `generation_llm.env` 的 `TIMEOUT_SECONDS`/`MAX_RETRIES` 和 `EXECUTION_*_TIMEOUT_SECONDS` 分阶段控制。
 
 `RUN_ID=` 留空表示按 `INPUT_PATH` 稳定续传；同一输入目录会复用同一输出目录。需要重新完整运行时，请填写新的 `RUN_ID`。
 

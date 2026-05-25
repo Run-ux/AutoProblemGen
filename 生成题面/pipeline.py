@@ -33,6 +33,7 @@ QUALITY_DIMENSIONS = (
     "sample_quality",
     "oj_readability",
 )
+GENERATION_TERMINAL_STATUSES = {"schema_insufficient", "difference_insufficient"}
 
 
 class GenerationPipeline:
@@ -249,8 +250,12 @@ class GenerationPipeline:
         self._emit_progress(
             f"[problem] {problem_id}：生成完成，status={generated.status}。"
         )
-        markdown = render_problem_markdown(generated, plan)
-        self._emit_progress(f"[problem] {problem_id}：写入产物。")
+        markdown = None
+        if generated.status not in GENERATION_TERMINAL_STATUSES:
+            markdown = render_problem_markdown(generated, plan)
+        self._emit_progress(
+            f"[problem] {problem_id}：写入{'诊断' if markdown is None else ''}产物。"
+        )
         record = self._save_outputs(
             stem=stem,
             plan=plan,
@@ -323,8 +328,12 @@ class GenerationPipeline:
             self._emit_progress(
                 f"[problem] {problem_id}：第 {round_index} 轮生成完成，status={generated.status}。"
             )
-            markdown = render_problem_markdown(generated, plan)
-            self._emit_progress(f"[problem] {problem_id}：第 {round_index} 轮写入产物。")
+            markdown = None
+            if generated.status not in GENERATION_TERMINAL_STATUSES:
+                markdown = render_problem_markdown(generated, plan)
+            self._emit_progress(
+                f"[problem] {problem_id}：第 {round_index} 轮写入{'诊断' if markdown is None else ''}产物。"
+            )
             record = self._save_outputs(
                 stem=base_stem,
                 plan=plan,
@@ -345,6 +354,37 @@ class GenerationPipeline:
                     ),
                 },
             )
+            if generated.status in GENERATION_TERMINAL_STATUSES:
+                round_record = {
+                    "round_index": round_index,
+                    "artifact_path": record["artifact_path"],
+                    "markdown_path": record["markdown_path"],
+                    "quality_report_json_path": "",
+                    "quality_report_md_path": "",
+                    "overall_status": "not_evaluated",
+                    "generated_status": generated.status,
+                    "quality_score": 0.0,
+                    "divergence_score": 0.0,
+                    "quality_dimension_scores": [],
+                    "iteration_phase": iteration_phase,
+                    "full_score_polish_round_index": polish_round_index,
+                    "quality_evaluation_skipped": True,
+                    "quality_skip_reason": f"生成状态为 {generated.status}，不进入质量评测。",
+                }
+                round_records.append(round_record)
+                record["quality_report_json_path"] = ""
+                record["quality_report_md_path"] = ""
+                record["final_round_index"] = round_index
+                record["round_records"] = list(round_records)
+                last_plan = plan
+                last_generated = generated
+                final_record = record
+                stop_reason = generated.status
+                self._emit_progress(
+                    f"[problem] {problem_id}：第 {round_index} 轮跳过质量评测；"
+                    f"generated_status={generated.status}。"
+                )
+                break
             self._emit_progress(f"[problem] {problem_id}：第 {round_index} 轮进入质量评测。")
             quality_result = self._evaluate_quality_round(
                 problem_id=problem_id,
@@ -498,14 +538,16 @@ class GenerationPipeline:
         stem: str,
         plan: VariantPlan,
         payload: dict[str, Any],
-        markdown: str,
+        markdown: str | None,
         round_index: int | None = None,
         iteration_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         stem_with_round = f"{stem}_round{round_index}" if round_index is not None else stem
         problem_group = self._build_problem_group(plan.source_problem_ids)
         json_path = self._resolve_problem_group_dir(self.artifact_dir, problem_group) / f"{stem_with_round}.json"
-        md_path = self._resolve_problem_group_dir(self.output_dir, problem_group) / f"{stem_with_round}.md"
+        md_path: Path | None = None
+        if markdown is not None:
+            md_path = self._resolve_problem_group_dir(self.output_dir, problem_group) / f"{stem_with_round}.md"
 
         artifact = {
             "problem_id": plan.problem_id,
@@ -548,15 +590,16 @@ class GenerationPipeline:
         with json_path.open("w", encoding="utf-8") as handle:
             json.dump(artifact, handle, ensure_ascii=False, indent=2)
 
-        with md_path.open("w", encoding="utf-8") as handle:
-            handle.write(markdown)
+        if md_path is not None and markdown is not None:
+            with md_path.open("w", encoding="utf-8") as handle:
+                handle.write(markdown)
 
         return {
             "problem_id": plan.problem_id,
             "source_problem_ids": list(plan.source_problem_ids),
             "mode": plan.mode,
             "variant_index": plan.variant_index,
-            "markdown_path": str(md_path),
+            "markdown_path": str(md_path) if md_path is not None else "",
             "artifact_path": str(json_path),
             "generated_status": payload.get("status", "ok"),
         }

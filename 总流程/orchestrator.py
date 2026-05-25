@@ -60,7 +60,7 @@ class WorkflowConfig:
     run_id: str | None = None
     quality_iterations: int = 3
     quality_full_score_max_iterations: int = 10
-    verification_timeout_seconds: float = 3600.0
+    verification_timeout_seconds: float = 0.0
     python_executable: str = sys.executable
     workflow_config_path: Path | None = None
 
@@ -93,10 +93,10 @@ class WorkflowConfig:
                 10,
                 source=source,
             ),
-            verification_timeout_seconds=_read_positive_float(
+            verification_timeout_seconds=_read_float(
                 values,
                 "VERIFICATION_TIMEOUT_SECONDS",
-                3600.0,
+                0.0,
                 source=source,
             ),
             python_executable=_optional_text(values, "PYTHON_EXECUTABLE") or sys.executable,
@@ -668,6 +668,8 @@ def _config_summary(
         "quality_iterations": config.quality_iterations,
         "quality_full_score_max_iterations": config.quality_full_score_max_iterations,
         "verification_timeout_seconds": config.verification_timeout_seconds,
+        "verification_outer_timeout_enabled": False,
+        "verification_timeout_policy": "外层验证总超时已禁用；验证阶段依赖 LLM 与本地执行的内部阶段超时。",
         "python_executable": config.python_executable,
         "generation_llm": config.generation_llm.to_safe_summary(),
         "embedding_llm": config.embedding_llm.to_safe_summary(),
@@ -1039,7 +1041,7 @@ def _run_verification_for_single_problem(
         log_path=paths["logs"]
         / f"04_verify_{order:03d}_{_safe_path_part(problem_id)}_{_safe_path_part(artifact_path.stem)}.log",
         env=_stage_env(config, paths, problem_id=problem_id, stage="verification"),
-        timeout_seconds=config.verification_timeout_seconds,
+        timeout_seconds=None,
     )
     stage_name = f"verification:{problem_id}:{artifact_path.stem}"
     _append_stage(summary, stage_name, result)
@@ -1105,7 +1107,7 @@ def _run_verification_for_quality_passed_generations(
             log_path=paths["logs"]
             / f"04_verify_{_safe_path_part(problem['problem_id'])}_{_safe_path_part(artifact_path.stem)}.log",
             env=config.runtime_env(),
-            timeout_seconds=config.verification_timeout_seconds,
+            timeout_seconds=None,
         )
         stage_name = f"verification:{problem['problem_id']}:{artifact_path.stem}"
         _append_stage(summary, stage_name, result)
@@ -1126,6 +1128,13 @@ def _run_verification_for_quality_passed_generations(
 
 
 def _quality_gate_result(generation: dict[str, Any]) -> dict[str, Any]:
+    generated_status = str(generation.get("generated_status", "") or "").strip()
+    if generated_status and generated_status != "ok":
+        return {
+            "passed": False,
+            "reason": f"生成状态为 {generated_status}，未进入质量评价。",
+            "generated_status": generated_status,
+        }
     quality_path_text = str(generation.get("quality_report_json_path", "")).strip()
     iteration_summary_path_text = str(generation.get("iteration_summary_path", "")).strip()
     if not quality_path_text:
@@ -1316,13 +1325,17 @@ def _read_positive_int(values: dict[str, str], key: str, default: int, *, source
 
 
 def _read_positive_float(values: dict[str, str], key: str, default: float, *, source: str) -> float:
+    value = _read_float(values, key, default, source=source)
+    if value <= 0:
+        raise RuntimeConfigError(f"{source} 配置 {key} 必须大于 0。")
+    return value
+
+
+def _read_float(values: dict[str, str], key: str, default: float, *, source: str) -> float:
     raw = values.get(key, "").strip()
     if not raw:
         return default
     try:
-        value = float(raw)
+        return float(raw)
     except ValueError as exc:
         raise RuntimeConfigError(f"{source} 配置 {key} 必须是数字。") from exc
-    if value <= 0:
-        raise RuntimeConfigError(f"{source} 配置 {key} 必须大于 0。")
-    return value

@@ -290,17 +290,34 @@ class ProblemGenerator:
         ).lower()
         errors: list[str] = []
         for original_problem in original_problems:
-            title = str(original_problem.get("title", "")).strip().lower()
             forbidden = [
-                str(original_problem.get("problem_id", "")).strip().lower(),
-                str(original_problem.get("source", "")).strip().lower(),
-                title,
+                self._clean_forbidden_reuse_token(original_problem.get("problem_id", "")),
+                self._clean_forbidden_reuse_token(self._source_name(original_problem.get("source", ""))),
+                self._clean_forbidden_reuse_token(original_problem.get("title", "")),
+                self._clean_forbidden_reuse_token(original_problem.get("url", "")),
             ]
             for token in forbidden:
                 if token and token in combined:
                     errors.append(f"题面包含不应复用的原题标识或标题片段：{token}")
                     return errors
         return errors
+
+    def _clean_forbidden_reuse_token(self, value: Any) -> str:
+        token = str(value).strip().lower()
+        if not token:
+            return ""
+        if len(token) == 1 and token.isascii() and token.isalpha():
+            return ""
+        return token
+
+    def _source_name(self, source: Any) -> str:
+        if isinstance(source, dict):
+            for key in ("source_name", "name", "platform"):
+                value = str(source.get(key, "")).strip()
+                if value:
+                    return value
+            return ""
+        return str(source)
 
     def _contains_html_artifact(self, text: str) -> bool:
         lowered = text.lower()

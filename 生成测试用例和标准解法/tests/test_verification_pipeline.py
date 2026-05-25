@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import unittest
 from unittest.mock import patch
@@ -291,18 +293,22 @@ class VerificationPipelineTests(unittest.TestCase):
 
         fake_run_solution.side_effect = side_effect
 
-        result = verify_bruteforce_solution(
-            sample_artifact(),
-            {"status": "ok", "code": "bad_code"},
-            input_cases,
-            client,
-            self.config,
-        )
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            result = verify_bruteforce_solution(
+                sample_artifact(),
+                {"status": "ok", "code": "bad_code"},
+                input_cases,
+                client,
+                self.config,
+            )
 
         self.assertEqual(result["final_code"], "good_code")
         self.assertEqual(result["repair_iteration_count"], 1)
         self.assertEqual(result["solved_case_count"], 1)
         self.assertEqual(result["large_scale_input_count"], 2)
+        self.assertIn("[verification repair] 暴力解法修复：第 1 轮开始", stdout.getvalue())
+        self.assertIn("暴力解法修复循环结束", stdout.getvalue())
 
     @patch("verification_pipeline.run_checker")
     def test_verify_checker_repairs_false_reject_then_false_accept(self, fake_run_checker) -> None:
@@ -324,19 +330,23 @@ class VerificationPipelineTests(unittest.TestCase):
 
         fake_run_checker.side_effect = side_effect
 
-        result = verify_checker(
-            sample_artifact(),
-            {"needs_checker": True, "checker_code": "bad_checker"},
-            solved_cases,
-            client,
-            self.config,
-        )
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            result = verify_checker(
+                sample_artifact(),
+                {"needs_checker": True, "checker_code": "bad_checker"},
+                solved_cases,
+                client,
+                self.config,
+            )
 
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["final_checker_code"], "reject_wrong")
         self.assertEqual(result["property_1"]["status"], "ok")
         self.assertEqual(result["property_2"]["status"], "ok")
         self.assertEqual(result["repair_iteration_count"], 2)
+        self.assertIn("[verification repair] checker 误拒修复：第 1 轮开始", stdout.getvalue())
+        self.assertIn("[verification repair] checker 误收修复：第 2 轮开始", stdout.getvalue())
 
     @patch("verification_pipeline.run_solution")
     def test_verify_standard_solution_repairs_output_mismatch_without_checker(self, fake_run_solution) -> None:
@@ -351,21 +361,24 @@ class VerificationPipelineTests(unittest.TestCase):
 
         fake_run_solution.side_effect = side_effect
 
-        result = verify_standard_solution(
-            sample_artifact(),
-            {"status": "ok", "code": "bad_standard"},
-            [{"case_id": "case_001", "source": "random", "input": "1\n1", "output": "1"}],
-            {"needs_checker": False, "reason": "唯一答案题。"},
-            {"status": "skipped"},
-            client,
-            self.config,
-        )
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            result = verify_standard_solution(
+                sample_artifact(),
+                {"status": "ok", "code": "bad_standard"},
+                [{"case_id": "case_001", "source": "random", "input": "1\n1", "output": "1"}],
+                {"needs_checker": False, "reason": "唯一答案题。"},
+                {"status": "skipped"},
+                client,
+                self.config,
+            )
 
         self.assertEqual(result["final_code"], "good_standard_code")
         self.assertEqual(result["repair_iteration_count"], 1)
         self.assertEqual(result["repair_history"][0]["expected_output"], "1")
         self.assertEqual(result["repair_history"][0]["actual_output"], "0")
         self.assertEqual(result["checked_count"], 1)
+        self.assertIn("[verification repair] 标准解修复：第 1 轮开始", stdout.getvalue())
 
     @patch("verification_pipeline.run_checker")
     @patch("verification_pipeline.run_solution")
@@ -816,11 +829,13 @@ class VerificationPipelineTests(unittest.TestCase):
         fake_solution.side_effect = side_effect
         client = FakeLLMClient()
 
-        result = generate_verified_artifacts(
-            sample_artifact(),
-            client=client,
-            execution_config=self.config,
-        )
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            result = generate_verified_artifacts(
+                sample_artifact(),
+                client=client,
+                execution_config=self.config,
+            )
 
         self.assertGreaterEqual(result["verified_test_inputs"]["count"], 30)
         self.assertEqual(result["bruteforce_verification"]["solved_case_count"], 30)
@@ -839,6 +854,11 @@ class VerificationPipelineTests(unittest.TestCase):
         )
         self.assertEqual(result["execution_metadata"]["large_scale_truth_output_count"], 0)
         self.assertEqual(result["execution_metadata"]["large_scale_input_count"], 0)
+        progress_text = stdout.getvalue()
+        self.assertIn("[verification 2/7] Prompt 与 LLM 生成开始", progress_text)
+        self.assertIn("[verification 4/7] 本地验证闭环开始", progress_text)
+        self.assertIn("[verification 5/7] checker 验证开始", progress_text)
+        self.assertIn("[verification 6/7] 错误解池增强开始", progress_text)
 
 
 if __name__ == "__main__":

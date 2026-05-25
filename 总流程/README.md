@@ -57,6 +57,12 @@ embedding_llm.env
 
 路径可以写绝对路径，也可以写相对 `workflow.env` 所在目录的路径。
 
+验证阶段的随机/对抗输入生成器依赖 `cyaron==0.7.0`。首次运行前请在执行总流程的同一个 Python 环境中安装：
+
+```powershell
+python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\requirements.txt
+```
+
 ## 运行总流程
 
 在本目录执行：
@@ -72,6 +78,8 @@ PYTHON_EXECUTABLE=D:\path\to\venv\Scripts\python.exe
 ```
 
 留空时会使用当前启动 `main.py` 的 Python 解释器。
+
+`VERIFICATION_TIMEOUT_SECONDS` 是废弃兼容项；总流程不再用外层总超时杀掉 `verification_runner.py`。验证耗时由 `generation_llm.env` 的 `TIMEOUT_SECONDS`、`MAX_RETRIES` 和 `workflow.env` 中的 `EXECUTION_TEST_INPUT_TIMEOUT_SECONDS`、`EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS`、`EXECUTION_CHECKER_TIMEOUT_SECONDS` 分阶段控制。
 
 ## 输入格式
 
@@ -121,6 +129,8 @@ OUTPUT_ROOT\RUN_ID
 
 - 启动摘要：`run_id` 来源、输入模式、题目总数、可跳过数、待处理数、summary 路径和 LLM 详细日志路径。
 - 每题进度：题号、`problem_id`、输入文件、每个阶段的开始/完成/跳过原因。
+- 验证内部进度：进入测试用例与标准解法阶段后，会输出 `[verification 2/7] Prompt 与 LLM 生成`、`[verification 4/7] 本地验证闭环`、`[verification 5/7] checker 验证`、`[verification 6/7] 错误解池增强` 等关键阶段。
+- LLM 修复轮次：暴力解、checker 误拒、checker 误收和标准解触发修复时，会输出当前是第几轮修复以及修复后重新验证的动作。
 - LLM 异常信号：重试和最终失败会即时显示，正常调用不逐次打印。
 
 正常调用的模型、prompt、response、usage、耗时、HTTP 状态、JSON 解析状态和结果摘要只写入 `logs/llm_calls.jsonl`。运行结束后，命令行会输出总状态、状态计数、未验证题目列表和 summary 路径，例如：
@@ -139,6 +149,7 @@ OUTPUT_ROOT\RUN_ID
 - `skipped_before_generation`：该题四元组抽取有维度失败，流程会继续处理下一题。
 - `quality_gate_failed`：该题生成完成但质量门槛未通过，不会进入验证阶段，流程会继续处理下一题。
 - `验证失败` 或 `verification_failed`：查看 `verification/` 下对应题目的验证结果 JSON，以及 `logs/` 中的验证日志。
+- 验证阶段长期运行：先看终端最后一条 `[verification x/7]` 或 `[verification repair]` 日志，判断当前卡在 LLM 生成、本地执行、checker 还是错误解池增强。
 - LLM 调用卡住、重试或返回非法 JSON：查看 `logs/llm_calls.jsonl` 中对应 `call_id` 的完整请求和返回。
 
 ## 运行测试

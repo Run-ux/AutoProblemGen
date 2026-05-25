@@ -10,6 +10,7 @@ from extract import (
     normalize_input_structure_result,
     validate_input_structure_result,
 )
+from qwen_client import QwenJSONError, _extract_chat_content
 
 
 class FakeClient:
@@ -249,6 +250,28 @@ class InputStructureValidationTests(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["result"], {})
         self.assertIn("components[0].role_description", result["error"])
+
+
+class QwenClientResponseValidationTests(unittest.TestCase):
+    def test_extract_chat_content_accepts_normal_response(self) -> None:
+        content = _extract_chat_content(
+            {"choices": [{"message": {"content": '{"status":"ok"}'}}]},
+            http_status=200,
+        )
+
+        self.assertEqual(content, '{"status":"ok"}')
+
+    def test_extract_chat_content_rejects_missing_choices(self) -> None:
+        with self.assertRaisesRegex(QwenJSONError, "缺少非空 choices"):
+            _extract_chat_content({"id": "chatcmpl-empty"}, http_status=200)
+
+    def test_extract_chat_content_rejects_none_message(self) -> None:
+        with self.assertRaisesRegex(QwenJSONError, "message 缺失或不是对象"):
+            _extract_chat_content({"choices": [{"message": None}]}, http_status=200)
+
+    def test_extract_chat_content_rejects_empty_content_with_http_status(self) -> None:
+        with self.assertRaisesRegex(QwenJSONError, "HTTP 200.*content 为空"):
+            _extract_chat_content({"choices": [{"message": {"content": ""}}]}, http_status=200)
 
 
 if __name__ == "__main__":

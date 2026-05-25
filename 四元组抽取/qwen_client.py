@@ -265,9 +265,17 @@ class QwenClient:
         )
         with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
             http_status = response.getcode()
-            data = json.loads(response.read().decode("utf-8"))
+            raw_text = response.read().decode("utf-8")
+        try:
+            data = json.loads(raw_text)
+        except json.JSONDecodeError as exc:
+            raise QwenJSONError(
+                f"LLM 响应不是合法 JSON：HTTP {http_status}；摘要={_summarize_response_shape(raw_text)}",
+                raw_text=raw_text,
+            ) from exc
+        content = _extract_chat_content(data, http_status=http_status)
         return {
-            "content": data["choices"][0]["message"]["content"],
+            "content": content,
             "raw_response": data,
             "http_status": http_status,
             "usage": data.get("usage", {}) if isinstance(data, dict) else {},
@@ -382,6 +390,72 @@ def _extract_first_json_object(text: str) -> Dict[str, Any]:
                     return json.loads(normalized_snippet)
 
     raise ValueError("JSON对象不完整")
+
+
+def _extract_chat_content(data: Any, *, http_status: int | str | None) -> str:
+    """校验 Chat Completions 响应结构，避免空响应被 NoneType 掩盖。"""
+    raw_text = _safe_json_dumps(data)
+    if not isinstance(data, dict):
+        raise QwenJSONError(
+            f"LLM 响应结构异常：HTTP {http_status}；根节点不是对象；摘要={_summarize_response_shape(data)}",
+            raw_text=raw_text,
+        )
+    choices = data.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise QwenJSONError(
+            f"LLM 响应结构异常：HTTP {http_status}；缺少非空 choices；摘要={_summarize_response_shape(data)}",
+            raw_text=raw_text,
+        )
+    first_choice = choices[0]
+    if not isinstance(first_choice, dict):
+        raise QwenJSONError(
+            f"LLM 响应结构异常：HTTP {http_status}；choices[0] 不是对象；摘要={_summarize_response_shape(data)}",
+            raw_text=raw_text,
+        )
+    message = first_choice.get("message")
+    if not isinstance(message, dict):
+        raise QwenJSONError(
+            f"LLM 响应结构异常：HTTP {http_status}；choices[0].message 缺失或不是对象；"
+            f"摘要={_summarize_response_shape(data)}",
+            raw_text=raw_text,
+        )
+    content = message.get("content")
+    if not isinstance(content, str) or not content.strip():
+        raise QwenJSONError(
+            f"LLM 响应结构异常：HTTP {http_status}；choices[0].message.content 为空；"
+            f"摘要={_summarize_response_shape(data)}",
+            raw_text=raw_text,
+        )
+    return content
+
+
+def _summarize_response_shape(value: Any) -> dict[str, Any]:
+    if isinstance(value, str):
+        return {"type": "str", "chars": len(value), "prefix": value[:120]}
+    if not isinstance(value, dict):
+        return {"type": type(value).__name__}
+    summary: dict[str, Any] = {"keys": list(value.keys())[:12]}
+    choices = value.get("choices")
+    summary["choices_type"] = type(choices).__name__
+    if isinstance(choices, list):
+        summary["choices_count"] = len(choices)
+        if choices and isinstance(choices[0], dict):
+            summary["choice0_keys"] = list(choices[0].keys())[:12]
+            message = choices[0].get("message")
+            summary["message_type"] = type(message).__name__
+            if isinstance(message, dict):
+                content = message.get("content")
+                summary["content_type"] = type(content).__name__
+                if isinstance(content, str):
+                    summary["content_chars"] = len(content)
+    return summary
+
+
+def _safe_json_dumps(value: Any) -> str:
+    try:
+        return json.dumps(value, ensure_ascii=False, default=str)
+    except TypeError:
+        return str(value)
 
 
 def _normalize_json_candidate(text: str) -> str:

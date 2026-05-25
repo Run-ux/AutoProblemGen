@@ -19,8 +19,6 @@ def validate_config(parser: argparse.ArgumentParser, config: WorkflowConfig) -> 
         parser.error("QUALITY_ITERATIONS 必须是 1、2 或 3，不能关闭质量评价。")
     if config.quality_full_score_max_iterations <= 0:
         parser.error("QUALITY_FULL_SCORE_MAX_ITERATIONS 必须是正整数。")
-    if config.verification_timeout_seconds <= 0:
-        parser.error("VERIFICATION_TIMEOUT_SECONDS 必须为正数。")
 
 
 def main(argv: list[str] | None = None) -> int:

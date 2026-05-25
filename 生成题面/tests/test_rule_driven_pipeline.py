@@ -1104,6 +1104,42 @@ class ProblemGeneratorTests(unittest.TestCase):
         self.assertEqual(problem.samples, [])
         self.assertEqual(problem.status, "ok")
 
+    def test_source_reuse_validation_ignores_single_letter_title(self) -> None:
+        generator = ProblemGenerator(client=None)
+        problem = GeneratedProblem(
+            title="动态任务",
+            description="给定数组 a，请输出答案。",
+            input_format="输入包含数组 a。",
+            output_format="输出一个整数。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[],
+        )
+
+        errors = generator._validate_source_reuse(
+            problem,
+            [{"problem_id": "CF100A", "title": "A", "source": "codeforces"}],
+        )
+
+        self.assertEqual(errors, [])
+
+    def test_source_reuse_validation_rejects_meaningful_title(self) -> None:
+        generator = ProblemGenerator(client=None)
+        problem = GeneratedProblem(
+            title="Seed Match",
+            description="请完成任务。",
+            input_format="输入。",
+            output_format="输出。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[],
+        )
+
+        errors = generator._validate_source_reuse(
+            problem,
+            [{"problem_id": "CF100A", "title": "Seed Match", "source": "codeforces"}],
+        )
+
+        self.assertIn("seed match", errors[0])
+
 
 class PipelineArtifactTests(unittest.TestCase):
     def test_pipeline_persists_rule_outputs_without_legacy_transform_tracks(self) -> None:
@@ -1938,14 +1974,17 @@ class QualityIterationPipelineTests(unittest.TestCase):
             summary_path = Path(records[0]["iteration_summary_path"])
             summary_payload = json.loads(summary_path.read_text(encoding="utf-8"))
             artifact_path = Path(records[0]["artifact_path"])
-            markdown_path = Path(records[0]["markdown_path"])
+            markdown_path = records[0]["markdown_path"]
 
         self.assertEqual(records[0]["final_round_index"], 1)
         self.assertEqual(artifact_path.parent.name, "A")
-        self.assertEqual(markdown_path.parent.name, "A")
+        self.assertEqual(markdown_path, "")
         self.assertEqual(summary_path.parent.name, "A")
         self.assertEqual(summary_payload["stop_reason"], "difference_insufficient")
         self.assertEqual(len(summary_payload["rounds"]), 1)
+        self.assertEqual(summary_payload["rounds"][0]["markdown_path"], "")
+        self.assertTrue(summary_payload["rounds"][0]["quality_evaluation_skipped"])
+        self.assertEqual(len(evaluator.calls), 0)
 
 
 class ReportRenderingTests(unittest.TestCase):

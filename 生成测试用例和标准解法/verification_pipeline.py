@@ -89,6 +89,14 @@ class VerificationError(RuntimeError):
     """表示生成后验证流水线无法安全继续。"""
 
 
+def _emit_progress(message: str) -> None:
+    print(message, flush=True)
+
+
+def _emit_repair_progress(repair_name: str, repair_round: int, message: str) -> None:
+    _emit_progress(f"[verification repair] {repair_name}：第 {repair_round} 轮{message}")
+
+
 def _build_client(config: LLMConfig | None, client: ChatLLMClient | None) -> tuple[LLMConfig | None, ChatLLMClient]:
     if client is not None:
         return config, client
@@ -504,6 +512,8 @@ def verify_bruteforce_solution(
                 )
             else:
                 error_report = _format_execution_report(result, expectation="暴力解法应正常返回输出字符串。")
+            repair_round = len(repair_history) + 1
+            _emit_repair_progress("暴力解法修复", repair_round, "开始。")
             repair = _repair_bruteforce(
                 artifact,
                 client,
@@ -522,10 +532,15 @@ def verify_bruteforce_solution(
             )
             current_code = repair["code"]
             should_restart = True
+            _emit_repair_progress("暴力解法修复", repair_round, "完成，重新验证全部输入。")
             logger.info("暴力解法已修复，准备重新验证全部输入: iteration=%s", iteration)
             break
 
         if not should_restart:
+            if repair_history:
+                _emit_progress(
+                    f"[verification repair] 暴力解法修复循环结束；累计修复 {len(repair_history)} 轮，验证通过。"
+                )
             return {
                 "status": "ok",
                 "final_code": current_code,
@@ -601,6 +616,7 @@ def _verify_checker_property_1(
     execution_config: ExecutionConfig,
     repair_history: list[dict[str, Any]],
 ) -> str:
+    initial_repair_count = len(repair_history)
     while True:
         restarted = False
         for case in solved_cases:
@@ -614,6 +630,8 @@ def _verify_checker_property_1(
             if result.status == EXECUTION_OK and result.return_value is True:
                 continue
             error_report = _format_execution_report(result, expectation="合法输出必须被 checker 判为 AC/True。")
+            repair_round = len(repair_history) + 1
+            _emit_repair_progress("checker 误拒修复", repair_round, "开始。")
             repair = _repair_checker_false_reject(
                 artifact,
                 client,
@@ -634,9 +652,15 @@ def _verify_checker_property_1(
             )
             checker_code = repair["checker_code"]
             restarted = True
+            _emit_repair_progress("checker 误拒修复", repair_round, "完成，重新验证性质1。")
             logger.info("checker 误拒修复完成，重新验证性质1。")
             break
         if not restarted:
+            repaired_count = len(repair_history) - initial_repair_count
+            if repaired_count:
+                _emit_progress(
+                    f"[verification repair] checker 误拒修复循环结束；累计修复 {repaired_count} 轮，性质1通过。"
+                )
             return checker_code
 
 
@@ -731,6 +755,8 @@ def verify_checker(
 
         expectation = "非法输出必须被 checker 稳定判为 WA/False。"
         error_report = _format_execution_report(result, expectation=expectation)
+        repair_round = len(repair_history) + 1
+        _emit_repair_progress("checker 误收修复", repair_round, "开始。")
         repair = _repair_checker_false_accept(
             artifact,
             client,
@@ -750,6 +776,7 @@ def verify_checker(
             }
         )
         checker_code = repair["checker_code"]
+        _emit_repair_progress("checker 误收修复", repair_round, "完成，重新验证性质1和性质2。")
         checker_code = _verify_checker_property_1(
             artifact,
             client,
@@ -923,6 +950,8 @@ def verify_standard_solution(
             else:
                 error_report = _format_execution_report(result, expectation="标准解应在题面限制内正常返回输出字符串。")
 
+            repair_round = len(repair_history) + 1
+            _emit_repair_progress("标准解修复", repair_round, "开始。")
             repair = _repair_standard_solution(
                 artifact,
                 client,
@@ -946,10 +975,15 @@ def verify_standard_solution(
             )
             current_code = repair["code"]
             should_restart = True
+            _emit_repair_progress("标准解修复", repair_round, "完成，重新验证全部小规模真值输入。")
             logger.info("标准解已修复，准备重新验证全部小规模真值输入: iteration=%s", iteration)
             break
 
         if not should_restart:
+            if repair_history:
+                _emit_progress(
+                    f"[verification repair] 标准解修复循环结束；累计修复 {len(repair_history)} 轮，验证通过。"
+                )
             return {
                 "status": "ok",
                 "final_code": current_code,
@@ -1488,14 +1522,21 @@ def generate_verified_artifacts(
     if execution_config is None:
         raise RuntimeError("ExecutionConfig 必须由总流程注入，子模块不再读取本地 .env。")
     active_execution_config = execution_config
+    _emit_progress("[verification 2/7] Prompt 与 LLM 生成开始。")
     generated_artifacts = generate_all_artifacts(artifact, resolved_config, client=active_client)
+    _emit_progress("[verification 2/7] Prompt 与 LLM 生成完成。")
 
+    _emit_progress("[verification 4/7] 本地验证闭环开始：收集合法输入。")
     verified_test_inputs = collect_verified_test_inputs(
         artifact,
         generated_artifacts,
         active_client,
         active_execution_config,
     )
+    _emit_progress(
+        f"[verification 4/7] 合法输入收集完成；count={verified_test_inputs['count']}。"
+    )
+    _emit_progress("[verification 4/7] 暴力解法验证开始。")
     bruteforce_verification = verify_bruteforce_solution(
         artifact,
         generated_artifacts["bruteforce_solution"],
@@ -1503,6 +1544,12 @@ def generate_verified_artifacts(
         active_client,
         active_execution_config,
     )
+    _emit_progress(
+        "[verification 4/7] 暴力解法验证完成；"
+        f"solved={bruteforce_verification['solved_case_count']}；"
+        f"large_scale={bruteforce_verification['large_scale_input_count']}。"
+    )
+    _emit_progress("[verification 5/7] checker 验证开始。")
     checker_verification = verify_checker(
         artifact,
         generated_artifacts["checker"],
@@ -1510,6 +1557,8 @@ def generate_verified_artifacts(
         active_client,
         active_execution_config,
     )
+    _emit_progress(f"[verification 5/7] checker 验证完成；status={checker_verification['status']}。")
+    _emit_progress("[verification 6/7] 错误解池增强开始。")
     wrong_solution_pool_result = verify_wrong_solution_pool(
         artifact,
         generated_artifacts,
@@ -1519,12 +1568,18 @@ def generate_verified_artifacts(
         active_client,
         active_execution_config,
     )
+    _emit_progress(
+        "[verification 6/7] 错误解池增强完成；"
+        f"kill_ratio={wrong_solution_pool_result['verification']['kill_ratio']:.2f}；"
+        f"killed={wrong_solution_pool_result['verification']['killed_count']}。"
+    )
     verified_test_inputs = wrong_solution_pool_result["verified_test_inputs"]
     bruteforce_verification = {
         **bruteforce_verification,
         "solved_cases": wrong_solution_pool_result["solved_cases"],
         "solved_case_count": len(wrong_solution_pool_result["solved_cases"]),
     }
+    _emit_progress("[verification 4/7] 标准解本地验证开始。")
     standard_solution_verification = verify_standard_solution(
         artifact,
         generated_artifacts["standard_solution"],
@@ -1534,10 +1589,19 @@ def generate_verified_artifacts(
         active_client,
         active_execution_config,
     )
+    _emit_progress(
+        "[verification 4/7] 标准解本地验证完成；"
+        f"checked={standard_solution_verification['checked_count']}。"
+    )
+    _emit_progress("[verification 4/7] 大规模真值输出生成开始。")
     large_scale_truth_outputs = generate_large_scale_truth_outputs(
         standard_solution_verification["final_code"],
         bruteforce_verification["large_scale_inputs"],
         standard_solution_verification["standard_solution_limits"],
+    )
+    _emit_progress(
+        "[verification 4/7] 大规模真值输出生成完成；"
+        f"count={large_scale_truth_outputs['count']}。"
     )
 
     result = dict(generated_artifacts)
