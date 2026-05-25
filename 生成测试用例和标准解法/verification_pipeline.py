@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import re
+from dataclasses import dataclass
 from typing import Any, Callable
 
 try:  # 兼容包内导入与当前目录直接运行两种方式。
@@ -84,9 +85,50 @@ MEMORY_LIMIT_VALUE_RE = re.compile(
     re.IGNORECASE,
 )
 
+DEFAULT_LLM_CASE_MAX_CHARS = 20_000
+DEFAULT_LLM_CASE_INPUT_MAX_CHARS = 12_000
+DEFAULT_LLM_CASE_OUTPUT_MAX_CHARS = 12_000
+DEFAULT_LLM_CASE_TOTAL_CHARS = 80_000
+DEFAULT_LLM_CASE_MAX_COUNT = 8
+DEFAULT_MAX_LLM_PROMPT_CHARS = 200_000
+DEFAULT_LLM_TRACE_MAX_TEXT_CHARS = 20_000
+
 
 class VerificationError(RuntimeError):
     """表示生成后验证流水线无法安全继续。"""
+
+
+@dataclass(frozen=True)
+class LLMContextLimits:
+    """验证阶段进入 LLM 上下文的文本预算。"""
+
+    llm_case_max_chars: int = DEFAULT_LLM_CASE_MAX_CHARS
+    llm_case_input_max_chars: int = DEFAULT_LLM_CASE_INPUT_MAX_CHARS
+    llm_case_output_max_chars: int = DEFAULT_LLM_CASE_OUTPUT_MAX_CHARS
+    llm_case_total_chars: int = DEFAULT_LLM_CASE_TOTAL_CHARS
+    llm_case_max_count: int = DEFAULT_LLM_CASE_MAX_COUNT
+    max_llm_prompt_chars: int = DEFAULT_MAX_LLM_PROMPT_CHARS
+    llm_trace_max_text_chars: int = DEFAULT_LLM_TRACE_MAX_TEXT_CHARS
+
+    @classmethod
+    def from_object(cls, value: Any | None) -> "LLMContextLimits":
+        if value is None:
+            return cls()
+        return cls(
+            llm_case_max_chars=int(getattr(value, "llm_case_max_chars", DEFAULT_LLM_CASE_MAX_CHARS)),
+            llm_case_input_max_chars=int(
+                getattr(value, "llm_case_input_max_chars", DEFAULT_LLM_CASE_INPUT_MAX_CHARS)
+            ),
+            llm_case_output_max_chars=int(
+                getattr(value, "llm_case_output_max_chars", DEFAULT_LLM_CASE_OUTPUT_MAX_CHARS)
+            ),
+            llm_case_total_chars=int(getattr(value, "llm_case_total_chars", DEFAULT_LLM_CASE_TOTAL_CHARS)),
+            llm_case_max_count=int(getattr(value, "llm_case_max_count", DEFAULT_LLM_CASE_MAX_COUNT)),
+            max_llm_prompt_chars=int(getattr(value, "max_llm_prompt_chars", DEFAULT_MAX_LLM_PROMPT_CHARS)),
+            llm_trace_max_text_chars=int(
+                getattr(value, "llm_trace_max_text_chars", DEFAULT_LLM_TRACE_MAX_TEXT_CHARS)
+            ),
+        )
 
 
 def _emit_progress(message: str) -> None:
@@ -142,6 +184,94 @@ def _result_summary(result: ExecutionResult) -> dict[str, Any]:
     if payload.get("user_stderr") and len(payload["user_stderr"]) > 2000:
         payload["user_stderr"] = _truncate_middle(payload["user_stderr"], 2000)
     return payload
+
+
+def _case_text_metadata(
+    *,
+    input_string: str,
+    output_string: str = "",
+    context_limits: LLMContextLimits,
+) -> dict[str, Any]:
+    input_chars = len(input_string)
+    output_chars = len(output_string)
+    total_io_chars = input_chars + output_chars
+    reasons: list[str] = []
+    if total_io_chars > context_limits.llm_case_max_chars:
+        reasons.append("case_io_too_large")
+    if input_chars > context_limits.llm_case_input_max_chars:
+        reasons.append("case_input_too_large")
+    if output_chars > context_limits.llm_case_output_max_chars:
+        reasons.append("case_output_too_large")
+    llm_eligible = not reasons
+    return {
+        "llm_eligible": llm_eligible,
+        "stress_only": not llm_eligible,
+        "input_chars": input_chars,
+        "output_chars": output_chars,
+        "total_io_chars": total_io_chars,
+        "llm_exclusion_reason": ",".join(reasons),
+    }
+
+
+def _input_case_metadata(input_string: str, context_limits: LLMContextLimits) -> dict[str, Any]:
+    return _case_text_metadata(input_string=input_string, context_limits=context_limits)
+
+
+def _solved_case_payload(
+    *,
+    case: dict[str, Any],
+    output: str,
+    context_limits: LLMContextLimits,
+) -> dict[str, Any]:
+    return {
+        "case_id": case["case_id"],
+        "source": case["source"],
+        "input": case["input"],
+        "output": output,
+        **_case_text_metadata(
+            input_string=case["input"],
+            output_string=output,
+            context_limits=context_limits,
+        ),
+    }
+
+
+def _select_llm_cases(
+    solved_cases: list[dict[str, Any]],
+    context_limits: LLMContextLimits,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    selected: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    used_chars = 0
+    for case in solved_cases:
+        case_chars = int(case.get("total_io_chars", len(case.get("input", "")) + len(case.get("output", ""))))
+        if not case.get("llm_eligible", True):
+            skipped.append(_llm_case_skip_record(case, reason=str(case.get("llm_exclusion_reason") or "stress_only")))
+            continue
+        if len(selected) >= context_limits.llm_case_max_count:
+            skipped.append(_llm_case_skip_record(case, reason="case_count_budget_exceeded"))
+            continue
+        if used_chars + case_chars > context_limits.llm_case_total_chars:
+            skipped.append(_llm_case_skip_record(case, reason="case_total_budget_exceeded"))
+            continue
+        selected.append(case)
+        used_chars += case_chars
+    return selected, skipped
+
+
+def _llm_case_skip_record(case: dict[str, Any], *, reason: str) -> dict[str, Any]:
+    return {
+        "case_id": case.get("case_id", ""),
+        "source": case.get("source", ""),
+        "reason": reason,
+        "input_chars": len(str(case.get("input", ""))),
+        "output_chars": len(str(case.get("output", ""))),
+        "total_io_chars": len(str(case.get("input", ""))) + len(str(case.get("output", ""))),
+    }
+
+
+def _is_case_input_too_large(case: dict[str, Any], context_limits: LLMContextLimits) -> bool:
+    return len(str(case.get("input", ""))) > context_limits.llm_case_input_max_chars
 
 
 def _format_execution_report(result: ExecutionResult, *, expectation: str) -> str:
@@ -304,6 +434,7 @@ def _collect_generated_inputs(
     validate_code: str,
     start_index: int,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> list[dict[str, Any]]:
     cases: list[dict[str, Any]] = []
     for local_index in range(1, 11):
@@ -326,6 +457,7 @@ def _collect_generated_inputs(
                 "source": source,
                 "source_index": local_index,
                 "input": input_string,
+                **_input_case_metadata(input_string, context_limits),
             }
         )
     return cases
@@ -339,6 +471,7 @@ def _collect_small_challenge_inputs(
     validate_code: str,
     start_index: int,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> list[dict[str, Any]]:
     cases: list[dict[str, Any]] = []
     for local_index in range(1, 11):
@@ -370,6 +503,7 @@ def _collect_small_challenge_inputs(
                 "source": "small_challenge",
                 "source_index": local_index,
                 "input": input_string,
+                **_input_case_metadata(input_string, context_limits),
             }
         )
     return cases
@@ -380,6 +514,7 @@ def collect_verified_test_inputs(
     generated_artifacts: dict[str, Any],
     client: ChatLLMClient,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
     """收集 30 个已通过本地 validate 函数的合法输入。"""
 
@@ -396,6 +531,7 @@ def collect_verified_test_inputs(
             validate_code=random_payload["validate_test_input_code"],
             start_index=1,
             execution_config=execution_config,
+            context_limits=context_limits,
         )
     )
     cases.extend(
@@ -405,6 +541,7 @@ def collect_verified_test_inputs(
             validate_code=adversarial_payload["validate_test_input_code"],
             start_index=11,
             execution_config=execution_config,
+            context_limits=context_limits,
         )
     )
     cases.extend(
@@ -415,6 +552,7 @@ def collect_verified_test_inputs(
             validate_code=random_payload["validate_test_input_code"],
             start_index=21,
             execution_config=execution_config,
+            context_limits=context_limits,
         )
     )
     return {
@@ -452,12 +590,172 @@ def _repair_bruteforce(
     )
 
 
+def _shrink_large_bruteforce_failure(
+    *,
+    current_code: str,
+    original_input: str,
+    validate_code: str,
+    original_result: ExecutionResult,
+    execution_config: ExecutionConfig,
+) -> dict[str, Any]:
+    """尝试把多测试组大输入缩小为仍可复现同类错误的小输入。"""
+
+    parsed = _parse_constant_line_test_cases(original_input)
+    if parsed is None:
+        return {
+            "status": "not_reproduced",
+            "reason": "unsupported_input_structure",
+            "attempt_count": 0,
+        }
+    header, cases = parsed
+    if len(cases) <= 1:
+        return {
+            "status": "not_reproduced",
+            "reason": "single_case_input",
+            "attempt_count": 0,
+        }
+
+    attempts: list[dict[str, Any]] = []
+    found_size: int | None = None
+    size = 1
+    while size <= len(cases):
+        candidate = _build_constant_line_test_input(header, cases[:size])
+        attempt = _try_shrink_candidate(
+            candidate,
+            current_code=current_code,
+            validate_code=validate_code,
+            original_result=original_result,
+            execution_config=execution_config,
+        )
+        attempt["case_count"] = size
+        attempts.append(attempt)
+        if attempt["reproduced"]:
+            found_size = size
+            break
+        size *= 2
+
+    if found_size is None:
+        return {
+            "status": "not_reproduced",
+            "reason": "prefix_search_not_reproduced",
+            "attempt_count": len(attempts),
+            "attempts": attempts,
+        }
+
+    low = 1
+    high = found_size
+    best_input = _build_constant_line_test_input(header, cases[:found_size])
+    while low < high:
+        mid = (low + high) // 2
+        candidate = _build_constant_line_test_input(header, cases[:mid])
+        attempt = _try_shrink_candidate(
+            candidate,
+            current_code=current_code,
+            validate_code=validate_code,
+            original_result=original_result,
+            execution_config=execution_config,
+        )
+        attempt["case_count"] = mid
+        attempts.append(attempt)
+        if attempt["reproduced"]:
+            high = mid
+            best_input = candidate
+        else:
+            low = mid + 1
+
+    return {
+        "status": "reproduced",
+        "reason": "constant_line_test_case_prefix",
+        "input": best_input,
+        "input_chars": len(best_input),
+        "case_count": high,
+        "attempt_count": len(attempts),
+        "attempts": attempts,
+    }
+
+
+def _parse_constant_line_test_cases(input_string: str) -> tuple[int, list[list[str]]] | None:
+    lines = input_string.splitlines()
+    if len(lines) < 3:
+        return None
+    try:
+        test_count = int(lines[0].strip())
+    except ValueError:
+        return None
+    if test_count <= 1:
+        return None
+    body = lines[1:]
+    if len(body) % test_count != 0:
+        return None
+    lines_per_case = len(body) // test_count
+    if lines_per_case <= 0:
+        return None
+    cases = [
+        body[index : index + lines_per_case]
+        for index in range(0, len(body), lines_per_case)
+    ]
+    return test_count, cases
+
+
+def _build_constant_line_test_input(_original_test_count: int, cases: list[list[str]]) -> str:
+    lines = [str(len(cases))]
+    for case_lines in cases:
+        lines.extend(case_lines)
+    return "\n".join(lines)
+
+
+def _try_shrink_candidate(
+    candidate: str,
+    *,
+    current_code: str,
+    validate_code: str,
+    original_result: ExecutionResult,
+    execution_config: ExecutionConfig,
+) -> dict[str, Any]:
+    validate_result = run_validate_test_input(
+        validate_code,
+        candidate,
+        timeout_seconds=execution_config.test_input_timeout_seconds,
+        memory_limit_mb=execution_config.test_input_memory_limit_mb,
+    )
+    if validate_result.status != EXECUTION_OK or validate_result.return_value is not True:
+        return {
+            "valid": False,
+            "reproduced": False,
+            "input_chars": len(candidate),
+            "validation_result": _result_summary(validate_result),
+        }
+
+    result = run_solution(
+        current_code,
+        candidate,
+        timeout_seconds=execution_config.bruteforce_timeout_seconds,
+        memory_limit_mb=execution_config.bruteforce_memory_limit_mb,
+    )
+    return {
+        "valid": True,
+        "reproduced": _is_same_failure(original_result, result),
+        "input_chars": len(candidate),
+        "execution_result": _result_summary(result),
+    }
+
+
+def _is_same_failure(original: ExecutionResult, candidate: ExecutionResult) -> bool:
+    return (
+        candidate.status == original.status
+        and candidate.phase == original.phase
+        and candidate.error_type == original.error_type
+    )
+
+
 def verify_bruteforce_solution(
     artifact: dict[str, Any],
     bruteforce_payload: dict[str, Any],
     input_cases: list[dict[str, Any]],
     client: ChatLLMClient,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
+    validate_code: str,
 ) -> dict[str, Any]:
     if bruteforce_payload.get("status") != "ok":
         raise VerificationError("暴力解法未生成成功，无法执行验证：" + str(bruteforce_payload.get("block_reason", "")))
@@ -469,6 +767,7 @@ def verify_bruteforce_solution(
         iteration += 1
         solved_cases: list[dict[str, Any]] = []
         large_scale_inputs: list[dict[str, Any]] = []
+        large_scale_runtime_failures: list[dict[str, Any]] = []
         should_restart = False
 
         for case in input_cases:
@@ -480,12 +779,11 @@ def verify_bruteforce_solution(
             )
             if result.status == EXECUTION_OK and isinstance(result.return_value, str):
                 solved_cases.append(
-                    {
-                        "case_id": case["case_id"],
-                        "source": case["source"],
-                        "input": case["input"],
-                        "output": result.return_value,
-                    }
+                    _solved_case_payload(
+                        case=case,
+                        output=result.return_value,
+                        context_limits=context_limits,
+                    )
                 )
                 continue
             if result.status in (EXECUTION_TIMEOUT, EXECUTION_MEMORY_LIMIT):
@@ -500,6 +798,30 @@ def verify_bruteforce_solution(
                 )
                 continue
 
+            shrink_result: dict[str, Any] | None = None
+            if result.status != EXECUTION_OK and _is_case_input_too_large(case, context_limits):
+                shrink_result = _shrink_large_bruteforce_failure(
+                    current_code=current_code,
+                    original_input=case["input"],
+                    validate_code=validate_code,
+                    original_result=result,
+                    execution_config=execution_config,
+                )
+                if shrink_result["status"] != "reproduced":
+                    large_scale_runtime_failures.append(
+                        {
+                            "case_id": case["case_id"],
+                            "source": case["source"],
+                            "input": case["input"],
+                            "classification": "large_scale_runtime_failure",
+                            "input_chars": len(case["input"]),
+                            "execution_result": _result_summary(result),
+                            "shrink_result": shrink_result,
+                        }
+                    )
+                    continue
+
+            repair_input = case["input"]
             if result.status == EXECUTION_OK:
                 error_report = json.dumps(
                     {
@@ -511,21 +833,47 @@ def verify_bruteforce_solution(
                     indent=2,
                 )
             else:
-                error_report = _format_execution_report(result, expectation="暴力解法应正常返回输出字符串。")
+                if shrink_result is not None and shrink_result["status"] == "reproduced":
+                    repair_input = shrink_result["input"]
+                    error_report = json.dumps(
+                        {
+                            "expectation": "暴力解法应正常返回输出字符串。",
+                            "original_large_input": {
+                                "case_id": case["case_id"],
+                                "input_chars": len(case["input"]),
+                                "execution_result": _result_summary(result),
+                            },
+                            "shrink_result": {
+                                key: value
+                                for key, value in shrink_result.items()
+                                if key != "input"
+                            },
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                else:
+                    error_report = _format_execution_report(result, expectation="暴力解法应正常返回输出字符串。")
             repair_round = len(repair_history) + 1
             _emit_repair_progress("暴力解法修复", repair_round, "开始。")
             repair = _repair_bruteforce(
                 artifact,
                 client,
                 current_code=current_code,
-                failing_input=case["input"],
+                failing_input=repair_input,
                 error_report=error_report,
             )
             repair_history.append(
                 {
                     "iteration": iteration,
                     "failed_case_id": case["case_id"],
-                    "failed_input": case["input"],
+                    "failed_input": repair_input,
+                    "original_failed_input_chars": len(case["input"]),
+                    "shrink_result": (
+                        {key: value for key, value in shrink_result.items() if key != "input"}
+                        if shrink_result
+                        else None
+                    ),
                     "error_report": error_report,
                     "repair": repair,
                 }
@@ -548,6 +896,8 @@ def verify_bruteforce_solution(
                 "solved_case_count": len(solved_cases),
                 "large_scale_inputs": large_scale_inputs,
                 "large_scale_input_count": len(large_scale_inputs),
+                "large_scale_runtime_failures": large_scale_runtime_failures,
+                "large_scale_runtime_failure_count": len(large_scale_runtime_failures),
                 "repair_history": repair_history,
                 "repair_iteration_count": len(repair_history),
             }
@@ -630,6 +980,18 @@ def _verify_checker_property_1(
             if result.status == EXECUTION_OK and result.return_value is True:
                 continue
             error_report = _format_execution_report(result, expectation="合法输出必须被 checker 判为 AC/True。")
+            if not case.get("llm_eligible", True):
+                repair_history.append(
+                    {
+                        "property": "no_false_reject",
+                        "classification": "large_case_false_reject_not_repaired",
+                        "failed_case_id": case["case_id"],
+                        "input_chars": len(case["input"]),
+                        "output_chars": len(case["output"]),
+                        "error_report": error_report,
+                    }
+                )
+                continue
             repair_round = len(repair_history) + 1
             _emit_repair_progress("checker 误拒修复", repair_round, "开始。")
             repair = _repair_checker_false_reject(
@@ -664,20 +1026,57 @@ def _verify_checker_property_1(
             return checker_code
 
 
+def _checker_property_1_summary(solved_cases: list[dict[str, Any]], repair_history: list[dict[str, Any]]) -> dict[str, Any]:
+    large_unrepaired = [
+        item
+        for item in repair_history
+        if item.get("classification") == "large_case_false_reject_not_repaired"
+    ]
+    if large_unrepaired:
+        return {
+            "status": "partial_large_case_failures",
+            "checked_count": len(solved_cases),
+            "large_unrepaired_count": len(large_unrepaired),
+            "large_unrepaired_cases": [
+                {
+                    "case_id": item.get("failed_case_id", ""),
+                    "input_chars": item.get("input_chars", 0),
+                    "output_chars": item.get("output_chars", 0),
+                }
+                for item in large_unrepaired
+            ],
+        }
+    return {"status": "ok", "checked_count": len(solved_cases)}
+
+
 def _generate_counterexamples(
     artifact: dict[str, Any],
     client: ChatLLMClient,
     solved_cases: list[dict[str, Any]],
+    context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
+    selected_cases, skipped_cases = _select_llm_cases(solved_cases, context_limits)
+    if not selected_cases:
+        return {
+            "counterexamples": [],
+            "skipped": [],
+            "llm_case_selection": {
+                "status": "skipped",
+                "reason": "没有满足 LLM 上下文预算的可读真值用例。",
+                "selected_count": 0,
+                "skipped_count": len(skipped_cases),
+                "skipped_cases": skipped_cases,
+            },
+        }
     prompt_cases = [
         {
             "case_id": case["case_id"],
             "input": case["input"],
             "correct_output": case["output"],
         }
-        for case in solved_cases
+        for case in selected_cases
     ]
-    return _call_prompt(
+    result = _call_prompt(
         client,
         task_name="checker_counterexample_generation",
         system_prompt=prompt_checker_counterexample.build_system_prompt(),
@@ -687,6 +1086,15 @@ def _generate_counterexamples(
             task_name="checker_counterexample_generation",
         ),
     )
+    result["llm_case_selection"] = {
+        "status": "ok",
+        "selected_count": len(selected_cases),
+        "skipped_count": len(skipped_cases),
+        "selected_case_ids": [case["case_id"] for case in selected_cases],
+        "skipped_cases": skipped_cases,
+        "total_selected_io_chars": sum(int(case.get("total_io_chars", 0)) for case in selected_cases),
+    }
+    return result
 
 
 def verify_checker(
@@ -695,6 +1103,7 @@ def verify_checker(
     solved_cases: list[dict[str, Any]],
     client: ChatLLMClient,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
     if not checker_payload.get("needs_checker"):
         return {
@@ -718,13 +1127,13 @@ def verify_checker(
         repair_history=repair_history,
     )
 
-    counterexamples = _generate_counterexamples(artifact, client, solved_cases)
+    counterexamples = _generate_counterexamples(artifact, client, solved_cases, context_limits)
     invalid_cases = counterexamples["counterexamples"]
     if not invalid_cases:
         return {
             "status": "counterexamples_empty",
             "final_checker_code": checker_code,
-            "property_1": {"status": "ok", "checked_count": len(solved_cases)},
+            "property_1": _checker_property_1_summary(solved_cases, repair_history),
             "property_2": {"status": "not_checked", "checked_count": 0},
             "counterexamples": counterexamples,
             "repair_history": repair_history,
@@ -792,7 +1201,7 @@ def verify_checker(
     return {
         "status": "ok",
         "final_checker_code": checker_code,
-        "property_1": {"status": "ok", "checked_count": len(solved_cases)},
+        "property_1": _checker_property_1_summary(solved_cases, repair_history),
         "property_2": {"status": "ok", "checked_count": len(invalid_cases)},
         "counterexamples": counterexamples,
         "checked_counterexamples": checked_counterexamples,
@@ -1012,6 +1421,8 @@ def generate_large_scale_truth_outputs(
 
     cases: list[dict[str, Any]] = []
     for index, case in enumerate(large_scale_inputs, start=1):
+        case_id = str(case.get("case_id", ""))
+        classification = str(case.get("classification", "large_scale_input"))
         result = run_solution(
             standard_code,
             case["input"],
@@ -1021,12 +1432,14 @@ def generate_large_scale_truth_outputs(
         if result.status != EXECUTION_OK or not isinstance(result.return_value, str):
             raise VerificationError(
                 f"标准解生成第 {index} 条大规模真值输出失败："
+                f"case_id={case_id}；classification={classification}；"
                 + json.dumps(_result_summary(result), ensure_ascii=False, indent=2)
             )
         cases.append(
             {
-                "case_id": case["case_id"],
+                "case_id": case_id,
                 "source": case["source"],
+                "classification": classification,
                 "input": case["input"],
                 "output": result.return_value,
                 "execution_result": _result_summary(result),
@@ -1039,6 +1452,15 @@ def generate_large_scale_truth_outputs(
         "count": len(cases),
         "standard_solution_limits": standard_limits,
     }
+
+
+def _large_scale_truth_input_cases(bruteforce_verification: dict[str, Any]) -> list[dict[str, Any]]:
+    """合并所有需要由标准解生成真值的大规模输入。"""
+
+    return [
+        *bruteforce_verification.get("large_scale_inputs", []),
+        *bruteforce_verification.get("large_scale_runtime_failures", []),
+    ]
 
 
 def _flatten_wrong_solution_candidates(wrong_solutions: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1139,6 +1561,7 @@ def _append_targeted_input_if_solved(
     validate_code: str,
     bruteforce_code: str,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
     for case in verified_test_inputs["cases"]:
         if case["input"] == input_string:
@@ -1180,13 +1603,13 @@ def _append_targeted_input_if_solved(
         "source": "wrong_pool_targeted",
         "source_index": source_index,
         "input": input_string,
+        **_input_case_metadata(input_string, context_limits),
     }
-    solved_case = {
-        "case_id": case_id,
-        "source": "wrong_pool_targeted",
-        "input": input_string,
-        "output": solve_result.return_value,
-    }
+    solved_case = _solved_case_payload(
+        case=input_case,
+        output=solve_result.return_value,
+        context_limits=context_limits,
+    )
     verified_test_inputs["cases"].append(input_case)
     verified_test_inputs["count"] = len(verified_test_inputs["cases"])
     source_counts["wrong_pool_targeted"] = source_index
@@ -1206,6 +1629,7 @@ def _evaluate_wrong_solution_candidate(
     *,
     checker_code: str | None,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
     checked_count = 0
     for case in solved_cases:
@@ -1273,6 +1697,7 @@ def _evaluate_wrong_solution_pool(
     *,
     checker_code: str | None,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> list[dict[str, Any]]:
     return [
         _evaluate_wrong_solution_candidate(
@@ -1280,6 +1705,7 @@ def _evaluate_wrong_solution_pool(
             solved_cases,
             checker_code=checker_code,
             execution_config=execution_config,
+            context_limits=context_limits,
         )
         for candidate in candidates
     ]
@@ -1318,6 +1744,7 @@ def verify_wrong_solution_pool(
     checker_verification: dict[str, Any],
     client: ChatLLMClient,
     execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
     """执行单题临时错误解池增强验证，并返回更新后的真值用例和 checker。"""
 
@@ -1378,6 +1805,7 @@ def verify_wrong_solution_pool(
         solved_cases=solved_cases,
         checker_code=checker_code,
         execution_config=execution_config,
+        context_limits=context_limits,
     )
     original_survivor_ids = {
         record["candidate"]["candidate_id"]
@@ -1462,6 +1890,7 @@ def verify_wrong_solution_pool(
                 validate_code=validate_code,
                 bruteforce_code=bruteforce_code,
                 execution_config=execution_config,
+                context_limits=context_limits,
             )
             append_result = {
                 "candidate_id": candidate_id,
@@ -1483,6 +1912,7 @@ def verify_wrong_solution_pool(
             solved_cases=solved_cases,
             checker_code=checker_code,
             execution_config=execution_config,
+            context_limits=context_limits,
         )
         round_records.append(round_record)
 
@@ -1515,6 +1945,7 @@ def generate_verified_artifacts(
     *,
     client: ChatLLMClient | None = None,
     execution_config: ExecutionConfig | None = None,
+    context_limits: Any | None = None,
 ) -> dict[str, Any]:
     """生成全部产物，并执行测试输入、暴力解法和 checker 验证闭环。"""
 
@@ -1522,6 +1953,7 @@ def generate_verified_artifacts(
     if execution_config is None:
         raise RuntimeError("ExecutionConfig 必须由总流程注入，子模块不再读取本地 .env。")
     active_execution_config = execution_config
+    active_context_limits = LLMContextLimits.from_object(context_limits)
     _emit_progress("[verification 2/7] Prompt 与 LLM 生成开始。")
     generated_artifacts = generate_all_artifacts(artifact, resolved_config, client=active_client)
     _emit_progress("[verification 2/7] Prompt 与 LLM 生成完成。")
@@ -1532,6 +1964,7 @@ def generate_verified_artifacts(
         generated_artifacts,
         active_client,
         active_execution_config,
+        active_context_limits,
     )
     _emit_progress(
         f"[verification 4/7] 合法输入收集完成；count={verified_test_inputs['count']}。"
@@ -1543,11 +1976,14 @@ def generate_verified_artifacts(
         verified_test_inputs["cases"],
         active_client,
         active_execution_config,
+        active_context_limits,
+        generated_artifacts["test_inputs"]["random"]["validate_test_input_code"],
     )
     _emit_progress(
         "[verification 4/7] 暴力解法验证完成；"
         f"solved={bruteforce_verification['solved_case_count']}；"
-        f"large_scale={bruteforce_verification['large_scale_input_count']}。"
+        f"large_scale={bruteforce_verification['large_scale_input_count']}；"
+        f"large_runtime_failure={bruteforce_verification['large_scale_runtime_failure_count']}。"
     )
     _emit_progress("[verification 5/7] checker 验证开始。")
     checker_verification = verify_checker(
@@ -1556,6 +1992,7 @@ def generate_verified_artifacts(
         bruteforce_verification["solved_cases"],
         active_client,
         active_execution_config,
+        active_context_limits,
     )
     _emit_progress(f"[verification 5/7] checker 验证完成；status={checker_verification['status']}。")
     _emit_progress("[verification 6/7] 错误解池增强开始。")
@@ -1567,6 +2004,7 @@ def generate_verified_artifacts(
         checker_verification,
         active_client,
         active_execution_config,
+        active_context_limits,
     )
     _emit_progress(
         "[verification 6/7] 错误解池增强完成；"
@@ -1594,9 +2032,10 @@ def generate_verified_artifacts(
         f"checked={standard_solution_verification['checked_count']}。"
     )
     _emit_progress("[verification 4/7] 大规模真值输出生成开始。")
+    large_scale_truth_input_cases = _large_scale_truth_input_cases(bruteforce_verification)
     large_scale_truth_outputs = generate_large_scale_truth_outputs(
         standard_solution_verification["final_code"],
-        bruteforce_verification["large_scale_inputs"],
+        large_scale_truth_input_cases,
         standard_solution_verification["standard_solution_limits"],
     )
     _emit_progress(
@@ -1646,9 +2085,21 @@ def generate_verified_artifacts(
                     "checker_timeout_seconds": active_execution_config.checker_timeout_seconds,
                     "checker_memory_limit_mb": active_execution_config.checker_memory_limit_mb,
                 },
+                "context_limits": {
+                    "llm_case_max_chars": active_context_limits.llm_case_max_chars,
+                    "llm_case_input_max_chars": active_context_limits.llm_case_input_max_chars,
+                    "llm_case_output_max_chars": active_context_limits.llm_case_output_max_chars,
+                    "llm_case_total_chars": active_context_limits.llm_case_total_chars,
+                    "llm_case_max_count": active_context_limits.llm_case_max_count,
+                    "max_llm_prompt_chars": active_context_limits.max_llm_prompt_chars,
+                    "llm_trace_max_text_chars": active_context_limits.llm_trace_max_text_chars,
+                },
                 "verified_test_input_count": verified_test_inputs["count"],
                 "solved_case_count": bruteforce_verification["solved_case_count"],
                 "large_scale_input_count": bruteforce_verification["large_scale_input_count"],
+                "large_scale_runtime_failure_count": bruteforce_verification[
+                    "large_scale_runtime_failure_count"
+                ],
                 "standard_solution_timeout_seconds": standard_solution_verification["standard_solution_limits"][
                     "timeout_seconds"
                 ],

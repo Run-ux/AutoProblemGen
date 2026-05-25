@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 WORKFLOW_DIR = Path(__file__).resolve().parents[1] / "总流程"
@@ -12,6 +12,7 @@ from runtime_config import LLMEndpointConfig, RuntimeConfigError, llm_config_fro
 
 
 DEFAULT_TEMPERATURE = 0.2
+DEFAULT_MAX_LLM_PROMPT_CHARS = 200_000
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class LLMConfig:
     temperature: float = DEFAULT_TEMPERATURE
     timeout_seconds: float = 360.0
     max_retries: int = 3
+    max_prompt_chars: int = DEFAULT_MAX_LLM_PROMPT_CHARS
 
     @classmethod
     def from_endpoint(cls, endpoint: LLMEndpointConfig) -> "LLMConfig":
@@ -37,6 +39,11 @@ class LLMConfig:
     @classmethod
     def from_runtime_env(cls, name: str) -> "LLMConfig":
         return cls.from_endpoint(llm_config_from_runtime_env(name))
+
+    def with_max_prompt_chars(self, max_prompt_chars: int) -> "LLMConfig":
+        if max_prompt_chars <= 0:
+            raise RuntimeConfigError("MAX_LLM_PROMPT_CHARS 必须大于 0。")
+        return replace(self, max_prompt_chars=max_prompt_chars)
 
 
 ConfigError = RuntimeConfigError

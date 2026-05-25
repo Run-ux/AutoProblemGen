@@ -10,6 +10,7 @@ from typing import Any
 RUNTIME_GENERATION_LLM_ENV = "AUTOPROBLEMGEN_GENERATION_LLM_CONFIG"
 RUNTIME_EMBEDDING_LLM_ENV = "AUTOPROBLEMGEN_EMBEDDING_LLM_CONFIG"
 RUNTIME_EXECUTION_ENV = "AUTOPROBLEMGEN_EXECUTION_CONFIG"
+RUNTIME_CONTEXT_ENV = "AUTOPROBLEMGEN_CONTEXT_CONFIG"
 
 DEFAULT_TEMPERATURE = 0.2
 DEFAULT_LLM_TIMEOUT_SECONDS = 360.0
@@ -21,6 +22,14 @@ DEFAULT_BRUTEFORCE_TIMEOUT_SECONDS = 5.0
 DEFAULT_BRUTEFORCE_MEMORY_LIMIT_MB = 512
 DEFAULT_CHECKER_TIMEOUT_SECONDS = 5.0
 DEFAULT_CHECKER_MEMORY_LIMIT_MB = 512
+
+DEFAULT_LLM_CASE_MAX_CHARS = 20_000
+DEFAULT_LLM_CASE_INPUT_MAX_CHARS = 12_000
+DEFAULT_LLM_CASE_OUTPUT_MAX_CHARS = 12_000
+DEFAULT_LLM_CASE_TOTAL_CHARS = 80_000
+DEFAULT_LLM_CASE_MAX_COUNT = 8
+DEFAULT_MAX_LLM_PROMPT_CHARS = 200_000
+DEFAULT_LLM_TRACE_MAX_TEXT_CHARS = 20_000
 
 
 class RuntimeConfigError(ValueError):
@@ -180,6 +189,98 @@ class ExecutionLimits:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ContextLimits:
+    """控制进入 LLM 上下文和 trace 日志的文本规模。"""
+
+    llm_case_max_chars: int = DEFAULT_LLM_CASE_MAX_CHARS
+    llm_case_input_max_chars: int = DEFAULT_LLM_CASE_INPUT_MAX_CHARS
+    llm_case_output_max_chars: int = DEFAULT_LLM_CASE_OUTPUT_MAX_CHARS
+    llm_case_total_chars: int = DEFAULT_LLM_CASE_TOTAL_CHARS
+    llm_case_max_count: int = DEFAULT_LLM_CASE_MAX_COUNT
+    max_llm_prompt_chars: int = DEFAULT_MAX_LLM_PROMPT_CHARS
+    llm_trace_max_text_chars: int = DEFAULT_LLM_TRACE_MAX_TEXT_CHARS
+
+    @classmethod
+    def from_values(cls, values: dict[str, str], *, source: str) -> "ContextLimits":
+        return cls(
+            llm_case_max_chars=_read_positive_int(
+                values,
+                "LLM_CASE_MAX_CHARS",
+                DEFAULT_LLM_CASE_MAX_CHARS,
+                source=source,
+            ),
+            llm_case_input_max_chars=_read_positive_int(
+                values,
+                "LLM_CASE_INPUT_MAX_CHARS",
+                DEFAULT_LLM_CASE_INPUT_MAX_CHARS,
+                source=source,
+            ),
+            llm_case_output_max_chars=_read_positive_int(
+                values,
+                "LLM_CASE_OUTPUT_MAX_CHARS",
+                DEFAULT_LLM_CASE_OUTPUT_MAX_CHARS,
+                source=source,
+            ),
+            llm_case_total_chars=_read_positive_int(
+                values,
+                "LLM_CASE_TOTAL_CHARS",
+                DEFAULT_LLM_CASE_TOTAL_CHARS,
+                source=source,
+            ),
+            llm_case_max_count=_read_positive_int(
+                values,
+                "LLM_CASE_MAX_COUNT",
+                DEFAULT_LLM_CASE_MAX_COUNT,
+                source=source,
+            ),
+            max_llm_prompt_chars=_read_positive_int(
+                values,
+                "MAX_LLM_PROMPT_CHARS",
+                DEFAULT_MAX_LLM_PROMPT_CHARS,
+                source=source,
+            ),
+            llm_trace_max_text_chars=_read_positive_int(
+                values,
+                "LLM_TRACE_MAX_TEXT_CHARS",
+                DEFAULT_LLM_TRACE_MAX_TEXT_CHARS,
+                source=source,
+            ),
+        )
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any], *, source: str) -> "ContextLimits":
+        values = {
+            "LLM_CASE_MAX_CHARS": _payload_text(payload, "llm_case_max_chars", "LLM_CASE_MAX_CHARS"),
+            "LLM_CASE_INPUT_MAX_CHARS": _payload_text(
+                payload,
+                "llm_case_input_max_chars",
+                "LLM_CASE_INPUT_MAX_CHARS",
+            ),
+            "LLM_CASE_OUTPUT_MAX_CHARS": _payload_text(
+                payload,
+                "llm_case_output_max_chars",
+                "LLM_CASE_OUTPUT_MAX_CHARS",
+            ),
+            "LLM_CASE_TOTAL_CHARS": _payload_text(
+                payload,
+                "llm_case_total_chars",
+                "LLM_CASE_TOTAL_CHARS",
+            ),
+            "LLM_CASE_MAX_COUNT": _payload_text(payload, "llm_case_max_count", "LLM_CASE_MAX_COUNT"),
+            "MAX_LLM_PROMPT_CHARS": _payload_text(payload, "max_llm_prompt_chars", "MAX_LLM_PROMPT_CHARS"),
+            "LLM_TRACE_MAX_TEXT_CHARS": _payload_text(
+                payload,
+                "llm_trace_max_text_chars",
+                "LLM_TRACE_MAX_TEXT_CHARS",
+            ),
+        }
+        return cls.from_values(values, source=source)
+
+    def to_runtime_payload(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 def load_env_values(path: str | Path) -> dict[str, str]:
     """读取总流程使用的简单 KEY=VALUE 配置文件。"""
     target = Path(path)
@@ -213,16 +314,23 @@ def execution_limits_from_runtime_env() -> ExecutionLimits:
     return ExecutionLimits.from_payload(payload, source=f"环境变量 {RUNTIME_EXECUTION_ENV}")
 
 
+def context_limits_from_runtime_env() -> ContextLimits:
+    payload = _runtime_payload_from_env(RUNTIME_CONTEXT_ENV)
+    return ContextLimits.from_payload(payload, source=f"环境变量 {RUNTIME_CONTEXT_ENV}")
+
+
 def runtime_env_payload(
     *,
     generation_llm: LLMEndpointConfig,
     embedding_llm: LLMEndpointConfig,
     execution_limits: ExecutionLimits,
+    context_limits: ContextLimits,
 ) -> dict[str, str]:
     return {
         RUNTIME_GENERATION_LLM_ENV: json.dumps(generation_llm.to_runtime_payload(), ensure_ascii=False),
         RUNTIME_EMBEDDING_LLM_ENV: json.dumps(embedding_llm.to_runtime_payload(), ensure_ascii=False),
         RUNTIME_EXECUTION_ENV: json.dumps(execution_limits.to_runtime_payload(), ensure_ascii=False),
+        RUNTIME_CONTEXT_ENV: json.dumps(context_limits.to_runtime_payload(), ensure_ascii=False),
         "PYTHONIOENCODING": "utf-8",
     }
 

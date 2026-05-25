@@ -18,6 +18,7 @@ from llm_trace import (
     WORKFLOW_RUN_ID,
 )
 from runtime_config import (
+    ContextLimits,
     ExecutionLimits,
     LLMEndpointConfig,
     RuntimeConfigError,
@@ -56,6 +57,7 @@ class WorkflowConfig:
     generation_llm: LLMEndpointConfig
     embedding_llm: LLMEndpointConfig
     execution_limits: ExecutionLimits
+    context_limits: ContextLimits
     output_root: Path = DEFAULT_OUTPUT_ROOT
     run_id: str | None = None
     quality_iterations: int = 3
@@ -103,6 +105,7 @@ class WorkflowConfig:
             generation_llm=load_llm_endpoint_config(generation_llm_path),
             embedding_llm=load_llm_endpoint_config(embedding_llm_path),
             execution_limits=ExecutionLimits.from_values(values, source=source),
+            context_limits=ContextLimits.from_values(values, source=source),
             workflow_config_path=config_path,
         )
 
@@ -111,6 +114,7 @@ class WorkflowConfig:
             generation_llm=self.generation_llm,
             embedding_llm=self.embedding_llm,
             execution_limits=self.execution_limits,
+            context_limits=self.context_limits,
         )
 
 
@@ -674,6 +678,7 @@ def _config_summary(
         "generation_llm": config.generation_llm.to_safe_summary(),
         "embedding_llm": config.embedding_llm.to_safe_summary(),
         "execution_limits": asdict(config.execution_limits),
+        "context_limits": asdict(config.context_limits),
     }
 
 

@@ -67,6 +67,12 @@ class OpenAIChatLLMClient:
             bool(self.config.base_url),
         )
         call_id = new_call_id()
+        self._ensure_prompt_budget(
+            call_id=call_id,
+            task_name=task_name,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        )
         payload = {
             "model": self.config.model,
             "temperature": self.config.temperature,
@@ -131,6 +137,21 @@ class OpenAIChatLLMClient:
                 return content
             except Exception as exc:
                 elapsed = time.perf_counter() - started
+                if _is_context_length_error(exc):
+                    logger.exception(
+                        "LLM 调用失败且不重试: task=%s model=%s reason=context_length",
+                        task_name,
+                        self.config.model,
+                    )
+                    fail_call(
+                        call_id=call_id,
+                        task_name=task_name,
+                        attempt=attempt,
+                        max_retries=attempts,
+                        elapsed_seconds=elapsed,
+                        error=exc,
+                    )
+                    raise LLMCallError(f"LLM 调用失败: {task_name}") from exc
                 if attempt < attempts:
                     delay = 1.5 * attempt
                     logger.warning(
@@ -165,3 +186,39 @@ class OpenAIChatLLMClient:
                 raise LLMCallError(f"LLM 调用失败: {task_name}") from exc
 
         raise LLMCallError(f"LLM 调用失败: {task_name}")
+
+    def _ensure_prompt_budget(
+        self,
+        *,
+        call_id: str,
+        task_name: str,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> None:
+        prompt_chars = len(system_prompt) + len(user_prompt)
+        if prompt_chars <= self.config.max_prompt_chars:
+            return
+        error = LLMCallError(
+            "LLM prompt 超过本地预算："
+            f"task={task_name}；prompt_chars={prompt_chars}；"
+            f"max_prompt_chars={self.config.max_prompt_chars}"
+        )
+        fail_call(
+            call_id=call_id,
+            task_name=task_name,
+            attempt=0,
+            max_retries=max(1, self.config.max_retries),
+            elapsed_seconds=0.0,
+            error=error,
+        )
+        raise error
+
+
+def _is_context_length_error(error: BaseException) -> bool:
+    text = str(error).lower()
+    return (
+        "maximum context length" in text
+        or "context length" in text
+        or "reduce the length of the messages" in text
+        or "too many tokens" in text
+    )

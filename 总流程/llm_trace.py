@@ -14,6 +14,9 @@ WORKFLOW_LLM_TRACE_PATH = "WORKFLOW_LLM_TRACE_PATH"
 WORKFLOW_CURRENT_PROBLEM_ID = "WORKFLOW_CURRENT_PROBLEM_ID"
 WORKFLOW_CURRENT_STAGE = "WORKFLOW_CURRENT_STAGE"
 WORKFLOW_RUN_ID = "WORKFLOW_RUN_ID"
+RUNTIME_CONTEXT_ENV = "AUTOPROBLEMGEN_CONTEXT_CONFIG"
+
+DEFAULT_TRACE_MAX_TEXT_CHARS = 20_000
 
 _COUNTER = itertools.count(1)
 
@@ -47,6 +50,7 @@ def start_call(
         return started
 
     payload_bytes = len(json.dumps(payload or {}, ensure_ascii=False).encode("utf-8"))
+    text_limit = _trace_text_limit()
     event = _base_event(call_id=call_id, event="start", task_name=task_name)
     event.update(
         {
@@ -59,9 +63,12 @@ def start_call(
             "system_chars": len(system_prompt),
             "user_chars": len(user_prompt),
             "payload_bytes": payload_bytes,
-            "system_prompt": system_prompt,
-            "user_prompt": user_prompt,
-            "payload": _scrub(payload or {}),
+            "system_prompt_truncated": len(system_prompt) > text_limit,
+            "user_prompt_truncated": len(user_prompt) > text_limit,
+            "payload_truncated": _value_has_long_text(payload or {}, text_limit),
+            "system_prompt": _limit_text(system_prompt, text_limit),
+            "user_prompt": _limit_text(user_prompt, text_limit),
+            "payload": _limit_value(_scrub(payload or {}), text_limit),
         }
     )
     _write_event(event)
@@ -118,6 +125,7 @@ def finish_call(
 ) -> None:
     if not trace_enabled():
         return
+    text_limit = _trace_text_limit()
     event = _base_event(call_id=call_id, event="success", task_name=task_name)
     event.update(
         {
@@ -127,8 +135,10 @@ def finish_call(
             "usage": usage or {},
             "json_parse": json_parse,
             "summary": summary or summarize_value(raw_response),
-            "response_text": response_text,
-            "raw_response": _scrub(raw_response),
+            "response_text_truncated": len(response_text) > text_limit,
+            "raw_response_truncated": _value_has_long_text(raw_response, text_limit),
+            "response_text": _limit_text(response_text, text_limit),
+            "raw_response": _limit_value(_scrub(raw_response), text_limit),
         }
     )
     _write_event(event)
@@ -242,6 +252,49 @@ def _scrub(value: Any) -> Any:
     if isinstance(value, list):
         return [_scrub(item) for item in value]
     return value
+
+
+def _trace_text_limit() -> int:
+    raw_payload = os.environ.get(RUNTIME_CONTEXT_ENV, "").strip()
+    if raw_payload:
+        try:
+            payload = json.loads(raw_payload)
+            value = int(payload.get("llm_trace_max_text_chars", DEFAULT_TRACE_MAX_TEXT_CHARS))
+            if value > 0:
+                return value
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
+    return DEFAULT_TRACE_MAX_TEXT_CHARS
+
+
+def _limit_text(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    marker = f"\n...<truncated {len(value) - limit} chars>...\n"
+    if limit <= len(marker):
+        return value[:limit]
+    keep_each_side = (limit - len(marker)) // 2
+    return value[:keep_each_side] + marker + value[-keep_each_side:]
+
+
+def _limit_value(value: Any, limit: int) -> Any:
+    if isinstance(value, str):
+        return _limit_text(value, limit)
+    if isinstance(value, dict):
+        return {key: _limit_value(item, limit) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_limit_value(item, limit) for item in value]
+    return value
+
+
+def _value_has_long_text(value: Any, limit: int) -> bool:
+    if isinstance(value, str):
+        return len(value) > limit
+    if isinstance(value, dict):
+        return any(_value_has_long_text(item, limit) for item in value.values())
+    if isinstance(value, list):
+        return any(_value_has_long_text(item, limit) for item in value)
+    return False
 
 
 def _error_parts(error: BaseException | str) -> tuple[str, str]:

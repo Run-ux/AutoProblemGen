@@ -81,6 +81,8 @@ PYTHON_EXECUTABLE=D:\path\to\venv\Scripts\python.exe
 
 `VERIFICATION_TIMEOUT_SECONDS` 是废弃兼容项；总流程不再用外层总超时杀掉 `verification_runner.py`。验证耗时由 `generation_llm.env` 的 `TIMEOUT_SECONDS`、`MAX_RETRIES` 和 `workflow.env` 中的 `EXECUTION_TEST_INPUT_TIMEOUT_SECONDS`、`EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS`、`EXECUTION_CHECKER_TIMEOUT_SECONDS` 分阶段控制。
 
+验证阶段还会使用 `workflow.env` 中的 LLM 上下文预算配置控制哪些测试用例可以进入模型 prompt。`LLM_CASE_*` 系列配置用于把小型可读用例和大规模压力用例分流：大规模用例继续用于本地执行验证，但不会原样进入 `checker_counterexample_generation` 等 LLM prompt。`MAX_LLM_PROMPT_CHARS` 用于在请求 API 前做本地预算检查，超限会直接失败并给出具体任务名和字符数；`LLM_TRACE_MAX_TEXT_CHARS` 控制 `logs/llm_calls.jsonl` 中大文本字段的记录上限。
+
 ## 输入格式
 
 `INPUT_PATH` 支持两种形式：
@@ -118,7 +120,7 @@ OUTPUT_ROOT\RUN_ID
 典型输出包括：
 
 - `logs/`：各阶段日志，每题会有独立的抽取、生成和验证日志。
-- `logs/llm_calls.jsonl`：所有 LLM 请求的结构化明细，包含完整 prompt、完整 response、重试、耗时、usage 和解析结果；不会记录 API Key。
+- `logs/llm_calls.jsonl`：所有 LLM 请求的结构化明细，包含 prompt/response 的字符数、短文本原文、超大文本首尾摘要、重试、耗时、usage 和解析结果；不会记录 API Key。
 - `tuple/`：四元组抽取结果。
 - `generation/source/<problem_id>/`：每题隔离的题面生成输入，包含四元组和 `original_problem` 原题文本，避免目录输入时重复生成已处理题。
 - `generation/`：题面生成的 Markdown、artifact 和质量报告。
@@ -150,7 +152,7 @@ OUTPUT_ROOT\RUN_ID
 - `quality_gate_failed`：该题生成完成但质量门槛未通过，不会进入验证阶段，流程会继续处理下一题。
 - `验证失败` 或 `verification_failed`：查看 `verification/` 下对应题目的验证结果 JSON，以及 `logs/` 中的验证日志。
 - 验证阶段长期运行：先看终端最后一条 `[verification x/7]` 或 `[verification repair]` 日志，判断当前卡在 LLM 生成、本地执行、checker 还是错误解池增强。
-- LLM 调用卡住、重试或返回非法 JSON：查看 `logs/llm_calls.jsonl` 中对应 `call_id` 的完整请求和返回。
+- LLM 调用卡住、重试或返回非法 JSON：查看 `logs/llm_calls.jsonl` 中对应 `call_id` 的请求和返回摘要；若出现 `LLM prompt 超过本地预算`，请调小进入 LLM 的 case 规模或提高 `MAX_LLM_PROMPT_CHARS`。
 
 ## 运行测试
 

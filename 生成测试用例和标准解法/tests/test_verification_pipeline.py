@@ -17,11 +17,13 @@ from local_execution import (
 )
 from verification_pipeline import (
     _candidate_prompt_payload,
+    _large_scale_truth_input_cases,
     _parse_standard_solution_limits,
     _result_summary,
     collect_verified_test_inputs,
     generate_large_scale_truth_outputs,
     generate_verified_artifacts,
+    LLMContextLimits,
     VerificationError,
     verify_bruteforce_solution,
     verify_checker,
@@ -260,7 +262,13 @@ class VerificationPipelineTests(unittest.TestCase):
             }
         }
 
-        result = collect_verified_test_inputs(sample_artifact(), generated_artifacts, client, self.config)
+        result = collect_verified_test_inputs(
+            sample_artifact(),
+            generated_artifacts,
+            client,
+            self.config,
+            LLMContextLimits(),
+        )
 
         self.assertEqual(result["count"], 30)
         self.assertEqual(result["source_counts"]["small_challenge"], 10)
@@ -301,6 +309,8 @@ class VerificationPipelineTests(unittest.TestCase):
                 input_cases,
                 client,
                 self.config,
+                LLMContextLimits(),
+                "def validate_test_input(input_string):\n    return True",
             )
 
         self.assertEqual(result["final_code"], "good_code")
@@ -309,6 +319,84 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(result["large_scale_input_count"], 2)
         self.assertIn("[verification repair] 暴力解法修复：第 1 轮开始", stdout.getvalue())
         self.assertIn("暴力解法修复循环结束", stdout.getvalue())
+
+    @patch("verification_pipeline.run_validate_test_input")
+    @patch("verification_pipeline.run_solution")
+    def test_verify_bruteforce_continues_when_large_runtime_failure_cannot_shrink(
+        self,
+        fake_run_solution,
+        fake_validate,
+    ) -> None:
+        fake_validate.return_value = ExecutionResult(status=EXECUTION_OK, return_value=True)
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            if input_string.startswith("not-a-multicase"):
+                return ExecutionResult(
+                    status=EXECUTION_ERROR,
+                    phase="runtime",
+                    error_type="ValueError",
+                    error_message="boom",
+                )
+            return ExecutionResult(status=EXECUTION_OK, return_value="1")
+
+        fake_run_solution.side_effect = side_effect
+        client = FakeLLMClient()
+
+        result = verify_bruteforce_solution(
+            sample_artifact(),
+            {"status": "ok", "code": "brute"},
+            [
+                {"case_id": "case_012", "source": "adversarial", "input": "not-a-multicase-" + "x" * 100},
+                {"case_id": "case_001", "source": "small", "input": "1\n1"},
+            ],
+            client,
+            self.config,
+            LLMContextLimits(llm_case_input_max_chars=20),
+            "def validate_test_input(input_string):\n    return True",
+        )
+
+        self.assertEqual(result["solved_case_count"], 1)
+        self.assertEqual(result["large_scale_runtime_failure_count"], 1)
+        self.assertEqual(result["large_scale_runtime_failures"][0]["classification"], "large_scale_runtime_failure")
+        self.assertEqual(result["large_scale_runtime_failures"][0]["input"], "not-a-multicase-" + "x" * 100)
+        self.assertNotIn("bruteforce_debug", client.calls)
+
+    @patch("verification_pipeline.run_validate_test_input")
+    @patch("verification_pipeline.run_solution")
+    def test_verify_bruteforce_repairs_with_shrunk_large_runtime_failure(
+        self,
+        fake_run_solution,
+        fake_validate,
+    ) -> None:
+        fake_validate.return_value = ExecutionResult(status=EXECUTION_OK, return_value=True)
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            if code == "bad_code":
+                return ExecutionResult(
+                    status=EXECUTION_ERROR,
+                    phase="runtime",
+                    error_type="ValueError",
+                    error_message="boom",
+                )
+            return ExecutionResult(status=EXECUTION_OK, return_value="1")
+
+        fake_run_solution.side_effect = side_effect
+        client = FakeLLMClient()
+
+        result = verify_bruteforce_solution(
+            sample_artifact(),
+            {"status": "ok", "code": "bad_code"},
+            [{"case_id": "case_012", "source": "adversarial", "input": "4\n1\n2\n3\n4"}],
+            client,
+            self.config,
+            LLMContextLimits(llm_case_input_max_chars=5),
+            "def validate_test_input(input_string):\n    return True",
+        )
+
+        self.assertEqual(result["final_code"], "good_code")
+        self.assertEqual(result["repair_iteration_count"], 1)
+        self.assertEqual(result["repair_history"][0]["failed_input"], "1\n1")
+        self.assertEqual(result["repair_history"][0]["original_failed_input_chars"], len("4\n1\n2\n3\n4"))
 
     @patch("verification_pipeline.run_checker")
     def test_verify_checker_repairs_false_reject_then_false_accept(self, fake_run_checker) -> None:
@@ -338,6 +426,7 @@ class VerificationPipelineTests(unittest.TestCase):
                 solved_cases,
                 client,
                 self.config,
+                LLMContextLimits(),
             )
 
         self.assertEqual(result["status"], "ok")
@@ -347,6 +436,84 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(result["repair_iteration_count"], 2)
         self.assertIn("[verification repair] checker 误拒修复：第 1 轮开始", stdout.getvalue())
         self.assertIn("[verification repair] checker 误收修复：第 2 轮开始", stdout.getvalue())
+
+    @patch("verification_pipeline.run_checker")
+    def test_verify_checker_counterexample_prompt_excludes_stress_cases(self, fake_run_checker) -> None:
+        class RecordingClient(FakeLLMClient):
+            def __init__(self) -> None:
+                super().__init__(checker=True)
+                self.prompts: dict[str, str] = {}
+
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                self.prompts[task_name] = user_prompt
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+        fake_run_checker.side_effect = [
+            ExecutionResult(status=EXECUTION_OK, return_value=True),
+            ExecutionResult(status=EXECUTION_OK, return_value=True),
+            ExecutionResult(status=EXECUTION_OK, return_value=False),
+        ]
+        client = RecordingClient()
+        solved_cases = [
+            {"case_id": "case_001", "source": "small", "input": "1\n1", "output": "1"},
+            {
+                "case_id": "case_012",
+                "source": "adversarial",
+                "input": "X" * 200,
+                "output": "Y" * 200,
+                "llm_eligible": False,
+                "stress_only": True,
+                "total_io_chars": 400,
+                "llm_exclusion_reason": "case_io_too_large",
+            },
+        ]
+
+        result = verify_checker(
+            sample_artifact(),
+            {"needs_checker": True, "checker_code": "accept_legal"},
+            solved_cases,
+            client,
+            self.config,
+            LLMContextLimits(llm_case_max_chars=50, llm_case_total_chars=100),
+        )
+
+        prompt = client.prompts["checker_counterexample_generation"]
+        self.assertIn("case_001", prompt)
+        self.assertNotIn("case_012", prompt)
+        self.assertEqual(result["counterexamples"]["llm_case_selection"]["skipped_count"], 1)
+
+    @patch("verification_pipeline.run_checker")
+    def test_verify_checker_skips_counterexample_llm_when_only_stress_cases_exist(self, fake_run_checker) -> None:
+        fake_run_checker.return_value = ExecutionResult(status=EXECUTION_OK, return_value=True)
+        client = FakeLLMClient(checker=True)
+
+        result = verify_checker(
+            sample_artifact(),
+            {"needs_checker": True, "checker_code": "accept_legal"},
+            [
+                {
+                    "case_id": "case_012",
+                    "source": "adversarial",
+                    "input": "X" * 200,
+                    "output": "Y" * 200,
+                    "llm_eligible": False,
+                    "stress_only": True,
+                    "total_io_chars": 400,
+                    "llm_exclusion_reason": "case_io_too_large",
+                }
+            ],
+            client,
+            self.config,
+            LLMContextLimits(llm_case_max_chars=50),
+        )
+
+        self.assertEqual(result["status"], "counterexamples_empty")
+        self.assertNotIn("checker_counterexample_generation", client.calls)
+        self.assertEqual(result["counterexamples"]["llm_case_selection"]["status"], "skipped")
 
     @patch("verification_pipeline.run_solution")
     def test_verify_standard_solution_repairs_output_mismatch_without_checker(self, fake_run_solution) -> None:
@@ -455,17 +622,73 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["cases"][0]["output"], "100")
+        self.assertEqual(result["cases"][0]["classification"], "large_scale_input")
+
+    @patch("verification_pipeline.run_solution")
+    def test_generate_large_scale_truth_outputs_preserves_runtime_failure_classification(
+        self,
+        fake_run_solution,
+    ) -> None:
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_OK, return_value="200")
+
+        result = generate_large_scale_truth_outputs(
+            "standard",
+            [
+                {
+                    "case_id": "case_099",
+                    "source": "adversarial",
+                    "classification": "large_scale_runtime_failure",
+                    "input": "huge runtime failure input",
+                }
+            ],
+            {"timeout_seconds": 1.0, "memory_limit_mb": 512},
+        )
+
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["cases"][0]["classification"], "large_scale_runtime_failure")
+        self.assertEqual(result["cases"][0]["output"], "200")
 
     @patch("verification_pipeline.run_solution")
     def test_generate_large_scale_truth_outputs_fails_fast_on_execution_error(self, fake_run_solution) -> None:
         fake_run_solution.return_value = ExecutionResult(status=EXECUTION_TIMEOUT)
 
-        with self.assertRaisesRegex(VerificationError, "大规模真值输出失败"):
+        with self.assertRaisesRegex(VerificationError, "case_id=case_099.*large_scale_runtime_failure"):
             generate_large_scale_truth_outputs(
                 "standard",
-                [{"case_id": "case_002", "source": "random", "input": "100000\n..."}],
+                [
+                    {
+                        "case_id": "case_099",
+                        "source": "random",
+                        "classification": "large_scale_runtime_failure",
+                        "input": "100000\n...",
+                    }
+                ],
                 {"timeout_seconds": 1.0, "memory_limit_mb": 512},
             )
+
+    def test_large_scale_truth_input_cases_merges_runtime_failures(self) -> None:
+        result = _large_scale_truth_input_cases(
+            {
+                "large_scale_inputs": [
+                    {
+                        "case_id": "case_010",
+                        "source": "random",
+                        "classification": "large_scale_input",
+                        "input": "large",
+                    }
+                ],
+                "large_scale_runtime_failures": [
+                    {
+                        "case_id": "case_099",
+                        "source": "adversarial",
+                        "classification": "large_scale_runtime_failure",
+                        "input": "runtime failure",
+                    }
+                ],
+            }
+        )
+
+        self.assertEqual([case["case_id"] for case in result], ["case_010", "case_099"])
 
     @patch("verification_pipeline.run_validate_test_input")
     @patch("verification_pipeline.run_solution")
@@ -511,6 +734,7 @@ class VerificationPipelineTests(unittest.TestCase):
             {"status": "skipped"},
             FakeLLMClient(),
             self.config,
+            LLMContextLimits(),
         )
 
         self.assertEqual(result["verification"]["targeted_input_count"], 1)
@@ -595,6 +819,7 @@ class VerificationPipelineTests(unittest.TestCase):
             {"status": "skipped"},
             client,
             self.config,
+            LLMContextLimits(),
         )
 
         targeted_calls = [call for call in client.calls if call.startswith("wrong_solution_targeted_input:")]
@@ -650,6 +875,7 @@ class VerificationPipelineTests(unittest.TestCase):
             {"status": "skipped"},
             FakeLLMClient(),
             self.config,
+            LLMContextLimits(),
         )
 
         self.assertEqual(result["verification"]["targeted_input_count"], 0)
@@ -690,6 +916,7 @@ class VerificationPipelineTests(unittest.TestCase):
             {"status": "skipped"},
             client,
             self.config,
+            LLMContextLimits(),
         )
 
         targeted_calls = [call for call in client.calls if call.startswith("wrong_solution_targeted_input:")]
@@ -748,6 +975,7 @@ class VerificationPipelineTests(unittest.TestCase):
             {"status": "ok", "final_checker_code": "verified_checker", "repair_history": []},
             client,
             self.config,
+            LLMContextLimits(),
         )
 
         self.assertEqual(result["verification"]["killed_count"], 0)
@@ -803,6 +1031,7 @@ class VerificationPipelineTests(unittest.TestCase):
             {"status": "ok", "final_checker_code": "verified_checker", "repair_history": []},
             FakeLLMClient(checker=True),
             self.config,
+            LLMContextLimits(),
         )
 
         self.assertEqual(result["verification"]["killed_count"], 1)

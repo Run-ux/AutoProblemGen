@@ -6,7 +6,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from runtime_config import RUNTIME_GENERATION_LLM_ENV, execution_limits_from_runtime_env
+from runtime_config import RUNTIME_GENERATION_LLM_ENV, context_limits_from_runtime_env, execution_limits_from_runtime_env
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -35,8 +35,15 @@ def main(argv: list[str] | None = None) -> int:
 
         artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
         llm_config = LLMConfig.from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
+        context_limits = context_limits_from_runtime_env()
+        llm_config = llm_config.with_max_prompt_chars(context_limits.max_llm_prompt_chars)
         execution_config = ExecutionConfig.from_runtime_limits(execution_limits_from_runtime_env())
-        result = generate_verified_artifacts(artifact, llm_config, execution_config=execution_config)
+        result = generate_verified_artifacts(
+            artifact,
+            llm_config,
+            execution_config=execution_config,
+            context_limits=context_limits,
+        )
         output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[OK] verified artifacts saved to: {output_path}")
         return 0

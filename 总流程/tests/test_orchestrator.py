@@ -27,12 +27,15 @@ from llm_trace import (
 )
 from orchestrator import CommandResult, TUPLE_DIMENSIONS, WorkflowConfig, run_workflow
 from runtime_config import (
+    ContextLimits,
     ExecutionLimits,
     LLMEndpointConfig,
+    RUNTIME_CONTEXT_ENV,
     RUNTIME_EMBEDDING_LLM_ENV,
     RUNTIME_EXECUTION_ENV,
     RUNTIME_GENERATION_LLM_ENV,
     RuntimeConfigError,
+    context_limits_from_runtime_env,
     execution_limits_from_runtime_env,
     llm_config_from_runtime_env,
 )
@@ -96,6 +99,15 @@ def _make_workflow_config(
             checker_timeout_seconds=8.0,
             checker_memory_limit_mb=512,
         ),
+        context_limits=ContextLimits(
+            llm_case_max_chars=111,
+            llm_case_input_max_chars=112,
+            llm_case_output_max_chars=113,
+            llm_case_total_chars=114,
+            llm_case_max_count=5,
+            max_llm_prompt_chars=115,
+            llm_trace_max_text_chars=116,
+        ),
     )
 
 
@@ -144,6 +156,13 @@ def _write_workflow_files(temp: Path, input_path: Path, *, quality_iterations: i
                 "EXECUTION_BRUTEFORCE_MEMORY_LIMIT_MB=384",
                 "EXECUTION_CHECKER_TIMEOUT_SECONDS=8",
                 "EXECUTION_CHECKER_MEMORY_LIMIT_MB=512",
+                "LLM_CASE_MAX_CHARS=111",
+                "LLM_CASE_INPUT_MAX_CHARS=112",
+                "LLM_CASE_OUTPUT_MAX_CHARS=113",
+                "LLM_CASE_TOTAL_CHARS=114",
+                "LLM_CASE_MAX_COUNT=5",
+                "MAX_LLM_PROMPT_CHARS=115",
+                "LLM_TRACE_MAX_TEXT_CHARS=116",
             ]
         ),
         encoding="utf-8",
@@ -333,6 +352,7 @@ class RuntimeConfigTests(unittest.TestCase):
                 generation = llm_config_from_runtime_env(RUNTIME_GENERATION_LLM_ENV)
                 embedding = llm_config_from_runtime_env(RUNTIME_EMBEDDING_LLM_ENV)
                 execution_limits = execution_limits_from_runtime_env()
+                context_limits = context_limits_from_runtime_env()
 
         self.assertEqual(generation.model, "chat-model")
         self.assertEqual(generation.api_key, "secret-generation-key")
@@ -340,6 +360,8 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertEqual(embedding.api_key, "secret-embedding-key")
         self.assertEqual(execution_limits.test_input_timeout_seconds, 6.0)
         self.assertEqual(execution_limits.checker_memory_limit_mb, 512)
+        self.assertEqual(context_limits.llm_case_max_chars, 111)
+        self.assertEqual(context_limits.max_llm_prompt_chars, 115)
 
 
 class LLMTraceTests(unittest.TestCase):
@@ -412,6 +434,35 @@ class LLMTraceTests(unittest.TestCase):
             self.assertNotIn("secret-generation-key", trace_text)
             self.assertIn("[REDACTED]", trace_text)
 
+    def test_llm_trace_truncates_large_prompt_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            trace_path = Path(tempdir) / "llm_calls.jsonl"
+            env = {
+                WORKFLOW_LLM_TRACE_PATH: str(trace_path),
+                RUNTIME_CONTEXT_ENV: json.dumps({"llm_trace_max_text_chars": 30}),
+            }
+            with mock.patch.dict(os.environ, env, clear=False):
+                start_call(
+                    call_id=new_call_id(),
+                    task_name="large_task",
+                    model="chat-model",
+                    endpoint="https://example.test",
+                    temperature=0.2,
+                    timeout_seconds=30,
+                    attempt=1,
+                    max_retries=1,
+                    system_prompt="S" * 80,
+                    user_prompt="U" * 80,
+                    payload={"messages": [{"content": "P" * 80}]},
+                )
+
+            event = json.loads(trace_path.read_text(encoding="utf-8").splitlines()[0])
+            self.assertTrue(event["system_prompt_truncated"])
+            self.assertTrue(event["user_prompt_truncated"])
+            self.assertTrue(event["payload_truncated"])
+            self.assertLess(len(event["system_prompt"]), 80)
+            self.assertIn("truncated", event["system_prompt"])
+
 
 class CliTests(unittest.TestCase):
     def test_cli_reads_workflow_config_and_rejects_disabled_quality_gate(self) -> None:
@@ -430,6 +481,8 @@ class CliTests(unittest.TestCase):
             self.assertEqual(config.quality_full_score_max_iterations, 10)
             self.assertEqual(config.generation_llm.model, "chat-model")
             self.assertEqual(config.embedding_llm.model, "embedding-model")
+            self.assertEqual(config.context_limits.llm_case_max_chars, 111)
+            self.assertEqual(config.context_limits.llm_trace_max_text_chars, 116)
 
             bad_workflow_path = _write_workflow_files(temp, input_path, quality_iterations=0)
             with contextlib.redirect_stderr(io.StringIO()):
@@ -515,6 +568,7 @@ class OrchestratorTests(unittest.TestCase):
             self.assertIn(RUNTIME_GENERATION_LLM_ENV, generation_calls[0]["env"])
             self.assertIn(RUNTIME_EMBEDDING_LLM_ENV, generation_calls[0]["env"])
             self.assertIn(RUNTIME_EXECUTION_ENV, generation_calls[0]["env"])
+            self.assertIn(RUNTIME_CONTEXT_ENV, generation_calls[0]["env"])
             self.assertEqual(summary["problems"][0]["status"], "quality_gate_failed")
             self.assertEqual(summary["problems"][0]["generation"]["status"], "quality_gate_failed")
             self.assertFalse(any(Path(call["command"][1]).name == "verification_runner.py" for call in runner.calls))
