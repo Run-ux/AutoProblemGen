@@ -1,0 +1,112 @@
+{
+  "problem_id": "taco_codechef_c0ea04c63c73",
+  "source": "codechef",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    },
+    "components": [
+      {
+        "role": "test_case_count",
+        "role_description": "Number of test cases",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "test_case_values",
+        "role_description": "Sequence of integers C, one per test case",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": 0,
+          "max": 1152921504606846975
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "element_all_ones_mask",
+        "description": "Each element of the array must be of the form 2^x - 1 for some integer x with 1 ≤ x ≤ 60.",
+        "formal": "∀k (1≤k≤n) ∃x∈{1,…,60} : a_k = 2^x - 1",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "xor_sum_equals_target",
+        "description": "The bitwise XOR of all elements in the array must equal the given integer C.",
+        "formal": "⨁_{k=1}^{n} a_k = C",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "minimal_array_size",
+        "description": "The size n of the array must be the smallest possible size for which an interesting array with XOR sum C exists.",
+        "formal": "n = min{ m | ∃ interesting array B of size m, ⨁_{j=1}^{m} b_j = C }",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimize the size of an interesting array whose XOR equals C",
+    "target": "size",
+    "requires_solution": true
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "bit_transition_length_relation",
+        "description": "For non-zero C, the number of elements in the constructed array is exactly one plus the number of times adjacent bits differ in the binary representation of C. This relation guarantees the minimal possible size of the interesting array.",
+        "properties": {
+          "length_equals_transitions_plus_one": true
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "monotonic_decreasing_exponents",
+        "description": "The exponents of the elements (the x in 2^x - 1) are strictly decreasing along the constructed sequence. This ensures that the XOR operations occur from higher to lower bit‑length, preventing interference and maintaining correctness.",
+        "properties": {
+          "order": "strictly_decreasing"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codechef_c0ea04c63c73",
+    "title": "MINSZ",
+    "description": "Consider an array A = \\{a_{1}, a_{2},...,a_{n}\\} of size n ≥ 1. If a_{k} = 2^{x} -1 for all  1≤ k ≤ n,  for some integer x (1 ≤ x ≤ 60), then A is called interesting array.\n\nYou are given a number C. Find any interesting array A of minimum possible size such that  a_{1} \\bigoplus a_{2} \\bigoplus...\\bigoplus a_{n} = C, where \\bigoplus represents bitwise XOR operation.\n\nIf there exists multiple such arrays, output any one.\n\n------ Input Format ------ \n\n- First line will contain T, number of testcases. Then the testcases follow.\n- Each testcase contains single integer C on a single line.\n\n------ Output Format ------ \n\n- For each testcase, on the first line output the minimum possible size of array A satisfying the given property.\n- On the next line output the elements of array A in any order. \n\n------ Constraints ------ \n\n$1 ≤ T ≤ 10^{5}$\n$0 ≤ C < 2^{60}$\n- It is guaranteed in the input that sum of lengths of arrays over all testcases does not exceed $10^{6}$.\n\n----- Sample Input 1 ------ \n3\n1\n2\n3\n----- Sample Output 1 ------ \n1\n1\n2\n1 3\n1\n3\n\n----- explanation 1 ------ \n$\\textbf{Test case}$ 1: $C=1$, $A$ can be $\\{1\\}$\n\n$\\textbf{Test case}$ 2: $C=2$, $A$ can be $\\{1,3\\}$\n\n$\\textbf{Test case}$ 3: $C=3$, $A$ can be $\\{3\\}$",
+    "input": "",
+    "output": "",
+    "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+    "source": "codechef",
+    "standard_solution_code": "for _ in range(int(input())):\n\tC = int(input())\n\tif C == 0:\n\t\tprint('2\\n1 1\\n')\n\t\tcontinue\n\tb = ''\n\twhile C > 0:\n\t\tb += str(C % 2)\n\t\tC = C // 2\n\tb = b[::-1]\n\tsize = len(b)\n\tv = []\n\tprev = b[0]\n\tv.append(2 ** size - 1)\n\tfor i in range(1, size):\n\t\tif b[i] == prev:\n\t\t\tcontinue\n\t\tv.append(2 ** (size - i) - 1)\n\t\tprev = b[i]\n\tprint(len(v))\n\tprint(' '.join(map(str, v)))"
+  }
+}

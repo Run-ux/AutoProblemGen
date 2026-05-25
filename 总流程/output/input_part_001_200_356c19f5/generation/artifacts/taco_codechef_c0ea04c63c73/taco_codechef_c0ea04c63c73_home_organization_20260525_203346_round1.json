@@ -1,0 +1,955 @@
+{
+  "problem_id": "inverse_minsz_min_modify",
+  "source_problem_ids": [
+    "taco_codechef_c0ea04c63c73"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_c0ea04c63c73",
+      "MINSZ",
+      "codechef",
+      "Consider an array A = \\{a_{1}, a_{2},...,a_{n}\\} of size n ≥ 1. If a_{k} = 2^{x} -1 for all 1≤ k ≤ n, for some integer x (1 ≤ x ≤ 60), then A is called interesting array. You are given a number C. Find any interesting...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束新增修改操作契约，目标变为最小化修改次数，不变量承担最小性证明与修改可行性责任。",
+    "summary": "在保留原有趣数组定义与XOR性质的前提下，将问题从‘构造满足C的最小数组’转变为‘在给定现有数组上以最小编辑代价达成相同性质’，同时必须证明最优性和构造正确性。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3991,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3991,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4867,
+      "O": 0.4523,
+      "V": 0.7001
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4867,
+      "objective_type_distance": 0.4894,
+      "objective_text_distance": 0.3967,
+      "invariant_match_distance": 0.7001
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_edit_distance",
+    "description": "minimize the number of modified positions (i.e., indices i where B_i ≠ A_i)",
+    "target": "edit_count",
+    "requires_solution": true,
+    "output_format": "First line: integer K (minimum number of modifications). Second line: n space-separated integers B_i (a modified interesting array with XOR C)."
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题结果（最小数组大小）可直接作为反向目标，且输入整数的二进制位翻转构成与原核心规律（相邻位变化次数决定大小）完全相关的自然修改操作，存在明确的设计自由度（选择哪些位翻转）和最小性证明要求。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_minsz_min_modify",
+    "source": "inverse_design_from_codechef_c0ea04c63c73",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case_count",
+          "role_description": "Number of test cases",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "array_length_and_elements_and_target",
+          "role_description": "For each test case: first integer n (1≤n≤60), then n integers a_i (each is 2^x - 1, 1≤x≤60), then integer C (0≤C<2^60). It is guaranteed that there exists at least one way to change some a_i into other interesting numbers such that the XOR of the new array equals C.",
+          "type": "composite",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {},
+          "components": [
+            {
+              "role": "n",
+              "type": "integer",
+              "value_range": {
+                "min": 1,
+                "max": 60
+              }
+            },
+            {
+              "role": "a_i",
+              "type": "array",
+              "length": {
+                "min": "n",
+                "max": "n"
+              },
+              "value_range": {
+                "min": 1,
+                "max": 1152921504606846975
+              },
+              "value_constraint": "must be of the form 2^x - 1, 1 ≤ x ≤ 60"
+            },
+            {
+              "role": "C",
+              "type": "integer",
+              "value_range": {
+                "min": 0,
+                "max": 1152921504606846975
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "initial_interesting",
+          "description": "Each a_i is of the form 2^x - 1 (1 ≤ x ≤ 60).",
+          "formal": "∀i, ∃x∈[1,60] : a_i = 2^x - 1"
+        },
+        {
+          "name": "edit_operation_rule",
+          "description": "A modification consists of changing the value of an element to any other interesting number (still 2^y - 1). No elements may be added or removed; the array length n is fixed.",
+          "formal": "B_i = changed_value, where B_i is also a valid interesting number."
+        },
+        {
+          "name": "target_xor_constraint",
+          "description": "The XOR of all elements in the final array must equal C.",
+          "formal": "⨁_{i=1}^{n} B_i = C"
+        },
+        {
+          "name": "feasibility_guarantee",
+          "description": "The input guarantees at least one array B satisfying the interesting property, XOR = C, and derivable from A by modifying some elements.",
+          "formal": "∃ B : (∀i, B_i is interesting) ∧ (⨁ B_i = C)"
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_edit_distance",
+      "description": "minimize the number of modified positions (i.e., indices i where B_i ≠ A_i)",
+      "target": "edit_count",
+      "requires_solution": true,
+      "output_format": "First line: integer K (minimum number of modifications). Second line: n space-separated integers B_i (a modified interesting array with XOR C)."
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "length_invariance",
+          "description": "The modified array retains the same length n.",
+          "properties": {
+            "length_unchanged": true
+          }
+        },
+        {
+          "name": "interesting_preservation",
+          "description": "Every element remains an interesting number.",
+          "properties": {
+            "valid_values": true
+          }
+        },
+        {
+          "name": "minimal_edit_lower_bound",
+          "description": "For any solution with K modifications, let m_min(C) be the minimum possible length of an interesting array with XOR C. Then K ≥ n - max_keep, where max_keep is the maximum size of a subset S of A such that there exists an interesting array B' of length n, XOR = C, and B' contains S as a subsequence. In particular, K ≥ n - |A ∩ B*| for some optimal target array B*.",
+          "properties": {
+            "bound_based_on_retained_elements": true,
+            "parity_considerations": "K must satisfy parity constraints relative to m_min(C ⊕ XOR(S))"
+          }
+        },
+        {
+          "name": "construction_feasibility",
+          "description": "Given a retained subset S, the remaining positions can be filled with a core minimal sequence for C ⊕ XOR(S) padded with equal pairs to reach length n - |S|, provided parity conditions hold. This guarantees existence of a solution achieving the bound.",
+          "properties": {
+            "decomposition": "core_minimal_plus_pairs"
+          }
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "1600"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "For given C, compute the minimal length and construct a specific interesting array via binary bit-transition method (e.g., size = transitions+1).",
+    "reusable_subroutines": "Computing the minimal size m_min(C) and generating a canonical minimal interesting array (used as building block).",
+    "new_solver_core": "Compute the maximum number of elements from A that can be retained while still allowing the rest to form a valid interesting array with XOR C. This involves exploring candidate subsets or using DP over the limited set (at most 60 elements) to maximize retained count subject to existence of a valid completion (core + padding). Then derive minimum modifications = n - retained.",
+    "new_proof_obligation": "Must prove that any valid solution corresponds to a retained subset S whose XOR is S_xor, and that the required number of modifications is at least n - |S|, with equality when completion is feasible. Additionally, prove that the chosen subset S is optimal (no larger S exists), and that the constructed completion indeed satisfies all constraints.",
+    "why_direct_reuse_fails": "The original solver only builds one ad‐hoc minimum‐length array for a given C. It does not consider existing array elements, nor retention vs. modification tradeoffs, nor the need to maximize retention while embedding the core sequence into a fixed‐length array."
+  },
+  "anti_shallow_rationale": "不是简单换皮：问题从构造转向带代价的逆设计，新算法必须综合原题的最小序列构造与一个组合保留优化，需要证明修改次数的下界和构造可行性，仅靠原解无法直接推出。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "必须定义反向目标作为驱动新问题的核心。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 中添加目标 XOR 约束，成为判定答案正确性的核心条件。",
+        "objective 中明确目标为达成该结果的最小修改。"
+      ],
+      "innovation_reason": "将原题输出的‘有趣数组且 XOR=C’直接作为反向目标，迫使算法围绕该目标设计修改序列。",
+      "difficulty_reason": "目标约束与最小性结合，要求算法不能仅产生任意可行解，必须严格满足结果性质并给出最优代价。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "必须明确可执行的修改操作，使逆设计有操作空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 中增加 edit_operation_rule，限定只能原位修改元素值，且新值仍为有趣数。",
+        "invariant 中加入 length_invariance 和 interesting_preservation，确保操作边界。"
+      ],
+      "innovation_reason": "将修改操作从抽象设计具体化为对有趣值集合的取值变更，严格绑定原始结构。",
+      "difficulty_reason": "操作空间的离散性和组合爆炸可能使优化非平凡，需要结合原题结构设计高效算法。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "必须确保答案承担最小性责任，避免仅输出可行修改。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 中明确 minimize_edit_distance。",
+        "invariant 中添加 minimal_edit_lower_bound 和 construction_feasibility，为下界和构造提供证明基础。"
+      ],
+      "innovation_reason": "将答案正确性从存在性提升到最优性，需要额外的保留/丢弃分析和下界证明。",
+      "difficulty_reason": "要求算法证明其修改次数不可再减少，可能需要基于原题核心的最小长度性质推导紧下界。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题 'MINSZ' 已经要求输出完整的数组方案，违反了规则 eligibility 中的 forbidden_seed_properties '原题本来就要求输出完整方案'，因此该规则不适用于此种子题。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "在 seed_schema 的 original_problem.description 中明确要求 'output the elements of array A'，说明原题输出即完整构造；规则 eligibility.forbidden_seed_properties 列出 '原题本来就要求输出完整方案' 为禁止条件。",
+        "feedback": "建议跳过此规则，因为原题已提供完整方案，再升级为规范解难以产生实质性解法变化，很可能沦为表面修改（如排序后处理）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_incompatible",
+      "selection_reason": "原题对于任意输入均存在解，不存在“做不到”的情形，无法产生局部冲突证据，规则所需的无解分支没有真实落地场景。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 的核心约束与 invariant 表明对所有 C 均可构造最小大小数组，标准解法仅含成功分支；rule_under_review.eligibility.required_seed_properties 要求“做不到的原因可以用局部证据表示”与原题属性冲突。",
+        "feedback": "建议选择存在无解可能性的种子题，或通过变换将问题改造为部分输入可解、部分不可解，否则失败证据分支将退化为死代码，违反 helpers 红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "种子题的最小数组解空间过于平凡：对于 C≠0 解唯一（multiset 唯一），对于 C=0 解数量恒为 60（选择两个相同 2^x-1 元素）。计数退化为简单的特判，无法引入新的状态组织或去重义务，不符合‘把存在性或单一最优值改成计数’所需的算法责任升级。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束（xor_sum_equals_target、element_all_ones_mask）和不变量（bit_transition_length_relation）使得最小长度构造由 C 的二进制位变化唯一确定（C≠0 时），解空间至多包含一个等价类（multiset 相同视为同解）。C=0 时解空间为 { {a,a} | a=2^x-1, 1≤x≤60 }，大小固定 60，无需拆分或动态规划即可直接计算。种子 schema 中 objective 为 minimize size，并没有计数义务，换成计数无法迫使解空间分解或去重创新。",
+        "feedback": "建议更换种子题为解空间大小随输入变化、需动态规划或组合结构统计的问题，例如具有多个等价类的最优解计数，才能充分发挥 counting 变换的算法深度。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题已是最小化长度构造，无顺序不确定、资源波动或局部选择差异等原生扰动，无法基于原题语义定义扰动模型。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最小化数组长度 (objective: minimize the size)，构造唯一性强 (invariant: length equals bit transitions plus one)。输入 C 固定，输出顺序任意但无对抗性，不涉及扰动 (original_problem.description: given C, find any interesting array of minimum possible size)。规则要求原题自带不确定性 (required_seed_properties: 顺序不确定、资源波动或局部选择差异)，该原题不具备。",
+        "feedback": "原题语义缺少可被放大的原生扰动来源。强行添加扰动模型将脱离原题核心，落入 failure_templates.not_applicable 描述的情形。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_feasibility_to_extremal_gap",
+      "selection_reason": "原题已经是最小尺寸的极值求解问题，输出本就包含临界参数（数组的最小大小），不存在从可行性判定向临界阈值升级的空间；若强行引入参数K并二分，将沦为规则明确禁止的“阈值只是在原判定外层做机械二分”。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子约束中 explicitly 定义了 minimal_array_size：n = min{ m | ∃ interesting array B of size m, ⨁ b_j = C }，目标为 minimize_value，说明极值求解已经完成，阈值（最小尺寸）已是答案的一部分。原题可行性是确定的，没有可供优化的额外参数，不符合 required_seed_properties 中的“原题可行性随某个参数具有清晰的单调性或分层结构”。",
+        "feedback": "当前种子不适用于 feasibility_to_extremal_threshold 规则，因为原题本身就是一个完整的阈值优化问题，规则的核心转换“从判断是否可行改成求临界阈值”已经天然满足，再应用只会产生浅层包装，违背 anti_shallow_rationale 原则。建议更换种子为仅含可行性判定的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_conflicting_metric",
+      "selection_reason": "原目标为最小化数组大小，且不变式将大小与位变换次数绑定，未暴露任何自然第二属性。给定的约束和不变式中没有体现冲突权衡，数组大小已锚定，无法形成真实的多目标权衡。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为 minimize size，约束仅限定元素为 2^x-1 且 XOR 等于 C。不变式显示大小等于二进制位变化次数加一，没有额外可权衡的属性。因此缺乏自然且冲突的第二评价指标。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "REVERSE_TARGET_AND_NATURAL_EDIT_FOUND",
+      "selection_reason": "原题结果（最小数组大小）可直接作为反向目标，且输入整数的二进制位翻转构成与原核心规律（相邻位变化次数决定大小）完全相关的自然修改操作，存在明确的设计自由度（选择哪些位翻转）和最小性证明要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 为 minimize the size of an interesting array whose XOR equals C，输出包含最小大小。 invariant bit_transition_length_relation 说明大小 = C 的二进制相邻位变化次数+1，因此该大小可反向绑定为目标；修改 C 的二进制位直接改变该变化次数，符合 edit_operation_contract 要求的‘修改操作必须来自原题对象的自然结构’。",
+        "feedback": "建议在规划阶段明确定义修改操作（如单点翻转 C 的二进制位），并确保最小性证明基于二进制相邻位变化次数的单调性或组合性质，以维护核心规律不脱节。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "原题无自然可分解的局部单元，仅对单个 C 求最小数组，不存在可通过共享资源耦合的独立分量。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 core_constraints 仅定义单一 xor_sum_equals_target 和 minimal_array_size，未包含任何可独立处理的子结构；input_structure 虽有多个测试用例，但它们彼此独立，无共同变量或守恒量；invariant 反映的是单个 C 的位切换规律，不存在跨单元依赖。",
+        "feedback": "该种子题无法满足规则要求的“原题存在可分解的局部单元”，强行添加全局约束只能硬加无关背景，不符合 eligibility 条件。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_alternating_operation",
+      "selection_reason": "原题是给定目标异或值C，构造最小长度的特殊数组，其构造过程完全由C的二进制位变化决定，没有可供双方轮流选择、拿取、移动或改变状态的自然操作，不能转化为博弈状态。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中core_constraints描述了数组元素约束和异或和等于C，objective为最小化数组大小，invariant显示构造长度仅由C的位变化次数确定，标准解法直接按位扫描生成序列，无选择分支。",
+        "feedback": "该规则要求原题具有可轮流执行的操作和状态分支，但本题是静态构造，无任何操作或选择自由度，无法形成对抗博弈。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题不具备规则所要求的路径、区间、子树或集合等局部结构，无法形成可组合的局部对象族并扩展到全局覆盖或割问题。种子题是关于单个整数 C 的位操作构造，输入为单一数值，输出为最小数组，不存在多个局部对象间的覆盖或支配关系。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 显示输入为单个整数 C（test_case_values），核心约束为元素全1掩码和 XOR 和等于 C，目标是最小化数组大小。没有任何局部对象族定义。规则 eligibility 要求“原题核心对象具有路径、区间、子树、集合等局部结构”和“多个局部对象之间可以自然形成覆盖或割关系”，但种子题完全不满足。规则失败模板也明确“这道种子题没有适合扩成覆盖或割的局部对象族”。",
+        "feedback": "该种子题不适合使用 local_path_to_global_cover 规则，因为缺乏局部结构，强行应用只会导致不自然的附加限制或故事替换。建议寻找具有图论路径、区间集合或子树族等元素的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_counting_object",
+      "selection_reason": "原题是构造题，目标为最小化数组尺寸并输出一个解，不是计数问题。不存在‘明确有限的计数对象’，无法在其上定义自然权重或统计量，不满足规则准入条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema seed_schema.objective.type 为 'minimize_value'，描述为最小化 interesting array 的尺寸；原题描述要求输出一个最小尺寸的数组，而非计数方案总数。core_constraints 和 invariant 均围绕构造单个解，没有计数对象。",
+        "feedback": "规则要求种子题具有明确有限的计数对象，并存在自然权重或统计量。当前题目是构造最小解，不符合‘计数’本质，建议更换为经典计数题后再申请本规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题 'MINSZ' 已经要求输出完整的数组方案，违反了规则 eligibility 中的 forbidden_seed_properties '原题本来就要求输出完整方案'，因此该规则不适用于此种子题。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "在 seed_schema 的 original_problem.description 中明确要求 'output the elements of array A'，说明原题输出即完整构造；规则 eligibility.forbidden_seed_properties 列出 '原题本来就要求输出完整方案' 为禁止条件。",
+        "feedback": "建议跳过此规则，因为原题已提供完整方案，再升级为规范解难以产生实质性解法变化，很可能沦为表面修改（如排序后处理）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_incompatible",
+      "message": "原题对于任意输入均存在解，不存在“做不到”的情形，无法产生局部冲突证据，规则所需的无解分支没有真实落地场景。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 的核心约束与 invariant 表明对所有 C 均可构造最小大小数组，标准解法仅含成功分支；rule_under_review.eligibility.required_seed_properties 要求“做不到的原因可以用局部证据表示”与原题属性冲突。",
+        "feedback": "建议选择存在无解可能性的种子题，或通过变换将问题改造为部分输入可解、部分不可解，否则失败证据分支将退化为死代码，违反 helpers 红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "种子题的最小数组解空间过于平凡：对于 C≠0 解唯一（multiset 唯一），对于 C=0 解数量恒为 60（选择两个相同 2^x-1 元素）。计数退化为简单的特判，无法引入新的状态组织或去重义务，不符合‘把存在性或单一最优值改成计数’所需的算法责任升级。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束（xor_sum_equals_target、element_all_ones_mask）和不变量（bit_transition_length_relation）使得最小长度构造由 C 的二进制位变化唯一确定（C≠0 时），解空间至多包含一个等价类（multiset 相同视为同解）。C=0 时解空间为 { {a,a} | a=2^x-1, 1≤x≤60 }，大小固定 60，无需拆分或动态规划即可直接计算。种子 schema 中 objective 为 minimize size，并没有计数义务，换成计数无法迫使解空间分解或去重创新。",
+        "feedback": "建议更换种子题为解空间大小随输入变化、需动态规划或组合结构统计的问题，例如具有多个等价类的最优解计数，才能充分发挥 counting 变换的算法深度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题已是最小化长度构造，无顺序不确定、资源波动或局部选择差异等原生扰动，无法基于原题语义定义扰动模型。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最小化数组长度 (objective: minimize the size)，构造唯一性强 (invariant: length equals bit transitions plus one)。输入 C 固定，输出顺序任意但无对抗性，不涉及扰动 (original_problem.description: given C, find any interesting array of minimum possible size)。规则要求原题自带不确定性 (required_seed_properties: 顺序不确定、资源波动或局部选择差异)，该原题不具备。",
+        "feedback": "原题语义缺少可被放大的原生扰动来源。强行添加扰动模型将脱离原题核心，落入 failure_templates.not_applicable 描述的情形。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_feasibility_to_extremal_gap",
+      "message": "原题已经是最小尺寸的极值求解问题，输出本就包含临界参数（数组的最小大小），不存在从可行性判定向临界阈值升级的空间；若强行引入参数K并二分，将沦为规则明确禁止的“阈值只是在原判定外层做机械二分”。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子约束中 explicitly 定义了 minimal_array_size：n = min{ m | ∃ interesting array B of size m, ⨁ b_j = C }，目标为 minimize_value，说明极值求解已经完成，阈值（最小尺寸）已是答案的一部分。原题可行性是确定的，没有可供优化的额外参数，不符合 required_seed_properties 中的“原题可行性随某个参数具有清晰的单调性或分层结构”。",
+        "feedback": "当前种子不适用于 feasibility_to_extremal_threshold 规则，因为原题本身就是一个完整的阈值优化问题，规则的核心转换“从判断是否可行改成求临界阈值”已经天然满足，再应用只会产生浅层包装，违背 anti_shallow_rationale 原则。建议更换种子为仅含可行性判定的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_metric",
+      "message": "原目标为最小化数组大小，且不变式将大小与位变换次数绑定，未暴露任何自然第二属性。给定的约束和不变式中没有体现冲突权衡，数组大小已锚定，无法形成真实的多目标权衡。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为 minimize size，约束仅限定元素为 2^x-1 且 XOR 等于 C。不变式显示大小等于二进制位变化次数加一，没有额外可权衡的属性。因此缺乏自然且冲突的第二评价指标。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "REVERSE_TARGET_AND_NATURAL_EDIT_FOUND",
+      "message": "原题结果（最小数组大小）可直接作为反向目标，且输入整数的二进制位翻转构成与原核心规律（相邻位变化次数决定大小）完全相关的自然修改操作，存在明确的设计自由度（选择哪些位翻转）和最小性证明要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 为 minimize the size of an interesting array whose XOR equals C，输出包含最小大小。 invariant bit_transition_length_relation 说明大小 = C 的二进制相邻位变化次数+1，因此该大小可反向绑定为目标；修改 C 的二进制位直接改变该变化次数，符合 edit_operation_contract 要求的‘修改操作必须来自原题对象的自然结构’。",
+        "feedback": "建议在规划阶段明确定义修改操作（如单点翻转 C 的二进制位），并确保最小性证明基于二进制相邻位变化次数的单调性或组合性质，以维护核心规律不脱节。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "原题无自然可分解的局部单元，仅对单个 C 求最小数组，不存在可通过共享资源耦合的独立分量。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 core_constraints 仅定义单一 xor_sum_equals_target 和 minimal_array_size，未包含任何可独立处理的子结构；input_structure 虽有多个测试用例，但它们彼此独立，无共同变量或守恒量；invariant 反映的是单个 C 的位切换规律，不存在跨单元依赖。",
+        "feedback": "该种子题无法满足规则要求的“原题存在可分解的局部单元”，强行添加全局约束只能硬加无关背景，不符合 eligibility 条件。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_alternating_operation",
+      "message": "原题是给定目标异或值C，构造最小长度的特殊数组，其构造过程完全由C的二进制位变化决定，没有可供双方轮流选择、拿取、移动或改变状态的自然操作，不能转化为博弈状态。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中core_constraints描述了数组元素约束和异或和等于C，objective为最小化数组大小，invariant显示构造长度仅由C的位变化次数确定，标准解法直接按位扫描生成序列，无选择分支。",
+        "feedback": "该规则要求原题具有可轮流执行的操作和状态分支，但本题是静态构造，无任何操作或选择自由度，无法形成对抗博弈。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题不具备规则所要求的路径、区间、子树或集合等局部结构，无法形成可组合的局部对象族并扩展到全局覆盖或割问题。种子题是关于单个整数 C 的位操作构造，输入为单一数值，输出为最小数组，不存在多个局部对象间的覆盖或支配关系。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 显示输入为单个整数 C（test_case_values），核心约束为元素全1掩码和 XOR 和等于 C，目标是最小化数组大小。没有任何局部对象族定义。规则 eligibility 要求“原题核心对象具有路径、区间、子树、集合等局部结构”和“多个局部对象之间可以自然形成覆盖或割关系”，但种子题完全不满足。规则失败模板也明确“这道种子题没有适合扩成覆盖或割的局部对象族”。",
+        "feedback": "该种子题不适合使用 local_path_to_global_cover 规则，因为缺乏局部结构，强行应用只会导致不自然的附加限制或故事替换。建议寻找具有图论路径、区间集合或子树族等元素的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "missing_counting_object",
+      "message": "原题是构造题，目标为最小化数组尺寸并输出一个解，不是计数问题。不存在‘明确有限的计数对象’，无法在其上定义自然权重或统计量，不满足规则准入条件。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema seed_schema.objective.type 为 'minimize_value'，描述为最小化 interesting array 的尺寸；原题描述要求输出一个最小尺寸的数组，而非计数方案总数。core_constraints 和 invariant 均围绕构造单个解，没有计数对象。",
+        "feedback": "规则要求种子题具有明确有限的计数对象，并存在自然权重或统计量。当前题目是构造最小解，不符合‘计数’本质，建议更换为经典计数题后再申请本规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将正向构造题翻转为目标驱动的最小修改逆设计题，所有 helper 均已兑现：目标结果绑定为新的 XOR=C 约束，操作契约定义了基于有趣值的修改，最小性责任通过 minimize_edit_distance 和不变式下界保证，且未违反任何红线。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "1. target_result_binding: candidate_schema 的 core_constraints 添加 'target_xor_constraint' (⨁ B_i = C)，objective 变为 minimize_edit_distance，将原题结果转为反向目标，翻转求解方向。2. edit_operation_contract: core_constraints 增加 'edit_operation_rule'（仅允许改为其他有趣数，长度固定），invariant 包含 'length_invariance' 和 'interesting_preservation'，操作空间严格基于原对象，非无关操作。3. minimality_or_certificate_lock: objective 明确 'minimize_edit_distance' 并输出最小 K 和可行数组；invariant 提供 'minimal_edit_lower_bound' 和 'construction_feasibility' 承担下界与构造正确性证明。4. applied_helpers 记录各 helper 的轴变更（C,O,V）及 schema 落点，且轴变更与规则要求一致。5. anti_shallow_rationale 确认非简单换皮，需新算法组合原最小序列构造与元素保留优化。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "题面清晰定义了反向目标、修改操作和最小性要求，完全兑现了规则合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中“最后所有格子里的标签数字的按位异或和必须等于 C”直接绑定目标结果（helper target_result_binding）；“每次只能将原标签改写成另一个有趣数”定义了修改操作来自原题对象的自然结构（helper edit_operation_contract）；“最少需要更换多少次标签？并输出一种更换后满足条件的最优方案”承担了最小性责任（helper minimality_or_certificate_lock）。new_schema 中 core_constraints 的 target_xor_constraint 和 edit_operation_rule 以及 objective 的 minimize_edit_distance 均已在题面中明确体现。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面已将正向构造问题翻转为给定目标下的最小修改设计，明确写出目标异或和、修改操作（只能换成有趣数）和最少更换次数的要求，并输出构造方案，完整兑现了反向设计规则的语义合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "目标结果绑定：描述要求“所有格子里的标签数字的按位异或和必须恰好等于 C”，将原题输出XOR C作为反向目标。修改操作契约：描述限定“每次只能把一张标签改写成另一个有趣数……不能增加或减少格子”，仅基于原题有趣数结构。最小性责任：输出格式要求“第一行一个整数 K，表示最少的更换次数”，并输出具体修改方案，样例解释中论证了无法更少更换，承担了最小性和构造正确性证明。上述内容完整覆盖了 all helpers（target_result_binding、edit_operation_contract、minimality_or_certificate_lock）的语义承诺。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "整理储物柜标签",
+    "description": "小明家里有一个很长的储物柜，里面有一排共 n 个格子，每个格子里都贴着一张标签。标签上写着一个“有趣数”——就是形如 2^x − 1 的正整数（比如 1, 3, 7, 15, …，其中 x 是正整数且不超过 60）。\n\n妈妈希望储物柜看起来更整齐，她给小明一个目标数字 C，并要求最后所有格子里的标签数字的按位异或和必须恰好等于 C。小明可以更换其中一些格子里的标签，但每次只能把一张标签改写成另一个有趣数（仍然必须是 2^y − 1 的形式），不能增加或减少格子，也不能把一张标签改成非有趣数。\n\n现在给你一开始每张标签上的数字以及目标 C，请你帮小明算一算：最少需要更换多少张标签？并且输出一种更换之后的方案，使得所有标签都是有趣数且异或和等于 C。",
+    "input_format": "第一行一个整数 T，表示测试数据的组数。接下来每组数据按以下格式给出：\n第一行一个整数 n，表示格子个数。\n第二行 n 个整数 a₁, a₂, …, aₙ，表示一开始贴在格子上的标签数字。保证每一个 aᵢ 都是有趣数。\n第三行一个整数 C，表示目标异或和。",
+    "output_format": "对于每组测试数据，输出两行：\n第一行一个整数 K，表示最少的更换次数。\n第二行 n 个整数 B₁, B₂, …, Bₙ，表示更换后的标签数字序列。这些数必须都是有趣数，并且满足 B₁ ⊕ B₂ ⊕ … ⊕ Bₙ = C。如果有多种最优方案，输出任意一种即可。",
+    "constraints": [
+      "1 ≤ T ≤ 100000",
+      "1 ≤ n ≤ 60",
+      "1 ≤ aᵢ < 2⁶⁰，且每个 aᵢ 均可表示为 2^x − 1 的形式，其中 1 ≤ x ≤ 60",
+      "0 ≤ C < 2⁶⁰",
+      "输入数据保证至少存在一种更换方案能满足要求。",
+      "所有测试数据的 n 的总和不超过 6 × 10⁵。",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "2\n2\n1 1\n2\n4\n1 3 7 15\n0",
+        "output": "1\n3 1\n2\n1 3 1 3",
+        "explanation": "第一组数据：初始标签 [1,1] 的异或和为 0，目标是 2。将第一个 1 改为 3（3 也是有趣数），得到 [3,1]，异或和变为 3⊕1 = 2，只更换了 1 次。\n第二组数据：初始标签 [1,3,7,15] 的异或和为 1⊕3⊕7⊕15 = 10，目标是 0。可以保留前两个标签 1 和 3 不动，把第三个标签 7 改成 1，第四个标签 15 改成 3，得到 [1,3,1,3]，此时异或和为 0，更换了 2 次。可以证明无法只换 1 个标签就达到目标。"
+      },
+      {
+        "input": "1\n3\n1 3 7\n7",
+        "output": "2\n7 1 1",
+        "explanation": "初始标签 [1,3,7] 的异或和为 1⊕3⊕7 = 5，目标是 7。如果保留最后一个标签 7 不动，只需要把前两个标签都改成 1，得到 [7,1,1]，异或和变成 7⊕1⊕1 = 7，花费 2 次更换。尝试保留更多标签都会导致需要填写的数据不是有趣数，因此 2 次就是最小更换次数。"
+      }
+    ],
+    "notes": "有趣数是指形如 2^x − 1（x 为正整数）的数，例如 1, 3, 7, 15, 31 等。所有输入给出的初始标签以及输出方案中的标签都必须满足这一性质。异或运算（⊕）在 C++/Java/Python 中对应位运算符号 ^。保证输入数据至少存在一种可行的更换方案。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_c0ea04c63c73_home_organization_20260525_203346",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}
