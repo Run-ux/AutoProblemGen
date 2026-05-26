@@ -12,7 +12,7 @@ from runtime_config import LLMEndpointConfig, RuntimeConfigError, llm_config_fro
 
 
 DEFAULT_TEMPERATURE = 0.2
-DEFAULT_MAX_LLM_PROMPT_CHARS = 200_000
+DEFAULT_MAX_LLM_PROMPT_CHARS = 600_000
 
 
 @dataclass(frozen=True)
