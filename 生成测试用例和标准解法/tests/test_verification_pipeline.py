@@ -621,6 +621,9 @@ class VerificationPipelineTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["count"], 1)
+        self.assertEqual(result["attempted_count"], 1)
+        self.assertEqual(result["failure_count"], 0)
+        self.assertEqual(result["failed_cases"], [])
         self.assertEqual(result["cases"][0]["output"], "100")
         self.assertEqual(result["cases"][0]["classification"], "large_scale_input")
 
@@ -645,12 +648,73 @@ class VerificationPipelineTests(unittest.TestCase):
         )
 
         self.assertEqual(result["count"], 1)
+        self.assertEqual(result["failure_count"], 0)
         self.assertEqual(result["cases"][0]["classification"], "large_scale_runtime_failure")
         self.assertEqual(result["cases"][0]["output"], "200")
 
+    def test_generate_large_scale_truth_outputs_skips_empty_inputs(self) -> None:
+        result = generate_large_scale_truth_outputs(
+            "standard",
+            [],
+            {"timeout_seconds": 1.0, "memory_limit_mb": 512},
+        )
+
+        self.assertEqual(result["status"], "skipped")
+        self.assertEqual(result["count"], 0)
+        self.assertEqual(result["attempted_count"], 0)
+        self.assertEqual(result["failure_count"], 0)
+        self.assertEqual(result["failed_cases"], [])
+
     @patch("verification_pipeline.run_solution")
-    def test_generate_large_scale_truth_outputs_fails_fast_on_execution_error(self, fake_run_solution) -> None:
-        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_TIMEOUT)
+    def test_generate_large_scale_truth_outputs_records_timeout_and_memory_failures(self, fake_run_solution) -> None:
+        fake_run_solution.side_effect = [
+            ExecutionResult(status=EXECUTION_TIMEOUT),
+            ExecutionResult(status=EXECUTION_OK, return_value="200"),
+            ExecutionResult(status=EXECUTION_MEMORY_LIMIT),
+        ]
+
+        result = generate_large_scale_truth_outputs(
+            "standard",
+            [
+                {
+                    "case_id": "case_098",
+                    "source": "random",
+                    "classification": "large_scale_input",
+                    "input": "timeout input",
+                },
+                {
+                    "case_id": "case_099",
+                    "source": "adversarial",
+                    "classification": "large_scale_runtime_failure",
+                    "input": "successful input",
+                },
+                {
+                    "case_id": "case_100",
+                    "source": "small_challenge",
+                    "classification": "large_scale_input",
+                    "input": "memory input",
+                },
+            ],
+            {"timeout_seconds": 1.0, "memory_limit_mb": 512},
+        )
+
+        self.assertEqual(result["status"], "partial_large_scale_failures")
+        self.assertEqual(result["attempted_count"], 3)
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["failure_count"], 2)
+        self.assertEqual(fake_run_solution.call_count, 3)
+        self.assertEqual([case["case_id"] for case in result["cases"]], ["case_099"])
+        self.assertEqual(result["cases"][0]["output"], "200")
+        self.assertEqual([case["case_id"] for case in result["failed_cases"]], ["case_098", "case_100"])
+        self.assertEqual(
+            [case["failure_reason"] for case in result["failed_cases"]],
+            [EXECUTION_TIMEOUT, EXECUTION_MEMORY_LIMIT],
+        )
+        self.assertEqual(result["failed_cases"][0]["execution_result"]["status"], EXECUTION_TIMEOUT)
+
+    @patch("verification_pipeline.run_solution")
+    def test_generate_large_scale_truth_outputs_fails_fast_on_runtime_error(self, fake_run_solution) -> None:
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_ERROR)
 
         with self.assertRaisesRegex(VerificationError, "case_id=case_099.*large_scale_runtime_failure"):
             generate_large_scale_truth_outputs(
@@ -660,6 +724,24 @@ class VerificationPipelineTests(unittest.TestCase):
                         "case_id": "case_099",
                         "source": "random",
                         "classification": "large_scale_runtime_failure",
+                        "input": "100000\n...",
+                    }
+                ],
+                {"timeout_seconds": 1.0, "memory_limit_mb": 512},
+            )
+
+    @patch("verification_pipeline.run_solution")
+    def test_generate_large_scale_truth_outputs_fails_fast_on_non_string_return(self, fake_run_solution) -> None:
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_OK, return_value=123)
+
+        with self.assertRaisesRegex(VerificationError, "case_id=case_099.*large_scale_input"):
+            generate_large_scale_truth_outputs(
+                "standard",
+                [
+                    {
+                        "case_id": "case_099",
+                        "source": "random",
+                        "classification": "large_scale_input",
                         "input": "100000\n...",
                     }
                 ],
@@ -1082,6 +1164,8 @@ class VerificationPipelineTests(unittest.TestCase):
             result["bruteforce_verification"]["solved_case_count"],
         )
         self.assertEqual(result["execution_metadata"]["large_scale_truth_output_count"], 0)
+        self.assertEqual(result["execution_metadata"]["large_scale_truth_failure_count"], 0)
+        self.assertEqual(result["execution_metadata"]["large_scale_truth_attempted_count"], 0)
         self.assertEqual(result["execution_metadata"]["large_scale_input_count"], 0)
         progress_text = stdout.getvalue()
         self.assertIn("[verification 2/7] Prompt 与 LLM 生成开始", progress_text)

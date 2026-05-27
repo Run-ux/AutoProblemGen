@@ -1416,10 +1416,14 @@ def generate_large_scale_truth_outputs(
             "reason": "没有大规模测试输入。",
             "cases": [],
             "count": 0,
+            "attempted_count": 0,
+            "failed_cases": [],
+            "failure_count": 0,
             "standard_solution_limits": standard_limits,
         }
 
     cases: list[dict[str, Any]] = []
+    failed_cases: list[dict[str, Any]] = []
     for index, case in enumerate(large_scale_inputs, start=1):
         case_id = str(case.get("case_id", ""))
         classification = str(case.get("classification", "large_scale_input"))
@@ -1429,6 +1433,18 @@ def generate_large_scale_truth_outputs(
             timeout_seconds=standard_limits["timeout_seconds"],
             memory_limit_mb=standard_limits["memory_limit_mb"],
         )
+        if result.status in {EXECUTION_TIMEOUT, EXECUTION_MEMORY_LIMIT}:
+            failed_cases.append(
+                {
+                    "case_id": case_id,
+                    "source": case["source"],
+                    "classification": classification,
+                    "input": case["input"],
+                    "failure_reason": result.status,
+                    "execution_result": _result_summary(result),
+                }
+            )
+            continue
         if result.status != EXECUTION_OK or not isinstance(result.return_value, str):
             raise VerificationError(
                 f"标准解生成第 {index} 条大规模真值输出失败："
@@ -1447,9 +1463,12 @@ def generate_large_scale_truth_outputs(
         )
 
     return {
-        "status": "ok",
+        "status": "partial_large_scale_failures" if failed_cases else "ok",
         "cases": cases,
         "count": len(cases),
+        "attempted_count": len(large_scale_inputs),
+        "failed_cases": failed_cases,
+        "failure_count": len(failed_cases),
         "standard_solution_limits": standard_limits,
     }
 
@@ -2040,7 +2059,9 @@ def generate_verified_artifacts(
     )
     _emit_progress(
         "[verification 4/7] 大规模真值输出生成完成；"
-        f"count={large_scale_truth_outputs['count']}。"
+        f"success={large_scale_truth_outputs['count']} "
+        f"failed={large_scale_truth_outputs['failure_count']} "
+        f"attempted={large_scale_truth_outputs['attempted_count']}。"
     )
 
     result = dict(generated_artifacts)
@@ -2111,6 +2132,8 @@ def generate_verified_artifacts(
                 ],
                 "standard_solution_checked_count": standard_solution_verification["checked_count"],
                 "large_scale_truth_output_count": large_scale_truth_outputs["count"],
+                "large_scale_truth_failure_count": large_scale_truth_outputs["failure_count"],
+                "large_scale_truth_attempted_count": large_scale_truth_outputs["attempted_count"],
                 "wrong_solution_pool_targeted_input_count": wrong_solution_pool_result["verification"][
                     "targeted_input_count"
                 ],
