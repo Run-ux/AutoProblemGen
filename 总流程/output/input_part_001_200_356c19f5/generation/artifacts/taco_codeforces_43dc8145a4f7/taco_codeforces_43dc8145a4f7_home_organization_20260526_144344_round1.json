@@ -1,0 +1,907 @@
+{
+  "problem_id": "home_org_counting_01",
+  "source_problem_ids": [
+    "taco_codeforces_43dc8145a4f7"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_43dc8145a4f7",
+      "codeforces",
+      "Daenerys Targaryen has an army consisting of k groups of soldiers, the i-th group contains a_{i} soldiers. She wants to bring her army to the other side of the sea to get the Iron Throne. She has recently bought an ai...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "目标轴 O 从 feasibility 变为 counting；核心约束 C 从仅描述邻接规则变为同时定义计数对象、等价关系与按行分解的计数单元；不变量 V 从基于贪婪度量的可行性条件转变为支持行独立分解的 DP 状态汇总逻辑。",
+    "summary": "将判定题升级为组合计数题，输出不再是 YES/NO，而是对方案总数的模结果。需要构建全新的动态规划状态，并确保去重正确性。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4055,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4055,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.6469,
+      "O": 0.4079,
+      "V": 0.5475
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.6469,
+      "objective_type_distance": 0.3236,
+      "objective_text_distance": 0.5343,
+      "invariant_match_distance": 0.5475
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "counting",
+    "description": "Compute the total number of distinct placements satisfying the adjacency constraint and the item count requirement, modulo 10^9+7.",
+    "target": "count",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "existence_to_counting 将原判定题重构为计数题，迫使求解目标从局部贪心容量验证彻底转变为全局组合计数，创新深度远超其他规则（canonical_witness 可能退化为贪心后构造，反向设计可能仅改变问法而未颠覆核心算法）；创新度判断：它将核心义务从‘是否存在安排’拉向‘定义等价类、去重、汇总计数’，输出对象从 YES/NO 变为带有清晰去重口径的方案总数，使主约束必须重新组织解空间的拆分与不变量；难度判断：在 n 可达 10000、组大小总和 ≤ 8n 的条件下，直接 DP 不可行，必须推导组合计数式并处理模数，大幅抬高算法设计与时间复杂度责任；风险判断：主要风险在于去重规则需严格定义（如区分不同座位分配），且大 n 的高效组合计数可能推导复杂，但可通过明确取模方式将结果控制在可计算范围内，风险可控",
+  "new_schema_snapshot": {
+    "problem_id": "home_org_counting_01",
+    "source": "derived_from_codeforces_43dc8145a4f7",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "parameters",
+          "role_description": "Two integers n and m, where n is the number of storage cabinets (rows) and m is the number of item types (groups).",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "item_counts",
+          "role_description": "Array of m integers representing the number of items of each type.",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "placement_rule",
+          "description": "Every cabinet (row) has 8 compartments (seats) arranged as adjacency components {1,2}, {3,4,5,6}, {7,8}. Each compartment can hold at most one item. All items must be placed exactly, with total items equal to sum of item_counts. Within any adjacency component, all occupied compartments must contain items of the same type (i.e., no two adjacent compartments may hold items of different types).",
+          "formal": "For each cabinet, for each component C in {{1,2},{3,4,5,6},{7,8}}, if compartment j in C is non‑empty then all non‑empty compartments in C have the same item type.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "counting_object_definition",
+          "description": "A placement is an assignment of an item type (or 'empty') to each of the 8·n compartments, such that the total number of compartments assigned to type i is exactly item_counts[i]. Two placements are considered distinct if they differ on at least one compartment's assigned type. Items of the same type are indistinguishable.",
+          "formal": "Let f: Cabinets × [1..8] → {0,1,…,m}, where 0 denotes empty and i∈[1..m] denotes type i, subject to the counts constraint. Two assignments f and g are different iff ∃ cabinet r, compartment c such that f(r,c) ≠ g(r,c).",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "row_decomposability",
+          "description": "Because there is no constraint across cabinets, any valid placement can be obtained by independently choosing a local configuration for each cabinet (a vector d_r ∈ ℕ^m specifying how many items of each type are placed in cabinet r) that satisfies the within‑cabinet adjacency rules, and then multiplying the counts of local arrangements for the chosen vectors. The total number of global placements equals the sum over all non‑negative integer vectors d_r that add up to the total item_counts of the product ∏_{r=1..n} g(d_r), where g(d) is the number of distinct within‑cabinet placements that use exactly d_i items of type i.",
+          "formal": "If D = { (d_1,…,d_m) | ∃ cabinet configuration with exactly d_i items of type i satisfying the adjacency rule } and g(d) is the number of distinct such configurations, then total placements = Σ_{d_r ∈ D, Σ_r d_r = a} ∏_r g(d_r).",
+          "source_sections": [
+            "analysis"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "counting",
+      "description": "Compute the total number of distinct placements satisfying the adjacency constraint and the item count requirement, modulo 10^9+7.",
+      "target": "count",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "counting_state_decomposition",
+          "description": "While computing the total number of placements, one can process cabinets one by one. Let dp[t][c_1…c_m] be the number of ways to place items in the first t cabinets such that for each type i exactly c_i items remain to be placed. The transition adds a valid vector d for the next cabinet, multiplying by g(d), and moving to state (t+1, c - d). Finally dp[n][0…0] gives the answer. This decomposition is correct because cabinets are independent.",
+          "properties": {
+            "dp_dim": "n+1 × ∏(item_counts+1)",
+            "transition": "dp[t+1][c'] = Σ_{d: d_i ≤ c'_i, d∈D} dp[t][c' - d] * g(d)"
+          },
+          "evidence_source": "analysis"
+        },
+        {
+          "name": "row_internal_count",
+          "description": "For any vector d, the function g(d) can be computed independently of the rest of the cabinets. It depends solely on the cabinet's adjacency structure and the required item counts. A valid configuration is one that assigns items to compartments respecting the component rules; the count can be obtained by case analysis or DP on the cabinet's compartments.",
+          "properties": {
+            "precomputation": "g(d) can be precomputed for all possible d that satisfy Σ d_i ≤ 8."
+          },
+          "evidence_source": "analysis"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "原题使用基于组大小的贪婪度量 f(s) 和全局上界 2n 来判定可行性，复杂度 O(k log k)。该解法不涉及任何计数或状态转移。",
+    "reusable_subroutines": "可以复用对行内邻接组件的结构理解（如 {1,2}, {3,4,5,6}, {7,8} 的约束），用于定义新题中行内配置的合法模式；原题中“每一行独立”的性质同样适用，但原解未提供行内配置的计数方法。",
+    "new_solver_core": "需要构造高维 DP 或使用生成函数与组合数学工具。一种可能路径是：预处理每种物品数量需求下每行的合法配置数 g(d)，然后按行 DP，状态为剩余各物品的数量，转移乘上 g(d)。由于 n 和 a_i 上限高达 10^4，直接高维 DP 不可行，必须利用背包或多项式卷积优化，或者利用 n 巨大但物品种类 m 较小（≤100）的性质设计近似计数或组合公式。核心难点是紧凑表示所有行配置的组合计数。",
+    "new_proof_obligation": "必须证明：(1) 对任意分配向量 d，行内配置计数 g(d) 的正确性（考虑去重与组件约束）；(2) 基于行独立的 DP 状态转移无遗漏、无重复（分配向量的分解唯一性）；(3) 当直接 DP 因状态空间爆炸不可行时，所使用的组合优化方法（如利用行同构性将问题转化为多项式系数或组合数求和）的合理性。",
+    "why_direct_reuse_fails": "原判定问题只回答 YES/NO，输出的布尔值不能通过简单变换导出方案总数；原求解策略完全依赖整体可行性不变量，没有构建任何方案计数所需的状态空间，因此无法直接复用。"
+  },
+  "anti_shallow_rationale": "新题并未简单套用原题的判定逻辑然后添加一个计数器，而是彻底重构了目标：从存在性变为计数，由此要求定义明确的计数对象与去重规则，并设计出全新的动态规划状态结构（按行分解+物品数量向量转移）。原题的不变量（可行性度量）被替换为计数 DP 的状态转移原则，核心解题路径发生根本变化，防止变成浅层换皮。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "将计数对象、等价关系与去重口径明确嵌入约束与目标中，是 existence→counting 转换的基础。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中添加 counting_object_definition，定义了方案的区别基于每个格子上的物品种类，同类物品不可区分。",
+        "目标 objective 从 feasibility 变为 counting，并指定模数。",
+        "不变量中引入基于此定义的状态分解，确保计数不重不漏。"
+      ],
+      "innovation_reason": "将原题中非正式的‘显然可数’变为严格的形式定义，迫使后续解法必须处理等价类和去重的正确性，提升问题新颖度。",
+      "difficulty_reason": "增加对方案去重的形式化要求，直接导致计数必须考虑组合等价，显著提高算法设计的复杂度与证明成本。"
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "利用种子题‘行间独立’的性质，将解空间按行分解为计数单元，为 DP 提供基础。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中加入 row_decomposability，声明方案可按行独立选择分配向量并乘积。",
+        "在 invariant 中具体化为 DP 状态按行向前推进，转移乘上行内配置数 g(d)。"
+      ],
+      "innovation_reason": "强行改变原有的整体度量视角，要求解法在分解层面重新组织状态，产生原题没有的‘分配向量’与‘行内计数’子问题。",
+      "difficulty_reason": "加法、乘法与分配的组合爆炸要求算法设计高度优化的聚合方法，从普通判定跃升为高维组合计数，大幅抬高难度。"
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "必须将计数作为主求解目标，不能保留原存在性判定再顺手计数。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "objective 完全取代原判定目标，只定义计数输出。",
+        "core_constraints 中不再保留任何 feasibility 直接检查，所有约束服务于计数对象的定义和可分解性。"
+      ],
+      "innovation_reason": "斩断与原判定逻辑的依赖，强制规划一个全新的求解义务，让算法核心围绕‘计数’而非‘存在’展开。",
+      "difficulty_reason": "无法借用任何存在性测试的剪枝或充分条件，必须正面解决计数组合难题，题目难度跃升到极高水平。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "seed_has_constructive_potential",
+      "selection_reason": "原题仅要求判定可行性，但存在明确的座位安排方案，且可定义字典序最小作为规范解，升级后迫使解法从判定转为构造最优安排，满足C、O、V轴变化要求。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "schema中objective.type为decision，仅输出YES/NO；标准解法为贪心判定，不输出方案；invariant描述了可行性的度量条件，说明解对象存在且可构造；示例中曾给出具体安排方式，表明方案可表达。",
+        "feedback": "规则要求规范解输出，原题具备升级空间，但需明确定义规范顺序的表示形式，避免歧义。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.25,
+      "reason_code": "evidence_locality_unsatisfied",
+      "selection_reason": "种子题的不可行判定依赖于全局容量度量 (sum f(a_i) ≤ 2n)，无解原因无法稳定地归约为局部可检查的冲突证据。部分实例的障碍无法缩小为小规模冲突集，若强行输出证据将退化为全局不变量解释，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schema中invariant['feasibility_measure']指出：「A placement … exists if and only if the sum of f over all groups does not exceed 2*n」。该度量是全局性的，且标准解法为贪心归约，不可行实例常表现为整体容量不足，缺少必然可提取的局部冲突核心。规则例示的positive证据（最小冲突集）难以在每个不可行输入上都可靠构造。",
+        "feedback": "无解情形严重依赖全局计算，强行要求输出局部证据极易退化为“解释为何不满足不等式”，违反helper中‘不能只写无解原因说明’及‘不能让失败输出退化成自然语言解释’的红线。建议仅当问题本身具有强局部障碍性质（如图奇环、方程不可满足局部赋值）时应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "counting_feasible",
+      "selection_reason": "种子题解空间有限（座位总数8n≤80000），去重规则可明确定义为座位分配组号相同则算同一安排，并能按行和座位组件拆分汇总，满足计数要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束 adjacency_seat_same_group 定义了逐座位的组归属限制，且 total_placement 约束保证所有士兵坐满；解空间有限因座位和组数量均有限；invariant 中的 max_fragments_per_row 和 feasibility_measure 已体现按行拆分可行性；修改 O 为计数、C 加入去重说明、V 改为取模验证后满足 required_axis_changes。",
+        "feedback": "种子题去重规则天然清晰，有限性可证，单元拆分有原题行组分支持，适合转化为计数题。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题是静态组合决策问题，不存在任何顺序不确定、资源波动或局部选择差异，无法构造来自原题语义的自然扰动模型；强行引入扰动会违反禁止硬造对手的红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "根据原题schema，核心约束只有'全部放置'和'同行同组件同组'，没有涉及动态、对手或资源的随机性；原题目标为决策存在性，所有输入固定；规则要求的'原生扰动来源'在种子题中缺失，且规则明确禁止依靠背景故事硬造对手。",
+        "feedback": "该规则不适用于本种子题，因为题目缺乏可被放大的原生扰动；建议更换种子题或规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "trivial_threshold",
+      "selection_reason": "原题的不变量直接提供了充要的阈值条件 sum f <= 2n，将判定改为求最小 n 仅需简单套用该条件，无法形成有意义的阈值优化挑战。",
+      "risk_tags": [
+        "low_novelty",
+        "trivial_monotone"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中的 invariant 'feasibility_measure' 给出了充要条件：可行当且仅当 Σf(a_i) ≤ 2n。因此最小排数可以直接由公式 n_min = ceil(Σf/2) 得出，阈值优化完全退化为原始判定条件的重述，未引入新的约束耦合或算法挑战。",
+        "feedback": "规则要求阈值必须进入核心约束并引发新的证明义务，但原题已显式包含最优阈值，扩展题无法体现临界参数的搜索或优化价值，建议寻找单调性隐藏在组合结构中的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_second_objective",
+      "selection_reason": "原题为决策问题（判定YES/NO），目标类型为feasibility，不存在单目标最优概念，无法在‘原目标附近’找到自然的第二评价指标，更无法构建真实冲突的权衡关系。强行引入多目标会彻底改变问题结构，违反红线‘跟原核心规律无关的额外约束’。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 明确为 decision，description 仅为‘判定是否存在满足给定约束的座位安排方案’，没有数值最优化目标。core_constraints 强制所有士兵必须全部分配，无选择余地，没有可优化的主指标。invariant 提供的 f 度量仅用于可行性判定，非优化目标。",
+        "feedback": "建议寻找本身具有单一数值最优目标的种子题（例如最大化/最小化某量），且该数值目标能自然延伸出与之冲突的第二个指标（如成本、风险、公平性等），以便构造帕累托前沿。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "eligible",
+      "selection_reason": "原题判定可行性（YES/NO）可作为反向目标（例如要使结果为YES），自然的修改操作是调整输入中的组大小（a_i），设计自由度在于选择修改哪些组及修改量，且存在充要条件提供可验证的可行性基准，完全符合反向设计规则要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为YES/NO决策，但可通过目标绑定（helper target_result_binding）将‘YES’作为要达成的结果。核心约束（adjacent_seat_same_group）和不变性衡量函数（f(1)=1, f(2)=1, f(3)=2, f(≥4)=ceil(s/2)）提供了反向验证手段。修改操作针对组大小a_i，这正是输入参数，属于原题对象的自然结构，满足edit_operation_contract。最小性可通过最小修改组数或士兵总数来定义，并由充要条件保证下界，满足minimality_or_certificate_lock。所有红线均未触发：并非简单询问‘答案是否等于给定值’，修改与原核心规律直接相关，不是只换故事背景或改格式。",
+        "feedback": "规则可直接应用，反向设计空间清晰，建议进入下一阶段规划。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_decomposable_units",
+      "selection_reason": "原题已是一个全局可行性判定，不存在可独立处理的局部单元，无法通过引入共享资源或全局约束将独立单元耦合。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题存在可分解的局部单元”，但种子题的核心约束 full_placement 和 adjacent_seat_same_group 直接作用于全体士兵和所有行，且 invariant 中的 feasibility_measure 已将问题归结为与行数 n 及全体组容量相关的全局条件，没有局部独立求解的成分。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_sequential_choice",
+      "selection_reason": "原题是组合分配可行性问题，无顺序选择或轮流操作，无法在不硬造对抗方的前提下自然转化为双人博弈。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述：Daenerys 需要将所有士兵分配到飞机座位上，没有步骤顺序或轮流决策。核心约束是分配约束，目标是存在性判定。规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题完全没有此类操作。forbidden_seed_properties 指出“对抗方只能靠故事背景硬造”，而原题只有单一决策者。",
+        "feedback": "建议选择具有显式序列决策过程的种子题，例如轮流取物或回合制移动，否则博弈化将流于表面。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题是关于分组分配到座位组件的可行性决策，不存在可自然扩展为覆盖或割的局部对象族（如路径、区间性质），核心约束仅要求组件内同组，无全局覆盖语义。扩展为全局覆盖或割会引入无关附加限制，违背规则要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目描述：每排座位分为三个组件 {1,2}, {3,4,5,6}, {7,8}，约束为在每个组件内所有被占座位必须同组，目标是判定是否存在安排。此问题不涉及路径、区间性质求解，也不存在多个局部对象间的覆盖或割关系。不变量仅提供可行性度量，并非覆盖或割的优化。",
+        "feedback": "该规则要求原题具有单一路径或区间性质，并能扩展到全局覆盖。此种子属于组合分配可行性问题，缺乏局部对象族和覆盖语义，强行应用会产生 trivial 或无关变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题目标是判定可行性（YES/NO），不是计数问题，没有明确的计数对象，更不存在自然权重或统计量。强制引入计数会完全改变问题本质，违背规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'decision'，目标为 'feasibility'，输出为 YES/NO，不存在计数对象。规则 eligibility.required_seed_properties 要求原题已有明确有限的计数对象，本种子不满足。",
+        "feedback": "带权计数规则要求种子题必须本身是计数题，且计数对象上天然附带权重、等级或统计量。本题是存在性判定，强行改造会变成凭空创造计数对象与权重，属于硬造，不符合资格。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_has_constructive_potential",
+      "message": "原题仅要求判定可行性，但存在明确的座位安排方案，且可定义字典序最小作为规范解，升级后迫使解法从判定转为构造最优安排，满足C、O、V轴变化要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.87,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "schema中objective.type为decision，仅输出YES/NO；标准解法为贪心判定，不输出方案；invariant描述了可行性的度量条件，说明解对象存在且可构造；示例中曾给出具体安排方式，表明方案可表达。",
+        "feedback": "规则要求规范解输出，原题具备升级空间，但需明确定义规范顺序的表示形式，避免歧义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "evidence_locality_unsatisfied",
+      "message": "种子题的不可行判定依赖于全局容量度量 (sum f(a_i) ≤ 2n)，无解原因无法稳定地归约为局部可检查的冲突证据。部分实例的障碍无法缩小为小规模冲突集，若强行输出证据将退化为全局不变量解释，违反规则红线。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.25,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schema中invariant['feasibility_measure']指出：「A placement … exists if and only if the sum of f over all groups does not exceed 2*n」。该度量是全局性的，且标准解法为贪心归约，不可行实例常表现为整体容量不足，缺少必然可提取的局部冲突核心。规则例示的positive证据（最小冲突集）难以在每个不可行输入上都可靠构造。",
+        "feedback": "无解情形严重依赖全局计算，强行要求输出局部证据极易退化为“解释为何不满足不等式”，违反helper中‘不能只写无解原因说明’及‘不能让失败输出退化成自然语言解释’的红线。建议仅当问题本身具有强局部障碍性质（如图奇环、方程不可满足局部赋值）时应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "counting_feasible",
+      "message": "种子题解空间有限（座位总数8n≤80000），去重规则可明确定义为座位分配组号相同则算同一安排，并能按行和座位组件拆分汇总，满足计数要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束 adjacency_seat_same_group 定义了逐座位的组归属限制，且 total_placement 约束保证所有士兵坐满；解空间有限因座位和组数量均有限；invariant 中的 max_fragments_per_row 和 feasibility_measure 已体现按行拆分可行性；修改 O 为计数、C 加入去重说明、V 改为取模验证后满足 required_axis_changes。",
+        "feedback": "种子题去重规则天然清晰，有限性可证，单元拆分有原题行组分支持，适合转化为计数题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题是静态组合决策问题，不存在任何顺序不确定、资源波动或局部选择差异，无法构造来自原题语义的自然扰动模型；强行引入扰动会违反禁止硬造对手的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "根据原题schema，核心约束只有'全部放置'和'同行同组件同组'，没有涉及动态、对手或资源的随机性；原题目标为决策存在性，所有输入固定；规则要求的'原生扰动来源'在种子题中缺失，且规则明确禁止依靠背景故事硬造对手。",
+        "feedback": "该规则不适用于本种子题，因为题目缺乏可被放大的原生扰动；建议更换种子题或规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "trivial_threshold",
+      "message": "原题的不变量直接提供了充要的阈值条件 sum f <= 2n，将判定改为求最小 n 仅需简单套用该条件，无法形成有意义的阈值优化挑战。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "trivial_monotone"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中的 invariant 'feasibility_measure' 给出了充要条件：可行当且仅当 Σf(a_i) ≤ 2n。因此最小排数可以直接由公式 n_min = ceil(Σf/2) 得出，阈值优化完全退化为原始判定条件的重述，未引入新的约束耦合或算法挑战。",
+        "feedback": "规则要求阈值必须进入核心约束并引发新的证明义务，但原题已显式包含最优阈值，扩展题无法体现临界参数的搜索或优化价值，建议寻找单调性隐藏在组合结构中的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_objective",
+      "message": "原题为决策问题（判定YES/NO），目标类型为feasibility，不存在单目标最优概念，无法在‘原目标附近’找到自然的第二评价指标，更无法构建真实冲突的权衡关系。强行引入多目标会彻底改变问题结构，违反红线‘跟原核心规律无关的额外约束’。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 明确为 decision，description 仅为‘判定是否存在满足给定约束的座位安排方案’，没有数值最优化目标。core_constraints 强制所有士兵必须全部分配，无选择余地，没有可优化的主指标。invariant 提供的 f 度量仅用于可行性判定，非优化目标。",
+        "feedback": "建议寻找本身具有单一数值最优目标的种子题（例如最大化/最小化某量），且该数值目标能自然延伸出与之冲突的第二个指标（如成本、风险、公平性等），以便构造帕累托前沿。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible",
+      "message": "原题判定可行性（YES/NO）可作为反向目标（例如要使结果为YES），自然的修改操作是调整输入中的组大小（a_i），设计自由度在于选择修改哪些组及修改量，且存在充要条件提供可验证的可行性基准，完全符合反向设计规则要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为YES/NO决策，但可通过目标绑定（helper target_result_binding）将‘YES’作为要达成的结果。核心约束（adjacent_seat_same_group）和不变性衡量函数（f(1)=1, f(2)=1, f(3)=2, f(≥4)=ceil(s/2)）提供了反向验证手段。修改操作针对组大小a_i，这正是输入参数，属于原题对象的自然结构，满足edit_operation_contract。最小性可通过最小修改组数或士兵总数来定义，并由充要条件保证下界，满足minimality_or_certificate_lock。所有红线均未触发：并非简单询问‘答案是否等于给定值’，修改与原核心规律直接相关，不是只换故事背景或改格式。",
+        "feedback": "规则可直接应用，反向设计空间清晰，建议进入下一阶段规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_decomposable_units",
+      "message": "原题已是一个全局可行性判定，不存在可独立处理的局部单元，无法通过引入共享资源或全局约束将独立单元耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题存在可分解的局部单元”，但种子题的核心约束 full_placement 和 adjacent_seat_same_group 直接作用于全体士兵和所有行，且 invariant 中的 feasibility_measure 已将问题归结为与行数 n 及全体组容量相关的全局条件，没有局部独立求解的成分。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_sequential_choice",
+      "message": "原题是组合分配可行性问题，无顺序选择或轮流操作，无法在不硬造对抗方的前提下自然转化为双人博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述：Daenerys 需要将所有士兵分配到飞机座位上，没有步骤顺序或轮流决策。核心约束是分配约束，目标是存在性判定。规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题完全没有此类操作。forbidden_seed_properties 指出“对抗方只能靠故事背景硬造”，而原题只有单一决策者。",
+        "feedback": "建议选择具有显式序列决策过程的种子题，例如轮流取物或回合制移动，否则博弈化将流于表面。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题是关于分组分配到座位组件的可行性决策，不存在可自然扩展为覆盖或割的局部对象族（如路径、区间性质），核心约束仅要求组件内同组，无全局覆盖语义。扩展为全局覆盖或割会引入无关附加限制，违背规则要求。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目描述：每排座位分为三个组件 {1,2}, {3,4,5,6}, {7,8}，约束为在每个组件内所有被占座位必须同组，目标是判定是否存在安排。此问题不涉及路径、区间性质求解，也不存在多个局部对象间的覆盖或割关系。不变量仅提供可行性度量，并非覆盖或割的优化。",
+        "feedback": "该规则要求原题具有单一路径或区间性质，并能扩展到全局覆盖。此种子属于组合分配可行性问题，缺乏局部对象族和覆盖语义，强行应用会产生 trivial 或无关变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题目标是判定可行性（YES/NO），不是计数问题，没有明确的计数对象，更不存在自然权重或统计量。强制引入计数会完全改变问题本质，违背规则红线。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'decision'，目标为 'feasibility'，输出为 YES/NO，不存在计数对象。规则 eligibility.required_seed_properties 要求原题已有明确有限的计数对象，本种子不满足。",
+        "feedback": "带权计数规则要求种子题必须本身是计数题，且计数对象上天然附带权重、等级或统计量。本题是存在性判定，强行改造会变成凭空创造计数对象与权重，属于硬造，不符合资格。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将原存在性判定升级为对象明确的计数题：定义了计数对象与去重规则，说明了取模方式，拆分了计数单元并锁定了计数义务，所有 helper 均落实且无红线下违规。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "目标从 feasibility 改为 counting 并指定模 10^9+7；core_constraints 中新增 counting_object_definition 明确定义方案等价关系为每个格子的物品种类，以及 row_decomposability 声明按行独立分解；invariant 中引入计数状态 DP；applied_helpers 显示三个 helper 均被应用且影响轴 C、O、V；anti_shallow_rationale 强调未简单套用原判定逻辑。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "missing_state_factorization_disclosure",
+      "message": "题面定义了计数对象、不同方案的口径和模数，但未按规则要求说明解空间如何拆分成可汇总的计数单元（如柜子间的独立性或按行分解的声明），导致 state_factorization 语义写空，从而未完全兑现该规则合同。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "生成题面的 description 仅说明格子与组件规则，没有提及柜子间无约束、方案可分解为每柜方案组合等拆分逻辑；notes 也只强调模数和物品不可区分，未补充分解方式。规则助手 state_factorization 的 prompt_guidance 明确要求“让核心约束说明如何拆成计数单元”，题面未兑现该指令。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确写出了计数对象（每个格子上的物品种类）、等价关系（同种物品不可区分，方案不同取决于至少一个格子不同）、模数（10^9+7）以及按柜子单元拆分与汇总的方式。所有关键语义均已落地，且计数锁入主目标，未保留存在性判定。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "描述：'方案的区别仅由每个格子上放置的物品类型（或为空）决定。同种物品不可区分。' 输出要求模10^9+7。描述：'由于各个柜子之间没有额外的限制，我们可以分柜子来考虑。对于一个柜子，我们用一个分配向量d...记g(d)...然后把各个柜子的方式数相乘...最后相加，即为总的放置方案数。' 样本解释也体现了计数语义。notes再次确认去重和模数。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "家庭收纳方案计数",
+    "description": "小丽是一位收纳师，她正在为一位客户规划一个大型衣柜。衣柜有 n 个柜子（行），每个柜子包含 8 个格子，从左到右编号 1 至 8。这些格子被划分为三个相邻组件：{1,2}、{3,4,5,6}、{7,8}。客户有 m 种不同的物品，第 i 种物品有 a_i 个，相同种类的物品视为一样。小丽需要将所有物品放入柜子的格子中，每个格子最多只能放一个物品。摆放时，必须遵守以下规则：在同一个相邻组件内的所有非空格子，必须放置相同种类的物品（不同组件之间可以放置不同种类）。\n\n由于各个柜子之间没有额外的限制，我们可以分柜子来考虑。对于一个柜子，我们用一个分配向量 d = (d_1,...,d_m) 表示它需要放置各种物品的个数。称 d 是合法的，如果存在一种在该柜子 8 个格子中放置物品的具体方式，恰好使用 d_i 个第 i 种物品，并且满足组件内同种的规则。记 g(d) 为满足合法分配 d 的柜内放置方式数。\n\n那么，一个完整的衣柜放置方案可以由以下方式得到：为每一个柜子选择一个合法的分配向量，要求所有柜子的分配向量之和等于 (a_1,...,a_m)，然后把各个柜子的方式数相乘，得到该分配向量组合对应的方案数。最后，把所有可能的合法分配向量组合的方案数相加，即为总的放置方案数。\n\n现在小丽想知道总共有多少种不同的放置方案。由于答案可能很大，请输出模 10^9+7 后的结果。",
+    "input_format": "第一行包含两个整数 n 和 m（1 ≤ n ≤ 10000，1 ≤ m ≤ 100），分别表示柜子的数量和物品种类数。\n第二行包含 m 个整数 a_1, a_2, ..., a_m（1 ≤ a_i ≤ 10000），表示每种物品的数量。保证所有物品总数不超过 8n。",
+    "output_format": "输出一个整数，表示方案数模 10^9+7 的值。",
+    "constraints": [
+      "1 ≤ n ≤ 10^4",
+      "1 ≤ m ≤ 100",
+      "1 ≤ a_i ≤ 10^4",
+      "∑ a_i ≤ 8·n",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1 2\n4 4",
+        "output": "2",
+        "explanation": "只有一个柜子，物品 A 和 B 各有 4 个，共需占用 8 个格子。柜子的三个相邻组件分别为 {1,2}、{3,4,5,6}、{7,8}。由于每个组件内必须放同一种物品，组件 {3,4,5,6} 有 4 个格子，恰好可以容纳一种物品的 4 个，而另外两个组件各自有 2 个格子。若将大组件分配给 A，则两个小组件必须分配给 B，这样就得到一种合法的分配向量 (4,4)，对应的柜内放置方式唯一（因为物品同种且组件内同种，交换组件内物品没有新方案）。同样，将大组件分配给 B。因此 g(4,4)=2，总方案数即为 2。"
+      },
+      {
+        "input": "1 1\n5",
+        "output": "56",
+        "explanation": "只有一种物品，共 5 个，柜子有 8 个格子，需要选择 5 个格子放置物品。因为只有一种物品，组件内同种规则自动满足。所以任何选出 5 个格子的方案都是合法的，不同的选择对应不同的最终格子占用状态。方案数为 C(8,5)=56。"
+      }
+    ],
+    "notes": "模数为 10^9+7。同种物品不可区分，方案的区别仅由每个格子上放置的物品类型（或为空）决定。由于各个柜子独立，计数时采用分配向量分解，确保不重不漏。建议选手设计算法时利用该性质。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_43dc8145a4f7_home_organization_20260526_144344",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

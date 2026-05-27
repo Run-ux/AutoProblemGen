@@ -1,0 +1,1089 @@
+{
+  "problem_id": "taco_inverse_design_0100",
+  "source_problem_ids": [
+    "taco_codeforces_cffd25076e13"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_cffd25076e13",
+      "codeforces",
+      "Evlampiy was gifted a rooted tree. The vertices of the tree are numbered from 1 to n. Each of its vertices also has an integer a_i written on it. For each vertex i, Evlampiy calculated c_i — the number of vertices j i...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束由固定 c_i 变为允许修改 c_i 且需满足目标节点赋值，目标由构造任意可行解变为最小化 c_i 修改次数并输出证书，不变量转变为证明最小性与修改-目标兼容性。",
+    "summary": "引入部分指定 a_i 作为目标，允许修改 c_i 为任意合法值，要求最小修改次数并使目标节点值成立，输出修改方案与完整 a_i 作为证书。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4679,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4679,
+    "axis_scores": {
+      "I": 0.1555,
+      "C": 0.5875,
+      "O": 0.5094,
+      "V": 0.6269
+    },
+    "components": {
+      "input_tree_distance": 0.1555,
+      "constraint_match_distance": 0.5875,
+      "objective_type_distance": 0.5729,
+      "objective_text_distance": 0.4141,
+      "invariant_match_distance": 0.6269
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization_with_certificate",
+    "description": "求最小修改次数 k，若不可行则输出 -1。若 k ≥ 0，输出 k，然后输出 n 个整数表示修改后的 c_i'，再输出 n 个整数表示一组满足所有约束的 a_i 赋值。",
+    "target": "minimum_edit_count",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "Given the revision context, the construct_or_obstruction rule was previously applied but led to a retheme because it only added a failure–certificate output without changing the core task (the algorithm remained nearly identical). The forward_solution_to_inverse_design rule fundamentally inverts the problem: instead of constructing a_i from c_i, it asks to minimally modify c_i (or other parameters) to match a given target a_i, which rewrites the core obligation and prevents direct solution transfer.；创新度判断：It transforms a forward construction task into an inverse design problem. The core obligation shifts from recovering an assignment to searching for minimal modifications to constraints so that a given target becomes feasible. This introduces target–driven reasoning, an editing operation space, and a burden of minimality that are absent in the seed problem.；难度判断：The main difficulty is raised in the inverse design phase: the solver must explore a combinatorial space of modifications, prove minimality, and correlate edits with the global subtree constraints. This goes well beyond the linear–time bottom–up insertion algorithm of the original solution.；风险判断：The primary risk is that an ill–defined target or edit operation could make the problem trivial (e.g., always modifying a single node) or unacceptably hard. However, helpers like edit_operation_contract and minimality_or_certificate_lock can steer the design to keep the problem well–posed and challenging.",
+  "new_schema_snapshot": {
+    "problem_id": "taco_inverse_design_0100",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "tree",
+      "length": {
+        "min": 1,
+        "max": 2000
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "rooted": true,
+        "directed": true,
+        "acyclic": true,
+        "connected": true,
+        "weighted": false,
+        "node_fields": [
+          "parent",
+          "c_i",
+          "target_value"
+        ],
+        "target_value_optional": true,
+        "target_value_range": [
+          1,
+          2000
+        ]
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "edit_operation",
+          "description": "允许将任意节点的 c_i 修改为任意整数，新值必须满足 0 ≤ c_i' ≤ size_i - 1，其中 size_i 为节点 i 的子树大小。修改次数最少的方案具有最优性。",
+          "formal": "∃ 修改集 M ⊆ [1..n]，对每个 i ∈ M 指定新 c_i' ∈ [0, size_i-1]；对 i ∉ M，c_i' = c_i。目标为最小化 |M|。",
+          "source_sections": [
+            "description",
+            "constraints"
+          ]
+        },
+        {
+          "name": "target_vertex_condition",
+          "description": "对于输入中 target_i > 0 的节点，其最终 a_i 赋值必须严格等于 target_i。输入保证若有解，target_i 互不相同且不超过 n。",
+          "formal": "∀ i: target_i > 0 ⇒ a_i = target_i",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "subtree_strict_less_count_modified",
+          "description": "修改后的 c_i' 必须等于节点 i 子树中严格小于 a_i 的节点数。",
+          "formal": "∀ i, |{ j : j is in subtree(i) ∧ a_j < a_i }| = c_i'",
+          "source_sections": [
+            "description",
+            "constraints"
+          ]
+        },
+        {
+          "name": "output_value_range",
+          "description": "最终 a_i 赋值在 1 到 10^9 之间，实际可限制于 1..n 范围内，保证若存在解必有一组解满足此范围。",
+          "formal": "∀ i, a_i ∈ [1, 10^9] ∩ ℤ",
+          "source_sections": [
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization_with_certificate",
+      "description": "求最小修改次数 k，若不可行则输出 -1。若 k ≥ 0，输出 k，然后输出 n 个整数表示修改后的 c_i'，再输出 n 个整数表示一组满足所有约束的 a_i 赋值。",
+      "target": "minimum_edit_count",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "modified_c_feasibility",
+          "description": "所有 c_i' 满足 0 ≤ c_i' ≤ size_i - 1。",
+          "properties": {
+            "range_validity": "∀ i, 0 ≤ c_i' ≤ size_i - 1"
+          },
+          "evidence_source": "definition"
+        },
+        {
+          "name": "target_assignment_consistency",
+          "description": "输出的 a_i 赋值必须与输入的 target_i 一致，且满足子树计数约束。",
+          "properties": {
+            "target_match": "∀ i: target_i > 0 ⇒ a_i = target_i",
+            "count_match": "∀ i, subtree_less_count(i, a) = c_i'"
+          },
+          "evidence_source": "solution_output"
+        },
+        {
+          "name": "minimality_proof_support",
+          "description": "输出方案提供 k 值以及具体修改，可被独立验证为最小：通过动态规划计算的最优子结构性质保证不存在更少修改的解。",
+          "properties": {
+            "optimal_substructure": "每个子树的最小修改次数由其子问题最优解除递推得到"
+          },
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "medium-hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "递归在后序遍历中构造严格递增序列，按 c_i 插入节点，输出任一组可行 a_i。",
+    "reusable_subroutines": "子树大小计算、c_i 可行性检测（判断 c_i 是否在 [0, size_i-1] 内）可复用。",
+    "new_solver_core": "树上动态规划：对于每个子树，考虑未指定目标值的节点可分配相对顺序，结合修改 c_i 的决策，计算最小修改次数及相应的 a_i 方案。",
+    "new_proof_obligation": "需证明动态规划的最优子结构：父节点最小修改次数可由子节点最优解与根节点 c_i 修改决策复合；需证明无解条件（指定值冲突或无法通过修改满足计数值时）对应 dp 状态不可达；需证明输出方案确实满足修改后约束且最小。",
+    "why_direct_reuse_fails": "原题构造算法仅输出任一合法 a_i，无法处理部分指定值带来的选择优化，且不涉及任何编辑距离或修改代价的积累与比较。"
+  },
+  "anti_shallow_rationale": "新题不再是给定完整 c_i 的纯构造，而是引入部分目标节点值和 c_i 可修改性的组合优化问题。核心算法从直接构造转为树上 DP，状态涉及目标值的匹配与 c_i 是否修改的选择，原题解法完全无法处理这一优化维度，且新题输出最小编辑次数与证书的性质要求全新的正确性论证。因此，故事背景虽可映射为城市通勤（公交站点客流计数调整），但算法结构与难题核心已彻底翻转，不属于换皮。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题输出 a_i 被绑定为反向目标，以部分指定的形式驱动问题。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "核心约束新增 target_vertex_condition",
+        "目标转变为最小化修改次数并使目标条件成立"
+      ],
+      "innovation_reason": "使问题从正向构造逆转为目标导向的编辑优化，开创了部分约束下的设计空间。",
+      "difficulty_reason": "要求算法必须处理指定值对子树内部排序的限制，不能随意构造。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "修改 c_i 是原题核心对象（计数参数）的自然编辑操作，构成可优化的行动空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束中明确 edit_operation 规则",
+        "不变量加入 modified_c_feasibility 范围检查"
+      ],
+      "innovation_reason": "将反向设计落实为可枚举、可决策的编辑动作，使求解过程转化为状态转移。",
+      "difficulty_reason": "要求证明任一合法目标所需的 c_i' 仅与节点计数值有关，且编辑代价可独立贡献。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小编辑次数及完整证书（修改后 c_i 与满足的 a_i），迫使解法承担最优性责任。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "目标类型设为 minimization_with_certificate",
+        "不变量加入 minimality_proof_support"
+      ],
+      "innovation_reason": "答案不再仅为任意可行解，必须附带最小性证据，提升了构造问题的严谨性和验证性。",
+      "difficulty_reason": "要求算法内嵌最优性证明，动态规划需显式维护决策的最小性，增加了正确性论证难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "种子题本身即要求输出完整赋值方案（a_i序列），属于规则明确禁止的属性“原题本来就要求输出完整方案”，不满足 eligibility 要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 construction，target 为 assignment，要求输出完整的 n 个整数 a_i，原题描述中“output n integers a_i”即完整方案。规则 eligibility 的 forbidden_seed_properties 第一条即为“原题本来就要求输出完整方案”，因此直接冲突。",
+        "feedback": "虽然原题支持构造任意解，可升级为规范解（如字典序最小），但规则自身禁止对已输出完整方案的种子题使用该变换。建议检查规则定义或更换种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "certifiable_obstruction",
+      "selection_reason": "原题的无解条件（c_i > 子树大小-1）是局部的且可验证，可直接转换为具体的冲突证据，满足规则对“做不到的原因可以用局部证据表示”和“冲突证据可以从输出直接检查”的要求，因此适合扩展。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的 invariant 中包含 'c_v_within_subtree_size'，该条件可直接作为局部冲突证据的核心；规则声明中 required_seed_properties 要求的局部证据表示和直接可检查性均成立；原题输出仅有 YES/NO，扩展后可将无解输出改为具体节点和违反条件。",
+        "feedback": "建议将冲突证据设计为输出第一个违反 c_i > size_i-1 的节点 i 及其 c_i 和 size_i，这样检查者只需验证不等式即可。同时保证成功分支仍输出合法赋值。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题构造解通过确定性的插入顺序实现，相对顺序唯一；计数只是将存在性答案替换为组合数C(1e9, n)，没有重新定义状态结构或引入新的算法责任，符合规则中negative example“状态结构和计数对象都没重新定义”的红线。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题输出要求“If there are several solutions, output any of them”，且标准解法通过strictly increasing subsequence构建唯一顺序。规则明确禁止“不能保持原状态结构不动”和“把计数只当成结果后处理”，且negative example为“把是否存在改成计数，但状态结构和计数对象都没重新定义”。转化后计数题的核心仍是原排序逻辑，未形成新的计数组件。",
+        "feedback": "可考虑选择解空间非唯一的种子题，或需要状态压缩的构造题，使计数过程强制引入等价类划分、动态规划等新结构。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题为一个确定的构造问题，输入中所有c_i都是精确值，不存在任何原生不确定性（如顺序不确定性、资源波动或局部选择差异），无法在不违反红线的情况下定义扰动模型，强行加入扰动将变为生造对手。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为：∀ i, |{ j : j in subtree(i) ∧ a_j < a_i }| = c_i，其中c_i由输入明确给出。该等式为严格等值要求，没有任何可接受的波动范围，且题目描述及解法均不涉及任何扰动或不确定性。规则强调扰动模型必须来自原题本身，但此处缺乏任何语义来源。",
+        "feedback": "当前种子题不具备可放大的原生扰动来源，不建议使用本规则进行扩展。若需引入保底优化，应选择输入中含有天然不确定性（如资源量区间、顺序竞争、随机失败等）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.35,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题没有自然的内生参数可优化为临界阈值；唯一可引入的阈值（输出值域上限）与核心约束（子树计数）脱节，变换实质是套一层二分，属于负面示例。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束为子树内小于计数条件，可行性仅取决于 c_i ≤ |subtree(i)|-1，无连续参数；引入输出值域上限 M 作为阈值后，核心约束不变，只是增加了输出范围限制，这符合规则负面示例“原题判定外面简单套一层二分但约束语义不变”，且违反禁止性质“没有自然参数可优化”。",
+        "feedback": "建议检查是否存在其他可参数化的元素（如容错计数、权重分配），但当前原题不具备自然临界参数，不宜采用此变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_optimization_goal",
+      "selection_reason": "种子题是构造题，没有单目标最优化，无法引入自然的第二评价指标，因此无法应用多目标权衡规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.objective.type 为 'construction'，无最大化或最小化目标；原题描述仅为恢复满足约束的赋值，不涉及任何数值优化。",
+        "feedback": "规则要求种子题存在单目标最优化作为扩展基础，但本题是可行性构造题，不具备应用前提。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "valid_inverse_target_and_natural_edit",
+      "selection_reason": "原题结果a_i可直接作为反向设计目标，输入中的c_i构成自然的修改空间，满足规则对反向目标和最小修改操作的要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为a_i赋值，是明确的结果目标；核心约束定义了c_i与a_i的子树相对大小关系，种子输入包含可修改的整数数组c_i，其修改直接与核心规律相关，且可定义最小化修改数量的目标。规则正向示例“给定目标答案，求最少修改几个元素使原性质成立”恰好契合本种子。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "lack_of_natural_coupling",
+      "selection_reason": "原题中的子树局部单元不存在自然的共享资源或全局守恒量，从独立求解到全局耦合的变换需要强行引入无关背景约束。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题仅要求恢复满足子树内c_i约束的权值赋值，解法自底向上为每个子树维护有序列表并插入节点，各子树处理相对独立，未涉及跨子树的资源分配或全局总量守恒。",
+        "feedback": "建议寻找存在明显共享预算或全局选择（如所有组件争夺同一资源池）的种子题，例如调度问题中多个任务共享处理器时间或背包中物品共享容量。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "no_natural_adversarial_choices",
+      "selection_reason": "原题是树节点权值的确定型构造问题，解决方案基于固定的插入排序过程，没有任何可供双方轮流选择、拿取或移动的自然操作，无法转化为双方最优博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为「确定每个子树中小于顶点值的数量等于给定c_i」，其标准解法是通过深度优先遍历构建严格递增序列并按c_i插入顶点（参见invariant中的increasing_subtree_sequence）。整个过程是单人的、确定的构造，没有可选的动作分支或状态转移中的选择自由度。规则要求的seed性质「存在可轮流选择、拿取、移动或改变状态的自然操作」和「不同操作会改变后续可选状态」在此均不成立。",
+        "feedback": "该种子题不具备可对抗化的选择过程，强行博弈化只能硬造叙事，违反红线。建议用于其他存在自然决策分支的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题没有适合扩成覆盖或割的局部对象族；仅靠子树不能自然形成覆盖，覆盖语义会脱离原有约束。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束是每个子树内小于a_i的数量等于c_i，这些子树是固定输入的，不是需被覆盖的对象族；题目是构造赋值，没有覆盖或割的动机。",
+        "feedback": "若要使用此规则，需要原题中存在多个类似局部对象且问题可自然转化为覆盖，但本题的c_i约束本质是单个全局构造任务，强行转为覆盖会导致偏离核心规律。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题是构造题，目标为恢复满足子树内相对大小约束的节点权值赋值，不存在明确有限的计数对象，无法应用从普通计数到带权计数的扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中objective.type为construction，target为assignment，原题描述要求恢复初始整数，不涉及任何计数任务；规则eligibility要求原题已有明确有限的计数对象，本种子题不满足。",
+        "feedback": "该规则仅适用于原题本身就是计数问题的情况，建议选择其他计数题作为种子。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "种子题本身即要求输出完整赋值方案（a_i序列），属于规则明确禁止的属性“原题本来就要求输出完整方案”，不满足 eligibility 要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 construction，target 为 assignment，要求输出完整的 n 个整数 a_i，原题描述中“output n integers a_i”即完整方案。规则 eligibility 的 forbidden_seed_properties 第一条即为“原题本来就要求输出完整方案”，因此直接冲突。",
+        "feedback": "虽然原题支持构造任意解，可升级为规范解（如字典序最小），但规则自身禁止对已输出完整方案的种子题使用该变换。建议检查规则定义或更换种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "certifiable_obstruction",
+      "message": "原题的无解条件（c_i > 子树大小-1）是局部的且可验证，可直接转换为具体的冲突证据，满足规则对“做不到的原因可以用局部证据表示”和“冲突证据可以从输出直接检查”的要求，因此适合扩展。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的 invariant 中包含 'c_v_within_subtree_size'，该条件可直接作为局部冲突证据的核心；规则声明中 required_seed_properties 要求的局部证据表示和直接可检查性均成立；原题输出仅有 YES/NO，扩展后可将无解输出改为具体节点和违反条件。",
+        "feedback": "建议将冲突证据设计为输出第一个违反 c_i > size_i-1 的节点 i 及其 c_i 和 size_i，这样检查者只需验证不等式即可。同时保证成功分支仍输出合法赋值。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题构造解通过确定性的插入顺序实现，相对顺序唯一；计数只是将存在性答案替换为组合数C(1e9, n)，没有重新定义状态结构或引入新的算法责任，符合规则中negative example“状态结构和计数对象都没重新定义”的红线。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题输出要求“If there are several solutions, output any of them”，且标准解法通过strictly increasing subsequence构建唯一顺序。规则明确禁止“不能保持原状态结构不动”和“把计数只当成结果后处理”，且negative example为“把是否存在改成计数，但状态结构和计数对象都没重新定义”。转化后计数题的核心仍是原排序逻辑，未形成新的计数组件。",
+        "feedback": "可考虑选择解空间非唯一的种子题，或需要状态压缩的构造题，使计数过程强制引入等价类划分、动态规划等新结构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题为一个确定的构造问题，输入中所有c_i都是精确值，不存在任何原生不确定性（如顺序不确定性、资源波动或局部选择差异），无法在不违反红线的情况下定义扰动模型，强行加入扰动将变为生造对手。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为：∀ i, |{ j : j in subtree(i) ∧ a_j < a_i }| = c_i，其中c_i由输入明确给出。该等式为严格等值要求，没有任何可接受的波动范围，且题目描述及解法均不涉及任何扰动或不确定性。规则强调扰动模型必须来自原题本身，但此处缺乏任何语义来源。",
+        "feedback": "当前种子题不具备可放大的原生扰动来源，不建议使用本规则进行扩展。若需引入保底优化，应选择输入中含有天然不确定性（如资源量区间、顺序竞争、随机失败等）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题没有自然的内生参数可优化为临界阈值；唯一可引入的阈值（输出值域上限）与核心约束（子树计数）脱节，变换实质是套一层二分，属于负面示例。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.35,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束为子树内小于计数条件，可行性仅取决于 c_i ≤ |subtree(i)|-1，无连续参数；引入输出值域上限 M 作为阈值后，核心约束不变，只是增加了输出范围限制，这符合规则负面示例“原题判定外面简单套一层二分但约束语义不变”，且违反禁止性质“没有自然参数可优化”。",
+        "feedback": "建议检查是否存在其他可参数化的元素（如容错计数、权重分配），但当前原题不具备自然临界参数，不宜采用此变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_optimization_goal",
+      "message": "种子题是构造题，没有单目标最优化，无法引入自然的第二评价指标，因此无法应用多目标权衡规则。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.objective.type 为 'construction'，无最大化或最小化目标；原题描述仅为恢复满足约束的赋值，不涉及任何数值优化。",
+        "feedback": "规则要求种子题存在单目标最优化作为扩展基础，但本题是可行性构造题，不具备应用前提。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_inverse_target_and_natural_edit",
+      "message": "原题结果a_i可直接作为反向设计目标，输入中的c_i构成自然的修改空间，满足规则对反向目标和最小修改操作的要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为a_i赋值，是明确的结果目标；核心约束定义了c_i与a_i的子树相对大小关系，种子输入包含可修改的整数数组c_i，其修改直接与核心规律相关，且可定义最小化修改数量的目标。规则正向示例“给定目标答案，求最少修改几个元素使原性质成立”恰好契合本种子。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "lack_of_natural_coupling",
+      "message": "原题中的子树局部单元不存在自然的共享资源或全局守恒量，从独立求解到全局耦合的变换需要强行引入无关背景约束。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题仅要求恢复满足子树内c_i约束的权值赋值，解法自底向上为每个子树维护有序列表并插入节点，各子树处理相对独立，未涉及跨子树的资源分配或全局总量守恒。",
+        "feedback": "建议寻找存在明显共享预算或全局选择（如所有组件争夺同一资源池）的种子题，例如调度问题中多个任务共享处理器时间或背包中物品共享容量。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_choices",
+      "message": "原题是树节点权值的确定型构造问题，解决方案基于固定的插入排序过程，没有任何可供双方轮流选择、拿取或移动的自然操作，无法转化为双方最优博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为「确定每个子树中小于顶点值的数量等于给定c_i」，其标准解法是通过深度优先遍历构建严格递增序列并按c_i插入顶点（参见invariant中的increasing_subtree_sequence）。整个过程是单人的、确定的构造，没有可选的动作分支或状态转移中的选择自由度。规则要求的seed性质「存在可轮流选择、拿取、移动或改变状态的自然操作」和「不同操作会改变后续可选状态」在此均不成立。",
+        "feedback": "该种子题不具备可对抗化的选择过程，强行博弈化只能硬造叙事，违反红线。建议用于其他存在自然决策分支的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题没有适合扩成覆盖或割的局部对象族；仅靠子树不能自然形成覆盖，覆盖语义会脱离原有约束。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束是每个子树内小于a_i的数量等于c_i，这些子树是固定输入的，不是需被覆盖的对象族；题目是构造赋值，没有覆盖或割的动机。",
+        "feedback": "若要使用此规则，需要原题中存在多个类似局部对象且问题可自然转化为覆盖，但本题的c_i约束本质是单个全局构造任务，强行转为覆盖会导致偏离核心规律。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题是构造题，目标为恢复满足子树内相对大小约束的节点权值赋值，不存在明确有限的计数对象，无法应用从普通计数到带权计数的扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中objective.type为construction，target为assignment，原题描述要求恢复初始整数，不涉及任何计数任务；规则eligibility要求原题已有明确有限的计数对象，本种子题不满足。",
+        "feedback": "该规则仅适用于原题本身就是计数问题的情况，建议选择其他计数题作为种子。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "ALL_RULE_CONTRACTS_FULFILLED",
+      "message": "规划将原正向构造题成功转化为反向设计题：以原题输出 a_i 作为部分指定目标，允许修改核心参数 c_i，并要求最小化修改次数并输出证书，完整兑现了目标绑定、编辑操作定义和最小性证书三个助手的语义合同。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "助手的实现证据：\n- target_result_binding: 候选 schema 新增 target_vertex_condition 约束，要求 a_i 等于指定的 target_i；目标变为最小化修改次数并满足该条件。不是简单判定相等，而是目标驱动的设计。\n- edit_operation_contract: 定义允许修改任意节点的 c_i 为 [0, size_i-1] 内的整数，修改操作直接源于原题核心约束对象，非无关发明。\n- minimality_or_certificate_lock: 目标明确为 minimization_with_certificate，输出 k (最小修改次数) 以及修改后的 c_i' 和满足所有约束的 a_i 作为证书；不变量中加入 minimality_proof_support，要求动态规划最优子结构证明最小性。\n硬性检查：反向目标来自原题输出 a_i；修改操作针对原核心参数 c_i；承担最小性责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确要求最小化c_i的修改次数以满足部分a_i的目标值，并输出修改方案和完整赋值，完整兑现了反向设计的三个helper语义：目标绑定、编辑操作合同和最小性证书。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：‘求出最小的调整次数K’并‘输出K’、‘输出调整后的c_i’'和‘a_i’；编辑操作：‘允许对任意站点的c_i进行调整，但调整后的新值c_i’必须满足0 ≤ c_i’ ≤ size_i−1’；目标绑定：‘对于部分关键站点…a_i必须等于指定的target_i’；约束：‘对于每个target_i>0的站点i，a_i必须等于target_i’。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "最少的站点统计修正",
+    "description": "小 Y 负责维护一个城市公交系统的线路规划。线路呈树形结构，共有 n 个站点，编号为 1 到 n。每个站点 i 有一个父站点 p_i（若 p_i=0 则为整条线路的起点），并且有一个尚未确定的整数编号 a_i，表示该站点的期望乘客吞吐量级别。\n由于记录系统出现故障，目前只知道每个站点 i 的“子树内小于自身编号的站点个数”的初步统计值 c_i（即：在 i 及其所有后代站点中，编号严格小于 a_i 的站点数量）。同时，对于部分关键站点，系统还额外保留了一份非常可靠的记录，指明这些站点的 a_i 必须等于指定的 target_i（如果 target_i = 0，则表示没有强制要求）。\n运营团队怀疑部分 c_i 可能统计有误，因此允许对任意站点的 c_i 进行调整，但调整后的新值 c_i' 必须满足 0 ≤ c_i' ≤ size_i−1，其中 size_i 是 i 的子树大小（包含 i 自身）。调整的次数越少，说明原先的记录越接近真实情况。\n请你写一个程序，求出最小的调整次数 K，使得存在一组 1 到 10^9 之间的整数编号 a_i，同时满足：\n· 对于每个站点 i，i 的子树中编号严格小于 a_i 的站点数量恰好等于 c_i'；\n· 对于每个 target_i > 0 的站点 i，a_i 必须等于 target_i。\n如果无论如何都无法满足，则输出 −1；否则输出 K，再输出 n 个整数表示调整后的 c_i'，最后输出 n 个整数表示一组满足条件的 a_i。可以证明，若有解，必有一组解将 a_i 限制在 1 到 n 之间。",
+    "input_format": "第一行一个整数 n (1≤n≤2000)，表示站点的个数。\n接下来 n 行，每行三个整数 p_i, c_i, target_i (0≤p_i≤n, 0≤c_i≤n−1, 0≤target_i≤n)。p_i 是站点 i 的父站点，0 表示根站点；c_i 是初步记录的计数值；target_i 是指定的目标编号，若为 0 则表示无强制要求，否则保证所有出现的正整数 target_i 互不相同且不超过 n。",
+    "output_format": "如果不存在合法方案，输出一行 −1。\n否则，第一行输出一个整数 K，表示最少需要调整的 c_i 的个数。\n第二行输出 n 个整数，第 i 个数为调整后的 c_i'。\n第三行输出 n 个整数，第 i 个数为最终分配的 a_i（1≤a_i≤10^9，可以证明若有解必有一组解在 1 到 n 之间，输出此范围内的值即可）。\n若有多组最优方案，输出任意一组。",
+    "constraints": [
+      "1 ≤ n ≤ 2000",
+      "0 ≤ p_i ≤ n",
+      "输入保证 p_i 描述一棵合法的树。",
+      "0 ≤ c_i ≤ n−1",
+      "0 ≤ target_i ≤ n，且所有 target_i>0 的值互不相同。",
+      "时间限制：1.0 秒",
+      "空间限制：256.0 MB"
+    ],
+    "samples": [
+      {
+        "input": "3\n0 1 0\n1 1 0\n1 0 3",
+        "output": "1\n1 0 0\n2 1 3",
+        "explanation": "站点 1 是根，站点 2 和 3 是它的子节点。原始 c 值为 [1,1,0]，目标要求 a_3=3。站点 2 的子树大小为 1，其 c_2=1 不合法（必须为 0），必须修改；其他 c 值可以保留。故最少调整次数 K=1。修改后 c'=[1,0,0]。分配 a=[2,1,3] 满足：站点 1 子树中小于 2 的有 1 个 (站点 2)；站点 2 子树没有小于 1 的；站点 3 子树没有小于 3 的；且 a_3=3。"
+      },
+      {
+        "input": "2\n0 0 2\n1 0 2",
+        "output": "-1",
+        "explanation": "站点 1 是根，站点 2 是其子节点。要求 a_1=2, a_2=2，这是不可能的，因为 a_i 必须两两不同。因此无解。"
+      },
+      {
+        "input": "1\n0 0 1",
+        "output": "0\n0\n1",
+        "explanation": "只有一个站点，c_1=0 无需修改，目标 a_1=1 已满足，最小调整次数为 0。"
+      }
+    ],
+    "notes": "• 对于 target_i=0 的站点，a_i 没有额外限制，只需满足子树计数约束。\n• 若有多种最优修改方案或多种合法 a_i，输出任意一组即可。\n• 保证若有解，a_i 可以取遍 1 到 n 的排列（或子集），因此输出在 1 到 n 之间即确保正确。\n• 调整 c_i 的次数定义为发生改变的 c_i 的个数，与具体修改的数值无关；一个站点即使 c_i 改了多次也只计一次。\n• 请留意输出顺序：c_i' 和 a_i 均按站点编号 1..n 顺序输出。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_cffd25076e13_urban_commute_20260527_201850",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cffd25076e13\\taco_codeforces_cffd25076e13_urban_commute_20260527_201850_round1.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_cffd25076e13\\taco_codeforces_cffd25076e13_urban_commute_20260527_201850_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 94.0,
+      "divergence_score": 35.2,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "冲突站点唯一性形式描述不一致",
+          "detail": "new_schema 中 failure_certificate_condition 的 formal 语句包含 “∃ unique v” 限定，而 generated_problem 的 output_format 及 notes 均明确说“如有多个这样的冲突站点，输出其中任意一个即可”，两者在唯一性要求上存在表述差异，可能引起对约束严格性的误解。",
+          "evidence_refs": [
+            "new_schema.core_constraints.constraints[2].formal",
+            "generated_problem.output_format"
+          ],
+          "fix_hint": "将 new_schema 的 formal 改为允许多冲突站点（如删去 unique）或在题面中添加说明“这些极小冲突站点中任意一个均可”，以保持严格一致。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例数量偏少且覆盖不全",
+          "detail": "题目仅包含两个样例，缺乏 n=1、c_i 全 0、多级子树或复杂插入构造的示例，参赛者可能难以验证边界行为和理解合法构造过程，影响独立做题的可靠性。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "增加至少一个边界样例（如 n=1、p=0 c=0）和一个展示递归插入的稍大样例，并附带解释，以提高覆盖度。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "新题核心任务仍为：给定每个节点的c_i（子树中严格小于当前节点的数量），恢复满足约束的节点赋值，输入结构与约束条件完全相同。输出仅增加无解时附带一个冲突节点编号，而原题标准解法在发现矛盾时已自然持有该节点且满足极小性要求，只需将'NO'改为'NO v'，不改变算法框架、状态设计或关键性质。背景叙事从树礼物变为公交流量，但任务定义、输入输出模式高度对应，属于典型换皮。因此语义差异很低，解法迁移风险极高，表面换皮风险较高。",
+          "evidence_refs": [
+            "original_problem.standard_solution_code",
+            "original_schema.core_constraints",
+            "new_schema.core_constraints",
+            "generated_problem.output_format",
+            "generated_problem.samples[1].output",
+            "hard_checks[9].evidence_refs"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "suggested_revisions": [
+        "将 new_schema 的 formal 改为允许多冲突站点（如删去 unique）或在题面中添加说明“这些极小冲突站点中任意一个均可”，以保持严格一致。",
+        "增加至少一个边界样例（如 n=1、p=0 c=0）和一个展示递归插入的稍大样例，并附带解释，以提高覆盖度。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "弱化 new_schema 中冲突站点唯一性的形式化要求，使其与题面“任意一个”的表述一致。",
+        "增加至少一个边界样例（如 n=1）和一个多节点构造样例，并附解释，提升样例质量和可靠性。",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "strengths_to_keep": [
+        "核心变体约束、双分支输出和局部证书要求均准确落地，忠实反映了 new_schema 的意图。",
+        "输出格式明确区分 YES/NO 两种分支，且失败证书的条件描述清晰、可局部验证。",
+        "题面结构规范，表述清晰，没有来源污染或无关文本，符合 OJ 阅读习惯。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 35.2,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "冲突站点唯一性形式描述不一致",
+                "detail": "new_schema 中 failure_certificate_condition 的 formal 语句包含 “∃ unique v” 限定，而 generated_problem 的 output_format 及 notes 均明确说“如有多个这样的冲突站点，输出其中任意一个即可”，两者在唯一性要求上存在表述差异，可能引起对约束严格性的误解。",
+                "evidence_refs": [
+                  "new_schema.core_constraints.constraints[2].formal",
+                  "generated_problem.output_format"
+                ],
+                "fix_hint": "将 new_schema 的 formal 改为允许多冲突站点（如删去 unique）或在题面中添加说明“这些极小冲突站点中任意一个均可”，以保持严格一致。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例数量偏少且覆盖不全",
+                "detail": "题目仅包含两个样例，缺乏 n=1、c_i 全 0、多级子树或复杂插入构造的示例，参赛者可能难以验证边界行为和理解合法构造过程，影响独立做题的可靠性。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "增加至少一个边界样例（如 n=1、p=0 c=0）和一个展示递归插入的稍大样例，并附带解释，以提高覆盖度。"
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "新题核心任务仍为：给定每个节点的c_i（子树中严格小于当前节点的数量），恢复满足约束的节点赋值，输入结构与约束条件完全相同。输出仅增加无解时附带一个冲突节点编号，而原题标准解法在发现矛盾时已自然持有该节点且满足极小性要求，只需将'NO'改为'NO v'，不改变算法框架、状态设计或关键性质。背景叙事从树礼物变为公交流量，但任务定义、输入输出模式高度对应，属于典型换皮。因此语义差异很低，解法迁移风险极高，表面换皮风险较高。",
+                "evidence_refs": [
+                  "original_problem.standard_solution_code",
+                  "original_schema.core_constraints",
+                  "new_schema.core_constraints",
+                  "generated_problem.output_format",
+                  "generated_problem.samples[1].output",
+                  "hard_checks[9].evidence_refs"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "将 new_schema 的 formal 改为允许多冲突站点（如删去 unique）或在题面中添加说明“这些极小冲突站点中任意一个均可”，以保持严格一致。",
+              "增加至少一个边界样例（如 n=1、p=0 c=0）和一个展示递归插入的稍大样例，并附带解释，以提高覆盖度。",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "弱化 new_schema 中冲突站点唯一性的形式化要求，使其与题面“任意一个”的表述一致。",
+              "增加至少一个边界样例（如 n=1）和一个多节点构造样例，并附解释，提升样例质量和可靠性。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "核心变体约束、双分支输出和局部证书要求均准确落地，忠实反映了 new_schema 的意图。",
+              "输出格式明确区分 YES/NO 两种分支，且失败证书的条件描述清晰、可局部验证。",
+              "题面结构规范，表述清晰，没有来源污染或无关文本，符合 OJ 阅读习惯。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 94.0,
+        "latest_divergence_score": 35.2,
+        "suggested_revisions": [
+          "将 new_schema 的 formal 改为允许多冲突站点（如删去 unique）或在题面中添加说明“这些极小冲突站点中任意一个均可”，以保持严格一致。",
+          "增加至少一个边界样例（如 n=1、p=0 c=0）和一个展示递归插入的稍大样例，并附带解释，以提高覆盖度。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "弱化 new_schema 中冲突站点唯一性的形式化要求，使其与题面“任意一个”的表述一致。",
+          "增加至少一个边界样例（如 n=1）和一个多节点构造样例，并附解释，提升样例质量和可靠性。",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "冲突站点唯一性形式描述不一致",
+            "detail": "new_schema 中 failure_certificate_condition 的 formal 语句包含 “∃ unique v” 限定，而 generated_problem 的 output_format 及 notes 均明确说“如有多个这样的冲突站点，输出其中任意一个即可”，两者在唯一性要求上存在表述差异，可能引起对约束严格性的误解。",
+            "evidence_refs": [
+              "new_schema.core_constraints.constraints[2].formal",
+              "generated_problem.output_format"
+            ],
+            "fix_hint": "将 new_schema 的 formal 改为允许多冲突站点（如删去 unique）或在题面中添加说明“这些极小冲突站点中任意一个均可”，以保持严格一致。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例数量偏少且覆盖不全",
+            "detail": "题目仅包含两个样例，缺乏 n=1、c_i 全 0、多级子树或复杂插入构造的示例，参赛者可能难以验证边界行为和理解合法构造过程，影响独立做题的可靠性。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "增加至少一个边界样例（如 n=1、p=0 c=0）和一个展示递归插入的稍大样例，并附带解释，以提高覆盖度。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "新题核心任务仍为：给定每个节点的c_i（子树中严格小于当前节点的数量），恢复满足约束的节点赋值，输入结构与约束条件完全相同。输出仅增加无解时附带一个冲突节点编号，而原题标准解法在发现矛盾时已自然持有该节点且满足极小性要求，只需将'NO'改为'NO v'，不改变算法框架、状态设计或关键性质。背景叙事从树礼物变为公交流量，但任务定义、输入输出模式高度对应，属于典型换皮。因此语义差异很低，解法迁移风险极高，表面换皮风险较高。",
+            "evidence_refs": [
+              "original_problem.standard_solution_code",
+              "original_schema.core_constraints",
+              "new_schema.core_constraints",
+              "generated_problem.output_format",
+              "generated_problem.samples[1].output",
+              "hard_checks[9].evidence_refs"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "核心变体约束、双分支输出和局部证书要求均准确落地，忠实反映了 new_schema 的意图。",
+          "输出格式明确区分 YES/NO 两种分支，且失败证书的条件描述清晰、可局部验证。",
+          "题面结构规范，表述清晰，没有来源污染或无关文本，符合 OJ 阅读习惯。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

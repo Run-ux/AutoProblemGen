@@ -1,0 +1,138 @@
+{
+  "problem_id": "taco_codechef_a1fbc477e906",
+  "source": "codechef",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    },
+    "components": [
+      {
+        "role": "test_case_count",
+        "role_description": "Number of test cases",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 10
+        },
+        "properties": {}
+      },
+      {
+        "role": "test_cases",
+        "role_description": "Sequence of test cases",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 10
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "ordered": true
+        },
+        "components": [
+          {
+            "role": "test_case",
+            "role_description": "A test case containing N, K and the binary string S",
+            "type": "tuple",
+            "length": null,
+            "value_range": null,
+            "properties": {
+              "ordered": true
+            },
+            "components": [
+              {
+                "role": "n",
+                "role_description": "Length of the binary string S",
+                "type": "integer",
+                "length": null,
+                "value_range": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "properties": {}
+              },
+              {
+                "role": "k",
+                "role_description": "Size of substrings for XOR operation",
+                "type": "integer",
+                "length": null,
+                "value_range": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "properties": {}
+              },
+              {
+                "role": "s",
+                "role_description": "Binary string of length N",
+                "type": "string",
+                "length": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "value_range": null,
+                "properties": {
+                  "ordered": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "character_set_binary",
+        "description": "The string S consists only of characters '0' and '1'.",
+        "formal": "S[i] ∈ {0,1}",
+        "source_sections": [
+          "description",
+          "constraints"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "value_computation",
+    "description": "计算所有K长度子串的XOR结果中的1的个数",
+    "target": "popcount",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "interval_xor_reduction",
+        "description": "The XOR of all substrings of length K reduces to the XOR of a fixed continuous segment of the original string for each output bit. Bit i of the result T is exactly the XOR of the bits of S with indices from i to i + N - K, leveraging the equivalence that XOR over many aligned substrings collapses to a single interval XOR due to cancellation and duplication properties.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codechef_a1fbc477e906",
+    "title": "KLXOR",
+    "description": "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you.\n\nYou are given a binary string S of length N. Let string T be the result of taking the XOR of all substrings of size K of S. You need to find the number of 1 bits in T.\n\nNote:\nA substring is a continuous part of string which can be obtained by deleting some (may be none) character's from the beginning and some (may be none) character's from the end.\nXOR of many similar-sized strings is defined [here].\n\n------ Input Format ------ \n\n- The first line of the input contains an integer T - the number of test cases. The test cases then follow.\n- The first line of each test case contains two integers N and K.\n- The second line of each test case contains a binary string S of size N.\n\n------ Output Format ------ \n\nFor each test case, output on a single line number of 1 bits in the XOR of all substrings of size K of S.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 10$\n$1 ≤ K ≤N ≤ 2 \\cdot 10^{5}$\n$|S| = N$\n$S$ only contains characters 0 and 1.\n\n----- Sample Input 1 ------ \n4\n4 1\n1010\n4 2\n1001\n4 3\n1111\n4 4\n0110\n\n----- Sample Output 1 ------ \n0\n2\n0\n2\n\n----- explanation 1 ------ \n- Test case $1$: All $1$-sized substrings of $S$ are:\n- 0\n- 1\n- 1\n- 0\n\nThe XOR of these strings is 0, therefore the number of 1 bits is $0$.\n- Test case $2$: All $2$-sized substrings of $S$ are:\n- 10\n- 00\n- 01\n\nThe XOR of these strings is 11, therefore the number of 1 bits is $2$.\n- Test case $3$: All $3$-sized substrings of $S$ are:\n- 111\n- 111\n\nThe XOR of these strings is 000, therefore the number of 1 bits is $0$.\n- Test case $4$: All $4$-sized substrings of $S$ are:\n- 0110\n\nThe XOR of these strings is 0110, therefore the number of 1 bits is $2$.",
+    "input": "",
+    "output": "",
+    "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+    "source": "codechef",
+    "standard_solution_code": "def Test(n, a, k):\n\tdp = [0] * n\n\tdp[0] = a[0]\n\tfor i in range(1, n):\n\t\tdp[i] = dp[i - 1] + a[i]\n\ts = [0] * k\n\tr = 0\n\tfor i in range(k):\n\t\ts[i] = dp[n - k + i] - r & 1\n\t\tr = dp[i]\n\treturn s.count(1)\nfor _ in range(int(input())):\n\t(n, k) = map(int, input().split())\n\ta = list(map(int, [*input()]))\n\tprint(Test(n, a, k))"
+  }
+}

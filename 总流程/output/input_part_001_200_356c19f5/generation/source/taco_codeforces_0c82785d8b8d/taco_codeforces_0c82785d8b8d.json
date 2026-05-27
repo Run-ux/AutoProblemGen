@@ -1,0 +1,107 @@
+{
+  "problem_id": "taco_codeforces_0c82785d8b8d",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "length": {
+      "min": 3,
+      "max": 6000
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "distinct": true
+    },
+    "components": []
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "coordinates_even",
+        "description": "All fence post coordinates are even.",
+        "formal": "x_i ≡ 0 (mod 2) and y_i ≡ 0 (mod 2) for all i",
+        "source_sections": [
+          "input"
+        ]
+      },
+      {
+        "name": "distinct_post_locations",
+        "description": "All fence posts lie at distinct coordinates.",
+        "formal": "∀ i ≠ j: (x_i, y_i) ≠ (x_j, y_j)",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "no_three_collinear",
+        "description": "No three fence posts lie on the same line.",
+        "formal": "∀ distinct i,j,k: (x_i,y_i), (x_j,y_j), (x_k,y_k) are not collinear",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "integer_grid_cows",
+        "description": "There is an infinite number of cows, one at every point with integer coordinates.",
+        "formal": "Cows = { (x,y) ∈ Z^2 }",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "strict_interior_enclosure",
+        "description": "A cow must be strictly inside the triangular fence to be enclosed.",
+        "formal": "enclosed = { cow ∈ Z^2 | cow is strictly inside the triangle }",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "interesting_fence_condition",
+        "description": "A fence is interesting if and only if the number of enclosed cows is odd and the area of the fence is an integer.",
+        "formal": "interesting(fence) ↔ |enclosed| mod 2 = 1 ∧ area(fence) ∈ Z",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "distinct_fence_vertex_set",
+        "description": "Two fences are considered different if they are constructed with a different set of three fence posts.",
+        "formal": "fence ≡ set of three distinct posts",
+        "source_sections": [
+          "output"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "counting",
+    "description": "统计同时满足内部整点数为奇数且面积为整数的三角形数量",
+    "target": "count",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "coordinate_modular_classification",
+        "description": "The interestingness of a triangle depends only on the residues of the vertex coordinates modulo 4, partitioning all points into four equivalence classes: (0,0), (0,2), (2,0), (2,2). The solution aggregates counts of each class and computes the answer solely from these counts.",
+        "properties": {},
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_0c82785d8b8d",
+    "title": "D1",
+    "description": "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even.\n\nThere are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that no three fence posts lie on the same line.\n\nThere are an infinite number of cows on the plane, one at every point with integer coordinates.\n\nGregor is a member of the Illuminati, and wants to build a triangular fence, connecting $3$ distinct existing fence posts. A cow strictly inside the fence is said to be enclosed. If there are an odd number of enclosed cows and the area of the fence is an integer, the fence is said to be interesting.\n\nFind the number of interesting fences.\n\n\n-----Input-----\n\nThe first line contains the integer $n$ ($3 \\le n \\le 6000$), the number of fence posts which Gregor can choose to form the vertices of a fence.\n\nEach of the next $n$ line contains two integers $x$ and $y$ ($0 \\le x,y \\le 10^7$, $x$ and $y$ are even), where $(x,y)$ is the coordinate of a fence post. All fence posts lie at distinct coordinates. No three fence posts are on the same line.\n\n\n-----Output-----\n\nPrint a single integer, the number of interesting fences. Two fences are considered different if they are constructed with a different set of three fence posts.\n\n\n-----Examples-----\n\nInput\n3\n0 0\n2 0\n0 4\nOutput\n1\nInput\n5\n0 0\n2 16\n30 14\n4 6\n2 10\nOutput\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+    "input": "3\n0 0\n2 0\n0 4\n5\n0 0\n2 16\n30 14\n4 6\n2 10",
+    "output": "1\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+    "constraints": "time limit: 6 seconds\nmemory limit: 256 megabytes",
+    "source": "codeforces",
+    "standard_solution_code": "from collections import defaultdict\n\ndef c2(x):\n\treturn x * (x - 1) // 2\n\ndef c3(x):\n\treturn x * (x - 1) * (x - 2) // 6\nwhile True:\n\ttry:\n\t\tcounts = defaultdict(int)\n\t\tn = int(input().strip())\n\t\tfor _ in range(n):\n\t\t\t(x, y) = map(int, input().strip().split())\n\t\t\tcounts[x % 4, y % 4] += 1\n\t\tans = c3(counts[0, 0]) + c3(counts[0, 2]) + c3(counts[2, 0]) + c3(counts[2, 2])\n\t\tans += c2(counts[0, 0]) * (n - counts[0, 0]) + c2(counts[0, 2]) * (n - counts[0, 2]) + c2(counts[2, 0]) * (n - counts[2, 0]) + c2(counts[2, 2]) * (n - counts[2, 2])\n\t\tprint(ans)\n\texcept EOFError:\n\t\tbreak"
+  }
+}

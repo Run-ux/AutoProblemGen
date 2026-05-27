@@ -1,0 +1,682 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 58.9,
+    "schema_distance": 0.4917,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中的所有关键元素，包括输入结构（n 和偶数坐标点）、目标 T、约束（坐标偶数、互异、无三点共线）、编辑操作和最小编辑次数要求，均在题面中得到准确体现。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含了独立做题所需的所有信息：任务说明（通勤区域、有趣条件、编辑操作、目标）、输入输出格式、数据范围约束、三个样例及解释，且额外提供了指导性注释。无缺失信息。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "各部分之间一致：描述与输入输出格式无冲突，样例与约束匹配，坐标偶数等约束在样例中得到体现，注释中的公式与前述模4类别说明连贯。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.samples",
+          "generated_problem.notes",
+          "new_schema.core_constraints"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "三个样例覆盖了 0 步、不可能、1 步三种情况，解释清晰且与题面规则相符，有助于理解题意和解题思路。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，分节描述，语言准确无歧义，无来源污染，便于参赛者快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面准确落地了反向设计框架，将目标绑定与最小编辑操作无缝融入叙述。",
+      "样例覆盖多种情况，解释有助于快速理解规则。",
+      "清晰的输入输出格式和约束说明，便于选手开始编码。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4917,
+      "axis_scores": {
+        "I": 0.0985,
+        "C": 0.5883,
+        "O": 0.5303,
+        "V": 0.7901
+      },
+      "components": {
+        "input_tree_distance": 0.0985,
+        "constraint_match_distance": 0.5883,
+        "objective_type_distance": 0.5664,
+        "objective_text_distance": 0.4762,
+        "invariant_match_distance": 0.7901
+      }
+    },
+    "schema_distance": 0.4917,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.4,
+    "solution_transfer_risk": 0.6,
+    "surface_retheme_risk": 0.8,
+    "verdict": "reject_as_retheme",
+    "rationale": "新题将原题的正向计数反转为带目标约束的最小编辑问题，但核心定义（偶数坐标、无三点共线、内部整点数奇数且面积为整数）和关键不变式（模4类别计数公式）完全保留。语义差异主要体现在目标函数从‘计数’变为‘最小化编辑次数’，但求解框架强依赖原题的模4分类与计数公式。熟悉原题的选手可以立即将编辑操作映射为类别转移，只需在原有计数子程序上增加最小距离计算，解法迁移风险中等。表层换皮风险很高：原题‘栅栏-奶牛’被直接替换为‘站点-乘客’，且描述结构高度对应，仅做实体映射。因此判定为换皮，拒绝通过。",
+    "evidence_refs": [
+      "divergence.schema_distance_breakdown",
+      "snapshots.difference_plan.changed_axes",
+      "snapshots.new_schema.core_constraints",
+      "snapshots.new_schema.invariant",
+      "snapshots.generated_problem.description"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.49，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "注释可能过度提示核心性质",
+      "detail": "生成题面在 notes 中直接给出了模4类别决定有趣性的结论和公式，这可能大幅降低题目难度，削弱了选手自主发现关键性质的考察。但作为审稿人，这属于题目呈现策略选择，不属于错误。",
+      "evidence_refs": [
+        "generated_problem.notes"
+      ],
+      "fix_hint": "如果希望保持 hard 难度，可以考虑隐去公式，只给出模4类别的启发，或者完全去掉 notes，让选手自行推导。"
+    },
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "新题将原题的正向计数反转为带目标约束的最小编辑问题，但核心定义（偶数坐标、无三点共线、内部整点数奇数且面积为整数）和关键不变式（模4类别计数公式）完全保留。语义差异主要体现在目标函数从‘计数’变为‘最小化编辑次数’，但求解框架强依赖原题的模4分类与计数公式。熟悉原题的选手可以立即将编辑操作映射为类别转移，只需在原有计数子程序上增加最小距离计算，解法迁移风险中等。表层换皮风险很高：原题‘栅栏-奶牛’被直接替换为‘站点-乘客’，且描述结构高度对应，仅做实体映射。因此判定为换皮，拒绝通过。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.difference_plan.changed_axes",
+        "snapshots.new_schema.core_constraints",
+        "snapshots.new_schema.invariant",
+        "snapshots.generated_problem.description"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "如果希望保持 hard 难度，可以考虑隐去公式，只给出模4类别的启发，或者完全去掉 notes，让选手自行推导。",
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "可考虑在输入格式中明确编辑后的新坐标是否仍需落在 [0,10^7] 范围内（尽管当前不限制亦可）。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 58.9,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "注释可能过度提示核心性质",
+        "detail": "生成题面在 notes 中直接给出了模4类别决定有趣性的结论和公式，这可能大幅降低题目难度，削弱了选手自主发现关键性质的考察。但作为审稿人，这属于题目呈现策略选择，不属于错误。",
+        "evidence_refs": [
+          "generated_problem.notes"
+        ],
+        "fix_hint": "如果希望保持 hard 难度，可以考虑隐去公式，只给出模4类别的启发，或者完全去掉 notes，让选手自行推导。"
+      },
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "新题将原题的正向计数反转为带目标约束的最小编辑问题，但核心定义（偶数坐标、无三点共线、内部整点数奇数且面积为整数）和关键不变式（模4类别计数公式）完全保留。语义差异主要体现在目标函数从‘计数’变为‘最小化编辑次数’，但求解框架强依赖原题的模4分类与计数公式。熟悉原题的选手可以立即将编辑操作映射为类别转移，只需在原有计数子程序上增加最小距离计算，解法迁移风险中等。表层换皮风险很高：原题‘栅栏-奶牛’被直接替换为‘站点-乘客’，且描述结构高度对应，仅做实体映射。因此判定为换皮，拒绝通过。",
+        "evidence_refs": [
+          "divergence.schema_distance_breakdown",
+          "snapshots.difference_plan.changed_axes",
+          "snapshots.new_schema.core_constraints",
+          "snapshots.new_schema.invariant",
+          "snapshots.generated_problem.description"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "如果希望保持 hard 难度，可以考虑隐去公式，只给出模4类别的启发，或者完全去掉 notes，让选手自行推导。",
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "可考虑在输入格式中明确编辑后的新坐标是否仍需落在 [0,10^7] 范围内（尽管当前不限制亦可）。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "题面准确落地了反向设计框架，将目标绑定与最小编辑操作无缝融入叙述。",
+      "样例覆盖多种情况，解释有助于快速理解规则。",
+      "清晰的输入输出格式和约束说明，便于选手开始编码。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d_urban_commute_20260527_190515_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d_urban_commute_20260527_190515_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_0c82785d8b8d",
+      "title": "D1",
+      "description": "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even.\n\nThere are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that no three fence posts lie on the same line.\n\nThere are an infinite number of cows on the plane, one at every point with integer coordinates.\n\nGregor is a member of the Illuminati, and wants to build a triangular fence, connecting $3$ distinct existing fence posts. A cow strictly inside the fence is said to be enclosed. If there are an odd number of enclosed cows and the area of the fence is an integer, the fence is said to be interesting.\n\nFind the number of interesting fences.\n\n\n-----Input-----\n\nThe first line contains the integer $n$ ($3 \\le n \\le 6000$), the number of fence posts which Gregor can choose to form the vertices of a fence.\n\nEach of the next $n$ line contains two integers $x$ and $y$ ($0 \\le x,y \\le 10^7$, $x$ and $y$ are even), where $(x,y)$ is the coordinate of a fence post. All fence posts lie at distinct coordinates. No three fence posts are on the same line.\n\n\n-----Output-----\n\nPrint a single integer, the number of interesting fences. Two fences are considered different if they are constructed with a different set of three fence posts.\n\n\n-----Examples-----\n\nInput\n3\n0 0\n2 0\n0 4\nOutput\n1\nInput\n5\n0 0\n2 16\n30 14\n4 6\n2 10\nOutput\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+      "input": "3\n0 0\n2 0\n0 4\n5\n0 0\n2 16\n30 14\n4 6\n2 10",
+      "output": "1\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+      "constraints": "time limit: 6 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "from collections import defaultdict\n\ndef c2(x):\n\treturn x * (x - 1) // 2\n\ndef c3(x):\n\treturn x * (x - 1) * (x - 2) // 6\nwhile True:\n\ttry:\n\t\tcounts = defaultdict(int)\n\t\tn = int(input().strip())\n\t\tfor _ in range(n):\n\t\t\t(x, y) = map(int, input().strip().split())\n\t\t\tcounts[x % 4, y % 4] += 1\n\t\tans = c3(counts[0, 0]) + c3(counts[0, 2]) + c3(counts[2, 0]) + c3(counts[2, 2])\n\t\tans += c2(counts[0, 0]) * (n - counts[0, 0]) + c2(counts[0, 2]) * (n - counts[0, 2]) + c2(counts[2, 0]) * (n - counts[2, 0]) + c2(counts[2, 2]) * (n - counts[2, 2])\n\t\tprint(ans)\n\texcept EOFError:\n\t\tbreak"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_0c82785d8b8d",
+        "D1",
+        "codeforces",
+        "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even. There are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "C：增加目标有趣三角形个数T约束和修改操作定义；O：从输出计数改为输出最小修改次数；V：不变量从单纯的模4分类计数扩展到基于类别分布变化与三角形数量函数的关系，以及对修改操作合法性的保证。",
+      "summary": "反向设计改变了求解方向：现在需要从目标出发，在满足凸约束的条件下最小化编辑操作。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inverse_interesting_commute_zone",
+      "source": "codeforces",
+      "input_structure": {
+        "type": "array plus integer",
+        "length": {
+          "min": 3,
+          "max": 6000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "distinct": true,
+          "no_three_collinear": true
+        },
+        "components": [
+          {
+            "name": "target_interesting_count",
+            "type": "integer",
+            "description": "一个整数 T，表示目标有趣通勤区域的数量。",
+            "bounds": {
+              "min": 0,
+              "max": "C(n,3)"
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "stop_coordinates_even",
+            "description": "所有公交站点的坐标均为偶数。",
+            "formal": "对于每个站点 i: x_i ≡ 0 (mod 2) 且 y_i ≡ 0 (mod 2)"
+          },
+          {
+            "name": "distinct_stop_locations",
+            "description": "所有站点坐标互不相同。",
+            "formal": "∀ i≠j: (x_i, y_i) ≠ (x_j, y_j)"
+          },
+          {
+            "name": "no_three_stops_collinear",
+            "description": "不存在三点共线。",
+            "formal": "∀ distinct i,j,k: 三点不共线"
+          },
+          {
+            "name": "infinite_passengers",
+            "description": "每个整数坐标点有一名乘客。",
+            "formal": "Passengers = Z^2"
+          },
+          {
+            "name": "strict_interior_passenger",
+            "description": "乘客必须严格位于三角形内部才算被包围。",
+            "formal": "enclosed = { p ∈ Z^2 | p strictly inside the commuting triangle }"
+          },
+          {
+            "name": "interesting_commute_zone_condition",
+            "description": "一个通勤区域是有趣的当且仅当内部乘客数为奇数且区域面积为整数。",
+            "formal": "interesting(zone) ↔ |enclosed| mod 2 = 1 ∧ area ∈ Z"
+          },
+          {
+            "name": "distinct_zone_triplet",
+            "description": "通勤区域由三个不同的站点组成，不同站点组视为不同区域。",
+            "formal": "zone ≡ set of three distinct stops"
+          },
+          {
+            "name": "target_interesting_count_constraint",
+            "description": "目标：经过修改后，有趣通勤区域的总数必须恰好等于给定的 T。",
+            "formal": "Count_interesting(modified_stops) = T"
+          },
+          {
+            "name": "edit_operation",
+            "description": "一次编辑操作：选择一个站点并修改其坐标到新的偶数坐标。新坐标必须仍是偶数，且所有站点坐标仍保持互不相同且无三点共线。",
+            "formal": "editᵢ(new_x, new_y) with new_x,new_y even, distinctness and no collinearity preserved"
+          },
+          {
+            "name": "minimal_edits",
+            "description": "要求输出最少的编辑操作次数使得目标成立。如果无法达成，输出 -1。",
+            "formal": "输出最小 k 使得存在 k 次编辑操作后 Count_interesting = T"
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization",
+        "description": "输出最少需要移动的站点数量 M，如果不可能则输出 -1。（仅输出整数，无需输出具体方案）",
+        "target": "min_edit_count",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "mod4_class_invariance",
+            "description": "一个通勤区域是否有趣仅取决于三个站点坐标模4的余数类别。每个站点属于以下四类之一： (0,0), (0,2), (2,0), (2,2)。有趣区域总数可以由各类站点的个数完全确定，公式为：∑_{c} C(cnt[c],3) + ∑_{c} C(cnt[c],2)*(n - cnt[c])。",
+            "properties": {
+              "categories": [
+                "(0,0)",
+                "(0,2)",
+                "(2,0)",
+                "(2,2)"
+              ],
+              "formula": "total_interesting = c3(c0) + c3(c1) + c3(c2) + c3(c3) + c2(c0)*(n-c0) + c2(c1)*(n-c1) + c2(c2)*(n-c2) + c2(c3)*(n-c3)"
+            }
+          },
+          {
+            "name": "edit_effect_on_class_distribution",
+            "description": "每次编辑操作相当于将一个站点的类别改变为另一个类别（仍为上述四种之一），因为坐标修改后模4余数会变化。因此，编辑操作等价于将类别计数向量(cnt[0],cnt[1],cnt[2],cnt[3]) 执行一次单位转移（减少当前类计数，增加新类计数）。",
+            "properties": {
+              "unit_transition": "一次编辑 ≤ 改变一个站点的类别",
+              "legal_transition": "所有类别间转移理论可行（通过小偏移），且保持输入条件"
+            }
+          },
+          {
+            "name": "min_edits_as_shortest_path",
+            "description": "最小编辑次数等于在类别计数状态空间中，从初始分布到某个使得总有趣数等于 T 的目标分布的最短路径长度，每一步移动一个点从一个类别到另一类别。由于每一步只能改变一个点，这等价于状态图上的无权最短路。证明：如果存在目标分布，则任何编辑序列可归约到类别序列，且反之可从类别序列构造合法坐标编辑序列（通过精心选择新坐标避免冲突）。",
+            "properties": {}
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "最少站点迁移",
+      "description": "城市公交系统中有 $n$ 个站点，每个站点落在平面上，坐标均为偶数。所有站点位置互不相同，且不存在任意三个站点共线。\n城市里有无穷多乘客，每个整数坐标点恰好有一名乘客。\n任意三个不同的站点可以构成一个通勤区域（三角形区域）。如果一个通勤区域满足：\n- 内部（严格包围）的乘客数量为奇数；\n- 区域面积为整数；\n则称该通勤区域为“有趣的通勤区域”。\n\n现在，公交公司希望调整部分站点的位置，使得调整后有趣的通勤区域总数恰好等于给定的目标值 $T$。每次调整可以选定一个站点，将其坐标修改为一个新的偶数坐标。调整过程中必须始终保持：\n- 所有站点坐标互不相同；\n- 任意三个站点不共线。\n\n你需要计算最少需要调整多少个站点（即最少移动次数）才能达成目标。如果无论怎样调整都无法恰好得到 $T$ 个有趣的通勤区域，则输出 $-1$。",
+      "input_format": "第一行包含两个整数 $n$ 和 $T$（$3 \\le n \\le 6000$，$0 \\le T \\le \\binom{n}{3}$）。\n接下来 $n$ 行，每行包含两个偶数整数 $x_i$ 和 $y_i$（$0 \\le x_i, y_i \\le 10^7$，均为偶数），表示初始时一个站点的坐标。所有站点坐标互不相同，且保证初始时无三点共线。",
+      "output_format": "输出一行一个整数 $M$：最少需要的站点调整次数。如果不可能达到目标，输出 $-1$。",
+      "constraints": [
+        "$3 \\le n \\le 6000$",
+        "$0 \\le T \\le \\binom{n}{3}$",
+        "$0 \\le x_i, y_i \\le 10^7$ 且为偶数",
+        "初始时所有站点坐标互不相同，且无三点共线",
+        "每次调整后仍需保持坐标互异且无三点共线",
+        "时间限制：6 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3 1\n0 0\n2 0\n0 4",
+          "output": "0",
+          "explanation": "三个站点坐标分别为 (0,0)、(2,0)、(0,4)。此时有趣的通勤区域数正好为 1，已经等于目标 $T=1$，因此不需要移动任何站点。"
+        },
+        {
+          "input": "4 1\n0 0\n0 2\n2 0\n2 2",
+          "output": "-1",
+          "explanation": "四个站点各属于一个不同的模 4 类别：(0,0)、(0,2)、(2,0)、(2,2)。当前有趣的通勤区域数为 0。可以验证，当 $n=4$ 时可能的有趣区域数只能是 0、2 或 4，无法变为 1，因此输出 -1。"
+        },
+        {
+          "input": "3 1\n0 0\n0 2\n2 0",
+          "output": "1",
+          "explanation": "三个站点初始类别为 (0,0)、(0,2)、(2,0)，有趣区域数为 0。通过一次调整，将站点 (2,0) 移动到 (4,0)（类别变为 (0,0)），调整后站点为 (0,0)、(0,2)、(4,0)，类别计数变为两个 (0,0) 和一个 (0,2)，有趣区域数变为 1，达到目标。"
+        }
+      ],
+      "notes": "站点的模 4 余数类别（即坐标对 4 取余）决定了通勤区域的有趣性。若要改变有趣区域的总数，必须改变各类别站点的个数。可以证明，只要目标类别分布能产生 $T$，且总站点数不变，就一定存在一个合法的坐标修改序列（每次修改保持互异且无三点共线）达到该分布。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "反向设计改变了求解方向：现在需要从目标出发，在满足凸约束的条件下最小化编辑操作。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4917,
+        "axis_scores": {
+          "I": 0.0985,
+          "C": 0.5883,
+          "O": 0.5303,
+          "V": 0.7901
+        },
+        "components": {
+          "input_tree_distance": 0.0985,
+          "constraint_match_distance": 0.5883,
+          "objective_type_distance": 0.5664,
+          "objective_text_distance": 0.4762,
+          "invariant_match_distance": 0.7901
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "必须将原来正向问题的输出（有趣三角形数量）指定为新问题的目标，使得问题反转。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中添加 target_interesting_count_constraint，绑定目标 T。",
+            "在 objective 中明确要求输出使得目标成立的方案指标。"
+          ],
+          "innovation_reason": "将计算方向从给定输入得出输出翻转为给定目标寻求输入，是核心转变。",
+          "difficulty_reason": "增加了反向约束，需要算法围绕目标驱动设计。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "必须定义合法的修改操作集，使反向设计落到实处。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中添加 edit_operation 定义，明确每次可修改一个站点坐标并保持前提。",
+            "在 invariant 中添加 edit_effect_on_class_distribution，形式化编辑对类别分布的影响。"
+          ],
+          "innovation_reason": "引入了设计自由度——编辑操作——将问题从静态统计变为动态规划。",
+          "difficulty_reason": "需要证明编辑操作与目标结果之间的一致性和最小性，增加了证明负担。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "必须要求输出最小编辑次数，而不是任意可行解。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在 objective 中明确目标是最小化编辑次数。",
+            "在 invariant 中添加 min_edits_as_shortest_path，提供最小性证明基础。"
+          ],
+          "innovation_reason": "让答案承担正确性和最小性双重责任，提升了解题要求。",
+          "difficulty_reason": "要求算法证明不能以更少操作达成目标，可能需要组合优化或下界论证。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "读入坐标，统计四种模4类别的站点个数，然后通过组合公式直接计算有趣三角形总数。时间复杂度O(n)。",
+        "reusable_subroutines": "模4分类函数；给定类别计数计算有趣三角形总数的公式函数。",
+        "new_solver_core": "首先计算初始各类别计数并得到当前总数。如果当前总数等于T，输出0。否则需要搜索：构造状态图（顶点为四元组(c0,c1,c2,c3)满足c0+c1+c2+c3=n），边为合法的单位类别转移（从一个类别移出一个点到另一类别，要求c_i>0，并保持总数n）。每条边权重1。在此图上进行单源最短路（从初始状态出发）找到第一个使得函数值等于T的状态的最短距离。由于状态数巨大（约为O(n^3)），需要进一步优化：利用函数的单调性或者数学性质，可能转化为分类讨论的背包问题，但理论上可以设计DP或广度优先搜索，但n最大6000，状态数太多，可能需要数学推导证明最小步数可以通过直接分析各类别目标计数的调整量得出，而无需显式搜索。所以，真正的解法应该是首先枚举目标分布中各类别的计数，然后通过公式计算调整量（每次变动相当于从一类减少1、另一类增加1，总变动次数等于曼哈顿距离的一半之类的），但需要保证序列的合法性（每一步类别计数非负）。可以证明最小修改次数 = (|Δc0|+|Δc1|+|Δc2|+|Δc3|)/2，只要满足总计数不变且目标计数非负。但这忽略了每次只能移一个点，不能同时增减，所以最小步数就是 L1 距离的一半。因此可以直接枚举可能的目标分布，计算 L1 距离的一半，取最小。复杂度 O(n^3) 枚举四个计数可能仍然太大，但可以优化为枚举三个计数，第四个自动确定。对于 n=6000，O(n^3) 不可行。所以需要更巧妙的数学推理：发现有趣总数的表达式是关于各类计数的二次函数，也许存在闭式解。但算法设计上，可以证明目标总数相对初始总数的偏差必须可以被通过几次移动实现，且移动次数有一定的奇偶性约束。由于原题已经是基于模4分类的计数，逆问题可以进一步利用模2性质？总之，新求解器核心的可行性尚需证明，但作为规划，可以陈述意图。",
+        "new_proof_obligation": "证明编辑操作对类别计数分布的影响等价于单位转移；证明任何合法的坐标修改序列必然对应一个类别转移序列且步数相同；证明存在一个类别转移序列可以映射回合法的坐标修改序列（只要能从分布恢复到无冲突的坐标配置）；最小编辑次数可以通过计算类别分布之间的 L1 距离除以2 得到（当存在可行序列时）。同时需要证明无法达到目标的情况：当不存在非负计数向量满足总数为n且公式值等于T时，输出-1。",
+        "why_direct_reuse_fails": "原解法仅对给定点集进行一次性计数，无需考虑修改操作或优化。新问题要求最小化编辑次数，必须建模为状态转移和优化问题，因此不能直接复用计数代码。"
+      },
+      "anti_shallow_rationale": "该逆问题不是简单更换背景或改变询问方式：它完全反转了求解方向，从计数转变为在目标约束下的最小编辑设计；新算法需要从分布优化角度重新建模，虽然复用模4分类和计数公式作为子程序，但主导求解义务变为优化搜索或数学推理，与原解仅用分类计数有本质区别；因此杜绝了换皮风险。"
+    }
+  }
+}

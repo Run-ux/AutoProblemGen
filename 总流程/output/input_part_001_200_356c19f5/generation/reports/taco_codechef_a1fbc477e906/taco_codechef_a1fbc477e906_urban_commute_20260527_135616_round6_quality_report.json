@@ -1,0 +1,704 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 94.0,
+    "divergence_score": 75.7,
+    "schema_distance": 0.4724,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 4.0,
+        "rationale": "new_schema 的核心要素（输入结构、操作、目标函数）均已落地，但 P 的约束范围在题面中写为 0 ≤ P ≤ 2×10^5，而 new_schema 明确要求最大值为 N-K+1。这一偏差虽然不大，但未严格遵循 new_schema 的 value_range 设定。",
+        "evidence_refs": [
+          "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+          "generated_problem.constraints[3]"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含了独立做题所需的全部关键信息：任务说明、输入输出格式、约束、样例及解释、操作定义、无解情形提示。无需额外猜测。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "题面各部分之间无矛盾。description 与 input_format 字段对应，constraints 与 notes 中的无解条件兼容（允许 P > K 时输出 -1），样例与题意一致。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.constraints",
+          "generated_problem.notes",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供了 4 个样例，覆盖了无需翻转、少量翻转、全部翻转和无解的情况，解释详细，能有效帮助理解任务。输入输出格式与题意完全匹配。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构标准，采用公交延误隐喻贴近日常，描述条理清晰，无来源泄露或无关信息，便于参赛者快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "公交延误隐喻贴合主题，描述生动且自然。",
+      "样例覆盖核心场景，解释清晰。",
+      "题面信息完整，关键定义（延误指标、翻转操作）明确。",
+      "无解情形有明确提示。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4724,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.6798,
+        "O": 0.5103,
+        "V": 0.7046
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.6798,
+        "objective_type_distance": 0.5075,
+        "objective_text_distance": 0.5146,
+        "invariant_match_distance": 0.7046
+      }
+    },
+    "schema_distance": 0.4724,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.8,
+    "solution_transfer_risk": 0.35,
+    "surface_retheme_risk": 0.15,
+    "verdict": "pass",
+    "rationale": "新题将原题的向前计算任务（给定S和K，计算异或子串popcount）彻底转变为反向优化问题（通过翻转位使popcount等于目标值P的最小修改次数）。核心目标从值计算变为最小化，新增了目标popcount匹配约束和仅允许位翻转的操作约束，并要求无解时输出-1。尽管底层依赖相同的区间异或归约（T[i]=XOR S[i..i+N-K]），但解题者必须全新设计算法以分析翻转对popcount的影响、推导线性关系并求解带约束的最小化问题，原题解法无法直接迁移。题目背景和样例叙述完全重构，无明显文本或结构复用。因此语义差异显著，解法迁移风险较低，表层换皮风险低，应予以通过。",
+    "evidence_refs": [
+      "original_schema.objective",
+      "new_schema.objective",
+      "new_schema.core_constraints",
+      "hard_checks[8].evidence_refs",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.47，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=4。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "P 的范围约束与 new_schema 不完全一致",
+      "detail": "new_schema 中 P 的 value_range.max 定义为 \"N-K+1\"，但生成的题面约束写为 0 ≤ P ≤ 2 × 10^5。虽然 2×10^5 在数值上可以覆盖可能值，但未体现与 N, K 的动态绑定，且宽松的约束可能掩盖 new_schema 的意图（例如 N-K+1 可能远小于 2×10^5 时，题面未明确上限）。",
+      "evidence_refs": [
+        "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+        "generated_problem.constraints[3]"
+      ],
+      "fix_hint": "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。"
+    }
+  ],
+  "suggested_revisions": [
+    "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。",
+    "修正 P 的约束范围，使其与 new_schema 的动态上限 N-K+1 一致，或在 notes 中补充说明。",
+    "可考虑在 notes 中简要说明为什么 P 可能超过 K 依旧可以输出 -1，以预防疑问。"
+  ],
+  "revision_brief": {
+    "round_index": 6,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 94.0,
+    "divergence_score": 75.7,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "P 的范围约束与 new_schema 不完全一致",
+        "detail": "new_schema 中 P 的 value_range.max 定义为 \"N-K+1\"，但生成的题面约束写为 0 ≤ P ≤ 2 × 10^5。虽然 2×10^5 在数值上可以覆盖可能值，但未体现与 N, K 的动态绑定，且宽松的约束可能掩盖 new_schema 的意图（例如 N-K+1 可能远小于 2×10^5 时，题面未明确上限）。",
+        "evidence_refs": [
+          "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+          "generated_problem.constraints[3]"
+        ],
+        "fix_hint": "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。"
+      }
+    ],
+    "suggested_revisions": [
+      "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。",
+      "修正 P 的约束范围，使其与 new_schema 的动态上限 N-K+1 一致，或在 notes 中补充说明。",
+      "可考虑在 notes 中简要说明为什么 P 可能超过 K 依旧可以输出 -1，以预防疑问。"
+    ],
+    "strengths_to_keep": [
+      "公交延误隐喻贴合主题，描述生动且自然。",
+      "样例覆盖核心场景，解释清晰。",
+      "题面信息完整，关键定义（延误指标、翻转操作）明确。",
+      "无解情形有明确提示。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_urban_commute_20260527_135616_round6.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_urban_commute_20260527_135616_round6.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_a1fbc477e906",
+      "title": "KLXOR",
+      "description": "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you.\n\nYou are given a binary string S of length N. Let string T be the result of taking the XOR of all substrings of size K of S. You need to find the number of 1 bits in T.\n\nNote:\nA substring is a continuous part of string which can be obtained by deleting some (may be none) character's from the beginning and some (may be none) character's from the end.\nXOR of many similar-sized strings is defined [here].\n\n------ Input Format ------ \n\n- The first line of the input contains an integer T - the number of test cases. The test cases then follow.\n- The first line of each test case contains two integers N and K.\n- The second line of each test case contains a binary string S of size N.\n\n------ Output Format ------ \n\nFor each test case, output on a single line number of 1 bits in the XOR of all substrings of size K of S.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 10$\n$1 ≤ K ≤N ≤ 2 \\cdot 10^{5}$\n$|S| = N$\n$S$ only contains characters 0 and 1.\n\n----- Sample Input 1 ------ \n4\n4 1\n1010\n4 2\n1001\n4 3\n1111\n4 4\n0110\n\n----- Sample Output 1 ------ \n0\n2\n0\n2\n\n----- explanation 1 ------ \n- Test case $1$: All $1$-sized substrings of $S$ are:\n- 0\n- 1\n- 1\n- 0\n\nThe XOR of these strings is 0, therefore the number of 1 bits is $0$.\n- Test case $2$: All $2$-sized substrings of $S$ are:\n- 10\n- 00\n- 01\n\nThe XOR of these strings is 11, therefore the number of 1 bits is $2$.\n- Test case $3$: All $3$-sized substrings of $S$ are:\n- 111\n- 111\n\nThe XOR of these strings is 000, therefore the number of 1 bits is $0$.\n- Test case $4$: All $4$-sized substrings of $S$ are:\n- 0110\n\nThe XOR of these strings is 0110, therefore the number of 1 bits is $2$.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "def Test(n, a, k):\n\tdp = [0] * n\n\tdp[0] = a[0]\n\tfor i in range(1, n):\n\t\tdp[i] = dp[i - 1] + a[i]\n\ts = [0] * k\n\tr = 0\n\tfor i in range(k):\n\t\ts[i] = dp[n - k + i] - r & 1\n\t\tr = dp[i]\n\treturn s.count(1)\nfor _ in range(int(input())):\n\t(n, k) = map(int, input().split())\n\ta = list(map(int, [*input()]))\n\tprint(Test(n, a, k))"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_a1fbc477e906",
+        "KLXOR",
+        "codechef",
+        "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you. You are given a binary string S of length N. Let string T be the result of taking the XOR...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "必须改变核心约束以引入目标绑定和修改操作，改变目标以定义最小化任务，改变不变量以支撑操作影响分析和最小性证明。",
+      "summary": "核心约束新增目标 popcount 匹配条件与允许的位翻转操作；目标从计算 popcount 变为最小修改次数；不变量从纯区间 XOR 归约扩展为修改操作对 popcount 的影响与最小性下界。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "urban_commute_klxor_inverse",
+      "source": "taco_codechef_a1fbc477e906",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "test_case_count",
+            "role_description": "Number of test cases",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 10
+            },
+            "properties": {}
+          },
+          {
+            "role": "test_cases",
+            "role_description": "Sequence of test cases",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 10
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {
+              "ordered": true
+            },
+            "components": [
+              {
+                "role": "test_case",
+                "role_description": "A test case containing N, K, the binary string S, and target popcount P",
+                "type": "tuple",
+                "length": null,
+                "value_range": null,
+                "properties": {
+                  "ordered": true
+                },
+                "components": [
+                  {
+                    "role": "n",
+                    "role_description": "Length of the binary string S",
+                    "type": "integer",
+                    "length": null,
+                    "value_range": {
+                      "min": 1,
+                      "max": 200000
+                    },
+                    "properties": {}
+                  },
+                  {
+                    "role": "k",
+                    "role_description": "Size of substrings for XOR operation",
+                    "type": "integer",
+                    "length": null,
+                    "value_range": {
+                      "min": 1,
+                      "max": 200000
+                    },
+                    "properties": {}
+                  },
+                  {
+                    "role": "p",
+                    "role_description": "Target popcount (number of 1s in T)",
+                    "type": "integer",
+                    "length": null,
+                    "value_range": {
+                      "min": 0,
+                      "max": "N-K+1"
+                    },
+                    "properties": {}
+                  },
+                  {
+                    "role": "s",
+                    "role_description": "Binary string of length N",
+                    "type": "string",
+                    "length": {
+                      "min": 1,
+                      "max": 200000
+                    },
+                    "value_range": null,
+                    "properties": {
+                      "ordered": true
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "character_set_binary",
+            "description": "S consists only of characters '0' and '1'.",
+            "formal": "S[i] ∈ {0,1}",
+            "source_sections": [
+              "description",
+              "constraints"
+            ]
+          },
+          {
+            "name": "target_popcount_binding",
+            "description": "After performing a sequence of bit flips on S, the XOR of all substrings of length K must yield a string T whose popcount equals the given P.",
+            "formal": "popcount(T) = P, where T = XOR_{i=1}^{N-K+1} S[i..i+K-1]",
+            "source_sections": [
+              "description",
+              "objective"
+            ]
+          },
+          {
+            "name": "allowed_operations",
+            "description": "You may flip any bit of S (0→1 or 1→0). Each flip counts as one modification. No other operations are allowed.",
+            "formal": "edit set = { flip(i) | i ∈ [1,N] }",
+            "source_sections": [
+              "description"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization",
+        "description": "Find the minimum number of bit flips required to make popcount(T) = P. If impossible, output -1.",
+        "target": "minimum_flips",
+        "requires_solution": true,
+        "certificate_requirement": "Output a single integer per test case: the minimum number of flips or -1."
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "interval_xor_reduction",
+            "description": "Each bit T[i] equals the XOR of S[i..i+N-K]. This relationship remains true regardless of the values of S and defines how flips propagate to T.",
+            "properties": {},
+            "evidence_source": "original_solution"
+          },
+          {
+            "name": "flip_impact_linearity",
+            "description": "Flipping S[j] toggles every T[i] for which j ∈ [i, i+N-K]. The total effect on popcount(T) is additive and can be precomputed via difference arrays.",
+            "properties": {},
+            "evidence_source": "analysis"
+          },
+          {
+            "name": "minimality_lower_bound",
+            "description": "The minimal number of flips to achieve target P is the Hamming distance between the current effect vector and the desired effect vector (mod 2), minimized subject to achieving P. This corresponds to solving a nearest-codeword-like problem.",
+            "properties": {},
+            "evidence_source": "proof_required"
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "公交延误指标最小调整",
+      "description": "在城市交通网络中，有 N 个公交站点依序排列。每天结束时，每个站点被标记为准点（0）或延误（1），形成长度为 N 的状态序列 S。\n\n交通管理中心定义“延误指标”来评估整体线路：首先取所有长度为 K 的连续站点区段（即连续 K 个站点），共 N−K+1 个区段；对这些区段的状态序列按位进行异或运算，得到一个长度为 K 的二进制串 T，T 中 1 的个数就是该线路的延误指标。\n\n现在你可以对任意站点的状态进行翻转（0 变 1，1 变 0），每次翻转计为一次操作。你的任务是：通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P。如果无论如何翻转都无法达到 P，输出 -1。",
+      "input_format": "第一行一个整数 T，表示测试用例的数量。接下来每个测试用例占两行。\n第一行包含三个整数 N, K, P，分别表示站点总数、区段长度、目标延误指标。\n第二行包含一个长度为 N 的、仅由字符 '0' 和 '1' 构成的字符串 S，表示各个站点的初始状态。",
+      "output_format": "对于每个测试用例，输出一行一个整数，表示最少需要的翻转次数；若无法达到目标，则输出 -1。",
+      "constraints": [
+        "1 ≤ T ≤ 10",
+        "1 ≤ K ≤ N ≤ 2 × 10^5",
+        "0 ≤ P ≤ 2 × 10^5",
+        "S 仅包含字符 '0' 和 '1'，且 |S| = N",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n4 2 2\n1001",
+          "output": "0",
+          "explanation": "初始 S=1001，长度为 2 的子串有 \"10\"、\"00\"、\"01\"，按位异或得 T=\"11\"，延误指标为 2，等于目标 P=2，无需翻转。"
+        },
+        {
+          "input": "1\n4 2 0\n1001",
+          "output": "1",
+          "explanation": "初始延误指标为 2，目标为 0。最少翻转第 2 位（0→1），S 变为 1101，子串为 \"11\"、\"10\"、\"01\"，异或得 T=\"00\"，指标为 0。翻转次数为 1。"
+        },
+        {
+          "input": "1\n3 3 3\n000",
+          "output": "3",
+          "explanation": "初始 S=000，K=3，只有一个子串即 S 自身，因此 T=\"000\"，延误指标为 0，目标 P=3。必须将所有 3 位翻转为 1，得到 S=111，T=\"111\"，指标为 3。显然至少需要 3 次翻转，无法更少。"
+        },
+        {
+          "input": "1\n3 2 3\n000",
+          "output": "-1",
+          "explanation": "初始 S=000，K=2，子串有 \"00\"、\"00\"，异或得 T=\"00\"，延误指标为 0。延误指标的最大可能值为 K=2，无法达到目标 P=3，因此无解，输出 -1。"
+        }
+      ],
+      "notes": "延误指标定义为：所有长度为 K 的连续子串按位异或后得到的长度为 K 的串 T 中 1 的个数。按位异或即对应位分别进行异或运算（0⊕0=0, 0⊕1=1, 1⊕1=0）。\n可能存在无法达到目标的情况，例如当目标 P 大于 K 时必然无解；此外，某些情形可能因奇偶性限制而无解。请务必在无解时输出 -1。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "核心约束新增目标 popcount 匹配条件与允许的位翻转操作；目标从计算 popcount 变为最小修改次数；不变量从纯区间 XOR 归约扩展为修改操作对 popcount 的影响与最小性下界。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4724,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.6798,
+          "O": 0.5103,
+          "V": 0.7046
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.6798,
+          "objective_type_distance": 0.5075,
+          "objective_text_distance": 0.5146,
+          "invariant_match_distance": 0.7046
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "必须将原题输出的 popcount 绑定为反向目标，使题目方向反转。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 新增 target_popcount_binding，约束最终 popcount 必须等于 P",
+            "objective 从计算 popcount 改为最小化修改次数"
+          ],
+          "innovation_reason": "将正向计算任务翻转为目标驱动设计，使求解从输出变成输入构造。",
+          "difficulty_reason": "算法需要围绕目标约束反推 S 的状态，要求深入理解修改对结果的影响。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "必须定义合法的修改操作，将反向设计落实到具体、可分析的操作上。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 新增 allowed_operations，明确只能翻转位",
+            "invariant 新增 flip_impact_linearity，描述翻转如何影响目标 popcount"
+          ],
+          "innovation_reason": "将反向设计映射到原对象（二进制串）的自然操作空间，避免随意添加无关操作。",
+          "difficulty_reason": "要求分析操作序列与最终 popcount 的精确对应，并利用该关系进行最优决策。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "必须承担最小修改责任，防止只输出任意可行修改。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确为最小化修改次数，并包含 certificate 要求输出该最小值或 -1",
+            "invariant 新增 minimality_lower_bound，为最小性提供理论下界"
+          ],
+          "innovation_reason": "答案从单纯的计算结果变成了带有最优性承诺的构造/修改决策。",
+          "difficulty_reason": "要求证明不能更少，通常需要构造下界和匹配的构造方案，并处理无解情形。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "使用 interval_xor_reduction 将每个 T[i] 化为 S[i..i+N-K] 的 XOR，然后利用前缀和快速计算 popcount。",
+        "reusable_subroutines": "前缀和计算、区间 XOR 查询、popcount 计算。",
+        "new_solver_core": "利用 flip_impact_linearity 建立每个 S 位对 popcount 贡献的线性方程组（模 2），将目标 P 转化为对贡献和的约束，然后通过贪心或 DP 找出最小翻转数，可能需要考虑无解条件（如奇偶性矛盾）。",
+        "new_proof_obligation": "证明最小翻转数的下界：任意翻转方案翻转次数至少为所得贡献向量的某种距离，并证明算法达到下界。还需证明无解判断的充分必要性。",
+        "why_direct_reuse_fails": "原解只计算现成 S 的 popcount，不具备修改决策能力，无法给出最小翻转方案，更缺少最小性证明。"
+      },
+      "anti_shallow_rationale": "新题并非仅改变输出格式或添加无关约束：它将求解方向从正向计算彻底翻转为目标驱动的输入修改，并强制要求最小性证明。算法核心必须从线性归约转向带约束的最近向量问题，创新点显著。"
+    }
+  }
+}

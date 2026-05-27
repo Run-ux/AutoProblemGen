@@ -1,0 +1,1001 @@
+{
+  "problem_id": "taco_codeforces_65e2144e4f0c",
+  "source_problem_ids": [
+    "taco_codeforces_65e2144e4f0c"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_65e2144e4f0c",
+      "E2",
+      "codeforces",
+      "The only difference with E1 is the question of the problem. Vlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Th...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimize the number of friends needed to always intercept an agent moving from the root to any leaf, or output -1 if impossible",
+    "target": "count",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "原题天然存在第二评价指标（朋友总移动距离），且与最小朋友数量有真实冲突：较少朋友需要更多移动才能覆盖所有逃脱路径，较多朋友则可静态放置。双目标可形成帕累托前沿，带来真正的算法结构改变，而非仅输出格式变化。相比之下，逆设计可能过度背离原题核心规律，构造/证据规则易退化为浅改。；创新度判断：引入总移动距离作为第二指标，将原题的单目标最小化改造成双目标权衡前沿，核心义务从计算单一最优值变成维护不可支配状态并证明前沿完整性，迫使算法同时处理数量和代价两个耦合维度。；难度判断：主求解责任从贪心计数升级为多目标优化，需要设计能在树结构上动态维护帕累托前沿的算法（如DP或扩展BFS），并证明状态压缩不会丢失折中信息，显著抬高了算法设计与正确性证明的难度。；风险判断：最大风险是第二指标若未能与核心约束深度耦合，可能退化为原答案的后处理附加输出。通过helper强制将移动代价嵌入状态定义和支配规则，并要求不变量解释为何不可先优化一个再优化另一个，可有效控制风险。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_65e2144e4f0c",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case_count",
+          "role_description": "number of test cases",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        },
+        {
+          "role": "room_count",
+          "role_description": "number of rooms in a test case",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 2,
+            "max": 200000
+          },
+          "properties": {}
+        },
+        {
+          "role": "friend_count",
+          "role_description": "number of friends in a test case",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 199999
+          },
+          "properties": {}
+        },
+        {
+          "role": "friend_positions",
+          "role_description": "rooms occupied by friends",
+          "type": "array",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 2,
+            "max": null
+          },
+          "properties": {
+            "distinct": true
+          }
+        },
+        {
+          "role": "tree",
+          "role_description": "undirected tree connecting the rooms",
+          "type": "tree",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "connected": true,
+            "acyclic": true,
+            "simple": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "graph_is_tree",
+          "description": "The maze consists of n rooms and n-1 bidirectional corridors, forming a connected acyclic graph (a tree).",
+          "formal": "G = (V, E), |V| = n, |E| = n-1, G is a tree",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "start_node_fixed",
+          "description": "Vlad always starts the game in room 1.",
+          "formal": "start = 1",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "goal_leaf_excluding_start",
+          "description": "Vlad wins by reaching a room other than 1 that has exactly one incident corridor (a leaf).",
+          "formal": "∀ v ∈ V, if v ≠ 1 ∧ deg(v) = 1, then v is a winning room for Vlad",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "friends_distinct_positions",
+          "description": "All friends are placed in distinct rooms; no two friends occupy the same room.",
+          "formal": "∀ i ≠ j, x_i ≠ x_j",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "friends_not_at_start",
+          "description": "No friend starts in room 1; all friend rooms satisfy x_i ≥ 2.",
+          "formal": "∀ i, x_i ≥ 2",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "simultaneous_moves",
+          "description": "In each unit of time, every participant may traverse at most one corridor, and all moves happen at the same time.",
+          "formal": "At each time step, each player chooses an adjacent node or stays; all choices are executed simultaneously",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "movement_optional",
+          "description": "Participants are allowed to stay in their current room and not move during a time unit.",
+          "formal": "∀ player p, ∀ time t, p may choose to stay in place",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "room_capacity_unlimited",
+          "description": "Any room can hold all participants at the same time without restriction.",
+          "formal": "capacity(v) = ∞",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "catch_on_encounter",
+          "description": "Friends win if a friend meets Vlad in any room or on any corridor before Vlad reaches a winning leaf.",
+          "formal": "Friends win if ∃ f, t such that pos_t(f) = pos_t(Vlad) or they traverse the same edge in opposite directions between time t and t+1, and this occurs before Vlad reaches a leaf v ≠ 1 with deg(v)=1",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "minimize the number of friends needed to always intercept an agent moving from the root to any leaf, or output -1 if impossible",
+      "target": "count",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "frontier_safety_invariant",
+          "description": "在每个主循环迭代开始处理Vlad前沿列表之前,列表中所有节点均未被任何朋友占据,即对于列表中的每个节点v,friends[v] == -1,确保Vlad始终位于安全位置。",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "interception_condition",
+          "description": "当Vlad在移动步尝试进入某节点v时,若该节点已被朋友占据（friends[v] != -1）,则对应朋友被记录为必需（加入needed）,且Vlad不再从v继续扩展,这稳定地将拦截事件与朋友需求绑定。",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "single_objective_to_tradeoff_frontier",
+  "rejected_candidates": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3407，落地轴=C, O, V。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 3 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "forbidden_seed_property_violated",
+      "selection_reason": "原题要求输出最小朋友数，标准解法在BFS过程中维护了needed字典，记录了拦截Vlad所需的朋友集合，只需将最终输出改为该集合即可获得合法方案，这符合“原解只要顺手回溯就能拿到方案”，且规则要求输出必须真正改变主要解法，此升级极可能退化为表面修改。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type为minimize_value，输出仅为整数。standard_solution_code中维护变量needed = {}，在vlad扩展时若friends[v] != -1则needed[friends[v]] = True，最后返回len(needed)。故原解已具备顺手输出完整方案的能力。",
+        "feedback": "该种子题的核心输出是计数值，内部虽存在解对象但回溯成本极低。若强行要求规范解（如字典序最小集合），大概率仅需在现有算法上附加选择逻辑，未能迫使主约束、状态设计或证明责任发生实质变更。建议选择输出类型与核心解法耦合更紧的种子题（如原题仅回答存在性，再升级为构造规范解）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.84,
+      "reason_code": "localizable_obstruction_certificate",
+      "selection_reason": "原题无解情形（输出-1）源于Vlad存在安全路径到叶子，该原因可转化为局部可检查的证据：指定一条路径，并为路径上每个节点提供Vlad距离与最近朋友距离的比较证明，检查者只需验证距离不等式；改造后要求输出朋友拦截方案或此类证据，推动核心约束（C）需引入距离计算，目标（O）变为结构化输出，不变式（V）需涵盖证书正确性，变化实质性而非表面格式。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "核心约束 goal_leaf_excluding_start 定义胜利叶子，catch_on_encounter 定义拦截条件。无解时存在叶子到最近朋友的距离严格大于根到叶子的距离，该性质可对每个点局部检查。原solution代码中interception_condition使用friends数组检测，可扩展为输出证据对象。",
+        "feedback": "建议确保证据结构明确包含路径节点序列及每个节点的安全时间证据，避免退化为文本解释；注意失败分支与成功分支对称，避免特判处理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.35,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题是最小化问题，改成计数最小解的数量仍高度依赖原判定过程（BFS求必经朋友），计数变为后处理，未实现状态结构重构，不符合规则要求的深度改造和新型责任。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求不能保持原状态结构不动、不能继续由原题判定过程主导（helpers redlines）；原题solution_code中的BFS前沿与拦截逻辑仍是新题计数的前置条件，计数目标未锁入主求解目标。",
+        "feedback": "原题求最小朋友数属于最优值而非存在性问题，变换为计数最小子集时，核心算法仍须先执行原题判定，未能将计数义务嵌入主状态转移，导致差异不足。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是一个完全信息确定性的对抗博弈，朋友策略旨在保证最坏情况拦截，已具备最坏情况分析，但不存在可变动的扰动源；引入额外扰动将违反规则禁止的'硬造对手'。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述：'Friends know the plan of a maze and intend to win. They don't want to waste too much energy. They ask you to determine if they can win and if they can, what minimum number of friends must remain in the maze so that they can always catch Vlad.' 所有移动同步、房间容量无限制、捕获条件确定，没有提及任何顺序不确定、资源波动或局部选择差异。核心约束中仅包含固定规则，不存在可被建模为扰动的原生不确定性。",
+        "feedback": "规则要求原题自带顺序不确定或局部选择差异，但种子题是确定性的完全信息博弈，最坏情况已由'always catch'覆盖。引入扰动只能通过硬造不确定因素（如移动失败、观测延迟），与规则禁止项冲突。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题已经是求最小朋友数的优化问题，规则要求从判定题扩展为阈值优化，但种子题本身已具备阈值优化特性，再应用该规则无法产生充分的差异，属于重复包装。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的目标明确为'minimize the number of friends needed to always intercept'（objective.type='minimize_value'），其求解算法利用了拦截条件的单调性（invariant 中的 frontier_safety_invariant 和 interception_condition）。规则要求将 feasibility 升级为 extremal，但原题已直接解决 extremal 问题，无需额外参数化阈值。",
+        "feedback": "该种子题已经是典型的阈值优化题，建议选择具有清晰判定性但尚未涉及的题目作为种子，例如只问是否拦截的版本。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_tradeoff_identified",
+      "selection_reason": "原题描述中明确提到‘不想浪费太多能量’，这自然引出‘总移动步数’的第二评价指标。最小化朋友数量与最小化总移动步数存在真实冲突：更少的朋友可能需要每个朋友移动更长距离，导致总步数增加。该权衡无法由原最小朋友数答案直接后处理得到，需要新的算法设计。符合规则要求的真实冲突和自然属性。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述：‘They don't want to waste too much energy.’ 当前目标是最小化朋友数量。引入总移动步数作为第二指标是对这一背景的直接建模。原算法仅计算最小朋友数，未记录步数，因此不能通过后处理得到帕累托前沿。",
+        "feedback": "规则适用于该种子题，可规划为双目标权衡前沿题，但需注意确保状态耦合与支配规则的新颖性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_inverse_target_and_edit_operations",
+      "selection_reason": "原题输出为最小朋友数，可作为反向目标被指定；树结构（边）与朋友位置均为原核心对象，修改、设计这些元素属于自然操作空间；可定义最小性证明责任，符合反向设计硬检查。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 中 objective 为 minimize_value，输出为整数（朋友数或 -1），可直接作为 target_result_binding 的反向目标。core_constraints 中的 graph_is_tree、friends_distinct_positions、friends_not_at_start 等定义了修改或设计的自然边界。原 input_structure 包含 tree 和 friend_positions，二者均可作为设计自由度，符合 edit_operation_contract 的“来自原题对象的自然结构”要求。",
+        "feedback": "该种子题输出明确且可量化，树与朋友位置构成自然的编辑或设计空间，引入最小性要求后能有效翻转求解方向，建议进入规划阶段。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_independent_units",
+      "selection_reason": "原题本身即为全局耦合的追及问题，所有朋友的位置和移动策略与 Vlad 的路径选择相互依赖，不存在可独立求解的局部单元，无法通过该规则转型为‘共享资源或全局守恒’的耦合题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 'catch_on_encounter' 要求朋友必须在 Vlad 到达叶子前拦截，拦截事件依赖全局路径；'frontier_safety_invariant' 和 'interception_condition' 表明解法需要全局维护朋友占领节点和 Vlad 前沿的变化，且最终最小子集选择是全局决策，没有任何可独立处理的局部组件。",
+        "feedback": "该原题不具备规则要求的可分解局部单元，强行构造将导致语义不自然，建议选择具有独立子问题（如多个区间、独立背包、分治类题目）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "missing_required_seed_properties",
+      "selection_reason": "原题操作是同时移动，不存在可转化为双方轮流选择的自然操作。同时移动是核心机制，强行改为轮流将破坏对抗本质。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述明确：'In each unit of time, every participant may traverse at most one corridor, and all moves happen at the same time.' 规则要求原题存在可轮流选择的操作，但此题所有参与者同时行动，不符合这一必备属性。",
+        "feedback": "该种子题已具备对抗性，但缺乏轮流选择基础，不符合规则要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "already_global_cover",
+      "selection_reason": "原题已经是典型的多对象全局覆盖问题（选择最小朋友子集拦截所有根到叶路径），核心对象族（朋友位置）和覆盖关系（拦截条件）天然存在，不存在从局部单路径扩展为覆盖的新空间，规则适用性不足。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述要求最小化能够拦截任何根到叶路径的朋友子集，核心约束包含catch_on_encounter和同时移动，已经是覆盖问题的完整体现。规则要求原题核心对象具有路径、区间等局部结构且可形成覆盖，但该题全局覆盖语义早已内建，没有待扩展的孤立局部对象族。",
+        "feedback": "规则旨在将单路径/单区间升级为覆盖，但当前题目已具备成熟的覆盖定义和最优性要求，强制套用会退化为浅层改写甚至仅改变背景，违背'不能只是重复处理多个独立对象'等辅助红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting_problem",
+      "selection_reason": "原题目标是求最小朋友数量，属于最优化问题，不存在明确有限的计数对象，无法定义自然权重或统计量。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'minimize_value', objective.description = 'minimize the number of friends needed to always intercept...'，且原题描述未提及任何方案计数，整个问题没有计数集合或枚举目标。",
+        "feedback": "该规则要求种子题有明确的有限计数对象，但此题是求最值，不满足 eligibility.required_seed_properties。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property_violated",
+      "message": "原题要求输出最小朋友数，标准解法在BFS过程中维护了needed字典，记录了拦截Vlad所需的朋友集合，只需将最终输出改为该集合即可获得合法方案，这符合“原解只要顺手回溯就能拿到方案”，且规则要求输出必须真正改变主要解法，此升级极可能退化为表面修改。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type为minimize_value，输出仅为整数。standard_solution_code中维护变量needed = {}，在vlad扩展时若friends[v] != -1则needed[friends[v]] = True，最后返回len(needed)。故原解已具备顺手输出完整方案的能力。",
+        "feedback": "该种子题的核心输出是计数值，内部虽存在解对象但回溯成本极低。若强行要求规范解（如字典序最小集合），大概率仅需在现有算法上附加选择逻辑，未能迫使主约束、状态设计或证明责任发生实质变更。建议选择输出类型与核心解法耦合更紧的种子题（如原题仅回答存在性，再升级为构造规范解）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "localizable_obstruction_certificate",
+      "message": "原题无解情形（输出-1）源于Vlad存在安全路径到叶子，该原因可转化为局部可检查的证据：指定一条路径，并为路径上每个节点提供Vlad距离与最近朋友距离的比较证明，检查者只需验证距离不等式；改造后要求输出朋友拦截方案或此类证据，推动核心约束（C）需引入距离计算，目标（O）变为结构化输出，不变式（V）需涵盖证书正确性，变化实质性而非表面格式。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.84,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "核心约束 goal_leaf_excluding_start 定义胜利叶子，catch_on_encounter 定义拦截条件。无解时存在叶子到最近朋友的距离严格大于根到叶子的距离，该性质可对每个点局部检查。原solution代码中interception_condition使用friends数组检测，可扩展为输出证据对象。",
+        "feedback": "建议确保证据结构明确包含路径节点序列及每个节点的安全时间证据，避免退化为文本解释；注意失败分支与成功分支对称，避免特判处理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题是最小化问题，改成计数最小解的数量仍高度依赖原判定过程（BFS求必经朋友），计数变为后处理，未实现状态结构重构，不符合规则要求的深度改造和新型责任。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.35,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求不能保持原状态结构不动、不能继续由原题判定过程主导（helpers redlines）；原题solution_code中的BFS前沿与拦截逻辑仍是新题计数的前置条件，计数目标未锁入主求解目标。",
+        "feedback": "原题求最小朋友数属于最优值而非存在性问题，变换为计数最小子集时，核心算法仍须先执行原题判定，未能将计数义务嵌入主状态转移，导致差异不足。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是一个完全信息确定性的对抗博弈，朋友策略旨在保证最坏情况拦截，已具备最坏情况分析，但不存在可变动的扰动源；引入额外扰动将违反规则禁止的'硬造对手'。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述：'Friends know the plan of a maze and intend to win. They don't want to waste too much energy. They ask you to determine if they can win and if they can, what minimum number of friends must remain in the maze so that they can always catch Vlad.' 所有移动同步、房间容量无限制、捕获条件确定，没有提及任何顺序不确定、资源波动或局部选择差异。核心约束中仅包含固定规则，不存在可被建模为扰动的原生不确定性。",
+        "feedback": "规则要求原题自带顺序不确定或局部选择差异，但种子题是确定性的完全信息博弈，最坏情况已由'always catch'覆盖。引入扰动只能通过硬造不确定因素（如移动失败、观测延迟），与规则禁止项冲突。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题已经是求最小朋友数的优化问题，规则要求从判定题扩展为阈值优化，但种子题本身已具备阈值优化特性，再应用该规则无法产生充分的差异，属于重复包装。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的目标明确为'minimize the number of friends needed to always intercept'（objective.type='minimize_value'），其求解算法利用了拦截条件的单调性（invariant 中的 frontier_safety_invariant 和 interception_condition）。规则要求将 feasibility 升级为 extremal，但原题已直接解决 extremal 问题，无需额外参数化阈值。",
+        "feedback": "该种子题已经是典型的阈值优化题，建议选择具有清晰判定性但尚未涉及的题目作为种子，例如只问是否拦截的版本。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_tradeoff_identified",
+      "message": "原题描述中明确提到‘不想浪费太多能量’，这自然引出‘总移动步数’的第二评价指标。最小化朋友数量与最小化总移动步数存在真实冲突：更少的朋友可能需要每个朋友移动更长距离，导致总步数增加。该权衡无法由原最小朋友数答案直接后处理得到，需要新的算法设计。符合规则要求的真实冲突和自然属性。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述：‘They don't want to waste too much energy.’ 当前目标是最小化朋友数量。引入总移动步数作为第二指标是对这一背景的直接建模。原算法仅计算最小朋友数，未记录步数，因此不能通过后处理得到帕累托前沿。",
+        "feedback": "规则适用于该种子题，可规划为双目标权衡前沿题，但需注意确保状态耦合与支配规则的新颖性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "natural_inverse_target_and_edit_operations",
+      "message": "原题输出为最小朋友数，可作为反向目标被指定；树结构（边）与朋友位置均为原核心对象，修改、设计这些元素属于自然操作空间；可定义最小性证明责任，符合反向设计硬检查。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 中 objective 为 minimize_value，输出为整数（朋友数或 -1），可直接作为 target_result_binding 的反向目标。core_constraints 中的 graph_is_tree、friends_distinct_positions、friends_not_at_start 等定义了修改或设计的自然边界。原 input_structure 包含 tree 和 friend_positions，二者均可作为设计自由度，符合 edit_operation_contract 的“来自原题对象的自然结构”要求。",
+        "feedback": "该种子题输出明确且可量化，树与朋友位置构成自然的编辑或设计空间，引入最小性要求后能有效翻转求解方向，建议进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_independent_units",
+      "message": "原题本身即为全局耦合的追及问题，所有朋友的位置和移动策略与 Vlad 的路径选择相互依赖，不存在可独立求解的局部单元，无法通过该规则转型为‘共享资源或全局守恒’的耦合题。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 'catch_on_encounter' 要求朋友必须在 Vlad 到达叶子前拦截，拦截事件依赖全局路径；'frontier_safety_invariant' 和 'interception_condition' 表明解法需要全局维护朋友占领节点和 Vlad 前沿的变化，且最终最小子集选择是全局决策，没有任何可独立处理的局部组件。",
+        "feedback": "该原题不具备规则要求的可分解局部单元，强行构造将导致语义不自然，建议选择具有独立子问题（如多个区间、独立背包、分治类题目）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "missing_required_seed_properties",
+      "message": "原题操作是同时移动，不存在可转化为双方轮流选择的自然操作。同时移动是核心机制，强行改为轮流将破坏对抗本质。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述明确：'In each unit of time, every participant may traverse at most one corridor, and all moves happen at the same time.' 规则要求原题存在可轮流选择的操作，但此题所有参与者同时行动，不符合这一必备属性。",
+        "feedback": "该种子题已具备对抗性，但缺乏轮流选择基础，不符合规则要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "already_global_cover",
+      "message": "原题已经是典型的多对象全局覆盖问题（选择最小朋友子集拦截所有根到叶路径），核心对象族（朋友位置）和覆盖关系（拦截条件）天然存在，不存在从局部单路径扩展为覆盖的新空间，规则适用性不足。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述要求最小化能够拦截任何根到叶路径的朋友子集，核心约束包含catch_on_encounter和同时移动，已经是覆盖问题的完整体现。规则要求原题核心对象具有路径、区间等局部结构且可形成覆盖，但该题全局覆盖语义早已内建，没有待扩展的孤立局部对象族。",
+        "feedback": "规则旨在将单路径/单区间升级为覆盖，但当前题目已具备成熟的覆盖定义和最优性要求，强制套用会退化为浅层改写甚至仅改变背景，违背'不能只是重复处理多个独立对象'等辅助红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting_problem",
+      "message": "原题目标是求最小朋友数量，属于最优化问题，不存在明确有限的计数对象，无法定义自然权重或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'minimize_value', objective.description = 'minimize the number of friends needed to always intercept...'，且原题描述未提及任何方案计数，整个问题没有计数集合或枚举目标。",
+        "feedback": "该规则要求种子题有明确的有限计数对象，但此题是求最值，不满足 eligibility.required_seed_properties。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.3407,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.373,
+            "O": 0.5511,
+            "V": 0.4552
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.373,
+            "objective_type_distance": 0.6874,
+            "objective_text_distance": 0.3466,
+            "invariant_match_distance": 0.4552
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 0.84,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3407，落地轴=C, O, V。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 3 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_65e2144e4f0c_urban_commute_20260527_134542",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

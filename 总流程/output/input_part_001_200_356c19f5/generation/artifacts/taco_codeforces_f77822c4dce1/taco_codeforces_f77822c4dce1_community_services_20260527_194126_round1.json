@@ -1,0 +1,829 @@
+{
+  "problem_id": "taco_codeforces_f77822c4dce1",
+  "source_problem_ids": [
+    "taco_codeforces_f77822c4dce1"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_f77822c4dce1",
+      "codeforces",
+      "Finally, you have defeated Razor and now, you are the Most Wanted street racer. Sergeant Cross has sent the full police force after you in a deadly pursuit. Fortunately, you have found a hiding spot but you fear that...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "construction",
+    "description": "construct a permutation and a vertex coloring satisfying given constraints",
+    "target": "",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（排列和着色）可作为稳定的反向目标，修改边是一个自然操作，与原核心规律（超立方同构和邻接着色）直接相关，且能引入最小修改证明责任，符合反向设计要求。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_f77822c4dce1",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "graph",
+      "length": {
+        "min": 1,
+        "max": 524288
+      },
+      "value_range": {
+        "min": 0,
+        "max": 65535
+      },
+      "properties": {
+        "connected": true,
+        "simple": true,
+        "multiple_test_cases": true
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "permutation_isomorphism_to_simple_hypercube",
+          "description": "The permutation P must map the simple n-dimensional hypercube to the input graph, i.e., after relabeling vertices of the simple hypercube by P, the resulting edge set is identical to the input edge set.",
+          "formal": "Let H be the simple n-dimensional hypercube. For (u,v) in E(H), (P[u],P[v]) must be an edge in the input graph, and the sets of edges coincide.",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "color_assignment_range",
+          "description": "Each vertex color must be an integer between 0 and n-1 inclusive.",
+          "formal": "∀v, color(v) ∈ {0, 1, …, n-1}",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "neighbor_color_completeness",
+          "description": "For every vertex u and every color c, there must exist at least one neighbor v of u such that color(v) = c.",
+          "formal": "∀u ∈ V, ∀c ∈ {0,…,n-1}, ∃v ∈ N(u) : color(v)=c",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construction",
+      "description": "construct a permutation and a vertex coloring satisfying given constraints",
+      "target": "",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "monotonicity",
+          "description": "BFS distance never decreases and rp propagation only occurs along increasing distances, preventing cycles and ensuring the process conforms to hypercube layers.",
+          "properties": {
+            "distance_update_rule": "d[nexv] = d[v] + 1 when first visited",
+            "rp_update_condition": "d[nexv] > d[v]"
+          },
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "bit_accumulation",
+          "description": "The rp value for each vertex is built by collecting distinct dimension bits along a shortest path from the root using bitwise OR, which equals XOR because no dimension repeats on a shortest path in a hypercube.",
+          "properties": {
+            "root_neighbor_init": "rp[neighbor_i] = 1 << i",
+            "forward_propagation": "rp[nexv] |= rp[v]"
+          },
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "distance_popcount_equality",
+          "description": "The BFS distance from the root equals the number of 1-bits in the rp identifier for every vertex.",
+          "properties": {
+            "root_popcount": 0,
+            "increment_property": "each forward step adds exactly one new set bit"
+          },
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "bijective_mapping",
+          "description": "After the BFS traversal, rp[0..2^n-1] is a permutation of {0,...,2^n-1}, providing an inverse mapping that reconstructs the simple hypercube labeling.",
+          "properties": {
+            "inverse_construction": "p[rp[i]] = i",
+            "range": "[0, 2^n)"
+          },
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "coloring_feasibility",
+          "description": "A vertex coloring satisfying the condition that every vertex has neighbors of all n colors exists if and only if n is a power of two.",
+          "properties": {
+            "feasibility_check": "2**n % n == 0",
+            "n_condition": "n is a power of two"
+          },
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "coloring_xor_assignment",
+          "description": "When a valid coloring exists, the color of the vertex with simple label i is the XOR of the indices of the set bits of i, which ensures the adjacency color property.",
+          "properties": {
+            "color_formula": "color = XOR_{j: i&(1<<j)} j"
+          },
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 1 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "original_problem_already_requires_full_construction",
+      "selection_reason": "原题要求输出排列和着色，已经是完整构造方案，且是任意方案，不满足规则所需从答案升级的起点条件。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中objective类型为construction，输出描述为'output any permutation P'和'output the colouring'，属于完整方案输出。",
+        "feedback": "规则的核心是从答案值升级为规范解，但种子题已要求输出完整构造，这使得规范解要求容易退化为格式变化或后处理，无法保证解法实质更新。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_obstruction_not_localizable",
+      "selection_reason": "种子题的无解条件完全由全局参数 n 决定（2**n % n == 0），无法映射为可局部检查的图冲突证据。规则要求‘做不到的原因可以用局部证据表示’，但该种子题的无解情形（输出 -1）仅依赖于 n，与具体图结构无关，无法构造出局部冲突证书。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "根据 schema 中的 invariant 'coloring_feasibility'：'2**n % n == 0，n is a power of two'，以及约束 'neighbor_color_completeness'，无解判定仅依赖全局参数 n，而非图的局部结构。种子题输出为 -1 时没有提供任何局部可验证的冲突证据。",
+        "feedback": "该规则不适用于当前种子题，因为种子题的无解情形无法自然产生局部冲突证据。建议换用其他种子题，其中无解由局部结构矛盾（如子图染色冲突）引起，以匹配规则对局部可检查证书的要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "ambiguous_dedup",
+      "selection_reason": "种子题为构造题，没有定义计数对象和等价关系，去重规则说不清楚。虽然解空间有限，但无法直接转为计数题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题要求输出任意一个置换和着色组合，输出样例显示多种可能，但未说明如何判断两个输出是同一个解。规则要求‘不同解之间的等价关系能说清楚’，而种子题中无此定义。",
+        "feedback": "需要先为种子题定义计数对象（如考虑置换和着色的组合并去重），再应用计数变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题为精确的排列超立方体识别与着色构造，输入图是确定性的超立方体同构副本，不存在顺序不确定、资源波动或局部选择差异等可形式化为扰动模型的语义要素，无法满足规则要求的原生扰动放大条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述明确“It is guaranteed that the graph described in the input is a permuted n-dimensional hypercube”，核心约束为排列必须使简单超立方体与输入图边集一致（permutation_isomorphism_to_simple_hypercube），目标为构造一个解，无任何不确定性或最坏情况语义，不符合规则 eligibility 中的 required_seed_properties。",
+        "feedback": "该种子题缺乏可被放大为保底优化的原生扰动来源，强行添加扰动将仅是外套二分或背景硬造对手，违反红线。建议选择具有内在不确定性的题目（如在线序列、含随机移动的博弈等）应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题着色可行性仅由 2^n % n == 0 决定的离散条件，不存在一个可单调变化并形成临界边界的参数，无法自然升级为求最小/最大阈值或容量的优化题；原题核心要求是构造置换与着色，而非寻找可行区域的边界。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 invariant 'coloring_feasibility' 描述着色存在性当且仅当 2**n % n == 0，给出的是离散可分性条件而非连续或有序的单调可行区域；规则 required_seed_properties 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，但此处 n 是固定输入，不存在可变的阈值参数；此外原题 objective 为 construction 类型，无容量或阈值概念，强行引入阈值会破坏原约束语义。",
+        "feedback": "此题缺乏可参数化的临界阈值，建议寻找包含资源分配、容量限制或连续决策边界的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_optimization_target",
+      "selection_reason": "种子题是构造性问题，题目要求输出置换和着色以满足给定约束，没有单目标最优值，不存在可冲突的第二评价指标，无法应用本规则。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的objective类型为construction，描述为“construct a permutation and a vertex coloring satisfying given constraints”，无量化目标函数。规则要求原题目标附近存在自然的第二评价指标，但此题无单目标可优化，无法构建权衡前沿。",
+        "feedback": "原题不存在优化目标，因此无法引入冲突的第二指标。建议改用其他种子题或规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "valid_inverse_target",
+      "selection_reason": "原题输出（排列和着色）可作为稳定的反向目标，修改边是一个自然操作，与原核心规律（超立方同构和邻接着色）直接相关，且能引入最小修改证明责任，符合反向设计要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题要求构造排列P和着色c，已知输入图G。反向设计可将P和c固定为目标，要求最少修改G的边以使目标合法。修改操作（add/remove edges）直接作用于图结构，与原约束“排列同构于简单超立方”和“邻居颜色完备性”的核心规律一致。原题解法的BFS和位运算为验证反向解的合法性提供了可计算基础。规则助手'target_result_binding'要求目标绑定原题结果，'edit_operation_contract'要求定义操作空间，'minimality_or_certificate_lock'要求最小性，均可在此种子上实现。符合eligible要求。",
+        "feedback": "规则适用，具备足够的设计自由度：可限定修改类型（仅删边、添边或两者），指定目标为排列或着色或两者，以及证明最小性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "MISSING_DECOMPOSABLE_UNITS",
+      "selection_reason": "原题是单一超立方体上的置换和着色构造问题，不存在多个可独立处理的局部单元（如本问题只有一个全局图，顶点之间相互依赖，没有可分割的组件）。因此无法通过共享资源或全局守恒将原本独立的组件耦合，因为根本没有独立的组件。该规则要求原题有可分解的局部单元，但种子题不满足此前提。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中的core_constraints是整图约束（置换同构、颜色范围、邻居颜色完备），objective是构造全局解，没有任何局部子任务划分。解决方案代码也显示从根出发的全局BFS构建rp数组，所有顶点只在一个连通图中处理，没有可分离的独立单元。input_structure为single graph，无多组件。原题摘要和示例中均未出现可分解为局部单元的结构。",
+        "feedback": "该规则要求原题存在可分解的局部单元，但种子题不具备这种结构。需要寻找具有多个独立子任务（如多个区间、多个子图）的种子题，才能通过共享资源或全局守恒将它们耦合。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是图构造题，要求输出一个排列和着色，没有可轮流选择或操作的过程。强行改为博弈只能硬造背景，违反规则要求行动必须来自原题已有操作。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为构造排列和着色（见 objective.type: 'construction'），不存在任何玩家需要逐步进行的操作。规则要求'原题存在可轮流选择、拿取、移动或改变状态的自然操作'，但原题输入为图，输出为排列和着色，没有操作环节。规则的正例是'把单人取物最优改成两人轮流取物'，但此题没有取物等操作。",
+        "feedback": "建议选择具有明确单人决策过程或操作的种子题，如取物、移动、选择项等，才能自然转化为博弈。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_single_path_structure",
+      "selection_reason": "原题没有单路径、单区间或单子树等局部结构作为核心对象，也没有可组合的局部对象族以供形成覆盖或割关系，本质上是一个图同构+染色构造问题，不满足规则所需的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为：给定一个permuted n-dimensional hypercube，要求找到一个置换P和一个顶点染色，使得每个顶点邻域包含所有颜色。核心是构造置换和染色，没有涉及任何路径的求解或性质。规则要求'原题核心对象具有路径、区间、子树、集合等局部结构'，本原题不满足。",
+        "feedback": "该种子题不适合被扩展成覆盖或割问题。若希望应用此规则，需要种子题以单条路径或子树为研究核心，如寻找满足某种性质的路径等。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_seed",
+      "selection_reason": "原题是构造题（要求输出排列和着色方案），而非计数题。规则要求原题已经有明确有限的计数对象，但原题不涉及任何计数，无法定义自然权重或统计量。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中`objective.type`为`construction`，描述为构造排列和顶点着色，没有计数对象。原题输出为具体的排列和着色序列，不统计任何数量。规则`eligibility.required_seed_properties`要求‘原题已经有明确有限的计数对象’，`forbidden_seed_properties`包含‘原题不是稳定计数对象’，均不满足。",
+        "feedback": "规则要求从普通计数扩展到带权分布，但原题本质上不是计数问题，无法应用该变换。请选择以计数为核心的原题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "original_problem_already_requires_full_construction",
+      "message": "原题要求输出排列和着色，已经是完整构造方案，且是任意方案，不满足规则所需从答案升级的起点条件。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中objective类型为construction，输出描述为'output any permutation P'和'output the colouring'，属于完整方案输出。",
+        "feedback": "规则的核心是从答案值升级为规范解，但种子题已要求输出完整构造，这使得规范解要求容易退化为格式变化或后处理，无法保证解法实质更新。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_obstruction_not_localizable",
+      "message": "种子题的无解条件完全由全局参数 n 决定（2**n % n == 0），无法映射为可局部检查的图冲突证据。规则要求‘做不到的原因可以用局部证据表示’，但该种子题的无解情形（输出 -1）仅依赖于 n，与具体图结构无关，无法构造出局部冲突证书。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "根据 schema 中的 invariant 'coloring_feasibility'：'2**n % n == 0，n is a power of two'，以及约束 'neighbor_color_completeness'，无解判定仅依赖全局参数 n，而非图的局部结构。种子题输出为 -1 时没有提供任何局部可验证的冲突证据。",
+        "feedback": "该规则不适用于当前种子题，因为种子题的无解情形无法自然产生局部冲突证据。建议换用其他种子题，其中无解由局部结构矛盾（如子图染色冲突）引起，以匹配规则对局部可检查证书的要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "ambiguous_dedup",
+      "message": "种子题为构造题，没有定义计数对象和等价关系，去重规则说不清楚。虽然解空间有限，但无法直接转为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题要求输出任意一个置换和着色组合，输出样例显示多种可能，但未说明如何判断两个输出是同一个解。规则要求‘不同解之间的等价关系能说清楚’，而种子题中无此定义。",
+        "feedback": "需要先为种子题定义计数对象（如考虑置换和着色的组合并去重），再应用计数变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题为精确的排列超立方体识别与着色构造，输入图是确定性的超立方体同构副本，不存在顺序不确定、资源波动或局部选择差异等可形式化为扰动模型的语义要素，无法满足规则要求的原生扰动放大条件。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述明确“It is guaranteed that the graph described in the input is a permuted n-dimensional hypercube”，核心约束为排列必须使简单超立方体与输入图边集一致（permutation_isomorphism_to_simple_hypercube），目标为构造一个解，无任何不确定性或最坏情况语义，不符合规则 eligibility 中的 required_seed_properties。",
+        "feedback": "该种子题缺乏可被放大为保底优化的原生扰动来源，强行添加扰动将仅是外套二分或背景硬造对手，违反红线。建议选择具有内在不确定性的题目（如在线序列、含随机移动的博弈等）应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题着色可行性仅由 2^n % n == 0 决定的离散条件，不存在一个可单调变化并形成临界边界的参数，无法自然升级为求最小/最大阈值或容量的优化题；原题核心要求是构造置换与着色，而非寻找可行区域的边界。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 invariant 'coloring_feasibility' 描述着色存在性当且仅当 2**n % n == 0，给出的是离散可分性条件而非连续或有序的单调可行区域；规则 required_seed_properties 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，但此处 n 是固定输入，不存在可变的阈值参数；此外原题 objective 为 construction 类型，无容量或阈值概念，强行引入阈值会破坏原约束语义。",
+        "feedback": "此题缺乏可参数化的临界阈值，建议寻找包含资源分配、容量限制或连续决策边界的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_optimization_target",
+      "message": "种子题是构造性问题，题目要求输出置换和着色以满足给定约束，没有单目标最优值，不存在可冲突的第二评价指标，无法应用本规则。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的objective类型为construction，描述为“construct a permutation and a vertex coloring satisfying given constraints”，无量化目标函数。规则要求原题目标附近存在自然的第二评价指标，但此题无单目标可优化，无法构建权衡前沿。",
+        "feedback": "原题不存在优化目标，因此无法引入冲突的第二指标。建议改用其他种子题或规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_inverse_target",
+      "message": "原题输出（排列和着色）可作为稳定的反向目标，修改边是一个自然操作，与原核心规律（超立方同构和邻接着色）直接相关，且能引入最小修改证明责任，符合反向设计要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题要求构造排列P和着色c，已知输入图G。反向设计可将P和c固定为目标，要求最少修改G的边以使目标合法。修改操作（add/remove edges）直接作用于图结构，与原约束“排列同构于简单超立方”和“邻居颜色完备性”的核心规律一致。原题解法的BFS和位运算为验证反向解的合法性提供了可计算基础。规则助手'target_result_binding'要求目标绑定原题结果，'edit_operation_contract'要求定义操作空间，'minimality_or_certificate_lock'要求最小性，均可在此种子上实现。符合eligible要求。",
+        "feedback": "规则适用，具备足够的设计自由度：可限定修改类型（仅删边、添边或两者），指定目标为排列或着色或两者，以及证明最小性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "MISSING_DECOMPOSABLE_UNITS",
+      "message": "原题是单一超立方体上的置换和着色构造问题，不存在多个可独立处理的局部单元（如本问题只有一个全局图，顶点之间相互依赖，没有可分割的组件）。因此无法通过共享资源或全局守恒将原本独立的组件耦合，因为根本没有独立的组件。该规则要求原题有可分解的局部单元，但种子题不满足此前提。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中的core_constraints是整图约束（置换同构、颜色范围、邻居颜色完备），objective是构造全局解，没有任何局部子任务划分。解决方案代码也显示从根出发的全局BFS构建rp数组，所有顶点只在一个连通图中处理，没有可分离的独立单元。input_structure为single graph，无多组件。原题摘要和示例中均未出现可分解为局部单元的结构。",
+        "feedback": "该规则要求原题存在可分解的局部单元，但种子题不具备这种结构。需要寻找具有多个独立子任务（如多个区间、多个子图）的种子题，才能通过共享资源或全局守恒将它们耦合。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是图构造题，要求输出一个排列和着色，没有可轮流选择或操作的过程。强行改为博弈只能硬造背景，违反规则要求行动必须来自原题已有操作。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为构造排列和着色（见 objective.type: 'construction'），不存在任何玩家需要逐步进行的操作。规则要求'原题存在可轮流选择、拿取、移动或改变状态的自然操作'，但原题输入为图，输出为排列和着色，没有操作环节。规则的正例是'把单人取物最优改成两人轮流取物'，但此题没有取物等操作。",
+        "feedback": "建议选择具有明确单人决策过程或操作的种子题，如取物、移动、选择项等，才能自然转化为博弈。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_single_path_structure",
+      "message": "原题没有单路径、单区间或单子树等局部结构作为核心对象，也没有可组合的局部对象族以供形成覆盖或割关系，本质上是一个图同构+染色构造问题，不满足规则所需的种子属性。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为：给定一个permuted n-dimensional hypercube，要求找到一个置换P和一个顶点染色，使得每个顶点邻域包含所有颜色。核心是构造置换和染色，没有涉及任何路径的求解或性质。规则要求'原题核心对象具有路径、区间、子树、集合等局部结构'，本原题不满足。",
+        "feedback": "该种子题不适合被扩展成覆盖或割问题。若希望应用此规则，需要种子题以单条路径或子树为研究核心，如寻找满足某种性质的路径等。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_seed",
+      "message": "原题是构造题（要求输出排列和着色方案），而非计数题。规则要求原题已经有明确有限的计数对象，但原题不涉及任何计数，无法定义自然权重或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中`objective.type`为`construction`，描述为构造排列和顶点着色，没有计数对象。原题输出为具体的排列和着色序列，不统计任何数量。规则`eligibility.required_seed_properties`要求‘原题已经有明确有限的计数对象’，`forbidden_seed_properties`包含‘原题不是稳定计数对象’，均不满足。",
+        "feedback": "规则要求从普通计数扩展到带权分布，但原题本质上不是计数问题，无法应用该变换。请选择以计数为核心的原题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "core_constraints",
+          "input_structure",
+          "invariant",
+          "objective"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 1 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_f77822c4dce1_community_services_20260527_194126",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

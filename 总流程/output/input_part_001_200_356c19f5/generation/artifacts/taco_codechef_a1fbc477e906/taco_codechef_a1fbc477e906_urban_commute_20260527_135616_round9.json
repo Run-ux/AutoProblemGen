@@ -1,0 +1,1858 @@
+{
+  "problem_id": "urban_commute_klxor_inverse",
+  "source_problem_ids": [
+    "taco_codechef_a1fbc477e906"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_a1fbc477e906",
+      "KLXOR",
+      "codechef",
+      "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you. You are given a binary string S of length N. Let string T be the result of taking the XOR...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "必须改变核心约束以引入目标绑定和修改操作，改变目标以定义最小化任务，改变不变量以支撑操作影响分析和最小性证明。",
+    "summary": "核心约束新增目标 popcount 匹配条件与允许的位翻转操作；目标从计算 popcount 变为最小修改次数；不变量从纯区间 XOR 归约扩展为修改操作对 popcount 的影响与最小性下界。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4724,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4724,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.6798,
+      "O": 0.5103,
+      "V": 0.7046
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.6798,
+      "objective_type_distance": 0.5075,
+      "objective_text_distance": 0.5146,
+      "invariant_match_distance": 0.7046
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "Find the minimum number of bit flips required to make popcount(T) = P. If impossible, output -1.",
+    "target": "minimum_flips",
+    "requires_solution": true,
+    "certificate_requirement": "Output a single integer per test case: the minimum number of flips or -1."
+  },
+  "rule_selection_reason": "规则 'local_path_to_global_cover' 试图将子串 Xor 扩展为全局覆盖，但原题核心规律在于 Xor 化简而非覆盖关系，强行添加覆盖约束会退化为无关额外限制，违反反换皮红线。'forward_solution_to_inverse_design' 则直接利用原题输出 (popcount) 作为反向目标，通过定义修改操作 (翻转 S 中位) 和最小性证明，彻底翻转求解方向，且不脱离 Xor 化简核心，是唯一能保证结构差异与创新度的规则。；创新度判断：将原题‘计算所有子串 Xor 后 1 的个数’翻转为‘给定目标 1 的个数，求最少翻转 S 中的多少位可达目标’，从而新增目标指定、修改操作合约与最小性证明三项核心义务，使问题从直接计算变为约束满足与组合优化。；难度判断：原题线性扫描解法不再适用，新题需在指数级修改空间中寻找最优方案，可能要求建立 Xor 影响差分、图论建模或 dp，主求解责任从简单的区间 Xor 计数提升为组合最优化，难度显著增加。；风险判断：主要风险在于若最小性证明过于宽松，问题可能退化为简单贪心或仍为线性；但可通过引入‘每次翻转影响一个固定区间’的不变量、限制操作只允许位翻转，并结合原不变量 (T 每位等于某连续段 Xor) 约束，设计出多项式时间可验证的最优解，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "urban_commute_klxor_inverse",
+    "source": "taco_codechef_a1fbc477e906",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case_count",
+          "role_description": "Number of test cases",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10
+          },
+          "properties": {}
+        },
+        {
+          "role": "test_cases",
+          "role_description": "Sequence of test cases",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "ordered": true
+          },
+          "components": [
+            {
+              "role": "test_case",
+              "role_description": "A test case containing N, K, the binary string S, and target popcount P",
+              "type": "tuple",
+              "length": null,
+              "value_range": null,
+              "properties": {
+                "ordered": true
+              },
+              "components": [
+                {
+                  "role": "n",
+                  "role_description": "Length of the binary string S",
+                  "type": "integer",
+                  "length": null,
+                  "value_range": {
+                    "min": 1,
+                    "max": 200000
+                  },
+                  "properties": {}
+                },
+                {
+                  "role": "k",
+                  "role_description": "Size of substrings for XOR operation",
+                  "type": "integer",
+                  "length": null,
+                  "value_range": {
+                    "min": 1,
+                    "max": 200000
+                  },
+                  "properties": {}
+                },
+                {
+                  "role": "p",
+                  "role_description": "Target popcount (number of 1s in T)",
+                  "type": "integer",
+                  "length": null,
+                  "value_range": {
+                    "min": 0,
+                    "max": "N-K+1"
+                  },
+                  "properties": {}
+                },
+                {
+                  "role": "s",
+                  "role_description": "Binary string of length N",
+                  "type": "string",
+                  "length": {
+                    "min": 1,
+                    "max": 200000
+                  },
+                  "value_range": null,
+                  "properties": {
+                    "ordered": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "character_set_binary",
+          "description": "S consists only of characters '0' and '1'.",
+          "formal": "S[i] ∈ {0,1}",
+          "source_sections": [
+            "description",
+            "constraints"
+          ]
+        },
+        {
+          "name": "target_popcount_binding",
+          "description": "After performing a sequence of bit flips on S, the XOR of all substrings of length K must yield a string T whose popcount equals the given P.",
+          "formal": "popcount(T) = P, where T = XOR_{i=1}^{N-K+1} S[i..i+K-1]",
+          "source_sections": [
+            "description",
+            "objective"
+          ]
+        },
+        {
+          "name": "allowed_operations",
+          "description": "You may flip any bit of S (0→1 or 1→0). Each flip counts as one modification. No other operations are allowed.",
+          "formal": "edit set = { flip(i) | i ∈ [1,N] }",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "Find the minimum number of bit flips required to make popcount(T) = P. If impossible, output -1.",
+      "target": "minimum_flips",
+      "requires_solution": true,
+      "certificate_requirement": "Output a single integer per test case: the minimum number of flips or -1."
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "interval_xor_reduction",
+          "description": "Each bit T[i] equals the XOR of S[i..i+N-K]. This relationship remains true regardless of the values of S and defines how flips propagate to T.",
+          "properties": {},
+          "evidence_source": "original_solution"
+        },
+        {
+          "name": "flip_impact_linearity",
+          "description": "Flipping S[j] toggles every T[i] for which j ∈ [i, i+N-K]. The total effect on popcount(T) is additive and can be precomputed via difference arrays.",
+          "properties": {},
+          "evidence_source": "analysis"
+        },
+        {
+          "name": "minimality_lower_bound",
+          "description": "The minimal number of flips to achieve target P is the Hamming distance between the current effect vector and the desired effect vector (mod 2), minimized subject to achieving P. This corresponds to solving a nearest-codeword-like problem.",
+          "properties": {},
+          "evidence_source": "proof_required"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "使用 interval_xor_reduction 将每个 T[i] 化为 S[i..i+N-K] 的 XOR，然后利用前缀和快速计算 popcount。",
+    "reusable_subroutines": "前缀和计算、区间 XOR 查询、popcount 计算。",
+    "new_solver_core": "利用 flip_impact_linearity 建立每个 S 位对 popcount 贡献的线性方程组（模 2），将目标 P 转化为对贡献和的约束，然后通过贪心或 DP 找出最小翻转数，可能需要考虑无解条件（如奇偶性矛盾）。",
+    "new_proof_obligation": "证明最小翻转数的下界：任意翻转方案翻转次数至少为所得贡献向量的某种距离，并证明算法达到下界。还需证明无解判断的充分必要性。",
+    "why_direct_reuse_fails": "原解只计算现成 S 的 popcount，不具备修改决策能力，无法给出最小翻转方案，更缺少最小性证明。"
+  },
+  "anti_shallow_rationale": "新题并非仅改变输出格式或添加无关约束：它将求解方向从正向计算彻底翻转为目标驱动的输入修改，并强制要求最小性证明。算法核心必须从线性归约转向带约束的最近向量问题，创新点显著。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "必须将原题输出的 popcount 绑定为反向目标，使题目方向反转。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 新增 target_popcount_binding，约束最终 popcount 必须等于 P",
+        "objective 从计算 popcount 改为最小化修改次数"
+      ],
+      "innovation_reason": "将正向计算任务翻转为目标驱动设计，使求解从输出变成输入构造。",
+      "difficulty_reason": "算法需要围绕目标约束反推 S 的状态，要求深入理解修改对结果的影响。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "必须定义合法的修改操作，将反向设计落实到具体、可分析的操作上。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 新增 allowed_operations，明确只能翻转位",
+        "invariant 新增 flip_impact_linearity，描述翻转如何影响目标 popcount"
+      ],
+      "innovation_reason": "将反向设计映射到原对象（二进制串）的自然操作空间，避免随意添加无关操作。",
+      "difficulty_reason": "要求分析操作序列与最终 popcount 的精确对应，并利用该关系进行最优决策。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "必须承担最小修改责任，防止只输出任意可行修改。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确为最小化修改次数，并包含 certificate 要求输出该最小值或 -1",
+        "invariant 新增 minimality_lower_bound，为最小性提供理论下界"
+      ],
+      "innovation_reason": "答案从单纯的计算结果变成了带有最优性承诺的构造/修改决策。",
+      "difficulty_reason": "要求证明不能更少，通常需要构造下界和匹配的构造方案，并处理无解情形。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "original_solution_already_contains_witness",
+      "selection_reason": "原题只要求输出 popcount，但标准解法已经显式构造了完整 T 的每一位（数组 s），仅多一步即可输出整个字符串，属于规则明确禁止的“原解只要顺手回溯就能拿到方案”。同时答案唯一，不存在多个方案，无法定义规范顺序，不满足“方案有自然顺序或能定义清楚的规范”。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 为 value_computation（计算 popcount），不要求输出完整解；标准解法代码片段 `s[i]=dp[n-k+i]-r & 1` 已逐位计算出 T，返回值 `s.count(1)` 改为返回 s 即可得到完整方案；规则 eligibility.forbidden_seed_properties 明确禁止“原解只要顺手回溯就能拿到方案”；required_seed_properties 要求有自然顺序或可定义规范，但 T 是唯一确定的，没有选择空间。",
+        "feedback": "该种子题的核心困难在于推导区间异或的化简公式，输出完整 T 不会改变算法主体，令规范性要求无法驱动解法升级，应寻找其他具有合法构造空间或需要排序/优化的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "infeasible_obstruction",
+      "selection_reason": "种子题是纯计算问题（求popcount），对所有合法输入都有确定输出，不存在‘做不到’的情形，无法要求输出冲突证据。即便强行引入无解条件（如引入目标串），也会脱离原题核心，缺乏自然性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为 value_computation，描述为‘计算所有K长度子串的XOR结果中的1的个数’，核心约束仅为二进制字符串，无组合可行性判定。不变式提供的是计算优化，未定义冲突结构。原问题中不存在任何无解分支或失败语义。",
+        "feedback": "若欲适用本规则，建议选取或改造种子题使其原本即具备可行解判定或构造任务，且具有明显的不可行条件，使得失败证据可基于问题结构自然产生。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "mismatch_seed_type",
+      "selection_reason": "种子题是确定性值计算（求popcount），不是存在性或单一最优值问题，没有多个解或等价关系，无法定义计数对象和去重规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标 'objective.description' 为 '计算所有K长度子串的XOR结果中的1的个数'，输出为单一数值；约束中无解空间定义；解法通过前缀和直接计算唯一答案。规则要求种子属性 '解空间有限' 和 '不同解之间的等价关系能说清楚'，但本题不存在多个解。",
+        "feedback": "建议为计数规则选择具有离散解集（如构造方案、满足条件的组合数）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题 KLXOR 是一个确定性计算问题，不存在任何原生不确定性来源（如顺序不确定、资源波动、局部选择差异）。若强行引入扰动，只能基于故事背景硬造对手，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求种子题具有'顺序不确定、资源波动或局部选择差异'（来源：rule.eligibility.required_seed_properties）。原题摘要显示，输入完全固定，所有K长度子串的XOR是确定性操作，无天然扰动（来源：seed_schema.core_constraints仅包含字符集限制，objective为确定性popcount计算）。此外，数据实例中无任何随机或顺序依赖属性。",
+        "feedback": "建议选择含有天然顺序选择、资源波动或对抗性场景的种子题（如在线算法、对抗性输入、资源分配问题），否则规则无法在不违反红线的前提下应用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_feasibility_structure",
+      "selection_reason": "原题是直接计算popcount的值计算问题，不存在可行性判定或单调可行区域，无法自然升级为阈值优化。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema中objective.type为value_computation，target为popcount，描述为“计算所有K长度子串的XOR结果中的1的个数”，不是判定问题；core_constraints仅包含字符集binary，无可行性单调约束；invariant描述区间异或简化，未体现可行域随参数变化的分层结构。",
+        "feedback": "规则要求种子题具有清晰的可行性随参数单调性或分层结构，但原题是纯粹的计算题，缺少可参数化的可行性概念，强行引入阈值只会机械外挂二分，违反redlines。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_conflicting_secondary_metric",
+      "selection_reason": "原题为纯计数问题，目标为单值popcount，其附近不存在自然的第二评价指标与之冲突，无法满足规则对种子题的要求。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标描述为'计算所有K长度子串的XOR结果中的1的个数'，不涉及任何其他度量；schema中约束仅字符集为二进制，未暗示任何第二指标；规则eligibility明确要求'原题目标附近存在自然的第二评价指标'且'第二指标不是原目标的同义改写'，此处无法找到。",
+        "feedback": "建议选择具有天然多维度评价的种子题，例如资源分配、路径规划等，方可应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "strong_inverse_design_fit",
+      "selection_reason": "原题输出（popcount）可直接作为反向目标值；二进制串的位翻转构成自然的修改操作空间；最小修改代价可结合原题约简性质进行验证和证明。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "规则要求原题输出或性质可作为反向目标（KLXOR输出是1的个数，可指定目标值）且存在自然修改操作（翻转二进制位）；种子题核心约束为二进制串，恒等式 interval_xor_reduction 提供了修改影响的演化依据。",
+        "feedback": "建议将目标 popcount 值与原始 popcount 差异作为下界引导算法设计，并利用 interval_xor_reduction 加速修改代价计算。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_no_decomposable_units",
+      "selection_reason": "原题KLXOR是单一全局计算：T为所有K长度子串的XOR结果的1的个数，没有可独立求解的局部单元（如独立区间、独立分块等），无法实现从局部独立到全局耦合的转变。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'You are given a binary string S of length N. Let string T be the result of taking the XOR of all substrings of size K of S. You need to find the number of 1 bits in T.' 其核心约束只有字符串为二进制，目标是计算popcount，不变量揭示了数学化简，整个问题为单一计算任务。输入输出结构未展示可分解的独立组件。",
+        "feedback": "建议寻找具有明显局部独立分量（如多个区间、多个独立查询、多个可选位置）的种子题再应用本规则，强行施加共享资源会沦为与核心规律无关的额外约束，触碰全局红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_operation",
+      "selection_reason": "原题是纯计算题，没有任何玩家可进行的操作或状态改变，无法转化为双方轮流选择的博弈。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题摘要显示只要求计算给定字符串所有 K 长度子串 XOR 的 1 的个数，没有决策过程。原题约束仅为‘字符串由 0 和 1 组成’，核心操作是固定计算，不存在不同操作改变后续可选状态的可能，完全符合规则禁止条件‘操作顺序固定且没有选择自由度’和‘对抗方只能靠故事背景硬造’。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "local_objects_exist",
+      "selection_reason": "原题天然存在一族有重叠的区间对象（所有长度为K的子串），可以自然形成最小点覆盖或割问题，满足局部到全局覆盖的转换要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述：所有长度为K的子串构成区间族；core_constraints节显示字符集限定；invariant节揭示区间XOR可归约至连续段，表明区间结构明确；规则声明要求种子具有路径/区间/子树等局部结构且能形成覆盖关系，原题已满足。",
+        "feedback": "该种子题适合扩展为点覆盖区间变体，但需确保新目标不流于经典问题，可增加额外约束提升新颖性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题不是计数题，而是计算给定二进制串所有K长子串XOR结果中1的个数，没有有限的计数对象集合，无法定义自然的权重、等级或统计量。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“计算所有K长度子串的XOR结果中的1的个数”，objective类型为value_computation，target为popcount；不存在“统计合法方案个数”等典型计数目标，也没有可枚举的对象集合可赋予权重。",
+        "feedback": "规则要求原题具有明确有限且可加权的计数对象，但本题仅需计算一个确定值，强制包装为带权分布会脱离原题核心规律，导致硬造权重。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "original_solution_already_contains_witness",
+      "message": "原题只要求输出 popcount，但标准解法已经显式构造了完整 T 的每一位（数组 s），仅多一步即可输出整个字符串，属于规则明确禁止的“原解只要顺手回溯就能拿到方案”。同时答案唯一，不存在多个方案，无法定义规范顺序，不满足“方案有自然顺序或能定义清楚的规范”。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 为 value_computation（计算 popcount），不要求输出完整解；标准解法代码片段 `s[i]=dp[n-k+i]-r & 1` 已逐位计算出 T，返回值 `s.count(1)` 改为返回 s 即可得到完整方案；规则 eligibility.forbidden_seed_properties 明确禁止“原解只要顺手回溯就能拿到方案”；required_seed_properties 要求有自然顺序或可定义规范，但 T 是唯一确定的，没有选择空间。",
+        "feedback": "该种子题的核心困难在于推导区间异或的化简公式，输出完整 T 不会改变算法主体，令规范性要求无法驱动解法升级，应寻找其他具有合法构造空间或需要排序/优化的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "infeasible_obstruction",
+      "message": "种子题是纯计算问题（求popcount），对所有合法输入都有确定输出，不存在‘做不到’的情形，无法要求输出冲突证据。即便强行引入无解条件（如引入目标串），也会脱离原题核心，缺乏自然性。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为 value_computation，描述为‘计算所有K长度子串的XOR结果中的1的个数’，核心约束仅为二进制字符串，无组合可行性判定。不变式提供的是计算优化，未定义冲突结构。原问题中不存在任何无解分支或失败语义。",
+        "feedback": "若欲适用本规则，建议选取或改造种子题使其原本即具备可行解判定或构造任务，且具有明显的不可行条件，使得失败证据可基于问题结构自然产生。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "mismatch_seed_type",
+      "message": "种子题是确定性值计算（求popcount），不是存在性或单一最优值问题，没有多个解或等价关系，无法定义计数对象和去重规则。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标 'objective.description' 为 '计算所有K长度子串的XOR结果中的1的个数'，输出为单一数值；约束中无解空间定义；解法通过前缀和直接计算唯一答案。规则要求种子属性 '解空间有限' 和 '不同解之间的等价关系能说清楚'，但本题不存在多个解。",
+        "feedback": "建议为计数规则选择具有离散解集（如构造方案、满足条件的组合数）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题 KLXOR 是一个确定性计算问题，不存在任何原生不确定性来源（如顺序不确定、资源波动、局部选择差异）。若强行引入扰动，只能基于故事背景硬造对手，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求种子题具有'顺序不确定、资源波动或局部选择差异'（来源：rule.eligibility.required_seed_properties）。原题摘要显示，输入完全固定，所有K长度子串的XOR是确定性操作，无天然扰动（来源：seed_schema.core_constraints仅包含字符集限制，objective为确定性popcount计算）。此外，数据实例中无任何随机或顺序依赖属性。",
+        "feedback": "建议选择含有天然顺序选择、资源波动或对抗性场景的种子题（如在线算法、对抗性输入、资源分配问题），否则规则无法在不违反红线的前提下应用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_feasibility_structure",
+      "message": "原题是直接计算popcount的值计算问题，不存在可行性判定或单调可行区域，无法自然升级为阈值优化。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema中objective.type为value_computation，target为popcount，描述为“计算所有K长度子串的XOR结果中的1的个数”，不是判定问题；core_constraints仅包含字符集binary，无可行性单调约束；invariant描述区间异或简化，未体现可行域随参数变化的分层结构。",
+        "feedback": "规则要求种子题具有清晰的可行性随参数单调性或分层结构，但原题是纯粹的计算题，缺少可参数化的可行性概念，强行引入阈值只会机械外挂二分，违反redlines。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_conflicting_secondary_metric",
+      "message": "原题为纯计数问题，目标为单值popcount，其附近不存在自然的第二评价指标与之冲突，无法满足规则对种子题的要求。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标描述为'计算所有K长度子串的XOR结果中的1的个数'，不涉及任何其他度量；schema中约束仅字符集为二进制，未暗示任何第二指标；规则eligibility明确要求'原题目标附近存在自然的第二评价指标'且'第二指标不是原目标的同义改写'，此处无法找到。",
+        "feedback": "建议选择具有天然多维度评价的种子题，例如资源分配、路径规划等，方可应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "strong_inverse_design_fit",
+      "message": "原题输出（popcount）可直接作为反向目标值；二进制串的位翻转构成自然的修改操作空间；最小修改代价可结合原题约简性质进行验证和证明。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "规则要求原题输出或性质可作为反向目标（KLXOR输出是1的个数，可指定目标值）且存在自然修改操作（翻转二进制位）；种子题核心约束为二进制串，恒等式 interval_xor_reduction 提供了修改影响的演化依据。",
+        "feedback": "建议将目标 popcount 值与原始 popcount 差异作为下界引导算法设计，并利用 interval_xor_reduction 加速修改代价计算。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_no_decomposable_units",
+      "message": "原题KLXOR是单一全局计算：T为所有K长度子串的XOR结果的1的个数，没有可独立求解的局部单元（如独立区间、独立分块等），无法实现从局部独立到全局耦合的转变。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'You are given a binary string S of length N. Let string T be the result of taking the XOR of all substrings of size K of S. You need to find the number of 1 bits in T.' 其核心约束只有字符串为二进制，目标是计算popcount，不变量揭示了数学化简，整个问题为单一计算任务。输入输出结构未展示可分解的独立组件。",
+        "feedback": "建议寻找具有明显局部独立分量（如多个区间、多个独立查询、多个可选位置）的种子题再应用本规则，强行施加共享资源会沦为与核心规律无关的额外约束，触碰全局红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_operation",
+      "message": "原题是纯计算题，没有任何玩家可进行的操作或状态改变，无法转化为双方轮流选择的博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题摘要显示只要求计算给定字符串所有 K 长度子串 XOR 的 1 的个数，没有决策过程。原题约束仅为‘字符串由 0 和 1 组成’，核心操作是固定计算，不存在不同操作改变后续可选状态的可能，完全符合规则禁止条件‘操作顺序固定且没有选择自由度’和‘对抗方只能靠故事背景硬造’。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "local_objects_exist",
+      "message": "原题天然存在一族有重叠的区间对象（所有长度为K的子串），可以自然形成最小点覆盖或割问题，满足局部到全局覆盖的转换要求。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述：所有长度为K的子串构成区间族；core_constraints节显示字符集限定；invariant节揭示区间XOR可归约至连续段，表明区间结构明确；规则声明要求种子具有路径/区间/子树等局部结构且能形成覆盖关系，原题已满足。",
+        "feedback": "该种子题适合扩展为点覆盖区间变体，但需确保新目标不流于经典问题，可增加额外约束提升新颖性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题不是计数题，而是计算给定二进制串所有K长子串XOR结果中1的个数，没有有限的计数对象集合，无法定义自然的权重、等级或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“计算所有K长度子串的XOR结果中的1的个数”，objective类型为value_computation，target为popcount；不存在“统计合法方案个数”等典型计数目标，也没有可枚举的对象集合可赋予权重。",
+        "feedback": "规则要求原题具有明确有限且可加权的计数对象，但本题仅需计算一个确定值，强制包装为带权分布会脱离原题核心规律，导致硬造权重。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划完全兑现了 inverse_design 规则专属合同：将正向 popcount 计算翻转为给定目标 P 的最小位翻转设计，定义了目标绑定、编辑操作和最小性证明，三个 helper 均落地到 C/O/V 轴的具体 schema 变化中。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "1. target_result_binding 落地：candidate_schema.core_constraints['target_popcount_binding'] 约束最终 popcount(T)=P，objective 要求最小翻转次数达成该目标，直接绑定原题结果语义。2. edit_operation_contract 落地：core_constraints['allowed_operations'] 明确定义翻转操作集，invariant['flip_impact_linearity'] 解释翻转如何影响 T 与 popcount。3. minimality_or_certificate_lock 落地：objective 明确为最小化翻转次数，invariant['minimality_lower_bound'] 提供理论下界，承担最小性证明责任。所有 helper 的 redlines 未被打破：非简单相等问法、操作源自原结构、不输出任意可行解。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面实现了反向设计规则的核心承诺：明确了目标延误指标绑定、允许位翻转操作，并要求最小翻转次数，符合最小性责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题目描述中：“你被允许对某些站点的状态进行翻转（0 变 1 或 1 变 0）... 通过最少的翻转次数，使得最终得到的延误指标恰好等于给定的目标值 P”，输出要求“最少需要的翻转次数”，且延误指标的计算基于原题的子串异或结构，修改操作直接作用于原对象 S。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_compliance_verified",
+      "message": "题面完整兑现了 forward_solution_to_inverse_design 的专属合同：目标 P 明确绑定原题结果语义（延误指标=popcount），允许操作仅限位翻转，要求最少修改次数并输出最小值或-1。三个 helper 的核心语义均已写实。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：“你被允许对某些站点的状态进行翻转（0 变 1 或 1 变 0）…你的任务是：通过最少的翻转次数，使得最终得到的延误指标恰好等于给定的目标值 P。如果无论怎么翻转都无法达到目标，输出 -1。” 目标 P 来自原题 popcount 的语义，修改操作直接操作二进制串位，目标严格最小化。new_schema 中 target_popcount_binding、allowed_operations 和 objective 的 minimization 与 certificate 要求均已体现在题面中。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "题面完整兑现了规则专属合同：反向目标绑定到原题结果语义（延误指标=P），修改操作来自原核心对象（位翻转），并明确要求最小修改次数。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中‘通过最少的翻转次数，使得最终得到的延误指标恰好等于给定的目标值 P’明确了反向目标和最小性要求；‘你被允许对某些站点的状态进行翻转（0 变 1 或 1 变 0）’定义了合法的修改操作；输出格式要求‘输出最少需要的翻转次数；若无法达到目标，则输出 -1’锁定了最小性责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized_in_text",
+      "message": "题面已明确要求用最少翻转次数使延误指标等于给定目标 P，翻转操作定义在原站点状态上，并承担了最小性责任（输出最小次数或 -1），三个 helper 的核心语义均已兑现。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题目描述：'通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P'实现了 target_result_binding。'可以对任意站点的状态进行翻转（0 变 1，1 变 0）'定义了 edit_operation_contract 允许的操作集。输出要求'最少需要的翻转次数'及无解输出 -1 落实了 minimality_or_certificate_lock。延误指标定义与 P 直接绑定原题结果语义，修改操作源自原核心对象 S，且最小性承诺避免了仅输出可行解。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_problem_validation_passed",
+      "message": "题面写清了反向目标（延误指标等于 P）、合法修改（翻转任意位）和最小性要求（最少翻转次数）；修改操作来自原题核对象（二进制串的位），且借助示例解释了操作对目标的影响，满足三个 helper 的专属语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "目标绑定：描述“通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P”和输出“最少翻转次数”落实 target_result_binding。修改操作：“你可以对任意站点的状态进行翻转（0 变 1，1 变 0）”来自原字符串，落实 edit_operation_contract。最小性：“最少翻转次数”作为优化目标，输出该值或 -1，落实 minimality_or_certificate_lock。示例解释展示了翻转如何改变延误指标，体现操作影响。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "ALL_HELPERS_REALIZED",
+      "message": "题面明确写清了反向目标（延误指标等于 P）、允许的操作（任意翻转）和最小性要求（最少翻转次数），完全兑现了规则专属语义合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中定义目标：“通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P”（对应 helper target_result_binding）；操作：“你可以对任意站点的状态进行翻转（0 变 1，1 变 0）”（对应 helper edit_operation_contract）；最小性：“输出一行一个整数，表示最少需要的翻转次数”（对应 helper minimality_or_certificate_lock）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确要求通过最少次数翻转二进制串使 popcount 达到给定目标，修改操作来自原题对象，并承担了最小化或输出 -1 的责任，完全兑现了规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：'通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P'；'可以对任意站点的状态进行翻转（0 变 1，1 变 0）'；输出格式：'输出一行一个整数，表示最少需要的翻转次数；若无法达到目标，则输出 -1'。规划摘要 new_schema 的 core_constraints 包含 target_popcount_binding 和 allowed_operations，objective 定义为 minimization 并附带 certificate 要求。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_satisfied",
+      "message": "题面完整实现了反向设计规则：将原题结果绑定为目标P，定义基于原结构的位翻转操作，并要求输出最小翻转次数，承担了最小性责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中明确“使得最终延误指标恰好等于给定的目标值P”（target_result_binding）；“在任意站点进行状态翻转……每次翻转计为一次操作”（edit_operation_contract）；“通过最少的翻转次数”（minimality_or_certificate_lock），且输出要求最小次数或-1。new_schema中的target_popcount_binding、allowed_operations和objective均与helper要求一致。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "RULE_CONTRACT_FULFILLED",
+      "message": "题面将原题 popcount 结果绑定为反向目标，定义了位翻转这一源自原题对象的自然操作，并明确要求输出最小翻转次数或不可行时的 -1，完整兑现了 forward_solution_to_inverse_design 规则的三个 helper 语义与核心承诺。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中“通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P”（最小性 + 目标绑定）；约束中“在任意站点进行状态翻转（准点变延误，延误变准点）”（操作定义源自原二进制串）；输入包含目标 P 且输出要求“最少需要的翻转次数；若无法达到目标，则输出 -1”（证书锁定）；样例解释展示了操作对延误指标的影响（edit_operation_contract 的线性关系被隐式满足）；注释强调延误指标上限为 K 并说明无解必须输出 -1（覆盖最小性下界与正确性责任）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_satisfied",
+      "message": "题面清晰定义了反向目标（延误指标等于 P）、允许的修改操作（位翻转）以及最小化责任（最少翻转次数），完全兑现了规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中明确规定：“通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P”（target_result_binding），“你可以在任意站点进行状态翻转（准点变延误，延误变准点），每次翻转计为一次操作”（edit_operation_contract），输出格式要求“最少需要的翻转次数；若无法达到目标，则输出 -1”（minimality_or_certificate_lock）。这些与 new_schema 中的 target_popcount_binding、allowed_operations、objective 完全对应。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.07,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "公交延误指标最小调整",
+    "description": "城市公交线路上有 N 个站点依序排列，每个站点在一天运营结束后会被标注为准点（0）或延误（1），构成长度为 N 的状态串 S。为了评估整体线路的延误状况，交通管理中心定义了“延误指标”：将 S 中所有长度为 K 的连续区段（共 N−K+1 个）取出，对这些区段的状态串按位进行异或运算，得到一个长度为 K 的二进制串 T，T 中 1 的个数即为延误指标。\n\n现在，你可以在任意站点进行状态翻转（准点变延误，延误变准点），每次翻转计为一次操作。你的任务是：通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P。如果无论如何翻转都无法达到 P，则输出 -1。",
+    "input_format": "第一行一个整数 T，表示测试用例的数量。接下来每个测试用例占两行。\n第一行包含三个整数 N, K, P，分别表示站点总数、区段长度、目标延误指标。\n第二行包含一个长度为 N 的、仅由字符 '0' 和 '1' 构成的字符串 S，表示各个站点的初始状态。",
+    "output_format": "对于每个测试用例，输出一行一个整数，表示最少需要的翻转次数；若无法达到目标，则输出 -1。",
+    "constraints": [
+      "1 ≤ T ≤ 10",
+      "1 ≤ K ≤ N ≤ 2 × 10^5",
+      "0 ≤ P ≤ K",
+      "S 仅包含字符 '0' 和 '1'，且 |S| = N",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n4 2 2\n1001",
+        "output": "0",
+        "explanation": "初始 S=1001，长度为 2 的子串有 “10”、“00”、“01”，按位异或得 T=“11”，延误指标为 2，等于目标 P=2，无需翻转。"
+      },
+      {
+        "input": "1\n4 2 0\n1001",
+        "output": "1",
+        "explanation": "初始延误指标为 2，目标为 0。最少翻转第 2 位（0→1），S 变为 1101，子串为 “11”、“10”、“01”，异或得 T=“00”，指标为 0。翻转次数为 1。"
+      },
+      {
+        "input": "1\n3 2 1\n000",
+        "output": "1",
+        "explanation": "初始延误指标为 0，目标为 1。翻转第 1 位（0→1），S=100，子串为 “10”、“00”，异或得 T=“10”，指标为 1。翻转次数为 1。"
+      },
+      {
+        "input": "1\n3 3 3\n000",
+        "output": "3",
+        "explanation": "初始 S=000，K=3，只有一个子串即 S 自身，因此 T=“000”，延误指标为 0，目标 P=3。必须将所有 3 位翻转为 1，得到 S=111，T=“111”，指标为 3。显然至少需要 3 次翻转，无法更少。"
+      }
+    ],
+    "notes": "延误指标定义为：所有长度为 K 的连续子串按位异或后得到的长度为 K 的串 T 中 1 的个数。按位异或即对应位分别进行异或运算（0⊕0=0, 0⊕1=1, 1⊕1=0）。\n注意：目标延误指标 P 的有效上界为 K，因为 T 的长度为 K。输入数据保证总是存在至少一种翻转方案使得延误指标达到 P，因此答案实际上不会是 −1；但为保持输出格式的完整性，若程序判断无法达到目标，仍应输出 −1。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_a1fbc477e906_urban_commute_20260527_135616",
+    "round_index": 9,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 8,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_urban_commute_20260527_135616_round8.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_urban_commute_20260527_135616_round8_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "pass",
+      "generated_status": "ok",
+      "quality_score": 88.0,
+      "divergence_score": 79.7,
+      "non_full_dimensions": [
+        {
+          "dimension": "variant_fidelity",
+          "score": 3.0,
+          "rationale": "new_schema 规定的 P 值范围为 0..N-K+1，但 generated_problem 的约束允许 0 ≤ P ≤ N，且样例 3（N=3,K=2,P=3）和样例 4（N=3,K=3,P=3）均超出 N-K+1，导致输入结构未完全遵循 new_schema。任务变体、操作和目标等其他方面落地正确。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range",
+            "generated_problem.constraints",
+            "generated_problem.samples[2]",
+            "generated_problem.samples[3]"
+          ]
+        }
+      ],
+      "suggested_revisions": [
+        "统一 P 的范围：根据题意 P 为长度为 K 的字符串的 popcount，自然 ≤K，建议修正 new_schema 为 0≤P≤K，或同步修改题面约束为 0≤P≤N-K+1（但后者不符合逻辑）。",
+        "增加至少一个输出 -1 的样例，并附带解释说明为何无法达到目标。",
+        "将 constraints 中 P 的范围与 new_schema 对齐或修正 new_schema。",
+        "添加一个无解样例（输出 -1）。",
+        "将 constraints 中的 0 ≤ P ≤ K 改为 0 ≤ P ≤ N-K+1，或检查 new_schema 的设定并统一两者。",
+        "可修改 notes 为“可以证明总有解，但为保持程序完整性，当无解时仍需输出 -1”，或直接移除“答案不会是 -1”的断言。",
+        "统一 P 的约束范围，使其与 new_schema 一致。",
+        "澄清或修正 notes 中关于无解可能性的表述，避免矛盾。",
+        "可增加一个边界样例（如 N=1, K=1）或无解样例以增强覆盖，但非必须。",
+        "将约束中的 P 上限修改为 K（即 0 ≤ P ≤ K），并确保样例的输入值符合新约束。",
+        "修正 constraints 中 P 的范围为 0 ≤ P ≤ K，与延误指标的定义和样例保持一致",
+        "将 new_schema 中 p 的 max 从 'N-K+1' 改为 'K'，或更新题面约束以匹配 new_schema（但后者会导致逻辑错误）。",
+        "明确表述：若题目数据保证总是有解，则去掉“输出 -1” 的部分；若允许无解情况，则去掉“总存在”的断言，并提供无解样例。",
+        "统一 P 的值域定义，消除 new_schema 与题面约束间的分歧。",
+        "消除 notes 中的逻辑矛盾，明确是否有无解情况，并考虑补充无解样例或说明数据保证有解。",
+        "将 new_schema 中 P 的 max 改为 'K'，并确保所有相关部分同步更新。",
+        "建议将 new_schema 中 P 的取值上限从 'N-K+1' 修正为 'K'，以消除与题面逻辑的偏差",
+        "当前题面已足够完善，核心部分无需修改",
+        "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。",
+        "修正 P 的约束范围，使其与 new_schema 的动态上限 N-K+1 一致，或在 notes 中补充说明。",
+        "可考虑在 notes 中简要说明为什么 P 可能超过 K 依旧可以输出 -1，以预防疑问。",
+        "将 constraints 中 P 的范围修改为 0 ≤ P ≤ max(K, N−K+1) 或直接说明 P 可以超出 K 但保证无解输出 -1；或者将第三个样例的 P 改为满足约束的值（如 P=2）并补充一个说明 P>K 无解但 P 仍在约束内的用例。",
+        "修正 constraints 中 P 的范围描述，使其与实际允许的输入及样例一致。",
+        "可考虑在 notes 中更明确地说明 P 可以超过 N−K+1 的情况（若输入确实允许）或调整样例以确保一致性。",
+        "根据任务逻辑，P 的实际有效上界为 K（因 T 的长度为 K）。建议统一将 P 的范围调整为 0 ≤ P ≤ K 或 0 ≤ P ≤ min(K, N)，并修正 new_schema 或 generated_problem 以保持一致。",
+        "将 constraints 中 P 的范围修正为 0 ≤ P ≤ K，或将 new_schema 中 P 的 max 改为 K，以消除不一致。",
+        "考虑在 constraints 中添加所有测试用例的 N 总和的限制（如 sum N ≤ 2×10^5），避免单个用例上限过高导致总时间超限。"
+      ],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "P 的取值范围与 new_schema 不一致",
+          "detail": "new_schema 中 P 的最大值为 N-K+1，而 generated_problem 的 constraints 写为 0 ≤ P ≤ K，两者冲突。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+            "generated_problem.constraints (0 ≤ P ≤ K)"
+          ],
+          "fix_hint": "统一 P 的范围：根据题意 P 为长度为 K 的字符串的 popcount，自然 ≤K，建议修正 new_schema 为 0≤P≤K，或同步修改题面约束为 0≤P≤N-K+1（但后者不符合逻辑）。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "缺少输出 -1 的样例",
+          "detail": "题目要求无解时输出 -1，但所有样例均未展示此情况，参赛者可能对无解条件感到困惑。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "增加至少一个输出 -1 的样例，并附带解释说明为何无法达到目标。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "P 的约束范围与 new_schema 不一致",
+          "detail": "new_schema 中 P 的最大值为 N-K+1，但题面 constraints 中规定 0 ≤ P ≤ K，两者存在明显差异，影响题目的 fidelity。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range",
+            "generated_problem.constraints"
+          ],
+          "fix_hint": "将 constraints 中的 0 ≤ P ≤ K 改为 0 ≤ P ≤ N-K+1，或检查 new_schema 的设定并统一两者。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "无解可能性声明存在轻微矛盾",
+          "detail": "notes 声称“总是存在至少一种翻转方案...因此答案不会是 -1”，但题目描述和输出格式仍要求输出 -1 表示无法达到目标，容易使参赛者困惑。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "generated_problem.output_format",
+            "generated_problem.notes"
+          ],
+          "fix_hint": "可修改 notes 为“可以证明总有解，但为保持程序完整性，当无解时仍需输出 -1”，或直接移除“答案不会是 -1”的断言。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "约束中 P 的范围与样例及实际定义冲突",
+          "detail": "constraints 规定 0 ≤ P ≤ N - K + 1，但延误指标 T 的长度为 K，其 popcount 最大为 K，因此 P 的上界应为 K。第三个样例 N=3, K=2, P=3，此时 N-K+1=2，P=3 已超出声明的约束范围，样例解释亦承认「最多只能有 2 个 1」，形成内部矛盾。",
+          "evidence_refs": [
+            "generated_problem.constraints",
+            "generated_problem.samples[2].input",
+            "generated_problem.samples[2].explanation"
+          ],
+          "fix_hint": "将约束中的 P 上限修改为 K（即 0 ≤ P ≤ K），并确保样例的输入值符合新约束。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "P 的值域在 new_schema 与生成题面间不一致",
+          "detail": "new_schema 中 p 的 value_range.max 为 'N-K+1'，但生成题面的 constraints 写为 '0 ≤ P ≤ K'。根据任务定义，P 是长度为 K 的 T 的 popcount，上限应为 K，建议将 new_schema 中的上限修正为 K 或同步题面。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+            "generated_problem.constraints[3]"
+          ],
+          "fix_hint": "将 new_schema 中 p 的 max 从 'N-K+1' 改为 'K'，或更新题面约束以匹配 new_schema（但后者会导致逻辑错误）。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "notes 中关于“总存在方案”与仍需输出 -1 的语义矛盾",
+          "detail": "notes 声称“可以证明，对于所有合法输入，总存在至少一种翻转方案使得延误指标等于目标 P”，但同时要求“当确实无法达到时仍需输出 -1”。这两句话互相矛盾，容易引起困惑。",
+          "evidence_refs": [
+            "generated_problem.notes"
+          ],
+          "fix_hint": "明确表述：若题目数据保证总是有解，则去掉“输出 -1” 的部分；若允许无解情况，则去掉“总存在”的断言，并提供无解样例。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "P 的取值范围与 new_schema 不一致",
+          "detail": "new_schema 中定义 P 的最大值为 'N-K+1'（显然是 T 长度的错误表述），而题面约束正确写为 0 ≤ P ≤ K，与延误指标定义一致。new_schema 需要修正以避免后续数据生成或评测时的混淆。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+            "generated_problem.constraints[2]"
+          ],
+          "fix_hint": "将 new_schema 中 P 的 max 改为 'K'，并确保所有相关部分同步更新。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "P 的范围约束与 new_schema 不完全一致",
+          "detail": "new_schema 中 P 的 value_range.max 定义为 \"N-K+1\"，但生成的题面约束写为 0 ≤ P ≤ 2 × 10^5。虽然 2×10^5 在数值上可以覆盖可能值，但未体现与 N, K 的动态绑定，且宽松的约束可能掩盖 new_schema 的意图（例如 N-K+1 可能远小于 2×10^5 时，题面未明确上限）。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+            "generated_problem.constraints[3]"
+          ],
+          "fix_hint": "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "constraints 中 P 的范围与样例冲突",
+          "detail": "constraints 中声明 0 ≤ P ≤ N − K + 1，但第三个样例 (N=3, K=2, P=3) 的 P=3 大于 N−K+1=2，直接违反约束，导致输入合法性描述与示例矛盾。可能源自 new_schema 中 P 的 value_range.max 设为 \"N-K+1\"，但实际目标延误指标上限应为 K，且该样例恰利用了 P 超过 K 判定无解的逻辑。",
+          "evidence_refs": [
+            "generated_problem.constraints",
+            "generated_problem.samples[2]",
+            "new_schema.input_structure.components[1].components[0].components[2].value_range"
+          ],
+          "fix_hint": "将 constraints 中 P 的范围修改为 0 ≤ P ≤ max(K, N−K+1) 或直接说明 P 可以超出 K 但保证无解输出 -1；或者将第三个样例的 P 改为满足约束的值（如 P=2）并补充一个说明 P>K 无解但 P 仍在约束内的用例。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "目标 popcount P 的上界不一致",
+          "detail": "new_schema 中 P 的最大值为 N-K+1，而 generated_problem 的 constraints 写为 0 ≤ P ≤ N，且样例 3 和样例 4 使用了超出 N-K+1 的 P 值（样例 3: N=3,K=2,P=3；样例 4: N=3,K=3,P=3）。这导致题面实现的输入范围与 new_schema 定义不符，可能造成数据生成或判题时的混淆。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].components[0].components[2].value_range",
+            "generated_problem.constraints",
+            "generated_problem.samples[2]",
+            "generated_problem.samples[3]"
+          ],
+          "fix_hint": "根据任务逻辑，P 的实际有效上界为 K（因 T 的长度为 K）。建议统一将 P 的范围调整为 0 ≤ P ≤ K 或 0 ≤ P ≤ min(K, N)，并修正 new_schema 或 generated_problem 以保持一致。"
+        }
+      ],
+      "strengths_to_keep": [
+        "主题迁移自然，将二进制串操作映射为公交站点延误，易于理解。",
+        "题目描述清晰，计算过程解释到位。",
+        "样例解释详细，手动展示了翻转与异或计算。",
+        "场景化改写成功，将二进制串映射为公交延误，形象易懂。",
+        "样例详细，解释充分，覆盖了 0 次和 1 次翻转的情况。",
+        "输入输出格式清晰，约束完整，时间空间限制明确。",
+        "主题映射自然，将二进制串与 XOR 操作抽象为公交站点延误指标，增强可读性",
+        "输入输出格式描述准确，无歧义",
+        "样例解释充分，有助于理解任务与操作的效果",
+        "主题重换为公交延误指标生动自然，增强了理解亲和力。",
+        "题目描述逻辑清晰，操作方式（翻转）和输出要求（最少次数）明确。",
+        "样例覆盖度高，解释详细，有助于验证理解。",
+        "题面格式规范，符合 OJ 标准，无来源污染。",
+        "题目描述生动且准确地映射了城市通勤场景，将原计算机题成功转化为日常问题，降低了理解门槛",
+        "输入输出格式规范，完全符合 OJ 标准，便于自动化评测",
+        "样例质量高，覆盖广，解释细致，对解题者有很强的指导意义",
+        "约束和注意事项补充了关键的上界和无解情况，确保了题面的自包含性",
+        "公交延误隐喻贴合主题，描述生动且自然。",
+        "样例覆盖核心场景，解释清晰。",
+        "题面信息完整，关键定义（延误指标、翻转操作）明确。",
+        "无解情形有明确提示。",
+        "new_schema 的核心约束与目标被完整转写为题面，没有遗漏。",
+        "题面用城市通勤比喻使任务直观易懂。",
+        "spec 信息齐全，notes 补充了异或定义和延误指标上限说明。",
+        "样例覆盖典型场景并有详细解释，有助于理解。",
+        "城市通勤主题自然，将二进制串操作映射到公交延误指标，增强了题目趣味性。",
+        "描述清晰定义了延误指标的计算方式，并准确解释了翻转操作及其效果。",
+        "样例覆盖全面，解释详细，能快速帮助参赛者理解任务。",
+        "备注部分补充了 P > K 必然无解等信息，减少了审题误解。"
+      ],
+      "previous_generated_problem": {
+        "title": "公交延误指标最小调整",
+        "description": "城市公交线路上有 N 个站点依序排列，每个站点在一天运营结束后会被标注为准点（0）或延误（1），构成长度为 N 的状态串 S。为了评估整体线路的延误状况，交通管理中心定义了“延误指标”：将 S 中所有长度为 K 的连续区段（共 N−K+1 个）取出，对这些区段的状态串按位进行异或运算，得到一个长度为 K 的二进制串 T，T 中 1 的个数即为延误指标。\n\n现在，你可以在任意站点进行状态翻转（准点变延误，延误变准点），每次翻转计为一次操作。你的任务是：通过最少的翻转次数，使得最终延误指标恰好等于给定的目标值 P。如果无论如何翻转都无法达到 P，则输出 -1。",
+        "input_format": "第一行一个整数 T，表示测试用例的数量。接下来每个测试用例占两行。\n第一行包含三个整数 N, K, P，分别表示站点总数、区段长度、目标延误指标。\n第二行包含一个长度为 N 的、仅由字符 '0' 和 '1' 构成的字符串 S，表示各个站点的初始状态。",
+        "output_format": "对于每个测试用例，输出一行一个整数，表示最少需要的翻转次数；若无法达到目标，则输出 -1。",
+        "constraints": [
+          "1 ≤ T ≤ 10",
+          "1 ≤ K ≤ N ≤ 2 × 10^5",
+          "0 ≤ P ≤ N",
+          "S 仅包含字符 '0' 和 '1'，且 |S| = N",
+          "时间限制：2 秒",
+          "空间限制：256 MB"
+        ],
+        "samples": [
+          {
+            "input": "1\n4 2 2\n1001",
+            "output": "0",
+            "explanation": "初始 S=1001，长度为 2 的子串有 \"10\"、\"00\"、\"01\"，按位异或得 T=\"11\"，延误指标为 2，等于目标 P=2，无需翻转。"
+          },
+          {
+            "input": "1\n4 2 0\n1001",
+            "output": "1",
+            "explanation": "初始延误指标为 2，目标为 0。最少翻转第 2 位（0→1），S 变为 1101，子串为 \"11\"、\"10\"、\"01\"，异或得 T=\"00\"，指标为 0。翻转次数为 1。"
+          },
+          {
+            "input": "1\n3 2 3\n000",
+            "output": "-1",
+            "explanation": "初始 S=000，K=2，子串有 \"00\"、\"00\"，异或得 T=\"00\"，延误指标为 0。延误指标的最大可能值为 K=2，目标 P=3 已经超过这个上限，无论如何翻转都不可能达到，因此无解，输出 -1。"
+          },
+          {
+            "input": "1\n3 3 3\n000",
+            "output": "3",
+            "explanation": "初始 S=000，K=3，只有一个子串即 S 自身，因此 T=\"000\"，延误指标为 0，目标 P=3。必须将所有 3 位翻转为 1，得到 S=111，T=\"111\"，指标为 3。显然至少需要 3 次翻转，无法更少。"
+          }
+        ],
+        "notes": "延误指标定义为：所有长度为 K 的连续子串按位异或后得到的长度为 K 的串 T 中 1 的个数。按位异或即对应位分别进行异或运算（0⊕0=0, 0⊕1=1, 1⊕1=0）。\n输入保证 P 为整数且 0 ≤ P ≤ N，但延误指标的实际上限为 K。若 P > K，必然无解；即使 P ≤ K，也可能因翻转操作的内在约束（如奇偶性限制）导致无法达到目标，此时也应输出 -1。",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": ""
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 85.0,
+            "divergence_score": 78.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "P 的取值范围与 new_schema 不一致",
+                "detail": "new_schema 中 P 的最大值为 N-K+1，而 generated_problem 的 constraints 写为 0 ≤ P ≤ K，两者冲突。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+                  "generated_problem.constraints (0 ≤ P ≤ K)"
+                ],
+                "fix_hint": "统一 P 的范围：根据题意 P 为长度为 K 的字符串的 popcount，自然 ≤K，建议修正 new_schema 为 0≤P≤K，或同步修改题面约束为 0≤P≤N-K+1（但后者不符合逻辑）。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "缺少输出 -1 的样例",
+                "detail": "题目要求无解时输出 -1，但所有样例均未展示此情况，参赛者可能对无解条件感到困惑。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "增加至少一个输出 -1 的样例，并附带解释说明为何无法达到目标。"
+              }
+            ],
+            "suggested_revisions": [
+              "统一 P 的范围：根据题意 P 为长度为 K 的字符串的 popcount，自然 ≤K，建议修正 new_schema 为 0≤P≤K，或同步修改题面约束为 0≤P≤N-K+1（但后者不符合逻辑）。",
+              "增加至少一个输出 -1 的样例，并附带解释说明为何无法达到目标。",
+              "将 constraints 中 P 的范围与 new_schema 对齐或修正 new_schema。",
+              "添加一个无解样例（输出 -1）。"
+            ],
+            "strengths_to_keep": [
+              "主题迁移自然，将二进制串操作映射为公交站点延误，易于理解。",
+              "题目描述清晰，计算过程解释到位。",
+              "样例解释详细，手动展示了翻转与异或计算。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 85.0,
+            "divergence_score": 82.2,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "P 的约束范围与 new_schema 不一致",
+                "detail": "new_schema 中 P 的最大值为 N-K+1，但题面 constraints 中规定 0 ≤ P ≤ K，两者存在明显差异，影响题目的 fidelity。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range",
+                  "generated_problem.constraints"
+                ],
+                "fix_hint": "将 constraints 中的 0 ≤ P ≤ K 改为 0 ≤ P ≤ N-K+1，或检查 new_schema 的设定并统一两者。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "无解可能性声明存在轻微矛盾",
+                "detail": "notes 声称“总是存在至少一种翻转方案...因此答案不会是 -1”，但题目描述和输出格式仍要求输出 -1 表示无法达到目标，容易使参赛者困惑。",
+                "evidence_refs": [
+                  "generated_problem.description",
+                  "generated_problem.output_format",
+                  "generated_problem.notes"
+                ],
+                "fix_hint": "可修改 notes 为“可以证明总有解，但为保持程序完整性，当无解时仍需输出 -1”，或直接移除“答案不会是 -1”的断言。"
+              }
+            ],
+            "suggested_revisions": [
+              "将 constraints 中的 0 ≤ P ≤ K 改为 0 ≤ P ≤ N-K+1，或检查 new_schema 的设定并统一两者。",
+              "可修改 notes 为“可以证明总有解，但为保持程序完整性，当无解时仍需输出 -1”，或直接移除“答案不会是 -1”的断言。",
+              "统一 P 的约束范围，使其与 new_schema 一致。",
+              "澄清或修正 notes 中关于无解可能性的表述，避免矛盾。",
+              "可增加一个边界样例（如 N=1, K=1）或无解样例以增强覆盖，但非必须。"
+            ],
+            "strengths_to_keep": [
+              "场景化改写成功，将二进制串映射为公交延误，形象易懂。",
+              "样例详细，解释充分，覆盖了 0 次和 1 次翻转的情况。",
+              "输入输出格式清晰，约束完整，时间空间限制明确。"
+            ]
+          }
+        },
+        {
+          "round_index": 3,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 3,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 86.0,
+            "divergence_score": 68.7,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "约束中 P 的范围与样例及实际定义冲突",
+                "detail": "constraints 规定 0 ≤ P ≤ N - K + 1，但延误指标 T 的长度为 K，其 popcount 最大为 K，因此 P 的上界应为 K。第三个样例 N=3, K=2, P=3，此时 N-K+1=2，P=3 已超出声明的约束范围，样例解释亦承认「最多只能有 2 个 1」，形成内部矛盾。",
+                "evidence_refs": [
+                  "generated_problem.constraints",
+                  "generated_problem.samples[2].input",
+                  "generated_problem.samples[2].explanation"
+                ],
+                "fix_hint": "将约束中的 P 上限修改为 K（即 0 ≤ P ≤ K），并确保样例的输入值符合新约束。"
+              }
+            ],
+            "suggested_revisions": [
+              "将约束中的 P 上限修改为 K（即 0 ≤ P ≤ K），并确保样例的输入值符合新约束。",
+              "修正 constraints 中 P 的范围为 0 ≤ P ≤ K，与延误指标的定义和样例保持一致"
+            ],
+            "strengths_to_keep": [
+              "主题映射自然，将二进制串与 XOR 操作抽象为公交站点延误指标，增强可读性",
+              "输入输出格式描述准确，无歧义",
+              "样例解释充分，有助于理解任务与操作的效果"
+            ]
+          }
+        },
+        {
+          "round_index": 4,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 4,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 74.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "P 的值域在 new_schema 与生成题面间不一致",
+                "detail": "new_schema 中 p 的 value_range.max 为 'N-K+1'，但生成题面的 constraints 写为 '0 ≤ P ≤ K'。根据任务定义，P 是长度为 K 的 T 的 popcount，上限应为 K，建议将 new_schema 中的上限修正为 K 或同步题面。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+                  "generated_problem.constraints[3]"
+                ],
+                "fix_hint": "将 new_schema 中 p 的 max 从 'N-K+1' 改为 'K'，或更新题面约束以匹配 new_schema（但后者会导致逻辑错误）。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "notes 中关于“总存在方案”与仍需输出 -1 的语义矛盾",
+                "detail": "notes 声称“可以证明，对于所有合法输入，总存在至少一种翻转方案使得延误指标等于目标 P”，但同时要求“当确实无法达到时仍需输出 -1”。这两句话互相矛盾，容易引起困惑。",
+                "evidence_refs": [
+                  "generated_problem.notes"
+                ],
+                "fix_hint": "明确表述：若题目数据保证总是有解，则去掉“输出 -1” 的部分；若允许无解情况，则去掉“总存在”的断言，并提供无解样例。"
+              }
+            ],
+            "suggested_revisions": [
+              "将 new_schema 中 p 的 max 从 'N-K+1' 改为 'K'，或更新题面约束以匹配 new_schema（但后者会导致逻辑错误）。",
+              "明确表述：若题目数据保证总是有解，则去掉“输出 -1” 的部分；若允许无解情况，则去掉“总存在”的断言，并提供无解样例。",
+              "统一 P 的值域定义，消除 new_schema 与题面约束间的分歧。",
+              "消除 notes 中的逻辑矛盾，明确是否有无解情况，并考虑补充无解样例或说明数据保证有解。"
+            ],
+            "strengths_to_keep": [
+              "主题重换为公交延误指标生动自然，增强了理解亲和力。",
+              "题目描述逻辑清晰，操作方式（翻转）和输出要求（最少次数）明确。",
+              "样例覆盖度高，解释详细，有助于验证理解。",
+              "题面格式规范，符合 OJ 标准，无来源污染。"
+            ]
+          }
+        },
+        {
+          "round_index": 5,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 5,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 79.7,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "P 的取值范围与 new_schema 不一致",
+                "detail": "new_schema 中定义 P 的最大值为 'N-K+1'（显然是 T 长度的错误表述），而题面约束正确写为 0 ≤ P ≤ K，与延误指标定义一致。new_schema 需要修正以避免后续数据生成或评测时的混淆。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+                  "generated_problem.constraints[2]"
+                ],
+                "fix_hint": "将 new_schema 中 P 的 max 改为 'K'，并确保所有相关部分同步更新。"
+              }
+            ],
+            "suggested_revisions": [
+              "将 new_schema 中 P 的 max 改为 'K'，并确保所有相关部分同步更新。",
+              "建议将 new_schema 中 P 的取值上限从 'N-K+1' 修正为 'K'，以消除与题面逻辑的偏差",
+              "当前题面已足够完善，核心部分无需修改"
+            ],
+            "strengths_to_keep": [
+              "题目描述生动且准确地映射了城市通勤场景，将原计算机题成功转化为日常问题，降低了理解门槛",
+              "输入输出格式规范，完全符合 OJ 标准，便于自动化评测",
+              "样例质量高，覆盖广，解释细致，对解题者有很强的指导意义",
+              "约束和注意事项补充了关键的上界和无解情况，确保了题面的自包含性"
+            ]
+          }
+        },
+        {
+          "round_index": 6,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 6,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 75.7,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "P 的范围约束与 new_schema 不完全一致",
+                "detail": "new_schema 中 P 的 value_range.max 定义为 \"N-K+1\"，但生成的题面约束写为 0 ≤ P ≤ 2 × 10^5。虽然 2×10^5 在数值上可以覆盖可能值，但未体现与 N, K 的动态绑定，且宽松的约束可能掩盖 new_schema 的意图（例如 N-K+1 可能远小于 2×10^5 时，题面未明确上限）。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+                  "generated_problem.constraints[3]"
+                ],
+                "fix_hint": "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。"
+              }
+            ],
+            "suggested_revisions": [
+              "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。",
+              "修正 P 的约束范围，使其与 new_schema 的动态上限 N-K+1 一致，或在 notes 中补充说明。",
+              "可考虑在 notes 中简要说明为什么 P 可能超过 K 依旧可以输出 -1，以预防疑问。"
+            ],
+            "strengths_to_keep": [
+              "公交延误隐喻贴合主题，描述生动且自然。",
+              "样例覆盖核心场景，解释清晰。",
+              "题面信息完整，关键定义（延误指标、翻转操作）明确。",
+              "无解情形有明确提示。"
+            ]
+          }
+        },
+        {
+          "round_index": 7,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 7,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 78.0,
+            "divergence_score": 80.9,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "constraints 中 P 的范围与样例冲突",
+                "detail": "constraints 中声明 0 ≤ P ≤ N − K + 1，但第三个样例 (N=3, K=2, P=3) 的 P=3 大于 N−K+1=2，直接违反约束，导致输入合法性描述与示例矛盾。可能源自 new_schema 中 P 的 value_range.max 设为 \"N-K+1\"，但实际目标延误指标上限应为 K，且该样例恰利用了 P 超过 K 判定无解的逻辑。",
+                "evidence_refs": [
+                  "generated_problem.constraints",
+                  "generated_problem.samples[2]",
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range"
+                ],
+                "fix_hint": "将 constraints 中 P 的范围修改为 0 ≤ P ≤ max(K, N−K+1) 或直接说明 P 可以超出 K 但保证无解输出 -1；或者将第三个样例的 P 改为满足约束的值（如 P=2）并补充一个说明 P>K 无解但 P 仍在约束内的用例。"
+              }
+            ],
+            "suggested_revisions": [
+              "将 constraints 中 P 的范围修改为 0 ≤ P ≤ max(K, N−K+1) 或直接说明 P 可以超出 K 但保证无解输出 -1；或者将第三个样例的 P 改为满足约束的值（如 P=2）并补充一个说明 P>K 无解但 P 仍在约束内的用例。",
+              "修正 constraints 中 P 的范围描述，使其与实际允许的输入及样例一致。",
+              "可考虑在 notes 中更明确地说明 P 可以超过 N−K+1 的情况（若输入确实允许）或调整样例以确保一致性。"
+            ],
+            "strengths_to_keep": [
+              "new_schema 的核心约束与目标被完整转写为题面，没有遗漏。",
+              "题面用城市通勤比喻使任务直观易懂。",
+              "spec 信息齐全，notes 补充了异或定义和延误指标上限说明。",
+              "样例覆盖典型场景并有详细解释，有助于理解。"
+            ]
+          }
+        },
+        {
+          "round_index": 8,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 8,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 88.0,
+            "divergence_score": 79.7,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "目标 popcount P 的上界不一致",
+                "detail": "new_schema 中 P 的最大值为 N-K+1，而 generated_problem 的 constraints 写为 0 ≤ P ≤ N，且样例 3 和样例 4 使用了超出 N-K+1 的 P 值（样例 3: N=3,K=2,P=3；样例 4: N=3,K=3,P=3）。这导致题面实现的输入范围与 new_schema 定义不符，可能造成数据生成或判题时的混淆。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].components[0].components[2].value_range",
+                  "generated_problem.constraints",
+                  "generated_problem.samples[2]",
+                  "generated_problem.samples[3]"
+                ],
+                "fix_hint": "根据任务逻辑，P 的实际有效上界为 K（因 T 的长度为 K）。建议统一将 P 的范围调整为 0 ≤ P ≤ K 或 0 ≤ P ≤ min(K, N)，并修正 new_schema 或 generated_problem 以保持一致。"
+              }
+            ],
+            "suggested_revisions": [
+              "根据任务逻辑，P 的实际有效上界为 K（因 T 的长度为 K）。建议统一将 P 的范围调整为 0 ≤ P ≤ K 或 0 ≤ P ≤ min(K, N)，并修正 new_schema 或 generated_problem 以保持一致。",
+              "将 constraints 中 P 的范围修正为 0 ≤ P ≤ K，或将 new_schema 中 P 的 max 改为 K，以消除不一致。",
+              "考虑在 constraints 中添加所有测试用例的 N 总和的限制（如 sum N ≤ 2×10^5），避免单个用例上限过高导致总时间超限。"
+            ],
+            "strengths_to_keep": [
+              "城市通勤主题自然，将二进制串操作映射到公交延误指标，增强了题目趣味性。",
+              "描述清晰定义了延误指标的计算方式，并准确解释了翻转操作及其效果。",
+              "样例覆盖全面，解释详细，能快速帮助参赛者理解任务。",
+              "备注部分补充了 P > K 必然无解等信息，减少了审题误解。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 8,
+        "latest_round_index": 8,
+        "latest_iteration_phase": "full_score_polish",
+        "latest_overall_status": "pass",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 88.0,
+        "latest_divergence_score": 79.7,
+        "suggested_revisions": [
+          "统一 P 的范围：根据题意 P 为长度为 K 的字符串的 popcount，自然 ≤K，建议修正 new_schema 为 0≤P≤K，或同步修改题面约束为 0≤P≤N-K+1（但后者不符合逻辑）。",
+          "增加至少一个输出 -1 的样例，并附带解释说明为何无法达到目标。",
+          "将 constraints 中 P 的范围与 new_schema 对齐或修正 new_schema。",
+          "添加一个无解样例（输出 -1）。",
+          "将 constraints 中的 0 ≤ P ≤ K 改为 0 ≤ P ≤ N-K+1，或检查 new_schema 的设定并统一两者。",
+          "可修改 notes 为“可以证明总有解，但为保持程序完整性，当无解时仍需输出 -1”，或直接移除“答案不会是 -1”的断言。",
+          "统一 P 的约束范围，使其与 new_schema 一致。",
+          "澄清或修正 notes 中关于无解可能性的表述，避免矛盾。",
+          "可增加一个边界样例（如 N=1, K=1）或无解样例以增强覆盖，但非必须。",
+          "将约束中的 P 上限修改为 K（即 0 ≤ P ≤ K），并确保样例的输入值符合新约束。",
+          "修正 constraints 中 P 的范围为 0 ≤ P ≤ K，与延误指标的定义和样例保持一致",
+          "将 new_schema 中 p 的 max 从 'N-K+1' 改为 'K'，或更新题面约束以匹配 new_schema（但后者会导致逻辑错误）。",
+          "明确表述：若题目数据保证总是有解，则去掉“输出 -1” 的部分；若允许无解情况，则去掉“总存在”的断言，并提供无解样例。",
+          "统一 P 的值域定义，消除 new_schema 与题面约束间的分歧。",
+          "消除 notes 中的逻辑矛盾，明确是否有无解情况，并考虑补充无解样例或说明数据保证有解。",
+          "将 new_schema 中 P 的 max 改为 'K'，并确保所有相关部分同步更新。",
+          "建议将 new_schema 中 P 的取值上限从 'N-K+1' 修正为 'K'，以消除与题面逻辑的偏差",
+          "当前题面已足够完善，核心部分无需修改",
+          "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。",
+          "修正 P 的约束范围，使其与 new_schema 的动态上限 N-K+1 一致，或在 notes 中补充说明。",
+          "可考虑在 notes 中简要说明为什么 P 可能超过 K 依旧可以输出 -1，以预防疑问。",
+          "将 constraints 中 P 的范围修改为 0 ≤ P ≤ max(K, N−K+1) 或直接说明 P 可以超出 K 但保证无解输出 -1；或者将第三个样例的 P 改为满足约束的值（如 P=2）并补充一个说明 P>K 无解但 P 仍在约束内的用例。",
+          "修正 constraints 中 P 的范围描述，使其与实际允许的输入及样例一致。",
+          "可考虑在 notes 中更明确地说明 P 可以超过 N−K+1 的情况（若输入确实允许）或调整样例以确保一致性。",
+          "根据任务逻辑，P 的实际有效上界为 K（因 T 的长度为 K）。建议统一将 P 的范围调整为 0 ≤ P ≤ K 或 0 ≤ P ≤ min(K, N)，并修正 new_schema 或 generated_problem 以保持一致。",
+          "将 constraints 中 P 的范围修正为 0 ≤ P ≤ K，或将 new_schema 中 P 的 max 改为 K，以消除不一致。",
+          "考虑在 constraints 中添加所有测试用例的 N 总和的限制（如 sum N ≤ 2×10^5），避免单个用例上限过高导致总时间超限。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "P 的取值范围与 new_schema 不一致",
+            "detail": "new_schema 中 P 的最大值为 N-K+1，而 generated_problem 的 constraints 写为 0 ≤ P ≤ K，两者冲突。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+              "generated_problem.constraints (0 ≤ P ≤ K)"
+            ],
+            "fix_hint": "统一 P 的范围：根据题意 P 为长度为 K 的字符串的 popcount，自然 ≤K，建议修正 new_schema 为 0≤P≤K，或同步修改题面约束为 0≤P≤N-K+1（但后者不符合逻辑）。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "缺少输出 -1 的样例",
+            "detail": "题目要求无解时输出 -1，但所有样例均未展示此情况，参赛者可能对无解条件感到困惑。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "增加至少一个输出 -1 的样例，并附带解释说明为何无法达到目标。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "P 的约束范围与 new_schema 不一致",
+            "detail": "new_schema 中 P 的最大值为 N-K+1，但题面 constraints 中规定 0 ≤ P ≤ K，两者存在明显差异，影响题目的 fidelity。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].components[0].components[2].value_range",
+              "generated_problem.constraints"
+            ],
+            "fix_hint": "将 constraints 中的 0 ≤ P ≤ K 改为 0 ≤ P ≤ N-K+1，或检查 new_schema 的设定并统一两者。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "无解可能性声明存在轻微矛盾",
+            "detail": "notes 声称“总是存在至少一种翻转方案...因此答案不会是 -1”，但题目描述和输出格式仍要求输出 -1 表示无法达到目标，容易使参赛者困惑。",
+            "evidence_refs": [
+              "generated_problem.description",
+              "generated_problem.output_format",
+              "generated_problem.notes"
+            ],
+            "fix_hint": "可修改 notes 为“可以证明总有解，但为保持程序完整性，当无解时仍需输出 -1”，或直接移除“答案不会是 -1”的断言。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "约束中 P 的范围与样例及实际定义冲突",
+            "detail": "constraints 规定 0 ≤ P ≤ N - K + 1，但延误指标 T 的长度为 K，其 popcount 最大为 K，因此 P 的上界应为 K。第三个样例 N=3, K=2, P=3，此时 N-K+1=2，P=3 已超出声明的约束范围，样例解释亦承认「最多只能有 2 个 1」，形成内部矛盾。",
+            "evidence_refs": [
+              "generated_problem.constraints",
+              "generated_problem.samples[2].input",
+              "generated_problem.samples[2].explanation"
+            ],
+            "fix_hint": "将约束中的 P 上限修改为 K（即 0 ≤ P ≤ K），并确保样例的输入值符合新约束。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "P 的值域在 new_schema 与生成题面间不一致",
+            "detail": "new_schema 中 p 的 value_range.max 为 'N-K+1'，但生成题面的 constraints 写为 '0 ≤ P ≤ K'。根据任务定义，P 是长度为 K 的 T 的 popcount，上限应为 K，建议将 new_schema 中的上限修正为 K 或同步题面。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+              "generated_problem.constraints[3]"
+            ],
+            "fix_hint": "将 new_schema 中 p 的 max 从 'N-K+1' 改为 'K'，或更新题面约束以匹配 new_schema（但后者会导致逻辑错误）。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "notes 中关于“总存在方案”与仍需输出 -1 的语义矛盾",
+            "detail": "notes 声称“可以证明，对于所有合法输入，总存在至少一种翻转方案使得延误指标等于目标 P”，但同时要求“当确实无法达到时仍需输出 -1”。这两句话互相矛盾，容易引起困惑。",
+            "evidence_refs": [
+              "generated_problem.notes"
+            ],
+            "fix_hint": "明确表述：若题目数据保证总是有解，则去掉“输出 -1” 的部分；若允许无解情况，则去掉“总存在”的断言，并提供无解样例。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "P 的取值范围与 new_schema 不一致",
+            "detail": "new_schema 中定义 P 的最大值为 'N-K+1'（显然是 T 长度的错误表述），而题面约束正确写为 0 ≤ P ≤ K，与延误指标定义一致。new_schema 需要修正以避免后续数据生成或评测时的混淆。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+              "generated_problem.constraints[2]"
+            ],
+            "fix_hint": "将 new_schema 中 P 的 max 改为 'K'，并确保所有相关部分同步更新。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "P 的范围约束与 new_schema 不完全一致",
+            "detail": "new_schema 中 P 的 value_range.max 定义为 \"N-K+1\"，但生成的题面约束写为 0 ≤ P ≤ 2 × 10^5。虽然 2×10^5 在数值上可以覆盖可能值，但未体现与 N, K 的动态绑定，且宽松的约束可能掩盖 new_schema 的意图（例如 N-K+1 可能远小于 2×10^5 时，题面未明确上限）。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].components[0].components[2].value_range.max",
+              "generated_problem.constraints[3]"
+            ],
+            "fix_hint": "将 P 的约束改为 0 ≤ P ≤ N-K+1 或 0 ≤ P ≤ K，并明确其依赖关系，或至少说明实际数据保证 P 不超过 N-K+1（或 K）。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "constraints 中 P 的范围与样例冲突",
+            "detail": "constraints 中声明 0 ≤ P ≤ N − K + 1，但第三个样例 (N=3, K=2, P=3) 的 P=3 大于 N−K+1=2，直接违反约束，导致输入合法性描述与示例矛盾。可能源自 new_schema 中 P 的 value_range.max 设为 \"N-K+1\"，但实际目标延误指标上限应为 K，且该样例恰利用了 P 超过 K 判定无解的逻辑。",
+            "evidence_refs": [
+              "generated_problem.constraints",
+              "generated_problem.samples[2]",
+              "new_schema.input_structure.components[1].components[0].components[2].value_range"
+            ],
+            "fix_hint": "将 constraints 中 P 的范围修改为 0 ≤ P ≤ max(K, N−K+1) 或直接说明 P 可以超出 K 但保证无解输出 -1；或者将第三个样例的 P 改为满足约束的值（如 P=2）并补充一个说明 P>K 无解但 P 仍在约束内的用例。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "目标 popcount P 的上界不一致",
+            "detail": "new_schema 中 P 的最大值为 N-K+1，而 generated_problem 的 constraints 写为 0 ≤ P ≤ N，且样例 3 和样例 4 使用了超出 N-K+1 的 P 值（样例 3: N=3,K=2,P=3；样例 4: N=3,K=3,P=3）。这导致题面实现的输入范围与 new_schema 定义不符，可能造成数据生成或判题时的混淆。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].components[0].components[2].value_range",
+              "generated_problem.constraints",
+              "generated_problem.samples[2]",
+              "generated_problem.samples[3]"
+            ],
+            "fix_hint": "根据任务逻辑，P 的实际有效上界为 K（因 T 的长度为 K）。建议统一将 P 的范围调整为 0 ≤ P ≤ K 或 0 ≤ P ≤ min(K, N)，并修正 new_schema 或 generated_problem 以保持一致。"
+          }
+        ],
+        "strengths_to_keep": [
+          "主题迁移自然，将二进制串操作映射为公交站点延误，易于理解。",
+          "题目描述清晰，计算过程解释到位。",
+          "样例解释详细，手动展示了翻转与异或计算。",
+          "场景化改写成功，将二进制串映射为公交延误，形象易懂。",
+          "样例详细，解释充分，覆盖了 0 次和 1 次翻转的情况。",
+          "输入输出格式清晰，约束完整，时间空间限制明确。",
+          "主题映射自然，将二进制串与 XOR 操作抽象为公交站点延误指标，增强可读性",
+          "输入输出格式描述准确，无歧义",
+          "样例解释充分，有助于理解任务与操作的效果",
+          "主题重换为公交延误指标生动自然，增强了理解亲和力。",
+          "题目描述逻辑清晰，操作方式（翻转）和输出要求（最少次数）明确。",
+          "样例覆盖度高，解释详细，有助于验证理解。",
+          "题面格式规范，符合 OJ 标准，无来源污染。",
+          "题目描述生动且准确地映射了城市通勤场景，将原计算机题成功转化为日常问题，降低了理解门槛",
+          "输入输出格式规范，完全符合 OJ 标准，便于自动化评测",
+          "样例质量高，覆盖广，解释细致，对解题者有很强的指导意义",
+          "约束和注意事项补充了关键的上界和无解情况，确保了题面的自包含性",
+          "公交延误隐喻贴合主题，描述生动且自然。",
+          "样例覆盖核心场景，解释清晰。",
+          "题面信息完整，关键定义（延误指标、翻转操作）明确。",
+          "无解情形有明确提示。",
+          "new_schema 的核心约束与目标被完整转写为题面，没有遗漏。",
+          "题面用城市通勤比喻使任务直观易懂。",
+          "spec 信息齐全，notes 补充了异或定义和延误指标上限说明。",
+          "样例覆盖典型场景并有详细解释，有助于理解。",
+          "城市通勤主题自然，将二进制串操作映射到公交延误指标，增强了题目趣味性。",
+          "描述清晰定义了延误指标的计算方式，并准确解释了翻转操作及其效果。",
+          "样例覆盖全面，解释详细，能快速帮助参赛者理解任务。",
+          "备注部分补充了 P > K 必然无解等信息，减少了审题误解。"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

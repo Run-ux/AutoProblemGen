@@ -1,0 +1,139 @@
+{
+  "problem_id": "taco_codeforces_6e10787c52e1",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "n",
+        "role_description": "number of vertices",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 2,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "parents",
+        "role_description": "parent index for each vertex from 2 to n",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 99999
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {
+          "rooted": true,
+          "connected": true,
+          "acyclic": true
+        }
+      },
+      {
+        "role": "s_values",
+        "role_description": "partial prefix sums from vertices to root, erased entries replaced by -1",
+        "type": "array",
+        "length": {
+          "min": 2,
+          "max": 100000
+        },
+        "value_range": {
+          "min": -1,
+          "max": 1000000000
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "vertex_value_non_negative",
+        "description": "Each vertex v initially had a non-negative integer a_v (a_v ≥ 0).",
+        "formal": "∀v, a_v ≥ 0",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "path_sum_definition",
+        "description": "s_v is the sum of a values on the path from v to the root.",
+        "formal": "s_v = Σ_{u∈path(v→1)} a_u, s_1 = a_1",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "partial_path_sum_observation",
+        "description": "Only s_v for vertices of odd depth are given; those for even depth are erased and marked as -1 in input.",
+        "formal": "If depth(v) is even, s_v is unknown; if odd, s_v is provided.",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "optimality_min_total_sum",
+        "description": "If multiple valid assignments of a_v exist, choose one that minimizes the total sum of a_v over all vertices.",
+        "formal": "minimize Σ_{v∈V} a_v",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimize total sum of vertex values",
+    "target": "sum",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "ancestral_s_monotonicity",
+        "description": "For any two vertices where both s-values are known and one is an ancestor of the other, the s-value of the ancestor must be less than or equal to the s-value of the descendant. This follows from a_v >= 0 and the definition of s_v as a path sum.",
+        "properties": {
+          "condition": "known s-values",
+          "relationship": "ancestor_s <= descendant_s"
+        },
+        "evidence_source": "both"
+      },
+      {
+        "name": "even_depth_optimal_s_value",
+        "description": "In the unique optimal assignment that minimizes the total sum of a_v, the s-value for each even-depth vertex is forced to equal the minimum s-value among its children if it has children, and to equal its parent's s-value if it is a leaf. The bottom-up dfs enforces this upper-bound rule and propagates the values.",
+        "properties": {
+          "if_has_children": "equal_to_min_child_s",
+          "if_leaf": "equal_to_parent_s"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_6e10787c52e1",
+    "title": "A",
+    "description": "Mitya has a rooted tree with $n$ vertices indexed from $1$ to $n$, where the root has index $1$. Each vertex $v$ initially had an integer number $a_v \\ge 0$ written on it. For every vertex $v$ Mitya has computed $s_v$: the sum of all values written on the vertices on the path from vertex $v$ to the root, as well as $h_v$ — the depth of vertex $v$, which denotes the number of vertices on the path from vertex $v$ to the root. Clearly, $s_1=a_1$ and $h_1=1$.\n\nThen Mitya erased all numbers $a_v$, and by accident he also erased all values $s_v$ for vertices with even depth (vertices with even $h_v$). Your task is to restore the values $a_v$ for every vertex, or determine that Mitya made a mistake. In case there are multiple ways to restore the values, you're required to find one which minimizes the total sum of values $a_v$ for all vertices in the tree.\n\n\n-----Input-----\n\nThe first line contains one integer $n$ — the number of vertices in the tree ($2 \\le n \\le 10^5$). The following line contains integers $p_2$, $p_3$, ... $p_n$, where $p_i$ stands for the parent of vertex with index $i$ in the tree ($1 \\le p_i < i$). The last line contains integer values $s_1$, $s_2$, ..., $s_n$ ($-1 \\le s_v \\le 10^9$), where erased values are replaced by $-1$.\n\n\n-----Output-----\n\nOutput one integer — the minimum total sum of all values $a_v$ in the original tree, or $-1$ if such tree does not exist.\n\n\n-----Examples-----\nInput\n5\n1 1 1 1\n1 -1 -1 -1 -1\n\nOutput\n1\n\nInput\n5\n1 2 3 1\n1 -1 2 -1 -1\n\nOutput\n2\n\nInput\n3\n1 2\n2 -1 1\n\nOutput\n-1",
+    "input": "5\n1 1 1 1\n1 -1 -1 -1 -1\n\n5\n1 2 3 1\n1 -1 2 -1 -1\n\n3\n1 2\n2 -1 1",
+    "output": "1\n\n2\n\n-1",
+    "constraints": "",
+    "source": "codeforces",
+    "standard_solution_code": "from collections import deque\n\nclass Graph(object):\n\n\tdef __init__(self, n, d):\n\t\tself.n = n\n\t\tself.graph = [[] for i in range(n)]\n\t\tself.parent = [-1 for i in range(n)]\n\t\tself.directed = d\n\n\tdef addEdge(self, x, y):\n\t\tself.graph[x].append(y)\n\t\tif not self.directed:\n\t\t\tself.graph[y].append(x)\n\n\tdef bfs(self, root):\n\t\tself.parent = [-1 for i in range(self.n)]\n\t\tqueue = [root]\n\t\tqueue = deque(queue)\n\t\tvis = [0] * self.n\n\t\tans = 0\n\t\twhile len(queue) != 0:\n\t\t\telement = queue.popleft()\n\t\t\tvis[element] = 1\n\t\t\tif self.parent[element] != -1 and s[element] != -1:\n\t\t\t\tif s[self.parent[self.parent[element]]] > s[element]:\n\t\t\t\t\treturn False\n\t\t\tflag = 0\n\t\t\tfor i in self.graph[element]:\n\t\t\t\tif vis[i] == 0:\n\t\t\t\t\tflag = 1\n\t\t\t\t\tqueue.append(i)\n\t\t\t\t\tself.parent[i] = element\n\t\treturn True\n\n\tdef dfs(self, root, ans):\n\t\tstack = [root]\n\t\tvis = [0] * self.n\n\t\tstack2 = []\n\t\twhile len(stack) != 0:\n\t\t\telement = stack.pop()\n\t\t\tif vis[element]:\n\t\t\t\tcontinue\n\t\t\tvis[element] = 1\n\t\t\tstack2.append(element)\n\t\t\tfor i in self.graph[element]:\n\t\t\t\tif vis[i] == 0:\n\t\t\t\t\tself.parent[i] = element\n\t\t\t\t\tstack.append(i)\n\t\twhile len(stack2) != 0:\n\t\t\telement = stack2.pop()\n\t\t\tm = 10 ** 18\n\t\t\tif s[element] == -1:\n\t\t\t\tfor i in self.graph[element]:\n\t\t\t\t\tif i != self.parent[element]:\n\t\t\t\t\t\tm = min(m, ans[i])\n\t\t\t\tif m == 10 ** 18:\n\t\t\t\t\tm = 0\n\t\t\t\t\tans[element] = 0\n\t\t\t\telse:\n\t\t\t\t\tans[element] = m\n\t\t\tfor i in self.graph[element]:\n\t\t\t\tif i != self.parent[element]:\n\t\t\t\t\tans[i] = max(ans[i] - ans[element], 0)\n\t\treturn ans\n\n\tdef shortestpath(self, source, dest):\n\t\tself.bfs(source)\n\t\tpath = [dest]\n\t\twhile self.parent[path[-1]] != -1:\n\t\t\tpath.append(parent[path[-1]])\n\t\treturn path[::-1]\n\n\tdef ifcycle(self):\n\t\tself.bfs(0)\n\t\tqueue = [0]\n\t\tvis = [0] * n\n\t\tqueue = deque(queue)\n\t\twhile len(queue) != 0:\n\t\t\telement = queue.popleft()\n\t\t\tvis[element] = 1\n\t\t\tfor i in graph[element]:\n\t\t\t\tif vis[i] == 1 and i != parent[element]:\n\t\t\t\t\treturn True\n\t\t\t\tif vis[i] == 0:\n\t\t\t\t\tqueue.append(i)\n\t\t\t\t\tvis[i] = 1\n\t\treturn False\n\n\tdef reroot(self, root, ans):\n\t\tstack = [root]\n\t\tvis = [0] * n\n\t\twhile len(stack) != 0:\n\t\t\te = stack[-1]\n\t\t\tif vis[e]:\n\t\t\t\tstack.pop()\n\t\t\t\tcontinue\n\t\t\tvis[e] = 1\n\t\t\tfor i in graph[e]:\n\t\t\t\tif not vis[e]:\n\t\t\t\t\tstack.append(i)\n\t\t\tif self.parent[e] == -1:\n\t\t\t\tcontinue\nn = int(input())\ng = Graph(n, False)\np = list(map(int, input().split()))\ns = list(map(int, input().split()))\nfor i in range(len(p)):\n\tg.addEdge(i + 1, p[i] - 1)\nif not g.bfs(0):\n\tprint(-1)\n\texit()\ns = g.dfs(0, s)\nprint(sum(s))"
+  }
+}

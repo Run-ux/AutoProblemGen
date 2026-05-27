@@ -1,0 +1,123 @@
+{
+  "problem_id": "taco_codeforces_f77822c4dce1",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "graph",
+    "length": {
+      "min": 1,
+      "max": 524288
+    },
+    "value_range": {
+      "min": 0,
+      "max": 65535
+    },
+    "properties": {
+      "connected": true,
+      "simple": true,
+      "multiple_test_cases": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "permutation_isomorphism_to_simple_hypercube",
+        "description": "The permutation P must map the simple n-dimensional hypercube to the input graph, i.e., after relabeling vertices of the simple hypercube by P, the resulting edge set is identical to the input edge set.",
+        "formal": "Let H be the simple n-dimensional hypercube. For (u,v) in E(H), (P[u],P[v]) must be an edge in the input graph, and the sets of edges coincide.",
+        "source_sections": [
+          "description",
+          "output"
+        ]
+      },
+      {
+        "name": "color_assignment_range",
+        "description": "Each vertex color must be an integer between 0 and n-1 inclusive.",
+        "formal": "∀v, color(v) ∈ {0, 1, …, n-1}",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "neighbor_color_completeness",
+        "description": "For every vertex u and every color c, there must exist at least one neighbor v of u such that color(v) = c.",
+        "formal": "∀u ∈ V, ∀c ∈ {0,…,n-1}, ∃v ∈ N(u) : color(v)=c",
+        "source_sections": [
+          "description",
+          "output"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "description": "construct a permutation and a vertex coloring satisfying given constraints",
+    "target": "",
+    "requires_solution": true
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "BFS distance never decreases and rp propagation only occurs along increasing distances, preventing cycles and ensuring the process conforms to hypercube layers.",
+        "properties": {
+          "distance_update_rule": "d[nexv] = d[v] + 1 when first visited",
+          "rp_update_condition": "d[nexv] > d[v]"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "bit_accumulation",
+        "description": "The rp value for each vertex is built by collecting distinct dimension bits along a shortest path from the root using bitwise OR, which equals XOR because no dimension repeats on a shortest path in a hypercube.",
+        "properties": {
+          "root_neighbor_init": "rp[neighbor_i] = 1 << i",
+          "forward_propagation": "rp[nexv] |= rp[v]"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "distance_popcount_equality",
+        "description": "The BFS distance from the root equals the number of 1-bits in the rp identifier for every vertex.",
+        "properties": {
+          "root_popcount": 0,
+          "increment_property": "each forward step adds exactly one new set bit"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "bijective_mapping",
+        "description": "After the BFS traversal, rp[0..2^n-1] is a permutation of {0,...,2^n-1}, providing an inverse mapping that reconstructs the simple hypercube labeling.",
+        "properties": {
+          "inverse_construction": "p[rp[i]] = i",
+          "range": "[0, 2^n)"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "coloring_feasibility",
+        "description": "A vertex coloring satisfying the condition that every vertex has neighbors of all n colors exists if and only if n is a power of two.",
+        "properties": {
+          "feasibility_check": "2**n % n == 0",
+          "n_condition": "n is a power of two"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "coloring_xor_assignment",
+        "description": "When a valid coloring exists, the color of the vertex with simple label i is the XOR of the indices of the set bits of i, which ensures the adjacency color property.",
+        "properties": {
+          "color_formula": "color = XOR_{j: i&(1<<j)} j"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_f77822c4dce1",
+    "title": "E",
+    "description": "Finally, you have defeated Razor and now, you are the Most Wanted street racer. Sergeant Cross has sent the full police force after you in a deadly pursuit. Fortunately, you have found a hiding spot but you fear that Cross and his force will eventually find you. To increase your chances of survival, you want to tune and repaint your BMW M3 GTR.\n\nThe car can be imagined as a permuted n-dimensional hypercube. A simple n-dimensional hypercube is an undirected unweighted graph built recursively as follows: \n\n  * Take two simple (n-1)-dimensional hypercubes one having vertices numbered from 0 to 2^{n-1}-1 and the other having vertices numbered from 2^{n-1} to 2^{n}-1. A simple 0-dimensional Hypercube is just a single vertex. \n  * Add an edge between the vertices i and i+2^{n-1} for each 0≤ i < 2^{n-1}. \n\n\n\nA permuted n-dimensional hypercube is formed by permuting the vertex numbers of a simple n-dimensional hypercube in any arbitrary manner.\n\nExamples of a simple and permuted 3-dimensional hypercubes are given below:\n\n<image>\n\nNote that a permuted n-dimensional hypercube has the following properties: \n\n  * There are exactly 2^n vertices. \n  * There are exactly n⋅ 2^{n-1} edges. \n  * Each vertex is connected to exactly n other vertices. \n  * There are no self-loops or duplicate edges. \n\n\n\nLet's denote the permutation used to generate the permuted n-dimensional hypercube, representing your car, from a simple n-dimensional hypercube by P. Before messing up the functionalities of the car, you want to find this permutation so that you can restore the car if anything goes wrong. But the job isn't done yet.\n\nYou have n different colours numbered from 0 to n-1. You want to colour the vertices of this permuted n-dimensional hypercube in such a way that for each and every vertex u satisfying 0≤ u < 2^n and for each and every colour c satisfying 0≤ c < n, there is at least one vertex v adjacent to u having a colour c. In other words, from each and every vertex, it must be possible to reach a vertex of any colour by just moving to an adjacent vertex. \n\nGiven the permuted n-dimensional hypercube, find any valid permutation P and colouring.\n\nInput\n\nThe first line of input contains a single integer t (1≤ t≤ 4096) — the number of test cases.\n\nFor each test case, the first line contains a single integer n (1≤ n≤ 16).\n\nEach of the next n⋅ 2^{n-1} lines contain two integers u and v (0≤ u, v < 2^n) denoting that there is an edge between the vertices numbered u and v.\n\nIt is guaranteed that the graph described in the input is a permuted n-dimensional hypercube.\n\nAdditionally, it is guaranteed that the sum of 2^n over all test cases does not exceed 2^{16}=65 536.\n\nOutput\n\nFor each test case, print two lines.\n\nIn the first line, output any permutation P of length 2^n that can be used to transform a simple n-dimensional hypercube to the permuted n-dimensional hypercube given in the input. Two permuted hypercubes are considered the same if they have the same set of edges. If there are multiple answers, output any of them.\n\nIn the second line, print the colouring. If there is no way to colour the vertices satisfying the conditions, output -1. Otherwise, output a single line containing 2^n space separated integers. The i-th integer must be the colour of the vertex numbered (i-1) in the permuted n-dimensional hypercube. If there are multiple answers, output any of them.\n\nExample\n\nInput\n\n\n3\n1\n0 1\n2\n0 1\n1 2\n2 3\n3 0\n3\n0 1\n0 5\n0 7\n1 2\n1 4\n2 5\n2 6\n3 5\n3 6\n3 7\n4 6\n4 7\n\n\nOutput\n\n\n0 1\n0 0\n0 1 3 2\n0 0 1 1\n5 3 0 7 2 6 1 4\n-1\n\nNote\n\nThe colouring and the permuted hypercube for the first test case is shown below: \n\n<image>\n\nThe colouring and the permuted hypercube for the second test case is shown below: \n\n<image>\n\nThe permuted hypercube for the third test case is given in the problem statement. However, it can be shown that there exists no way to colour that cube satifying all the conditions. Note that some other permutations like [0, 5, 7, 3, 1, 2, 4, 6] and [0, 1, 5, 2, 7, 4, 3, 6] will also give the same permuted hypercube.",
+    "input": "The first line of input contains a single integer t (1≤ t≤ 4096) — the number of test cases.\n\nFor each test case, the first line contains a single integer n (1≤ n≤ 16).\n\nEach of the next n⋅ 2^{n-1} lines contain two integers u and v (0≤ u, v < 2^n) denoting that there is an edge between the vertices numbered u and v.\n\nIt is guaranteed that the graph described in the input is a permuted n-dimensional hypercube.\n\nAdditionally, it is guaranteed that the sum of 2^n over all test cases does not exceed 2^{16}=65 536.",
+    "output": "For each test case, print two lines.\n\nIn the first line, output any permutation P of length 2^n that can be used to transform a simple n-dimensional hypercube to the permuted n-dimensional hypercube given in the input. Two permuted hypercubes are considered the same if they have the same set of edges. If there are multiple answers, output any of them.\n\nIn the second line, print the colouring. If there is no way to colour the vertices satisfying the conditions, output -1. Otherwise, output a single line containing 2^n space separated integers. The i-th integer must be the colour of the vertex numbered (i-1) in the permuted n-dimensional hypercube. If there are multiple answers, output any of them.",
+    "constraints": "time limit: 3.0 seconds\nmemory limit: 256.0 megabytes",
+    "source": "codeforces",
+    "standard_solution_code": "from collections import deque\nfrom sys import stdin\nimport sys\ntt = int(stdin.readline())\nfor loop in range(tt):\n\tn = int(stdin.readline())\n\tlis = [[] for i in range(2 ** n)]\n\tfor i in range(n * 2 ** (n - 1)):\n\t\t(u, v) = map(int, stdin.readline().split())\n\t\tlis[u].append(v)\n\t\tlis[v].append(u)\n\trp = [0] * 2 ** n\n\td = [float('inf')] * 2 ** n\n\td[0] = 0\n\tq = deque()\n\tfor i in range(n):\n\t\tnexv = lis[0][i]\n\t\trp[nexv] = 2 ** i\n\t\td[nexv] = 1\n\t\tq.append(nexv)\n\twhile q:\n\t\tv = q.popleft()\n\t\tfor nexv in lis[v]:\n\t\t\tif d[nexv] == float('inf'):\n\t\t\t\td[nexv] = d[v] + 1\n\t\t\t\tq.append(nexv)\n\t\t\tif d[nexv] > d[v]:\n\t\t\t\trp[nexv] |= rp[v]\n\tp = [None] * 2 ** n\n\tfor i in range(2 ** n):\n\t\tp[rp[i]] = i\n\tprint(*p)\n\tif 2 ** n % n == 0:\n\t\tc = [None] * 2 ** n\n\t\tfor i in range(2 ** n):\n\t\t\tnow = 0\n\t\t\tfor j in range(n):\n\t\t\t\tif 2 ** j & i > 0:\n\t\t\t\t\tnow ^= j\n\t\t\tc[p[i]] = now\n\t\tprint(*c)\n\telse:\n\t\tprint(-1)"
+  }
+}

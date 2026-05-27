@@ -1,0 +1,116 @@
+{
+  "problem_id": "taco_codeforces_43dc8145a4f7",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "parameters",
+        "role_description": "number of rows and number of soldier groups",
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      {
+        "role": "group_sizes",
+        "role_description": "sizes of each group of soldiers",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100
+        },
+        "value_range": {
+          "min": 1,
+          "max": 10000
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "seat_adjacency_definition",
+        "description": "在同一排中,座位对 {1,2}, {3,4}, {4,5}, {5,6}, {7,8} 被定义为相邻座位。",
+        "formal": "For any row, seat i and seat j are adjacent iff {i,j} ∈ {{1,2},{3,4},{4,5},{5,6},{7,8}}.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "group_separation_on_adjacent_seats",
+        "description": "任意两个相邻座位上不能坐着来自不同组的士兵。",
+        "formal": "If two seats are adjacent and both occupied, the soldiers occupying them must belong to the same group.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "valid_seat_assignment",
+        "description": "所有士兵必须被分配到座位上,且每个座位最多容纳一名士兵。",
+        "formal": "The placement is a function from soldiers to seats that is injective, assigning each soldier to exactly one seat.",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "decision",
+    "description": "Determine whether there exists a seating arrangement satisfying the group adjacency constraints",
+    "target": "",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "independent_capacity_blocks",
+        "description": "Each row of 8 seats is partitioned by the neighbor relation into one contiguous block of size 4 (seats 3-6) and two blocks of size 2 (seats 1-2 and 7-8). These blocks share no neighboring seats, so soldiers from different groups can occupy different blocks without violating the adjacency constraint.",
+        "properties": {
+          "per_row_blocks": [
+            4,
+            2,
+            2
+          ],
+          "total_blocks": {
+            "size_4": "n",
+            "size_2": "2n"
+          }
+        },
+        "evidence_source": "both"
+      },
+      {
+        "name": "solution_preserving_reduction",
+        "description": "The greedy procedure repeatedly applies specific pairings (3+1, 2+2, 2+1+1, etc.) that consume one size‑4 block and reduce the corresponding residual demands. Each reduction step maintains the invariant that the original instance is solvable if and only if the reduced instance is solvable.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_43dc8145a4f7",
+    "title": "B",
+    "description": "Daenerys Targaryen has an army consisting of k groups of soldiers, the i-th group contains a_{i} soldiers. She wants to bring her army to the other side of the sea to get the Iron Throne. She has recently bought an airplane to carry her army through the sea. The airplane has n rows, each of them has 8 seats. We call two seats neighbor, if they are in the same row and in seats {1, 2}, {3, 4}, {4, 5}, {5, 6} or {7, 8}.\n\n [Image] A row in the airplane \n\nDaenerys Targaryen wants to place her army in the plane so that there are no two soldiers from different groups sitting on neighboring seats.\n\nYour task is to determine if there is a possible arranging of her army in the airplane such that the condition above is satisfied.\n\n\n-----Input-----\n\nThe first line contains two integers n and k (1 ≤ n ≤ 10000, 1 ≤ k ≤ 100) — the number of rows and the number of groups of soldiers, respectively.\n\nThe second line contains k integers a_1, a_2, a_3, ..., a_{k} (1 ≤ a_{i} ≤ 10000), where a_{i} denotes the number of soldiers in the i-th group.\n\nIt is guaranteed that a_1 + a_2 + ... + a_{k} ≤ 8·n.\n\n\n-----Output-----\n\nIf we can place the soldiers in the airplane print \"YES\" (without quotes). Otherwise print \"NO\" (without quotes).\n\nYou can choose the case (lower or upper) for each letter arbitrary.\n\n\n-----Examples-----\nInput\n2 2\n5 8\n\nOutput\nYES\n\nInput\n1 2\n7 1\n\nOutput\nNO\n\nInput\n1 2\n4 4\n\nOutput\nYES\n\nInput\n1 4\n2 2 1 2\n\nOutput\nYES\n\n\n\n-----Note-----\n\nIn the first sample, Daenerys can place the soldiers like in the figure below:\n\n [Image] \n\nIn the second sample, there is no way to place the soldiers in the plane since the second group soldier will always have a seat neighboring to someone from the first group.\n\nIn the third example Daenerys can place the first group on seats (1, 2, 7, 8), and the second group an all the remaining seats.\n\nIn the fourth example she can place the first two groups on seats (1, 2) and (7, 8), the third group on seats (3), and the fourth group on seats (5, 6).",
+    "input": "2 2\n5 8\n\n1 2\n7 1\n\n1 2\n4 4\n\n1 4\n2 2 1 2",
+    "output": "YES\n\nNO\n\nYES\n\nYES\n\n\n\n-----Note-----\n\nIn the first sample, Daenerys can place the soldiers like in the figure below:\n\n [Image] \n\nIn the second sample, there is no way to place the soldiers in the plane since the second group soldier will always have a seat neighboring to someone from the first group.\n\nIn the third example Daenerys can place the first group on seats (1, 2, 7, 8), and the second group an all the remaining seats.\n\nIn the fourth example she can place the first two groups on seats (1, 2) and (7, 8), the third group on seats (3), and the fourth group on seats (5, 6).",
+    "constraints": "",
+    "source": "codeforces",
+    "standard_solution_code": "(n, k) = list(map(int, input().split()))\na = sorted(list(map(int, input().split())))[::-1]\nm = n\nfor j in range(len(a)):\n\twaste = min(a[j] // 4, m)\n\tm -= waste\n\ta[j] -= waste * 4\n\tif m == 0:\n\t\tbreak\n(m1, m2, m3, msukabljat) = (0, 0, 0, [])\nfor x in a:\n\tm1 += x == 1\n\tm2 += x == 2\n\tm3 += x == 3\n\tmsukabljat += [x] if x >= 4 else []\nwaste = min(m1, m2, m)\n(m, m1, m2) = (m - waste, m1 - waste, m2 - waste)\nwaste = min(m3 // 2, m // 2)\n(m, m3) = (m - waste * 2, m3 - waste * 2)\nwaste = min(m2 // 3, m // 2)\n(m, m2) = (m - waste * 2, m2 - waste * 3)\nwaste = min(m1, m2, m3, m // 2)\n(m, m1, m2, m3) = (m - waste * 2, m1 - waste, m2 - waste, m3 - waste)\nwaste = min(m3, m)\n(m, m3) = (m - waste, m3 - waste)\nwaste = min(m1 // 2, m)\n(m, m1) = (m - waste, m1 - 2 * waste)\nwaste = min(m1, m)\n(m, m1) = (m - waste, m1 - waste)\nwaste = min(m2, m)\n(m, m2) = (m - waste, m2 - waste)\nif m1 + m2 + m3 * 2 + sum([x // 2 + x % 2 for x in msukabljat]) <= 2 * n:\n\tprint('YES')\nelse:\n\tprint('NO')"
+  }
+}
