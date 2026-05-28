@@ -453,6 +453,13 @@ def _resume_decision(problem: dict[str, Any]) -> str:
     return "未发现可复用的完成记录，从四元组抽取开始完整处理。"
 
 
+def _should_resume_existing_tuple_results(problem: dict[str, Any]) -> bool:
+    previous_hash = str(problem.get("previous_input_sha256") or "")
+    current_hash = str(problem.get("input_sha256") or "")
+    # 已知输入内容发生变化时，旧四元组不再可信，必须重新抽取。
+    return not (previous_hash and current_hash and previous_hash != current_hash)
+
+
 def _short_hash(value: Any) -> str:
     text = str(value or "")
     return text[:12] if text else "无"
@@ -495,6 +502,7 @@ def _run_single_problem_workflow(
         summary,
         problem_id=problem_id,
         order=order,
+        resume_existing_results=_should_resume_existing_tuple_results(problem),
     )
     tuple_status = _collect_single_tuple_raw_status(paths["tuple_raw"], problem_id)
     problem["tuple"] = tuple_status
@@ -732,6 +740,7 @@ def _run_extract_stage(
     *,
     problem_id: str,
     order: int,
+    resume_existing_results: bool,
 ) -> None:
     command = [
         config.python_executable,
@@ -741,6 +750,8 @@ def _run_extract_stage(
         "--output",
         str(paths["tuple_root"]),
     ]
+    if resume_existing_results:
+        command.append("--resume")
     result = runner(
         command,
         cwd=TUPLE_EXTRACT_DIR,

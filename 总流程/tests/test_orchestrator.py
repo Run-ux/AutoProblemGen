@@ -565,6 +565,9 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(source_payload["original_problem"]["title"], "示例题")
             self.assertIn("题面", source_payload["original_problem"]["description"])
             self.assertFalse(any(Path(call["command"][1]).name == "normalize.py" for call in runner.calls))
+            extract_calls = runner.stage_calls("extract.py")
+            self.assertEqual(len(extract_calls), 1)
+            self.assertIn("--resume", extract_calls[0]["command"])
             self.assertIn(RUNTIME_GENERATION_LLM_ENV, generation_calls[0]["env"])
             self.assertIn(RUNTIME_EMBEDDING_LLM_ENV, generation_calls[0]["env"])
             self.assertIn(RUNTIME_EXECUTION_ENV, generation_calls[0]["env"])
@@ -667,6 +670,9 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(summary["status"], "completed")
             self.assertGreater(len(runner.calls), 0)
             self.assertFalse(summary["problems"][0].get("skipped_this_run", False))
+            extract_calls = runner.stage_calls("extract.py")
+            self.assertEqual(len(extract_calls), 1)
+            self.assertNotIn("--resume", extract_calls[0]["command"])
 
     def test_directory_input_runs_full_workflow_per_problem_in_order(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
