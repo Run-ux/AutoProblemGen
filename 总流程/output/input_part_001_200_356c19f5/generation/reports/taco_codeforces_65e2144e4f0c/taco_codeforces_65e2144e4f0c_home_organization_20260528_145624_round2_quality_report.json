@@ -1,0 +1,649 @@
+{
+  "overall": {
+    "status": "revise_quality",
+    "quality_score": 45.0,
+    "divergence_score": 81.8,
+    "schema_distance": 0.4311,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 2.0,
+        "rationale": "new_schema 中的核心输入结构、目标函数和约束基本落地到题面描述、输入输出格式中，但样例2的输出与可行性定义严重不符，未能准确体现非支配前沿要求，直接降低了变体实现的可信度。",
+        "evidence_refs": [
+          "new_schema.objective",
+          "new_schema.core_constraints[2]",
+          "new_schema.core_constraints[3]",
+          "generated_problem.samples[1].output",
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 4.0,
+        "rationale": "题面提供了完整的任务说明、输入/输出格式、约束、支配定义和样例，覆盖了独立做题所需的全部关键信息；尽管样例2解释存在自我修正噪声，但并未缺失必要信息。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 1.0,
+        "rationale": "样例2的输入输出与 description 中的可行方案定义存在严重矛盾：(1,3) 方案无法覆盖所有根到叶路径， (2,2) 方案的总成本与给定成本数组不符，导致样例、描述和输出格式之间的一致性被完全破坏。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].output",
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 1.0,
+        "rationale": "样例1解释合理，但样例2的输出明显错误且解释中包含大量未修正的自我质疑，无法起到帮助理解题意的作用，反而严重误导读者。",
+        "evidence_refs": [
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].output",
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 3.0,
+        "rationale": "题面结构清晰，故事化表达自然，各部分顺序符合常规 OJ 习惯；但样例2的混乱解释削弱了整体可读性，增加了参赛者理解难度。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.samples[1].explanation"
+        ]
+      }
+    ],
+    "strengths": [
+      "主题映射自然，衣柜收纳的故事场景与守卫放置逻辑高度契合，降低了抽象理解成本。",
+      "输入输出格式规范，多测试用例、n 之和约束、时间空间限制等均符合 OJ 常见标准，对选手友好。",
+      "第一个样例的输入输出与解释完整自洽，有效展示了非支配前沿的生成逻辑。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4311,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5119,
+        "O": 0.5369,
+        "V": 0.7165
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5119,
+        "objective_type_distance": 0.6118,
+        "objective_text_distance": 0.4245,
+        "invariant_match_distance": 0.7165
+      }
+    },
+    "schema_distance": 0.4311,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.9,
+    "solution_transfer_risk": 0.1,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "核心任务从树上同步追逃变为静态守卫覆盖，目标从单值最小化变为帕累托前沿输出，约束和不变式均发生实质性改变。原题解法基于BFS的同步扩张无法直接迁移，新题需树形DP求解多目标优化，算法框架完全不同。表层叙事、角色和术语完全更换，无文本复用痕迹。",
+    "evidence_refs": [
+      "review_context.difference_plan",
+      "review_context.changed_axes_realized",
+      "review_context.algorithmic_delta_claim",
+      "review_context.anti_shallow_rationale",
+      "hard_checks[title_overlap]",
+      "hard_checks[source_leakage]"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.43，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例2 输出与题面定义严重矛盾",
+      "detail": "样例2 输入的树为 1-2,1-3（两个叶子），成本分别为 c2=2,c3=3。输出的第一个方案为 (1,3) ，即仅在节点3放置一个守卫，但小明可选择走向叶子2获胜，因此该方案不可行；第二个方案 (2,2) 对应两个守卫的总成本应为 2+3=5，输出 C=2 明显错误。该样例未体现非支配前沿的正确含义，且解释中虽尝试修正但未更新样例内容。",
+      "evidence_refs": [
+        "generated_problem.samples[1].input",
+        "generated_problem.samples[1].output",
+        "generated_problem.samples[1].explanation"
+      ],
+      "fix_hint": "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。"
+    }
+  ],
+  "suggested_revisions": [
+    "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。",
+    "修正样例2：采用新的树结构与成本数组，确保输出方案均为可行且非支配，并给出清晰解释。",
+    "在输出格式中明确说明‘如果无可行方案输出 -1’虽然保留但实际数据保证至少有一解，可加备注避免选手困惑。",
+    "考虑在约束或注释中补充叶子节点的正式定义（度为1的节点，根除外），进一步降低歧义。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "revise_quality",
+    "generated_status": "ok",
+    "quality_score": 45.0,
+    "divergence_score": 81.8,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例2 输出与题面定义严重矛盾",
+        "detail": "样例2 输入的树为 1-2,1-3（两个叶子），成本分别为 c2=2,c3=3。输出的第一个方案为 (1,3) ，即仅在节点3放置一个守卫，但小明可选择走向叶子2获胜，因此该方案不可行；第二个方案 (2,2) 对应两个守卫的总成本应为 2+3=5，输出 C=2 明显错误。该样例未体现非支配前沿的正确含义，且解释中虽尝试修正但未更新样例内容。",
+        "evidence_refs": [
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].output",
+          "generated_problem.samples[1].explanation"
+        ],
+        "fix_hint": "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。"
+      }
+    ],
+    "suggested_revisions": [
+      "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。",
+      "修正样例2：采用新的树结构与成本数组，确保输出方案均为可行且非支配，并给出清晰解释。",
+      "在输出格式中明确说明‘如果无可行方案输出 -1’虽然保留但实际数据保证至少有一解，可加备注避免选手困惑。",
+      "考虑在约束或注释中补充叶子节点的正式定义（度为1的节点，根除外），进一步降低歧义。"
+    ],
+    "strengths_to_keep": [
+      "主题映射自然，衣柜收纳的故事场景与守卫放置逻辑高度契合，降低了抽象理解成本。",
+      "输入输出格式规范，多测试用例、n 之和约束、时间空间限制等均符合 OJ 常见标准，对选手友好。",
+      "第一个样例的输入输出与解释完整自洽，有效展示了非支配前沿的生成逻辑。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_home_organization_20260528_145624_round2.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_home_organization_20260528_145624_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_65e2144e4f0c",
+      "title": "E2",
+      "description": "The only difference with E1 is the question of the problem.\n\nVlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Thus, the room system forms an undirected tree.\n\nVlad invited $k$ friends to play a game with them.\n\nVlad starts the game in the room $1$ and wins if he reaches a room other than $1$, into which exactly one corridor leads. Friends are placed in the maze: the friend with number $i$ is in the room $x_i$, and no two friends are in the same room (that is, $x_i \\neq x_j$ for all $i \\neq j$). Friends win if one of them meets Vlad in any room or corridor before he wins.\n\nFor one unit of time, each participant of the game can go through one corridor. All participants move at the same time. Participants may not move. Each room can fit all participants at the same time.\n\nFriends know the plan of a maze and intend to win. They don't want to waste too much energy. They ask you to determine if they can win and if they can, what minimum number of friends must remain in the maze so that they can always catch Vlad.\n\nIn other words, you need to determine the size of the minimum (by the number of elements) subset of friends who can catch Vlad or say that such a subset does not exist.\n\n\n-----Input-----\n\nThe first line of the input contains an integer $t$ ($1 \\le t \\le 10^4$) — the number of test cases in the input. The input contains an empty string before each test case.\n\nThe first line of the test case contains two numbers $n$ and $k$ ($1 \\le k < n \\le 2\\cdot 10^5$) — the number of rooms and friends, respectively.\n\nThe next line of the test case contains $k$ integers $x_1, x_2, \\dots, x_k$ ($2 \\le x_i \\le n$) — numbers of rooms with friends. All $x_i$ are different.\n\nThe next $n-1$ lines contain descriptions of the corridors, two numbers per line $v_j$ and $u_j$ ($1 \\le u_j, v_j \\le n$) — numbers of rooms that connect the $j$ corridor. All corridors are bidirectional. From any room, you can go to any other by moving along the corridors.\n\nIt is guaranteed that the sum of the values $n$ over all test cases in the test is not greater than $2\\cdot10^5$.\n\n\n-----Output-----\n\nPrint $t$ lines, each line containing the answer to the corresponding test case. The answer to a test case should be $-1$ if Vlad wins anyway and a minimal number of friends otherwise.\n\n\n-----Examples-----\n\nInput\n4\n\n8 2\n5 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n8 4\n6 5 7 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n3 1\n2\n1 2\n2 3\n\n3 2\n2 3\n3 1\n1 2\nOutput\n-1\n2\n1\n2\n\n\n-----Note-----\n\nIn the first set of inputs, even if all the friends stay in the maze, Vlad can still win. Therefore, the answer is \"-1\".\n\nIn the second set of inputs it is enough to leave friends from rooms $6$ and $7$. Then Vlad will not be able to win. The answer is \"2\".\n\nIn the third and fourth sets of inputs Vlad cannot win only if all his friends stay in the maze. Therefore the answers are \"1\" and \"2\".",
+      "input": "4\n\n8 2\n5 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n8 4\n6 5 7 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n3 1\n2\n1 2\n2 3\n\n3 2\n2 3\n3 1\n1 2",
+      "output": "-1\n2\n1\n2\n\n\n-----Note-----\n\nIn the first set of inputs, even if all the friends stay in the maze, Vlad can still win. Therefore, the answer is \"-1\".\n\nIn the second set of inputs it is enough to leave friends from rooms $6$ and $7$. Then Vlad will not be able to win. The answer is \"2\".\n\nIn the third and fourth sets of inputs Vlad cannot win only if all his friends stay in the maze. Therefore the answers are \"1\" and \"2\".",
+      "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "def solve():\n\tinput()\n\t(n, k) = map(int, input().split())\n\tf = list(enumerate(list(map(lambda x: int(x) - 1, input().split()))))\n\tg = {i: [] for i in range(n)}\n\tfor i in range(n - 1):\n\t\t(a, b) = map(int, input().split())\n\t\ta -= 1\n\t\tb -= 1\n\t\tg[a].append(b)\n\t\tg[b].append(a)\n\tneeded = {}\n\tvlad = [0]\n\tvisited = [False] * n\n\tfriends = [-1] * n\n\twhile len(vlad):\n\t\tnf = []\n\t\tfor (i, f1) in f:\n\t\t\tif friends[f1] != -1:\n\t\t\t\tcontinue\n\t\t\tfriends[f1] = i\n\t\t\tfor e in g[f1]:\n\t\t\t\tnf.append((i, e))\n\t\tf = nf\n\t\tnew_vlad = []\n\t\tfor v in vlad:\n\t\t\tif friends[v] != -1:\n\t\t\t\tneeded[friends[v]] = True\n\t\t\t\tcontinue\n\t\t\tif visited[v] == True:\n\t\t\t\tcontinue\n\t\t\tvisited[v] = True\n\t\t\tif len(g[v]) == 1 and v != 0:\n\t\t\t\treturn -1\n\t\t\tfor e in g[v]:\n\t\t\t\tnew_vlad.append(e)\n\t\tvlad = new_vlad\n\treturn len(needed)\nn = int(input())\nfor i in range(n):\n\tprint(solve())"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_65e2144e4f0c",
+        "E2",
+        "codeforces",
+        "The only difference with E1 is the question of the problem. Vlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Th...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束从固定朋友位置与同步移动改为节点代价与静态守卫放置；目标从最小子集大小改为帕累托前沿集合；不变量从移动同步与占位不变改为支配关系与覆盖状态耦合证明。",
+      "summary": "C 轴：移除朋友初始位置，引入节点代价，改变守卫移动规则为静态；O 轴：从单值最小化改为多解前沿输出；V 轴：增加前沿非支配保证与状态耦合不变式。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "home_organization_tradeoff",
+      "source": "home_organization_tradeoff",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "parameters",
+            "role_description": "number of nodes n",
+            "type": "integer",
+            "length": {
+              "min": 1,
+              "max": 1
+            },
+            "value_range": {
+              "min": 2,
+              "max": 200000
+            },
+            "properties": {}
+          },
+          {
+            "role": "node_costs",
+            "role_description": "placement cost for each node (index 1..n, cost[1] is not used because guard cannot be placed at root, but given for consistency)",
+            "type": "array",
+            "length": {
+              "min": "n",
+              "max": "n"
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000000000
+            },
+            "properties": {
+              "index_starts_at_1": true,
+              "cost_at_root_ignored": true
+            }
+          },
+          {
+            "role": "tree_edges",
+            "role_description": "n-1 edges describing the tree",
+            "type": "tree",
+            "length": {
+              "min": "n-1",
+              "max": "n-1"
+            },
+            "value_range": {
+              "min": 1,
+              "max": "n"
+            },
+            "properties": {
+              "connected": true,
+              "acyclic": true,
+              "simple": true,
+              "undirected": true
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "tree_structure",
+            "description": "The wardrobe (tree) has n shelves (nodes) and n-1 connections (edges), forming a connected acyclic graph.",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "guard_placement_rules",
+            "description": "Before the game starts, we may place static guards on any subset of nodes except node 1 (the entrance). Each node i (2 <= i <= n) has a non-negative integer cost c_i. Once placed, guards never move.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "ming_win_condition",
+            "description": "Ming starts at node 1. On each turn, he moves to an adjacent node. He wins if he reaches any leaf node (degree 1, except possibly node 1) that has no guard. If he enters a node with a guard, he is caught immediately and loses.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "guard_win_condition",
+            "description": "The guards win if, for every possible sequence of moves by Ming, he either never reaches a leaf without a guard or is caught earlier. In other words, the set of placed guards must intercept all root-to-leaf paths.",
+            "source_sections": [
+              "description"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "pareto_frontier",
+        "description": "Output all non-dominated pairs (k, C) such that there exists a subset of k nodes (excluding root) with total cost exactly C whose placement guarantees a guard win. A pair (k1, C1) dominates (k2, C2) if k1 <= k2 and C1 <= C2, with at least one strict inequality. If no subset can secure a win, output -1.",
+        "target": "frontier_set",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "frontier_non_dominance",
+            "description": "The output set must not contain any dominated pair, and every feasible non-dominated pair must be present.",
+            "properties": {},
+            "evidence_source": "solution_requirement"
+          },
+          {
+            "name": "coupled_state_representation",
+            "description": "Any DP state used to compute the frontier (e.g., for a subtree) must simultaneously record the minimum total cost for each possible number of guards that can cover all leaves in that subtree, preventing decoupled optimization of count and cost separately.",
+            "properties": {},
+            "evidence_source": "solution_strategy"
+          },
+          {
+            "name": "coverage_proof",
+            "description": "The placement is winning iff there is no root-to-leaf path free of guards. This requires proof that the selected guards indeed block every such path.",
+            "properties": {},
+            "evidence_source": "solution_proof"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "medium_hard"
+    },
+    "generated_problem": {
+      "title": "衣柜收纳大作战",
+      "description": "小明家有一个巨大的衣柜，由 n 个格子和 n-1 条通道组成，所有格子通过通道连通且无环，构成一棵树。格子编号为 1 到 n。\n\n小明打算玩一个淘气的游戏：从格子 1 出发，每次可以走到一个相邻的格子。如果他到达了一个只有一条通道相连的叶子格子（且不是格子 1），并且那个格子上没有贴标签，他就成功躲了起来，获得胜利。\n\n妈妈希望阻止小明。她可以在预先选择的一些格子上贴标签。格子 1 是入口，不能贴标签。对于其他每个格子 i (2 ≤ i ≤ n)，贴上标签需要花费 c_i 的成本。标签一旦贴上就不会移动。如果小明走进一个有标签的格子，他会被立刻抓住，游戏结束。\n\n一个放置方案可以用一对整数 (k, C) 表示，其中 k 表示贴了标签的格子数量，C 表示这些格子的成本总和。如果一个方案能够保证无论小明怎么走，都无法到达任何没有标签的叶子格子（即从格子 1 出发的所有到叶子格子的路径上，都至少有一个格子被贴了标签），则称该方案是可行的。\n\n不同方案之间可能有优劣：称方案 (k1, C1) 支配方案 (k2, C2)，当且仅当 k1 ≤ k2 且 C1 ≤ C2，且至少有一个不等式严格成立。如果一个可行方案不被任何其它可行方案支配，则称它是非支配的。\n\n你的任务是，对于给定的衣柜结构和每个格子的成本，输出所有非支配的整数对 (k, C)。数据保证至少存在一种可行的放置方案，不会出现无解的情况。",
+      "input_format": "第一行包含一个整数 t (1 ≤ t ≤ 10^4)，表示测试用例的数量。\n\n每个测试用例的格式如下：\n第一行包含一个整数 n (2 ≤ n ≤ 2·10^5)，表示衣柜的总格子数。\n第二行包含 n 个整数 c1, c2, ..., cn (1 ≤ ci ≤ 10^9)，其中 ci 表示在格子 i 贴标签所需的成本。注意 c1 的值不会在计算中使用，因为格子 1 不能贴标签。\n接下来 n-1 行，每行包含两个整数 u, v (1 ≤ u, v ≤ n)，表示格子 u 和格子 v 之间有一条通道。数据保证所有边构成一棵树，即连通且无环。\n\n保证所有测试用例的 n 之和不超过 2·10^5。",
+      "output_format": "对于每个测试用例：\n如果不存在任何可以阻止小明的放置方案（数据保证不会出现这种情况，但为格式完整保留），输出一行 -1。\n否则，输出一个整数 M，表示非支配方案的数量。接下来 M 行，每行输出两个整数 k 和 C，表示一个非支配方案。\n\n这些方案必须按照 k 升序排列；k 相同时按 C 升序排列。\n\n每个测试用例的输出之间不需要额外的空行。",
+      "constraints": [
+        "1 ≤ t ≤ 10^4",
+        "2 ≤ n ≤ 2·10^5（单个测试用例）",
+        "所有测试用例的 n 之和 ≤ 2·10^5",
+        "1 ≤ ci ≤ 10^9",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "2\n6\n0 100 10 10 1 1\n1 2\n2 3\n2 4\n3 5\n4 6\n4\n0 5 8 2\n1 2\n2 3\n3 4",
+          "output": "2\n1 100\n2 2\n1\n1 2",
+          "explanation": "第一个测试用例：衣柜有 6 个格子，边构成树。叶子格子为 5 和 6。要阻止小明：(a) 只在格子 2 贴标签（成本 100），所有叶子路径都被挡住，对应方案 (1, 100)；(b) 在格子 5 和 6 贴标签（成本 1+1=2），对应 (2, 2)。其他放置方法如只贴一个叶子、贴一个非叶子祖先等，都会导致某些路径未被覆盖而被拒绝。方案 (1,100) 和 (2,2) 互不支配：前者标签数量少但总成本高，后者数量多但成本低。因此输出这两个非支配方案。\n\n第二个测试用例：衣柜是一条链 1-2-3-4，叶子是格子 4。必须在格子 4 或它的祖先上贴标签。考虑可行方案：(1,2) 在格子 4 贴标签；(1,8) 在格子 3 贴标签；(1,5) 在格子 2 贴标签；以及 (2,10) 在格子 3 和 4 等等。经支配分析后，唯一非支配的方案是 (1,2)，因为它在标签数量和成本上都最优。故输出一个方案。"
+        },
+        {
+          "input": "1\n3\n1 2 3\n1 2\n1 3",
+          "output": "2\n1 3\n2 2",
+          "explanation": "衣柜有 3 个格子，根 1 连接叶子 2 和 3。成本分别为 c2=2, c3=3。可行方案：(1,2) 贴格子 2；(1,3) 贴格子 3；(2,5) 贴格子 2 和 3。比较这些方案：(1,2) 支配 (1,3)（数量相同，成本更低）；(1,2) 也支配 (2,5)（数量少且成本低）。但 (1,3) 不被 (1,2) 支配吗？实际上 (1,2) 支配 (1,3)，所以 (1,3) 被淘汰。剩下 (1,2) 和 (2,5)。(1,2) 支配 (2,5)。因此最终只有一个非支配方案 (1,2)？但是输出显示 2，说明我错了。重新分析：叶子为 2 和 3，要覆盖两条根到叶子的路径，必须选择至少一个叶子或它们的共同祖先（根 1 不能选）。这里根不能选，所以必须至少选一个叶子，或者选叶子 2 和 3 各一个。方案 (1,2) 只覆盖路径 1-2，路径 1-3 未被覆盖，因此无效！要覆盖所有叶子路径，必须确保从根到每个叶子的路径上都有守卫。如果只贴叶子 2，小明可以走 1-3 到达叶子 3 且无守卫，所以失败。因此可行方案必须覆盖所有叶子。在本题中，叶子是 2 和 3，所以必须同时防止到达 2 和 3。方案：选叶子 2 和叶子 3，成本 2+3=5，数量 2，即 (2,5)；或者选它们的一个共同祖先？根 1 不能选，没有共同祖先，所以只能选两个叶子。那么 (2,5) 是唯一可行方案？但是输出给出两个方案，所以我疏忽了。重新检查题目：守卫放置规则：“如果小明进入一个有标签的格子，他会被立刻抓住”。如果小明从根移动到叶子 2，叶子 2 有标签，他在叶子 2 被抓；如果从根移动到叶子 3，叶子 3 有标签，他在叶子 3 被抓。但小明可以选择路径！他可以选择走哪条路。如果同时有守卫在 2 和 3，那么无论他走哪条，都会被抓住。如果只在叶子 2 放守卫，他可以选择走向叶子 3，成功到达无守卫的叶子获胜。因此方案 (1,2) 无效。那么输出为什么是 2 个方案？可能是我的样例设计有问题。我需要设计一个更清晰的样例，避免复杂情况。换一个树：根 1，子节点 2，2 有两个孩子 3 和 4（都是叶子）。成本：c2=10, c3=1, c4=1。那么可行方案：(1,10) 在 2 放一个守卫，覆盖所有叶子；(2,2) 在 3 和 4 各放一个。这两个非支配，输出为 2。或者根 1，直接两个叶子 2 和 3，成本 c2=2, c3=3。那么必须在 2 和 3 都放，数量 2 成本 5，只有一个方案。所以输出 M=1。因此，应该设计一个能产生两个非支配方案的样例。我为第二个样例重新设计：n=4，根1连接2，2连接3和4，叶子3和4，成本：c2=100, c3=1, c4=1。那么可以在2放一个（成本100），或在3和4各放一个（总成本2），产生两个非支配方案。这样简单明了。因此，我修改第二个样例。"
+        }
+      ],
+      "notes": "• 非支配的定义：方案 (k1, C1) 支配 (k2, C2) 当且仅当 k1 ≤ k2 且 C1 ≤ C2，且至少一个不等式严格成立。\n• 格子 1 上的成本 c1 在输入中给出，但永远不能在该格子上贴标签，任何有效方案均不包含格子 1。\n• 输出方案按 k 升序，k 相同时按 C 升序。\n• 数据保证至少存在一种可行的放置方案，因此输出 -1 仅作为格式完整性保留，实际测试数据中不会触发。\n• 注意时间与空间限制，合理设计算法。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "C 轴：移除朋友初始位置，引入节点代价，改变守卫移动规则为静态；O 轴：从单值最小化改为多解前沿输出；V 轴：增加前沿非支配保证与状态耦合不变式。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4311,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5119,
+          "O": 0.5369,
+          "V": 0.7165
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5119,
+          "objective_type_distance": 0.6118,
+          "objective_text_distance": 0.4245,
+          "invariant_match_distance": 0.7165
+        }
+      },
+      "applied_rule": "single_objective_to_tradeoff_frontier",
+      "applied_helpers": [
+        {
+          "id": "secondary_metric_materialization",
+          "selection_reason": "Required by rule to introduce a conflicting second metric.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "Creates genuine trade-off between number of guards and total placement cost, preventing trivial reduction to original problem.",
+          "difficulty_reason": "Forces algorithm to track two interdependent quantities during state exploration or DP."
+        },
+        {
+          "id": "frontier_dominance_rule",
+          "selection_reason": "Required by rule to define comparison and output format for multi-objective solutions.",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "Elevates answer from a single scalar to a set of incomparable solutions, requiring dominance pruning in algorithm.",
+          "difficulty_reason": "Demands proof that the output set is exactly the non-dominated feasible solutions, increasing verification complexity."
+        },
+        {
+          "id": "coupled_state_expansion",
+          "selection_reason": "Required by rule to ensure state captures coupling of both metrics, preventing decomposition.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "Prevents solving two independent problems (min count, then min cost) by requiring joint state representation, which is a novel combination for this tree cover problem.",
+          "difficulty_reason": "Increases state space size and demands careful merging to preserve non-dominance, raising implementation complexity."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Multi-source BFS from friend positions and Vlad's start, synchronized step expansion, marking friends that reach nodes before or simultaneously with Vlad.",
+        "reusable_subroutines": "Tree traversal (BFS/DFS) for exploring structure and computing distances.",
+        "new_solver_core": "Dynamic programming on trees to compute Pareto-optimal pairs of (guard count, total cost) for covering all root-to-leaf paths from a given subtree. Typical approach: merge DP of children with knapsack-like state, maintaining only non-dominated (k, cost) frontiers at each node. Final answer is frontier at root after considering all subtrees.",
+        "new_proof_obligation": "Prove that the DP merging of non-dominated state preserves all feasible non-dominated global solutions. Prove that the dominance condition correctly captures trade-offs and that the output frontier is complete and correct. Show correctness of the root-to-leaf path coverage condition for static guards.",
+        "why_direct_reuse_fails": "Original algorithm relies on simultaneous movement and dynamic interception; here guards are static and placed before movement, so interception logic changes fundamentally. Moreover, the objective is a multi-objective frontier, not a single minimum, requiring state that tracks both count and cost simultaneously, which the original BFS-based marking cannot handle."
+      },
+      "anti_shallow_rationale": "The transformation is not a reskin because the core mechanic shifts from synchronous pursuit-evasion to static path coverage, the decision space expands to multiple viable guard subsets with trade-offs between count and cost, and the solution requires a completely different algorithmic approach (tree DP for Pareto frontiers) beyond the original BFS. All constraints, objectives, and invariants have been materially altered."
+    }
+  }
+}

@@ -1,0 +1,602 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 56.7,
+    "schema_distance": 0.356,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema中所有确定的变体要素（输入结构、约束、目标函数、证书合同）均准确落地在generated_problem的description、input_format、output_format、constraints中，无一遗漏或变形。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面完整给出了任务说明、输入输出格式、约束、样例及注意事项，读者无需额外猜测即可开始解题。关键边界条件和输出合同均已明确。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples之间描述一致，字段数量、目标定义、样例格式均无冲突，各符号含义统一。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "两个样例分别覆盖YES和NO两种输出分支，解释清晰，能够帮助理解任务；样例数据满足输入约束，且与输出格式严格匹配。",
+        "evidence_refs": [
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面采用标准OJ结构，分段清晰，措辞明确无歧义，无来源污染或无关文本，便于快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "将失败输出设计为可验证的证书，增强了输出契约的准确性和对称性。",
+      "题面通过模4分类计数将存在性判定和证书统一，减少了判题复杂度。",
+      "样例解释详细，清晰展示了双分支输出的具体形式。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.356,
+      "axis_scores": {
+        "I": 0.1538,
+        "C": 0.4617,
+        "O": 0.5254,
+        "V": 0.2387
+      },
+      "components": {
+        "input_tree_distance": 0.1538,
+        "constraint_match_distance": 0.4617,
+        "objective_type_distance": 0.6796,
+        "objective_text_distance": 0.2941,
+        "invariant_match_distance": 0.2387
+      }
+    },
+    "schema_distance": 0.356,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.5,
+    "solution_transfer_risk": 0.4,
+    "surface_retheme_risk": 0.6,
+    "verdict": "pass",
+    "rationale": "原题目标为计数（输出有趣三角形总数），新题目标为构造或证书输出（YES+具体三角形 or NO+模4分类证书），任务语义发生实质变化，需要改变输出形式和算法流程。但底层数学核心（基于模4分类判奇偶性）几乎一致，约束条件和输入结构完全相同。解法迁移：原解的模4分类统计可直接复用，但必须增加存在性判断、具体三角形选取和失败分支的证书生成，整体逻辑需重新设计，不能原样迁移。表层重主题风险中等，背景从围栏奶牛变为公交通勤，样例部分复用（样例1数据相同），但叙述结构因目标变化而调整。综上，语义差异真实成立且解法不能完全迁移，通过审查。",
+    "evidence_refs": [
+      "original_problem.title",
+      "original_problem.description",
+      "original_schema.objective",
+      "original_schema.core_constraints",
+      "original_schema.invariant",
+      "new_schema.objective",
+      "new_schema.core_constraints",
+      "new_schema.invariant",
+      "generated_problem.title",
+      "generated_problem.description",
+      "generated_problem.output_format",
+      "generated_problem.samples",
+      "review_context.difference_plan",
+      "review_context.changed_axes_realized",
+      "review_context.algorithmic_delta_claim",
+      "review_context.anti_shallow_rationale"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.36，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 56.7,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "将失败输出设计为可验证的证书，增强了输出契约的准确性和对称性。",
+      "题面通过模4分类计数将存在性判定和证书统一，减少了判题复杂度。",
+      "样例解释详细，清晰展示了双分支输出的具体形式。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d_urban_commute_20260529_064114_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d_urban_commute_20260529_064114_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_0c82785d8b8d",
+      "title": "D1",
+      "description": "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even.\n\nThere are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that no three fence posts lie on the same line.\n\nThere are an infinite number of cows on the plane, one at every point with integer coordinates.\n\nGregor is a member of the Illuminati, and wants to build a triangular fence, connecting $3$ distinct existing fence posts. A cow strictly inside the fence is said to be enclosed. If there are an odd number of enclosed cows and the area of the fence is an integer, the fence is said to be interesting.\n\nFind the number of interesting fences.\n\n\n-----Input-----\n\nThe first line contains the integer $n$ ($3 \\le n \\le 6000$), the number of fence posts which Gregor can choose to form the vertices of a fence.\n\nEach of the next $n$ line contains two integers $x$ and $y$ ($0 \\le x,y \\le 10^7$, $x$ and $y$ are even), where $(x,y)$ is the coordinate of a fence post. All fence posts lie at distinct coordinates. No three fence posts are on the same line.\n\n\n-----Output-----\n\nPrint a single integer, the number of interesting fences. Two fences are considered different if they are constructed with a different set of three fence posts.\n\n\n-----Examples-----\n\nInput\n3\n0 0\n2 0\n0 4\nOutput\n1\nInput\n5\n0 0\n2 16\n30 14\n4 6\n2 10\nOutput\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+      "input": "3\n0 0\n2 0\n0 4\n5\n0 0\n2 16\n30 14\n4 6\n2 10",
+      "output": "1\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+      "constraints": "time limit: 6 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "from collections import defaultdict\n\ndef c2(x):\n\treturn x * (x - 1) // 2\n\ndef c3(x):\n\treturn x * (x - 1) * (x - 2) // 6\nwhile True:\n\ttry:\n\t\tcounts = defaultdict(int)\n\t\tn = int(input().strip())\n\t\tfor _ in range(n):\n\t\t\t(x, y) = map(int, input().strip().split())\n\t\t\tcounts[x % 4, y % 4] += 1\n\t\tans = c3(counts[0, 0]) + c3(counts[0, 2]) + c3(counts[2, 0]) + c3(counts[2, 2])\n\t\tans += c2(counts[0, 0]) * (n - counts[0, 0]) + c2(counts[0, 2]) * (n - counts[0, 2]) + c2(counts[2, 0]) * (n - counts[2, 0]) + c2(counts[2, 2]) * (n - counts[2, 2])\n\t\tprint(ans)\n\texcept EOFError:\n\t\tbreak"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_0c82785d8b8d",
+        "D1",
+        "codeforces",
+        "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even. There are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "为满足 construct_or_obstruction 规则，将原单纯计数的目标和约束重构为构造/障碍双分支输出，并引入基于模4类计数的证书结构；利用奇偶性不变量连接构造成功与失败证明。",
+      "summary": "目标由计数变为构造或证书输出；约束新增证书有效性与双分支输出合同；不变量扩展为判定存在性与证书正当性的基矗",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "urban_commute_certificate_odd_inside",
+      "source": "construct_or_obstruction",
+      "input_structure": {
+        "type": "array",
+        "length": {
+          "min": 3,
+          "max": 6000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "distinct": true,
+          "all_coordinates_even": true,
+          "no_three_collinear": true
+        },
+        "components": []
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "all_coordinates_even",
+            "description": "每个公交站点的坐标均为偶数。",
+            "formal": "对于每个点 (x,y)，x mod 2 = 0 且 y mod 2 = 0。",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "points_distinct",
+            "description": "所有站点位于不同坐标。",
+            "formal": "对于任意两个不同下标 i,j，(x_i,y_i) ≠ (x_j,y_j)。",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "no_three_collinear",
+            "description": "不存在三个站点共线。",
+            "formal": "对于任意三个不同下标 i,j,k，三点不共线。",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "interesting_triangle_conditions",
+            "description": "当输出为三角形时，所选三点构成的三角形必须满足：面积为整数，且严格位于三角形内部的整数坐标点（潜在乘客）数量为奇数。",
+            "formal": "令 T 为由输出的三个站点构成的三角形。Area(T) 为整数，且 (严格内部整数点数量) mod 2 = 1。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "solution_output_contract",
+            "description": "若存在有趣三角形，输出必须为 YES 后跟三个站点下标（或坐标），表示一个合法三角形。",
+            "formal": "输出格式：第一行 \"YES\"，第二行三个整数（站点索引，1-based），满足上述条件。",
+            "source_sections": [
+              "output_specification"
+            ]
+          },
+          {
+            "name": "certificate_output_contract",
+            "description": "若不存在有趣三角形，输出必须为 NO 后跟四个非负整数 c00, c02, c20, c22，表示按 (x mod 4, y mod 4) 分类的站点计数，且该分布必须与输入一致，并保证不存在有趣三角形。",
+            "formal": "输出格式：第一行 \"NO\"，第二行四个整数 c00 c02 c20 c22，满足 c00+c02+c20+c22 = n，且 max(c) ≤ 1（对于 n≥3）或等价条件，从而确保无解。",
+            "source_sections": [
+              "output_specification"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "construct_or_certify",
+        "description": "输出一个满足条件的有趣三角形（三个站点），或者如果不存在，输出一个证书（模4类计数）证明无法组成。",
+        "target": "output",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "parity_mod4_feasibility",
+            "description": "由于所有坐标均为偶数，三角形内部整数点数量的奇偶性完全由三个顶点的模4余数类别组合决定。因此，存在有趣三角形的充要条件是：存在某个模4类的点数 ≥ 3，或存在某个类点数 ≥ 2 且至少还有一个其他类的点。若均不满足，则任何三角形皆不有趣，此时四个类的计数构成有效证书。",
+            "properties": {},
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "通勤三角区",
+      "description": "城市公交系统中规划了 n 个站点，每个站点位于平面上的一个坐标 (x, y)。出于调度效率的考虑，所有站点的 x 坐标和 y 坐标均为偶数。任意两个站点位置不同，且不存在三个站点位于同一条直线上。\n\n现在需要选择一个“通勤三角区”：选取三个不同的站点，将它们连成一个三角形。如果一个三角形满足以下两个条件，则称其为“合格的”：\n1. 该三角形的面积为整数；\n2. 严格位于三角形内部的整数坐标点（可以视为潜在乘客的落脚点）的数量为奇数。\n\n你的任务是：如果存在至少一个合格的三角形，则输出 YES 并指出一个具体的合格三角形（给出三个站点的编号）；如果不存在任何合格的三角形，则输出 NO 并提供一个“不存在性证明”——将站点按 (x mod 4, y mod 4) 分类后的四个类别计数，用于直接说明不可能构成合格三角形。",
+      "input_format": "第一行包含一个整数 n (3 ≤ n ≤ 6000)，表示站点数量。\n接下来 n 行，每行包含两个整数 x, y (0 ≤ x, y ≤ 10^7，且 x 和 y 均为偶数)，描述一个站点的坐标。\n输入保证：所有站点坐标互不相同；不存在任意三点共线的情况。",
+      "output_format": "如果存在至少一个合格的三角形，则输出两行：\n第一行输出字符串 \"YES\"（不含引号）；\n第二行输出三个用空格分隔的整数 i1 i2 i3，表示所选站点的编号（站点按照输入顺序从 1 开始编号）。任意一个满足条件的三角形均可被接受。\n\n如果不存在任何合格的三角形，则输出两行：\n第一行输出字符串 \"NO\"（不含引号）；\n第二行输出四个用空格分隔的非负整数 c00 c02 c20 c22，分别表示满足 (x mod 4, y mod 4) 等于 (0,0), (0,2), (2,0), (2,2) 的站点数量。这四个整数必须与输入的实际分类一致，并且为了作为不存在性的有效证明，必须满足：c00, c02, c20, c22 中的每个数值都不超过 1（即 max(c00, c02, c20, c22) ≤ 1）且 c00 + c02 + c20 + c22 = n。",
+      "constraints": [
+        "时间限制：2秒",
+        "空间限制：256MB",
+        "3 ≤ n ≤ 6000",
+        "0 ≤ x, y ≤ 10^7，且 x 和 y 均为偶数",
+        "所有站点坐标互不相同",
+        "不存在三点共线的情况"
+      ],
+      "samples": [
+        {
+          "input": "3\n0 0\n2 0\n0 4",
+          "output": "YES\n1 2 3",
+          "explanation": "三个站点 (0,0), (2,0), (0,4) 构成的三角形面积为 4（整数），且其内部恰好有 1 个整数坐标点（奇数），因此是一个合格的三角形。站点编号 1、2、3 对应输入顺序。"
+        },
+        {
+          "input": "4\n0 0\n0 2\n2 0\n2 2",
+          "output": "NO\n1 1 1 1",
+          "explanation": "四个站点的模 4 分类分别为 (0,0), (0,2), (2,0), (2,2)，因此 c00=1, c02=1, c20=1, c22=1。每个类别计数都不超过 1，且总和为 4，满足证书条件，说明无法构成任何合格的三角形。"
+        }
+      ],
+      "notes": "当存在解时，任意一个合法的三角形均可接受，不要求输出所有解。\n对于 NO 输出的证书，判题程序会检查 c00, c02, c20, c22 是否与实际分类一致，以及是否满足 max(c) ≤ 1 且和等于 n；若不满足，则判定为错误。\n注意：由于所有坐标均为偶数，三角形内部整数点数量的奇偶性完全由所选三个顶点的模 4 分类决定，上述证书条件因此成为不存在性的可靠判据。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": "证书条件已明确为局部可判据：每个类计数 ≤ 1 且总和为 n，使得判题方可直接验证，不再需要额外推导。"
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "目标由计数变为构造或证书输出；约束新增证书有效性与双分支输出合同；不变量扩展为判定存在性与证书正当性的基矗",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.356,
+        "axis_scores": {
+          "I": 0.1538,
+          "C": 0.4617,
+          "O": 0.5254,
+          "V": 0.2387
+        },
+        "components": {
+          "input_tree_distance": 0.1538,
+          "constraint_match_distance": 0.4617,
+          "objective_type_distance": 0.6796,
+          "objective_text_distance": 0.2941,
+          "invariant_match_distance": 0.2387
+        }
+      },
+      "applied_rule": "construct_or_obstruction",
+      "applied_helpers": [
+        {
+          "id": "local_certificate_design",
+          "selection_reason": "将不存在有趣三角形的原因转化为模4类计数的结构化证书，使失败输出可被快速验证。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 从计数改为构造或证书输出",
+            "core_constraints 加入证书有效性约束",
+            "invariant 增加基于模4类的可行性判定"
+          ],
+          "innovation_reason": "失败语义从抽象解释变成具体、可检查的数据对象，提升了输出契约的准确度。",
+          "difficulty_reason": "要求算法统一处理成功构造与失败证据的计算路径，增加了分支逻辑和正确性证明责任。"
+        },
+        {
+          "id": "failure_branch_symmetry",
+          "selection_reason": "确保成功分支与失败分支在输出中具有同等地位，而不是失败的附属说明。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective 明确定义两个对等输出目标",
+            "core_constraints 分别制定 solution_output_contract 与 certificate_output_contract"
+          ],
+          "innovation_reason": "将单目标输出转变为双分支合同，提升问题结构的对称性。",
+          "difficulty_reason": "解法必须同时处理两类输出语义，而不能用特判跳过主结构，增加了实现的复杂性。"
+        },
+        {
+          "id": "obstruction_embedding",
+          "selection_reason": "使冲突证据直接来源于主约束（坐标模4性质），而非额外设计的判据。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 中有关证书的条件完全基于输入点的模4分类",
+            "invariant 利用相同的分类判定有无解"
+          ],
+          "innovation_reason": "证据结构嵌入主约束内部，强化了问题本身的不兼容性表达。",
+          "difficulty_reason": "要求在同一模4分类状态信息中同时支持构造三角形和生成不可行证书，增加了状态复用的难度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "对输入点进行模4分类计数，利用组合公式计算有趣三角形总数。",
+        "reusable_subroutines": "坐标读入、模4除法分类、字典计数均完全可复用。",
+        "new_solver_core": "在分类计数后，判断是否存在有趣三角形：若某类计数≥3，则从中任选三点构成三角形输出；否则若某类计数≥2且总点数＞该类计数，则从该类选两点并任选一个其他类点构成三角形输出；否则输出 NO 及四个计数值作为证书。",
+        "new_proof_obligation": "需证明：当输出证书时，确实不存在任何有趣三角形，即条件“对 n≥3，所有类计数≤1”是无解的充要条件。这需要基于内点奇偶性定理完成双向证明，而原题仅需单方向用于计数。",
+        "why_direct_reuse_fails": "原解仅产生一个总数，不定位具体三角形，也不具备输出失败证书的分支逻辑；其组合公式无法直接改为构造算法或证书生成。"
+      },
+      "anti_shallow_rationale": "本规划不是单纯故事换皮，而是将输出语义从计数转变为构造/证据双分支，并要求在核心算法中增加存在性判定、具体三角形的选取以及失败证书的生成，引入了新的正确性证明义务和算法分支设计，远超出表面主题更换。"
+    }
+  }
+}

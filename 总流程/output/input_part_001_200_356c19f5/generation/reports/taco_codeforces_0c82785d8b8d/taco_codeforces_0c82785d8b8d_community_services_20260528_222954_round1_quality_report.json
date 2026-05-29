@@ -1,0 +1,599 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 77.9,
+    "schema_distance": 0.4115,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的任务变体（偶数坐标、互异、无三点共线、三角形内部整点奇数、输出最小字典序三元组编号）在题面的 description、input_format、output_format、constraints 和 samples 中均被准确实现，无遗漏或偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure.properties",
+          "new_schema.core_constraints[3].description",
+          "new_schema.core_constraints[4].description",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的所有关键信息：任务说明清晰（有效条件、优先顺序），输入输出格式完整，约束（n 范围、坐标范围、偶数、互异、无共线、保证有解、时空限制）齐全，notes 解释了字典序比较，无缺失的必要说明。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间互相一致：偶数坐标、点数范围、无共线等约束在多个部分统一出现；输出的编号顺序与描述中的“任意顺序”一致；样例输入输出及解释与题意匹配，无矛盾。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "共 2 个样例，样例 1 覆盖平凡情况，样例 2 展示多有效三角形时的字典序比较过程，解释详尽且与题意匹配；样例输入输出格式正确，能够帮助理解任务，虽数量不多但质量较高。",
+        "evidence_refs": [
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清楚，措辞明确，无来源污染；描述用词贴近日常协作，术语一致，且包含必要的 notes 对字典序比较做了规范说明，便于参赛者快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "主题映射自然，用词一致，无原题泄露",
+      "字典序最小化规则描述清晰，notes 给出了严格比较定义",
+      "样例解释详细，覆盖基本情况和比较过程",
+      "约束要求完整，时间空间限制明确"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4115,
+      "axis_scores": {
+        "I": 0.1667,
+        "C": 0.3487,
+        "O": 0.5871,
+        "V": 0.5923
+      },
+      "components": {
+        "input_tree_distance": 0.1667,
+        "constraint_match_distance": 0.3487,
+        "objective_type_distance": 0.6643,
+        "objective_text_distance": 0.4714,
+        "invariant_match_distance": 0.5923
+      }
+    },
+    "schema_distance": 0.4115,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.9,
+    "solution_transfer_risk": 0.2,
+    "surface_retheme_risk": 0.4,
+    "verdict": "pass",
+    "rationale": "新题将原题的计数目标（输出整数总数）改为输出构造目标（最小字典序的有效三角形索引），任务语义发生根本改变。原题的核心算法是模4分类的纯组合计数，而新题必须进行坐标排序、贪心扫描和最小性验证，算法结构和证明义务完全不同。虽然模4分类的不变量可以复用，但整体解法无法直接迁移。背景故事从围栏奶牛变为社区服务，但核心概念映射明显（偶数坐标点、奇数内部整点数），样例数据部分重合，存在一定表层换皮痕迹，但不足以改变实质性差异的判断。约束、目标、不变量的变化均已落地，故判定为重大语义差异且解法迁移风险低，通过。",
+    "evidence_refs": [
+      "snapshots.difference_plan",
+      "snapshots.new_schema",
+      "snapshots.generated_problem",
+      "snapshots.original_problem",
+      "review_context.distance_breakdown",
+      "hard_checks"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.41，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 77.9,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "主题映射自然，用词一致，无原题泄露",
+      "字典序最小化规则描述清晰，notes 给出了严格比较定义",
+      "样例解释详细，覆盖基本情况和比较过程",
+      "约束要求完整，时间空间限制明确"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d_community_services_20260528_222954_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_0c82785d8b8d\\taco_codeforces_0c82785d8b8d_community_services_20260528_222954_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_0c82785d8b8d",
+      "title": "D1",
+      "description": "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even.\n\nThere are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that no three fence posts lie on the same line.\n\nThere are an infinite number of cows on the plane, one at every point with integer coordinates.\n\nGregor is a member of the Illuminati, and wants to build a triangular fence, connecting $3$ distinct existing fence posts. A cow strictly inside the fence is said to be enclosed. If there are an odd number of enclosed cows and the area of the fence is an integer, the fence is said to be interesting.\n\nFind the number of interesting fences.\n\n\n-----Input-----\n\nThe first line contains the integer $n$ ($3 \\le n \\le 6000$), the number of fence posts which Gregor can choose to form the vertices of a fence.\n\nEach of the next $n$ line contains two integers $x$ and $y$ ($0 \\le x,y \\le 10^7$, $x$ and $y$ are even), where $(x,y)$ is the coordinate of a fence post. All fence posts lie at distinct coordinates. No three fence posts are on the same line.\n\n\n-----Output-----\n\nPrint a single integer, the number of interesting fences. Two fences are considered different if they are constructed with a different set of three fence posts.\n\n\n-----Examples-----\n\nInput\n3\n0 0\n2 0\n0 4\nOutput\n1\nInput\n5\n0 0\n2 16\n30 14\n4 6\n2 10\nOutput\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+      "input": "3\n0 0\n2 0\n0 4\n5\n0 0\n2 16\n30 14\n4 6\n2 10",
+      "output": "1\n3\n\n\n-----Note-----\n\nIn the first example, there is only $1$ fence. That fence is interesting since its area is $4$ and there is $1$ enclosed cow, marked in red.\n\nIn the second example, there are $3$ interesting fences.\n\n$(0,0)$ — $(30,14)$ — $(2,10)$\n\n$(2,16)$ — $(30,14)$ — $(2,10)$\n\n$(30,14)$ — $(4,6)$ — $(2,10)$",
+      "constraints": "time limit: 6 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "from collections import defaultdict\n\ndef c2(x):\n\treturn x * (x - 1) // 2\n\ndef c3(x):\n\treturn x * (x - 1) * (x - 2) // 6\nwhile True:\n\ttry:\n\t\tcounts = defaultdict(int)\n\t\tn = int(input().strip())\n\t\tfor _ in range(n):\n\t\t\t(x, y) = map(int, input().strip().split())\n\t\t\tcounts[x % 4, y % 4] += 1\n\t\tans = c3(counts[0, 0]) + c3(counts[0, 2]) + c3(counts[2, 0]) + c3(counts[2, 2])\n\t\tans += c2(counts[0, 0]) * (n - counts[0, 0]) + c2(counts[0, 2]) * (n - counts[0, 2]) + c2(counts[2, 0]) * (n - counts[2, 0]) + c2(counts[2, 2]) * (n - counts[2, 2])\n\t\tprint(ans)\n\texcept EOFError:\n\t\tbreak"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_0c82785d8b8d",
+        "D1",
+        "codeforces",
+        "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even. There are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "必须按照规则改动 C、O、V 三个轴：O 从计数变为输出最小解；C 加入规范序约束；V 新增最小性不变量并与原有模4不变量融合。",
+      "summary": "在核心约束中融入字典序最小化要求，目标转为输出满足该约束的具体三角形，不变量从纯组合奇偶性扩展到支持最小解证明。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_codeforces_0c82785d8b8d_canonical_witness",
+      "source": "codeforces",
+      "input_structure": {
+        "type": "array",
+        "length": {
+          "min": 3,
+          "max": 6000
+        },
+        "value_range": {
+          "min": 0,
+          "max": 10000000
+        },
+        "properties": {
+          "distinct": true,
+          "all_even": true
+        },
+        "components": [
+          {
+            "name": "coordinate",
+            "type": "pair",
+            "x": "integer",
+            "y": "integer",
+            "parity": "both even"
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "coordinates_even",
+            "description": "所有住户坐标的 x 和 y 均为偶数。",
+            "formal": "∀i, x_i mod 2 = 0 and y_i mod 2 = 0",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "points_distinct",
+            "description": "所有住户位置互不相同。",
+            "formal": "∀i≠j, (x_i,y_i) ≠ (x_j,y_j)",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "no_three_collinear",
+            "description": "不存在三点共线。",
+            "formal": "∀i<j<k, points i,j,k are not collinear",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "interesting_condition",
+            "description": "一个由三个住户构成的三角形称为有效服务组，当且仅当三角形内部包含奇数个整数坐标的居民（内部整点个数为奇数），且三角形面积为整数。由于坐标均为偶数，面积自动为整数，此条件等价于内部整点数为奇数。",
+            "formal": "Let T be the triangle formed by three chosen points. T is valid iff the number of integer lattice points strictly inside T is odd.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "canonical_order_requirement",
+            "description": "输出的三个住户必须构成一个有效服务组，且在所有有效服务组中，将它们按坐标排序（先 x 升序，x 相同则 y 升序）后得到的有序三元组具有最小字典序。",
+            "formal": "For a valid set of three points, sort them to (p1,p2,p3) with p1 ≤ p2 ≤ p3 in dictionary order (x first, then y). Among all valid triples, the output triple must satisfy: for any other valid triple with sorted order (q1,q2,q3), either (p1==q1 and p2==q2 and p3==q3) or at the first index where they differ, p_i < q_i (dictionary comparison on coordinates).",
+            "source_sections": [
+              "description",
+              "output"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "output_construction",
+        "description": "输出三个整数 a, b, c (1‑based 索引)，表示所选住户的编号，它们形成有效服务组，且在该有效服务组的坐标排序字典序是所有有效服务组中最小的。",
+        "target": "indices of the minimal valid triple",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "parity_invariance_mod4",
+            "description": "三个偶数坐标点形成的三角形内部整点数的奇偶性仅由三个点的模4剩余类决定：若至少有两个点属于同一模4类，则内部整点数为奇数；否则为偶数。该性质完全独立于点坐标的具体数值。",
+            "properties": {
+              "modulo_class": "(0,0), (0,2), (2,0), (2,2)"
+            },
+            "evidence_source": "mathematical derivation"
+          },
+          {
+            "name": "canonical_minimality_invariance",
+            "description": "将所有点按坐标字典序升序排列后，最小字典序的有效三角形一定由排序最靠前的几个点组成。具体地，它必然是以下两类之一：某个模4类中三个最小的点构成的全同类三角形；或者某个类中最小的两个点与另一个类中最小的一个点构成的跨类三角形。通过维护各类的最小点序列，可以在不枚举全部组合的情况下正确找到最小解。",
+            "properties": {
+              "basis": "sorted order + greedy selection"
+            },
+            "evidence_source": "proof by contradiction"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "社区服务小组的优选",
+      "description": "在一个规划整齐的社区中，有 n 户居民，每户都位于平面上一个坐标为偶数的点 (x, y) 上。社区管理员希望挑选一个由三户居民组成的服务小组，负责向社区内的整点驿站分发通知。\n一个三人小组是“有效的”，当且仅当他们位置所构成的三角形内部包含奇数个整点驿站（整点指的是横纵坐标均为整数的位置）。由于所有住户的坐标均为偶数，三角形的面积自动为整数，因此有效条件等价于三角形内部整点个数为奇数。\n在所有有效小组中，管理员希望选取“最优先”的一个。优先顺序定义如下：对于任意一个小组，首先将三位成员的坐标按照字典序升序排列（先按 x 坐标升序，若 x 相同则按 y 坐标升序），得到一个有序三元组；然后比较不同小组的有序三元组，字典序最小的小组具有最高优先级。数据保证至少存在一个有效小组，且所求的最小字典序小组是唯一的。\n你的任务是找出这个最优小组，并输出三位成员的编号（编号从 1 开始，按输入顺序）。",
+      "input_format": "第一行包含一个整数 n (3 ≤ n ≤ 6000)，表示住户的数量。\n接下来的 n 行，每行包含两个偶数 x 和 y (0 ≤ x, y ≤ 10^7)，表示一位住户的坐标。所有住户的坐标互不相同，且任意三点不共线。",
+      "output_format": "输出一行，包含三个整数，用空格分隔，表示所选住户的编号。编号可以以任意顺序输出。",
+      "constraints": [
+        "3 ≤ n ≤ 6000",
+        "0 ≤ x, y ≤ 10^7，且 x 和 y 均为偶数",
+        "所有住户坐标互不相同",
+        "不存在三点共线",
+        "保证至少存在一个有效服务小组",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3\n0 0\n2 0\n0 4",
+          "output": "1 2 3",
+          "explanation": "只有一个三角形，由住户 1、2、3 构成。该三角形内部整点个数为奇数（因为住户 1 (0,0) 和住户 3 (0,4) 在模 4 意义下同类），因此有效。其按坐标排序后的有序三元组为 ((0,0),(0,4),(2,0))，显然字典序最小。"
+        },
+        {
+          "input": "5\n0 0\n2 16\n30 14\n4 6\n2 10",
+          "output": "1 5 3",
+          "explanation": "共有三个有效小组：\n1) 住户 1 (0,0)、5 (2,10)、3 (30,14)，排序后为 ((0,0),(2,10),(30,14))\n2) 住户 2 (2,16)、5 (2,10)、3 (30,14)，排序后为 ((2,10),(2,16),(30,14))\n3) 住户 4 (4,6)、5 (2,10)、3 (30,14)，排序后为 ((2,10),(4,6),(30,14))\n比较有序三元组，第一个小组以 (0,0) 开头，字典序最小。因此选择住户 1、5、3。"
+        }
+      ],
+      "notes": "字典序比较的对象是小组内三个住户坐标按 (x, y) 升序排列得到的有序三元组。对于两个有序三元组 A 和 B，A 的字典序更小当且仅当存在一个位置 k (1 ≤ k ≤ 3)，使得 A 和 B 在前 k-1 个分量上相等，而 A 的第 k 个分量的 x 坐标更小，或者 x 相同时 y 坐标更小。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "在核心约束中融入字典序最小化要求，目标转为输出满足该约束的具体三角形，不变量从纯组合奇偶性扩展到支持最小解证明。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4115,
+        "axis_scores": {
+          "I": 0.1667,
+          "C": 0.3487,
+          "O": 0.5871,
+          "V": 0.5923
+        },
+        "components": {
+          "input_tree_distance": 0.1667,
+          "constraint_match_distance": 0.3487,
+          "objective_type_distance": 0.6643,
+          "objective_text_distance": 0.4714,
+          "invariant_match_distance": 0.5923
+        }
+      },
+      "applied_rule": "canonical_witness",
+      "applied_helpers": [
+        {
+          "id": "canonical_order_pressure",
+          "selection_reason": "需要引入规范顺序，使输出方案不仅是任意解，而是全局最小解，从而将序关系注入主状态演化，避免后处理加一层排序。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 增加 canonical_order_requirement，定义了字典序比较规则",
+            "objective 变为输出最小字典序三角形",
+            "invariant 新增 canonical_minimality_invariance 以支撑最小性证明"
+          ],
+          "innovation_reason": "迫使解法在搜索过程中直接融入全局序关系，无法仅靠局部计数完成，从根本上改变解题思路。",
+          "difficulty_reason": "最小化需求将简单计数升级为带序约束的构造问题，要求算法设计新的贪心或扫描策略，难度显著提高。"
+        },
+        {
+          "id": "proof_bearing_output",
+          "selection_reason": "输出方案必须承载规范性证明，即算法需内嵌最小性检验，而非仅仅输出一个看起来合规的三角形。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确要求输出的是具有最小序的解，隐含正确性证明义务",
+            "invariant 的 canonical_minimality_invariance 显式声明了算法必须确保输出为最小"
+          ],
+          "innovation_reason": "输出对象直接成为正确性证明的载体，解法必须内置检验自身输出是否为最小的逻辑，提升了输出责任。",
+          "difficulty_reason": "要求解法不仅要找到解，还要自证其最小性，增加了一层论证复杂度，并可能要求扩展不变式维护。"
+        },
+        {
+          "id": "constraint_reweighting",
+          "selection_reason": "将规范顺序要求提升为核心约束之一，改变原题仅关注“是否存在”的约束主次关系，让最小性成为必须优先满足的全局限制。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 中新规范序约束不再只是输出格式要求，而是参与判定三角形合法性的主约束",
+            "invariant 反映新的约束优先级：最小性优先于任意存在性"
+          ],
+          "innovation_reason": "原约束全为静态点属性，现引入序约束后，约束空间变为动态比较关系，解的结构需重新规划。",
+          "difficulty_reason": "主约束优先级调整迫使算法在早期就考虑最小性，不能后处理校验，使得搜索空间压缩和优化更难。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "基于模4剩余类的组合计数：统计各类点数量，使用组合公式直接计算全同类和跨类有趣三角形总数，O(n)完成，无需构造具体三角形。",
+        "reusable_subroutines": "将输入点按 (x%4, y%4) 分类的哈希操作可直接重用；模4类与内部点数奇偶性的判定规则不变。",
+        "new_solver_core": "对所有点按坐标排序，扫描过程中维护每类的最多两个最小点，以及跨类候选（某类最小两个点与另一类最小点），利用贪心和极值性质确定全局最小字典序的有趣三角形，整体复杂度 O(n log n) 或 O(n)。",
+        "new_proof_obligation": "必须证明在排序序列中仅依靠维护各类的最长两个最小点以及跨类最小候选，就足以覆盖所有可能的最小三角形情况，且不会遗漏因点间相对位置而可能形成的更小解。",
+        "why_direct_reuse_fails": "原解法仅输出一个整数总数，完全脱离具体三角形的坐标信息，无法定位哪个三角形是最小；即使复用分类，仍需要结合排序和最小性搜索，而原解法不包含任何排序或比较操作。"
+      },
+      "anti_shallow_rationale": "新题不仅更换了主题背景，更将输出从数值提升为需最小化验证的规范解；原题的核心算法基于纯组合计数，而新题必须加入坐标排序、贪心扫描及最小性证明，算法结构与证明义务均发生根本改变，未停留在换皮或浅改格式的层面。"
+    }
+  }
+}

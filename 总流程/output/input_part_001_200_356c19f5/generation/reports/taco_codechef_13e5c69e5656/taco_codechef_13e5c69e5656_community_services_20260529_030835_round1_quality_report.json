@@ -1,0 +1,678 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 97.0,
+    "divergence_score": 64.1,
+    "schema_distance": 0.4383,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中的输入结构、核心约束、目标函数均准确落地到 generated_problem 的 description、input_format、output_format、constraints 和 samples 中，无遗漏或偏差。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的全部关键信息，包括任务说明、输入输出格式、约束、必要解释，选手无需额外猜测核心规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 各部分之间完全一致，字段数量、目标定义、样例格式、符号含义均无冲突。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples.0",
+          "generated_problem.samples.1"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 4.0,
+        "rationale": "样例数量为 2，解释详细，但均只涉及所有服务点均可移动的情形，缺少包含不可移动点的示例，可能影响选手对‘部分灵活点重排且相对顺序保持不变’规则的理解。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks.sample_count"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，语言通顺，主题贴切，无来源污染或冗余文本，符合 OJ 题面表达习惯。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "主题映射自然，将原题包装为社区服务场景，易于理解",
+      "规则描述准确，对灵活点、重排限制、独立查询、去重等价类等关键点定义清晰",
+      "样例解释非常详细，逐步列出了所有符合条件的最终序列，有助于验证问题和理解去重规则",
+      "特殊约束（如 p 为质数、答案取模）在题面中多处强调，不易忽略"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4383,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5732,
+        "O": 0.6042,
+        "V": 0.5763
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5732,
+        "objective_type_distance": 0.7253,
+        "objective_text_distance": 0.4225,
+        "invariant_match_distance": 0.5763
+      }
+    },
+    "schema_distance": 0.4383,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.75,
+    "solution_transfer_risk": 0.65,
+    "surface_retheme_risk": 0.15,
+    "verdict": "pass",
+    "rationale": "The new problem transforms the core task from a pure optimization (maximize prefix sum) to counting the number of distinct optimal rearrangements. While the underlying constraint (reorder only elements divisible by a prime, fixed others) is identical, the objective changes from maximizing a sum to counting distinct achieving sequences, introducing new constraints (threshold property, deduplication, modulo arithmetic) and a new proof obligation. The original solver's preprocessing (prime factorization, grouping, sorting, prefix sums, binary search for movable count) can be largely reused, but the query answer must be replaced with a combinatorial counting formula requiring factorials, inverses, and careful handling of duplicate values. This requires significant adaptation and new analysis. The surface theme is completely different (community services vs. restaurant menu) and no direct text reuse is present. Thus, although structural similarity is high, the semantic shift in the problem's goal and the additional algorithmic burden make this a legitimate new problem rather than a shallow re-theme.",
+    "evidence_refs": [
+      "original_problem.title",
+      "generated_problem.title",
+      "new_schema.objective",
+      "new_schema.core_constraints",
+      "review_context.distance_breakdown.axis_scores",
+      "review_context.algorithmic_delta_claim.new_solver_core",
+      "hard_checks[source_leakage]",
+      "hard_checks[title_overlap]"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.44，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例未覆盖不可移动点的情况",
+      "detail": "提供的两个样例中，所有服务点的服务时长都能被 p 整除，导致所有点都是灵活服务点。没有展示当存在不可移动点时，部分灵活点重排与固定点相对顺序保持不变的场景，可能导致选手对规则的理解不够全面。",
+      "evidence_refs": [
+        "generated_problem.samples"
+      ],
+      "fix_hint": "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。"
+    }
+  ],
+  "suggested_revisions": [
+    "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。",
+    "增加一个包含不可移动服务点的样例，以更全面地覆盖重排规则的各种情况",
+    "可考虑在约束中直接写明取模的质数 1,000,000,007，而仅靠输出格式和 notes 提醒，以增强一致性"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 97.0,
+    "divergence_score": 64.1,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例未覆盖不可移动点的情况",
+        "detail": "提供的两个样例中，所有服务点的服务时长都能被 p 整除，导致所有点都是灵活服务点。没有展示当存在不可移动点时，部分灵活点重排与固定点相对顺序保持不变的场景，可能导致选手对规则的理解不够全面。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ],
+        "fix_hint": "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。"
+      }
+    ],
+    "suggested_revisions": [
+      "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。",
+      "增加一个包含不可移动服务点的样例，以更全面地覆盖重排规则的各种情况",
+      "可考虑在约束中直接写明取模的质数 1,000,000,007，而仅靠输出格式和 notes 提醒，以增强一致性"
+    ],
+    "strengths_to_keep": [
+      "主题映射自然，将原题包装为社区服务场景，易于理解",
+      "规则描述准确，对灵活点、重排限制、独立查询、去重等价类等关键点定义清晰",
+      "样例解释非常详细，逐步列出了所有符合条件的最终序列，有助于验证问题和理解去重规则",
+      "特殊约束（如 p 为质数、答案取模）在题面中多处强调，不易忽略"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656_community_services_20260529_030835_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656_community_services_20260529_030835_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_13e5c69e5656",
+      "title": "DQUERY",
+      "description": "Chef has prepared a menu for his new restaurant. The menu consists of N dishes whose flavour is given by M_{1}, M_{2}, \\dots, M_{N}, where M_{i} denotes the flavour of the i^{th} dish.\n\nChef has some rules in his restaurant-\nA dish is served only if the customer has already eaten all the dishes preceding it on the menu. \nEach dish will only be served once.\n\nAman, the richest man in the area, stops by the restaurant one day and inquires about the deliciousness of a dinner that he may have there. Aman has a favourite ingredient p which is a prime number and he wants to eat dishes with the most flavour that contains this ingredient. A dish with flavour M_{i} contains the ingredient p only if p is a divisor of M_{i}.\n\nIn order for Aman to patronise Chef's restaurant on a regular basis, he agrees to reorder his menu to fulfil Aman's wishes. He decides that he will reorder the dishes that contain Aman's favourite ingredient while leaving the position of other dishes unchanged. For example, if M = [1, 2, 3, 4, 5, 6] and p = 2 then Chef can reorder his menu into [1, 4, 3, 2, 5, 6] or into [1, 4, 3, 6, 5, 2] but not into [2, 1, 3, 4, 5, 6] since the first dish with flavour 1 does not contain p as p is not a divisor of 1.\n\nAman wants to know the deliciousness of his meal, which is the total sum of flavours of all dishes if he eats k dishes (first k dishes of the menu) and his favourite ingredient is p. Can you help Chef find the maximum deliciousness after reordering his menu?\n\nYou have to answer Q queries and each query will contain the favourite ingredient p and the number of dishes Aman wants to eat k. Each query is independent, i.e. changes made to the menu in one query do not affect the next one.\n\n------ Input Format ------ \n\n- The first line of input will contain a single integer T, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n- The first line of each test case contains one integer N — the number of dishes.\n- The next line contains N space-separated integers M_{1}, M_{2}, \\ldots, M_{N}- the flavours of the dishes\n- The third line contains Q — the number of queries.\n- Each of the next Q lines contains two space-separated integers p and k — the favourite ingredient of Aman and the number of dishes he will eat. \n\n------ Output Format ------ \n\nFor each test case, output Q lines, the i^{th} line containing the answer to the i^{th} query.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 100$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ Q ≤ 10^{5}$\n$1 ≤ M_{i}, p ≤ 10^{5}$\n$1 ≤ k ≤ N$\n$p$ is a prime number \n- The sum of $N$ and $Q$ over all test cases does not exceed $2 \\times 10^{5}$\n\n----- Sample Input 1 ------ \n2\n5\n1 2 3 4 5\n2\n2 3\n3 4\n10\n3 4 1 8 9 2 4 10 7 20\n5\n2 5\n3 8\n5 6\n2 3\n7 10\n----- Sample Output 1 ------ \n8\n10\n43\n41\n27\n24\n68\n----- explanation 1 ------ \nTest case $1$: The menu is $[1, 2, 3, 4, 5]$ and we have $2$ queries.\n- The first query has $p = 2$ and $k = 3$. Chef can reorder the menu to $[1, 4, 3, 2, 5]$. Now Aman will eat dishes with flavour $1$, $4$ and $3$. Deliciousness will be $1 + 4 + 3 = 8$\n- The second query has $p = 3$ and $k = 4$. Chef cannot reorder the menu and it remains the same. Now Aman will eat dishes with flavour $1$, $2$, $3$ and $4$. Deliciousness will be $1 + 2 + 3 + 4 = 10$\n\nTest case $2$: The menu is $[3, 4, 1, 8, 9, 2, 4, 10, 7, 20]$.\n- One optimal arrangement for the first query is $[3, 10, 1, 20, 9, 2, 4, 8, 7, 4]$\n- One optimal arrangement for the second query is $[3, 4, 1, 8, 9, 2, 4, 10, 7, 20]$",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 2 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "import math\n\ndef search(k, a):\n\tlt = 0\n\trt = len(a) - 1\n\tans = -1\n\twhile lt <= rt:\n\t\tmid = lt + (rt - lt) // 2\n\t\tif a[mid] > k:\n\t\t\trt = mid - 1\n\t\tif a[mid] <= k:\n\t\t\tlt = mid + 1\n\t\t\tans = mid\n\treturn ans\n\ndef primes(n):\n\tl = set()\n\twhile n % 2 == 0:\n\t\tl.add(2)\n\t\tn = n / 2\n\tfor i in range(3, int(math.sqrt(n)) + 1, 2):\n\t\twhile n % i == 0:\n\t\t\tl.add(i)\n\t\t\tn = n / i\n\tif n > 2:\n\t\tl.add(n)\n\treturn l\nfor _ in range(int(input())):\n\tn = int(input())\n\tm = [int(i) for i in input().split()]\n\tpfs = {}\n\tfor (ix, i) in enumerate(m):\n\t\tpf = primes(i)\n\t\tfor p in pf:\n\t\t\tif p in pfs:\n\t\t\t\tpfs[p][0].append(i)\n\t\t\t\tpfs[p][1].append(ix)\n\t\t\telse:\n\t\t\t\tpfs[p] = [[i], [ix]]\n\tfor pf in pfs:\n\t\tps = pfs[pf][0].copy()\n\t\tps.sort(reverse=True)\n\t\tfor i in range(1, len(ps)):\n\t\t\tpfs[pf][0][i] = pfs[pf][0][i - 1] + pfs[pf][0][i]\n\t\t\tps[i] = ps[i] + ps[i - 1]\n\t\tpfs[pf].append(ps)\n\tsm = m.copy()\n\tfor i in range(1, n):\n\t\tsm[i] = sm[i] + sm[i - 1]\n\tq = int(input())\n\tfor _ in range(q):\n\t\t(p, k) = [int(i) for i in input().split()]\n\t\tif p not in pfs:\n\t\t\tprint(sm[k - 1])\n\t\telse:\n\t\t\tpt = search(k - 1, pfs[p][1])\n\t\t\tif pt == -1:\n\t\t\t\tad = 0\n\t\t\t\tdf = 0\n\t\t\telse:\n\t\t\t\tad = pfs[p][2][pt]\n\t\t\t\tdf = pfs[p][0][pt]\n\t\t\tprint(sm[k - 1] - df + ad)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_13e5c69e5656",
+        "DQUERY",
+        "codechef",
+        "Chef has prepared a menu for his new restaurant. The menu consists of N dishes whose flavour is given by M_{1}, M_{2}, \\dots, M_{N}, where M_{i} denotes the flavour of the i^{th} dish. Chef has some rules in his resta...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "改为计数题必须修改目标定义（从最大值到方案数）、添加去重和计数相关约束、修改不变量以反映最优序列的分解性质。",
+      "summary": "从单值最优化变更为多解计数，核心求解义务从计算最大总和变为计算组合方案数。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "community_service_count_001",
+      "source": "codechef",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": 1,
+          "max": 100
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "N",
+            "role_description": "Number of service points",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            },
+            "properties": {}
+          },
+          {
+            "role": "M",
+            "role_description": "Service durations of the points",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            },
+            "properties": {
+              "ordered": true
+            }
+          },
+          {
+            "role": "Q",
+            "role_description": "Number of queries",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            },
+            "properties": {}
+          },
+          {
+            "role": "queries",
+            "role_description": "Queries, each with service type code p and number of points k",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100000
+            },
+            "value_range": {},
+            "properties": {
+              "ordered": true
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "reorderable_set_condition",
+            "description": "Only service points whose duration is divisible by the type code p can be reordered; the relative positions of all other points remain fixed.",
+            "formal": "For a given query (p, k), let S = {i | p divides M_i}. Any valid rearrangement M' must satisfy M'_i = M_i for i ∉ S, and {M'_i : i ∈ S} = {M_i : i ∈ S} as a multiset.",
+            "source_sections": []
+          },
+          {
+            "name": "prefix_selection",
+            "description": "The resident experiences the first k points in order; the total service duration is the sum of the first k elements of the rearranged list.",
+            "formal": "Total duration = sum_{i=1..k} M'_i",
+            "source_sections": []
+          },
+          {
+            "name": "prime_ingredient",
+            "description": "The service type code p in each query is a prime number.",
+            "formal": "p is prime",
+            "source_sections": []
+          },
+          {
+            "name": "independent_queries",
+            "description": "Each query is independent; any rearrangement performed for one query does not affect the original list for other queries.",
+            "formal": "For each query, the rearrangement starts from the original list M.",
+            "source_sections": []
+          },
+          {
+            "name": "counting_unit",
+            "description": "Two rearranged lists M' and M'' are considered the same if they are identical as arrays. The answer counts distinct final arrays.",
+            "formal": "M'_i = M''_i for all i implies they are the same. Only distinct arrays contribute to the count.",
+            "source_sections": []
+          },
+          {
+            "name": "finite_solution_space",
+            "description": "Because there are only finitely many points and permutations of the movable ones are finite, the number of distinct valid rearrangements is finite, and the answer is computed modulo a large prime.",
+            "formal": "|valid rearrangements| < ∞, output answer mod 10^9+7",
+            "source_sections": []
+          },
+          {
+            "name": "threshold_property",
+            "description": "For an optimal rearrangement (maximizing sum of first k), there exists a threshold value t such that all movable elements with value > t must appear in the first k movable slots, all with value < t must appear after, and exactly r of those with value = t are in the first k, where r = (number of movable slots in first k) - count of movable elements with value > t.",
+            "formal": "Let c_k = |S ∩ {1..k}|, let sorted values of S be d_1 ≥ ... ≥ d_m. Set t = d_{c_k}, and let r = c_k - #{i: d_i > t}. Then in any optimal M', the multiset of values in S∩{1..k} consists of all d_i > t and exactly r copies of t.",
+            "source_sections": []
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_sequences",
+        "description": "For each query, compute the number of distinct final service point sequences (under the allowed reordering) that achieve the maximum possible total duration of the first k points. Output the count modulo 1,000,000,007.",
+        "target": "count",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "prefix_movable_count_invariance",
+            "description": "The number of movable elements in any prefix of length k is invariant under valid reorderings, because only movable elements can change position but their set remains the same. This quantity determines how many movable slots must be filled with the largest elements to maximize the prefix sum.",
+            "properties": {},
+            "evidence_source": "from constraint"
+          },
+          {
+            "name": "optimal_front_multiset",
+            "description": "In any rearrangement achieving the maximum prefix sum, the multiset of values assigned to the first k movable slots is uniquely determined (up to permutation of identical values). It consists of all movable elements strictly greater than the threshold value t, plus a specific number r of elements equal to t, where t is the c_k-th largest movable element. This invariant ensures that all optimal rearrangements share the same front multiset, enabling combinatorial counting of distinct sequences.",
+            "properties": {},
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "Medium-Hard"
+    },
+    "generated_problem": {
+      "title": "社区服务的排班方案",
+      "description": "幸福社区有 N 个服务点，编号 1 到 N。每个服务点 i 有一个固定的服务时长 M_i。住户会按顺序依次访问前 k 个服务点。社区管理员可以为每位住户调整部分服务点的顺序，但只能调整那些服务时长能被质数 p 整除的服务点（称为灵活服务点），其余服务点的相对顺序保持不变。每次调整从原始顺序开始，各个查询相互独立。\n对于每个查询 (p, k)，你需要计算：在所有能使前 k 个服务点的服务时长之和达到最大的重排方案中，有多少种不同的最终服务点序列？如果两个序列在某个位置上的服务时长不同，则认为它们不同。答案可能很大，请将其对 1,000,000,007 取模后输出。",
+      "input_format": "第一行一个整数 T，表示测试用例数量。\n接下来每个测试用例：\n  第一行一个整数 N，表示服务点的数量。\n  第二行 N 个由空格分隔的整数 M_1, M_2, ..., M_N，分别表示每个服务点的服务时长。\n  第三行一个整数 Q，表示查询的数量。\n  接下来 Q 行，每行两个整数 p 和 k，表示一个查询：p 是一个质数，表示住户关注的类型；k 是该住户将访问的前 k 个服务点。",
+      "output_format": "对于每个测试用例，依次输出每个查询的答案，每个答案占一行，表示达到最大总服务时长的不同最终序列的数目，结果对 1,000,000,007 取模。",
+      "constraints": [
+        "1 ≤ T ≤ 100",
+        "1 ≤ N ≤ 10^5",
+        "1 ≤ Q ≤ 10^5",
+        "1 ≤ M_i ≤ 10^5",
+        "2 ≤ p ≤ 10^5，p 是质数",
+        "1 ≤ k ≤ N",
+        "所有测试用例的 N 总和不超过 2×10^5",
+        "所有测试用例的 Q 总和不超过 2×10^5",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n4\n2 4 4 6\n2\n2 3\n2 2",
+          "output": "3\n4",
+          "explanation": "原始序列 [2,4,4,6]。\n对于第一个查询 p=2, k=3：所有服务点均可被 2 整除，灵活服务点为索引 1,2,3,4。前 3 个位置中有 3 个灵活位置。为使前 3 项之和最大，必须将最大的 3 个灵活时长 6,4,4 放到前三个位置。它们的不同排列数为 3! / 2! = 3，对应的最终序列为 [6,4,4,2]、[4,6,4,2]、[4,4,6,2]。\n对于第二个查询 p=2, k=2：灵活服务点同上，前 2 个位置中有 2 个灵活位置。最优前缀必须包含 6 和一个 4。前两个位置可以是 (6,4) 或 (4,6)，后两个位置剩余一个 4 和 2，可以任意排列。但由于存在两个相同的 4，最终不同的完整序列有 4 种：[6,4,4,2]、[6,4,2,4]、[4,6,4,2]、[4,6,2,4]。"
+        },
+        {
+          "input": "1\n5\n3 3 3 6 9\n1\n3 5",
+          "output": "20",
+          "explanation": "原始序列 [3,3,3,6,9]，质数 p=3，k=5。所有服务时长都能被 3 整除，因此所有服务点都是灵活服务点。为使前 5 项之和最大，可以将所有点按任意顺序重排，不同序列数即为 5 个元素的全排列去除重复值：5! / 3! = 20。因此答案为 20。"
+        }
+      ],
+      "notes": "每个查询中的 p 均为质数。答案需要对 1,000,000,007 取模。达到最大总时长的方案总是存在，并且可以通过题目描述的贪心构造得到。计数时需考虑重复值导致的去重，即仅当数组完全一致时才视为同一个序列。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "从单值最优化变更为多解计数，核心求解义务从计算最大总和变为计算组合方案数。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4383,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5732,
+          "O": 0.6042,
+          "V": 0.5763
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5732,
+          "objective_type_distance": 0.7253,
+          "objective_text_distance": 0.4225,
+          "invariant_match_distance": 0.5763
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确定义计数对象和去重规则，否则计数题没有规范。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在core_constraints中添加counting_unit约束和finite_solution_space约束",
+            "objective改为count_sequences",
+            "在invariant中通过optimal_front_multiset支持去重"
+          ],
+          "innovation_reason": "将原题的存在性答案转变为对象明确的计数，重新定义了问题核心。",
+          "difficulty_reason": "引入去重和模运算，要求解法正确处理等价类和组合数计算。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "需要将解空间拆分为前部和后部才能进行组合计数。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在core_constraints中添加threshold_property约束，描述最优序列的分解",
+            "在invariant中添加optimal_front_multiset，固化分解结构"
+          ],
+          "innovation_reason": "从状态组织上强制分解，使计数不是单纯附加，而是算法内在义务。",
+          "difficulty_reason": "要求解法理解阈值分割和多重集分配，增加了证明和实现的复杂度。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "计数目标必须成为主求解对象，不能作为副产品。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective完全替换为count_sequences，不再输出最大值",
+            "core_constraints中通过threshold_property等使计数义务贯穿"
+          ],
+          "innovation_reason": "完全移除原优化目标，围绕计数重建问题，确保求解过程的每一部分都服务于计数。",
+          "difficulty_reason": "算法需兼顾计数正确性和去重正确性，无法简单在原算法上修补。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "For each prime p appearing in values, collect all indices and values of elements divisible by p. Sort these values in descending order and compute prefix sums. Also maintain an array of fixed prefix sums of the original menu. For a query (p,k), count how many of the first k elements are movable (using binary search on index list). Let this count be c. The maximum sum = fixed_prefix_sum[k] - sum of original movable values in first k + sum of largest c movable values globally.",
+        "reusable_subroutines": "Preprocessing: prime factorisation per element, building lists per p of (value, index), sorting values descending, building index arrays, computing prefix sums of these sorted values and of the original menu. Binary search to find number of movable elements in first k. All these are directly reused.",
+        "new_solver_core": "Extend preprocessing: for each prime p, build a frequency map of values and precompute the product of inverse factorials of these counts, P_p. Precompute factorials and inverse factorials up to N. For each query, after finding c and the sorted movable list, identify the threshold value t (the c-th largest) and r = c - count of values > t. Then compute answer = factorial(c) * factorial(m - c) * P_p * factorial(count[t]) * inv_factorial(r) * inv_factorial(count[t] - r) mod MOD. This counts distinct optimal sequences.",
+        "new_proof_obligation": "Show that the front multiset is uniquely determined in any optimal sequence, and that the formula correctly counts distinct final arrays (i.e., identical arrays induced by different permutations of same-valued elements are not double-counted). Also prove that no additional optimal sequences exist beyond those described.",
+        "why_direct_reuse_fails": "The original solver produces a single numeric value (the maximum sum). It has no mechanism for counting multiple achieving sequences or handling deduplication. Direct reuse would only give the maximum, not the count, and cannot account for the combinatorial structure of the solution space."
+      },
+      "anti_shallow_rationale": "题目目标从优化改为计数，引入了去重等价类和组合计数义务，核心求解逻辑从贪心求和变为组合计数，需要新的预处理和分析。不是仅改变故事或输出形式。"
+    }
+  }
+}

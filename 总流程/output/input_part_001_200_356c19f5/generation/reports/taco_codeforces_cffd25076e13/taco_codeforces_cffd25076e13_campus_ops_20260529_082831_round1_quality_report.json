@@ -1,0 +1,612 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 72.7,
+    "schema_distance": 0.3798,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的所有核心要素（输入结构、目标函数、约束条件）均准确落地到题面的 description、input_format、output_format、constraints 和 samples 中，无遗漏或偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的全部关键信息：任务说明、输入结构、输出规范、数据范围、修改规则、示例及解释，无需读者额外猜测。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints 与 samples 之间完全一致，字段数量、目标定义、符号含义均无冲突，样例输入输出与说明吻合。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供两个样例，涵盖不同树结构，且每个样例均附有详细解释，足以辅助理解题意和验证输出格式。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，符合 OJ 表达习惯，用语通俗易懂，无来源污染或无关文本，便于快速准确理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "new_schema 的目标与约束被精确转化为自然语言，无歧义。",
+      "输入输出格式描述极其规范，与样例完全对齐。",
+      "样例解释详尽，清晰展示了修改成本计算与验证过程。",
+      "题面独立自洽，未暴露任何原题信息。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3798,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5367,
+        "O": 0.4782,
+        "V": 0.4963
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5367,
+        "objective_type_distance": 0.5084,
+        "objective_text_distance": 0.4329,
+        "invariant_match_distance": 0.4963
+      }
+    },
+    "schema_distance": 0.3798,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.25,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "原题是给定固定 c_i 构造任意合法赋值，核心解法为递归插入排序后递增赋值；新题允许修改 c_i 并最小化总成本，且强制指定节点的值，属于目标驱动的优化问题，原解法无法处理优化搜索与目标绑定，必须重新设计最小代价调整算法。语义差异显著，解法迁移风险低。新题背景、叙事、样例和输入输出格式均完全更换，无表层换皮痕迹。",
+    "evidence_refs": [
+      "snapshots.original_problem",
+      "snapshots.generated_problem",
+      "snapshots.difference_plan",
+      "snapshots.new_schema",
+      "review_context.distance_breakdown.axis_scores"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.38，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [
+    "可考虑增加一个初始 c_i 非零的样例，以更全面地展示修改规则对非零初始值的影响（非必须）。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 72.7,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [
+      "可考虑增加一个初始 c_i 非零的样例，以更全面地展示修改规则对非零初始值的影响（非必须）。"
+    ],
+    "strengths_to_keep": [
+      "new_schema 的目标与约束被精确转化为自然语言，无歧义。",
+      "输入输出格式描述极其规范，与样例完全对齐。",
+      "样例解释详尽，清晰展示了修改成本计算与验证过程。",
+      "题面独立自洽，未暴露任何原题信息。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_cffd25076e13\\taco_codeforces_cffd25076e13.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cffd25076e13\\taco_codeforces_cffd25076e13_campus_ops_20260529_082831_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_cffd25076e13\\taco_codeforces_cffd25076e13_campus_ops_20260529_082831_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_cffd25076e13",
+      "title": "D",
+      "description": "Evlampiy was gifted a rooted tree. The vertices of the tree are numbered from 1 to n. Each of its vertices also has an integer a_i written on it. For each vertex i, Evlampiy calculated c_i — the number of vertices j in the subtree of vertex i, such that a_j < a_i. \n\n<image>Illustration for the second example, the first integer is a_i and the integer in parentheses is c_i\n\nAfter the new year, Evlampiy could not remember what his gift was! He remembers the tree and the values of c_i, but he completely forgot which integers a_i were written on the vertices.\n\nHelp him to restore initial integers!\n\nInput\n\nThe first line contains an integer n (1 ≤ n ≤ 2000) — the number of vertices in the tree.\n\nThe next n lines contain descriptions of vertices: the i-th line contains two integers p_i and c_i (0 ≤ p_i ≤ n; 0 ≤ c_i ≤ n-1), where p_i is the parent of vertex i or 0 if vertex i is root, and c_i is the number of vertices j in the subtree of vertex i, such that a_j < a_i.\n\nIt is guaranteed that the values of p_i describe a rooted tree with n vertices.\n\nOutput\n\nIf a solution exists, in the first line print \"YES\", and in the second line output n integers a_i (1 ≤ a_i ≤ {10}^{9}). If there are several solutions, output any of them. One can prove that if there is a solution, then there is also a solution in which all a_i are between 1 and 10^9.\n\nIf there are no solutions, print \"NO\".\n\nExamples\n\nInput\n\n\n3\n2 0\n0 2\n2 0\n\n\nOutput\n\n\nYES\n1 2 1 \n\nInput\n\n\n5\n0 1\n1 3\n2 1\n3 0\n2 0\n\n\nOutput\n\n\nYES\n2 3 2 1 2",
+      "input": "The first line contains an integer n (1 ≤ n ≤ 2000) — the number of vertices in the tree.\n\nThe next n lines contain descriptions of vertices: the i-th line contains two integers p_i and c_i (0 ≤ p_i ≤ n; 0 ≤ c_i ≤ n-1), where p_i is the parent of vertex i or 0 if vertex i is root, and c_i is the number of vertices j in the subtree of vertex i, such that a_j < a_i.\n\nIt is guaranteed that the values of p_i describe a rooted tree with n vertices.",
+      "output": "If a solution exists, in the first line print \"YES\", and in the second line output n integers a_i (1 ≤ a_i ≤ {10}^{9}). If there are several solutions, output any of them. One can prove that if there is a solution, then there is also a solution in which all a_i are between 1 and 10^9.\n\nIf there are no solutions, print \"NO\".",
+      "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "import sys\nreader = (line.rstrip() for line in sys.stdin)\ninput = reader.__next__\nn = int(input())\ncs = [0] * (n + 1)\nps = [0] * (n + 1)\nchildren = [[] for _ in range(n + 1)]\nfor i in range(1, n + 1):\n\t(p, c) = map(int, input().split())\n\tps[i] = p\n\tchildren[p].append(i)\n\tcs[i] = c\n\ndef sortDescendants(v):\n\tresult = []\n\tpos = cs[v]\n\tfor child in children[v]:\n\t\tresult += sortDescendants(child)\n\tif len(result) < pos:\n\t\tprint('NO')\n\t\tsys.exit()\n\tresult.insert(pos, v)\n\treturn result\nroot = children[0][0]\norder = sortDescendants(root)\na = [0] * n\nfor (i, v) in enumerate(order):\n\ta[v - 1] = i + 1\nprint('YES')\nprint(*a)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_cffd25076e13",
+        "codeforces",
+        "Evlampiy was gifted a rooted tree. The vertices of the tree are numbered from 1 to n. Each of its vertices also has an integer a_i written on it. For each vertex i, Evlampiy calculated c_i — the number of vertices j i...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "Core constraints (C) now include a target condition, a definition of allowed modifications, and range restrictions for modified c'_i. The objective (O) shifts from existence to a minimisation of L1‑cost. The invariant (V) must now capture properties that enable an optimality proof (e.g., non‑ancestor nodes keep original c_i).",
+      "summary": "The problem is transformed from a pure construction to a parameter‑tuning design task with a minimisation objective, thereby altering all three required axes.",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "campus_tree_target_design",
+      "source": "derived_from_codeforces_cffd25076e13",
+      "input_structure": {
+        "type": "tree",
+        "length": {
+          "min": 1,
+          "max": 2000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "rooted": true,
+          "acyclic": true,
+          "connected": true
+        },
+        "components": [
+          {
+            "name": "parent_array",
+            "type": "int[]",
+            "description": "p_i for i=1..n, 0 for root"
+          },
+          {
+            "name": "c_array",
+            "type": "int[]",
+            "description": "initial c_i values, 0 ≤ c_i ≤ size(subtree(i))-1"
+          },
+          {
+            "name": "target_node",
+            "type": "int",
+            "description": "node u whose assigned value a_u must equal v"
+          },
+          {
+            "name": "target_value",
+            "type": "int",
+            "description": "required value for a_u, 1 ≤ v ≤ 10^9"
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "subtree_less_count_modified",
+            "description": "For each vertex i, let c'_i be the (possibly modified) c_i. Then the number of vertices j in the subtree of i with a_j < a_i must equal c'_i.",
+            "formal": "∀i, |{j ∈ subtree(i) : a_j < a_i}| = c'_i",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "modification_range",
+            "description": "Each modified value c'_i must be an integer within [0, size(subtree(i))-1].",
+            "formal": "0 ≤ c'_i ≤ size(subtree(i))-1",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "target_condition",
+            "description": "The assigned value for node u must equal the given target value v.",
+            "formal": "a_u = v",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "value_range_bound",
+            "description": "All assigned integers a_i must be between 1 and 10^9 inclusive.",
+            "formal": "1 ≤ a_i ≤ 10^9",
+            "source_sections": [
+              "output"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "optimization",
+        "description": "minimize the total modification cost, defined as the sum of absolute differences between original c_i and modified c'_i",
+        "target": "minimum_total_cost = Σ_i |c_i - c'_i|",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "non_ancestor_invariance",
+            "description": "In an optimal solution, for any node that is not an ancestor of u, we can keep c'_i = c_i without increasing the total cost.",
+            "properties": {},
+            "evidence_source": "claimed_in_proof"
+          },
+          {
+            "name": "optimal_path_cost_lower_bound",
+            "description": "The minimal cost is achieved by modifying only ancestors of u, and the required adjustments satisfy a monotonicity condition that can be expressed via the subtree sizes and the target rank of u.",
+            "properties": {},
+            "evidence_source": "claimed_in_proof"
+          },
+          {
+            "name": "valid_modified_c_range",
+            "description": "For any node v, the modified value c'_v must be in [0, size(subtree(v))-1]; the algorithm must enforce this and report infeasibility if it cannot be satisfied.",
+            "properties": {},
+            "evidence_source": "claimed_in_proof"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium-hard (optimisation on tree, new proof obligations for minimal cost and optimal structure)"
+    },
+    "generated_problem": {
+      "title": "社团教室分配难题",
+      "description": "校园里的 n 个社团按照树形管理结构组织在一起，社团 1 是根社团，每个社团 i 有一个直接上级社团 p_i（p_i = 0 表示 i 是根社团）。每个社团 i 有一个初始的“顺位要求” c_i，它表示在最终分配教室编号时，社团 i 希望在自己管辖的子树（包括它自己）中，恰好有 c_i 个社团的教室编号比它更小。\n\n现在学校需要为每个社团分配一个互不相同的正整数作为教室编号（所有编号均在 1 到 10^9 之间），以满足所有社团的顺位要求。但是，由于一些特殊原因，你希望指定的社团 u 最终分配到的教室编号恰好等于 v。\n\n为了达成这个目标，你可以适当调整某些社团的顺位要求：把社团 i 的要求 c_i 修改为一个新的整数 c'_i，修改后仍需满足 0 ≤ c'_i ≤ size(subtree(i)) - 1（这里 size(subtree(i)) 表示以 i 为根的子树中的社团总数）。每修改一个单位，会产生 |c_i - c'_i| 的沟通成本。你的任务是找到最小的总沟通成本，并给出一组最终教室编号的分配方案，使得：\n • 对于每个社团 i，其子树中编号严格小于 a_i 的社团个数恰好等于修改后的 c'_i；\n • 社团 u 的教室编号恰好等于 v。\n\n如果无论如何修改顺位要求，都无法满足上述两条（即使在允许范围内任意调整每个 c_i），则只需要输出一行 “NO”。",
+      "input_format": "第一行包含一个整数 n (1 ≤ n ≤ 2000)，表示社团的个数。\n\n接下来的 n 行，第 i 行包含两个整数 p_i 和 c_i (0 ≤ p_i ≤ n，0 ≤ c_i ≤ n - 1)，分别表示社团 i 的上级社团编号（0 表示该社团为根社团）和它的初始顺位要求。输入保证描述了一棵包含 n 个社团的树，并且对每个社团 i 有 0 ≤ c_i ≤ size(subtree(i)) - 1。\n\n最后一行包含两个整数 u 和 v (1 ≤ u ≤ n，1 ≤ v ≤ 10^9)，表示希望社团 u 最终分配到的教室编号等于 v。",
+      "output_format": "如果存在满足条件的方案，则在第一行输出一个整数，表示最小的总沟通成本（即 Σ|c_i - c'_i|）。然后在第二行输出 n 个整数 a_1, a_2, …, a_n，表示最终分配给每个社团的教室编号。这些编号必须互不相同，均在 [1, 10^9] 内，且满足所有修改后的顺位要求以及 a_u = v。\n\n如果有多组最优方案，输出任意一组即可。\n\n如果不存在任何合法的修改方案，则仅输出一行 “NO”（不含引号，大写）。",
+      "constraints": [
+        "时间限制：1.0 秒",
+        "空间限制：256 MB",
+        "1 ≤ n ≤ 2000",
+        "0 ≤ p_i ≤ n，且输入保证构成一棵以某个 p_i = 0 的节点为根的树",
+        "0 ≤ c_i ≤ size(subtree(i)) - 1",
+        "1 ≤ u ≤ n",
+        "1 ≤ v ≤ 10^9",
+        "所有输入的 c_i 均为整数"
+      ],
+      "samples": [
+        {
+          "input": "3\n0 0\n1 0\n1 0\n3 1",
+          "output": "2\n2 3 1",
+          "explanation": "初始要求全部为 0。希望社团 3 获得编号 1。如果完全不修改，为了满足所有要求，教室编号必须满足 a_3 是子树 3 中最小的（c_3=0），同时 a_1 是整棵树中最小的（c_1=0），这会导致 a_1 < a_3，矛盾。因此必须修改要求。\n\n最优方案是：将 c_1 从 0 改为 1（成本 1），将 c_2 从 0 改为 1（成本 1），c_3 保持 0。此时总成本为 2。对应的教室编号分配为 a = [2, 3, 1]：对社团 1，子树中比它小的只有社团 3，恰有 1 个；对社团 2，子树中比它小的只有社团 3，恰有 1 个；对社团 3，子树中无更小编号，恰有 0 个。且 a_3 = 1 满足要求。可以验证不存在总成本小于 2 的方案。"
+        },
+        {
+          "input": "4\n0 0\n1 0\n1 0\n3 0\n4 1",
+          "output": "2\n2 4 3 1",
+          "explanation": "树结构：社团 1 是根，社团 2 和 3 直接受其管理，社团 4 受社团 3 管理。所有初始要求为 0。希望社团 4 获得编号 1。\n\n最优调整：将 c_1 从 0 改为 1（成本 1），将 c_3 从 0 改为 1（成本 1），其余保持 0。此时教室编号可分配为 [2, 4, 3, 1]：对于社团 1，子树中比 2 小的只有社团 4（编号 1），c'_1 = 1；对于社团 3，子树中比 3 小的也只有社团 4，c'_3 = 1；社团 2 和 4 的子树中均无更小编号，满足 c'_2 = 0, c'_4 = 0。总成本为 2，且 a_4 = 1。"
+        }
+      ],
+      "notes": "数据保证至少存在一种合法的修改方案，因此一定可以输出最小成本和分配方案；实际测试数据中不会出现必须输出 “NO” 的情况。总成本在 n ≤ 2000 时不会超过 10^7，可直接使用 32 位有符号整数计算和输出，无需取模。教室编号必须互不相同，且均在 [1, 10^9] 范围内。如果存在多组最优方案，输出任意一组即可。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "The problem is transformed from a pure construction to a parameter‑tuning design task with a minimisation objective, thereby altering all three required axes.",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3798,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5367,
+          "O": 0.4782,
+          "V": 0.4963
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5367,
+          "objective_type_distance": 0.5084,
+          "objective_text_distance": 0.4329,
+          "invariant_match_distance": 0.4963
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "The constructor’s output (a_i) is bound to a specific target (node u must have a_u = v), inverting the solution direction.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "Added target_condition constraint in core_constraints",
+            "Objective now requires satisfying this target with minimal modification cost"
+          ],
+          "innovation_reason": "Flips the problem from existence to goal‑driven design, forcing the algorithm to work backwards from the desired output.",
+          "difficulty_reason": "The inserted target constraint narrows the solution space; the algorithm must now consider whether the constraint can be met and at what cost, not just whether any assignment exists."
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "The natural operation is to modify the c_i values, which directly affect the subtree inequality constraints.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "Core constraints now include modification_range for c'_i",
+            "Invariant includes non_ancestor_invariance and optimal_path_cost_lower_bound to describe the edit space properties"
+          ],
+          "innovation_reason": "Concretises the inverse design as an explicit optimisation over a well‑defined edit space, moving beyond abstract goal‑reaching.",
+          "difficulty_reason": "Requires the algorithm to explore a combinatorial edit space while proving that certain edits are never needed, adding a layer of structural analysis."
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "The problem demands a minimal total modification cost, not just any feasible edit sequence.",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "Objective changed to minimise Σ|c_i - c'_i|",
+            "Invariant now includes claims about optimal strategy (e.g., only ancestors need modification) and a lower‑bound argument"
+          ],
+          "innovation_reason": "Elevates the problem from feasibility to certified optimality, requiring the solver to provide a provably minimal solution.",
+          "difficulty_reason": "Proving minimality is typically non‑trivial; the solver must establish an optimal substructure (e.g., that non‑ancestor c_i retain their original values) and derive a tight lower bound on the cost."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Recursively insert each node into the order of its subtree according to its original c_i, then assign strictly increasing values.",
+        "reusable_subroutines": "Subtree size calculation, legality checks for c_i range.",
+        "new_solver_core": "A tree DP or directed analysis that determines the minimal adjustments to c_i along the path from root to u (and possibly some siblings) so that u can be placed at the exact rank corresponding to v, while respecting all c'_i constraints.",
+        "new_proof_obligation": "Prove that the optimal strategy never needs to modify nodes outside the ancestor path; establish the exact relationship between the target value v, the target node u's position in the global order, and the required modifications on ancestor c_i; provide a constructive algorithm achieving the minimum L1 cost.",
+        "why_direct_reuse_fails": "The original solver works only for fixed c_i and any feasible assignment; here we must search over a weighted modification space to hit a precise target value while minimising cost – a fundamentally different exploration that cannot be reduced to one call of the seed algorithm."
+      },
+      "anti_shallow_rationale": "The transformation is not superficial: it changes the core question from existence (construct any a_i) to an optimisation (minimal parameter edits to enforce a specific a_u = v). The algorithmic structure shifts from a linear‑time insertion procedure to a cost‑minimization procedure that must reason about trade‑offs across ancestor nodes. A simple reskin of the original solution would fail to handle the optimisation, and merely asking 'is there a solution with a_u=v?' would be a trivial shallow variant; this problem explicitly demands a minimality proof, which deepens the difficulty."
+    }
+  }
+}

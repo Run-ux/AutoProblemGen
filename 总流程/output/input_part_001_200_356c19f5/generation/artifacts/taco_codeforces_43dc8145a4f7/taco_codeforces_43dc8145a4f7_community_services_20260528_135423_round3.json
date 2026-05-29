@@ -1,0 +1,1028 @@
+{
+  "problem_id": "taco_codeforces_43dc8145a4f7",
+  "source_problem_ids": [
+    "taco_codeforces_43dc8145a4f7"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_43dc8145a4f7",
+      "codeforces",
+      "Daenerys Targaryen has an army consisting of k groups of soldiers, the i-th group contains a_{i} soldiers. She wants to bring her army to the other side of the sea to get the Iron Throne. She has recently bought an ai...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "decision",
+    "description": "Determine if there exists an arrangement of soldiers satisfying the adjacency constraints",
+    "target": "feasibility",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "原判定题存在单调参数n（行数越多越易安排），可行性随n单调变化，且可行区域随n改变，完全满足阈值优化规则的eligibility。该规则可将给定n的判定彻底转化为求解最小可行n的优化问题，从根本上改变目标（O）、核心约束（C，n由输入变为输出）以及不变量（需证明临界性），能带来实质性差异。相比之下，existence_to_counting已在两轮修订中因差异度不足（53.3）被判定为换皮，不应继续选用；canonical_witness可能退化为原贪心解的后处理输出，仅增加表面构造义务；construct_or_obstruction虽然引入证据输出，但仍以原判定逻辑为主，创新度有限；forward_solution_to_inverse_design缺少与原题邻接约束直接关联的自然修改操作，易成强行包装。阈值优化规则在保留原题块分解与容量分析特色的同时，迫使算法重构为直接推导下界的高效构造，可同时提高创新度与难度。；创新度判断：将核心义务从“给定n，判断是否存在安排”拉离为“给定任意组分布，必须找出允许安排存在的最小行数n，并证明该n无法再减小”。输出由简单布尔值变为带证明语义的临界整数，主目标由判定变为极值优化，不变量必须支撑临界性，使得题目不再局限于一次可行性检查，需要全新的状态组织和下界推理。；难度判断：新题要求直接构造最小n值，不能依赖原判定函数机械二分，否则将被视为浅改。主求解责任抬升为：对任意组输入，通过分析4-座块与2-座单元的容量需求，精确计算所需行数的紧下界，并证明任何小于该下界的行数均必然导致冲突。这需要更精细的组合数学推导和贪心/构造策略，难度显著高于原判定。；风险判断：最大风险是生成时容易被简化为二分搜索原判定结果，从而退化成机械阈值包装。但可通过规则内helper (extremal_answer_contract与monotone_boundary_invariant) 强制要求“临界值证明必须直接进入不变量与目标定义”，并在题面中明确禁止使用原可行性判定为黑盒，要求提供确定性的下界构造算法，从而将风险控制在可接受范围。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_43dc8145a4f7",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "parameters",
+          "role_description": "number of rows and number of groups",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "group_sizes",
+          "role_description": "soldier count per group",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "adjacency_definition",
+          "description": "Seats in the airplane are arranged in n rows of 8 seats each. Two seats are neighbor if they are in the same row and belong to seat index sets {1,2}, {3,4}, {4,5}, {5,6}, or {7,8}.",
+          "formal": "For a seat (r, c) with 1≤c≤8, neighbors are (r,1)-(r,2), (r,3)-(r,4), (r,4)-(r,5), (r,5)-(r,6), (r,7)-(r,8).",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "no_cross_group_adjacency",
+          "description": "No two soldiers from different groups are allowed to sit on neighboring seats.",
+          "formal": "If soldier p from group i sits on seat s and soldier q from group j (i≠j) sits on seat t, then s and t cannot be neighbors.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "full_placement",
+          "description": "All soldiers from all groups must be placed on the airplane, i.e., exactly a_i seats assigned to group i.",
+          "formal": "For each group i, the number of occupied seats by group i equals a_i.",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "seat_capacity_one",
+          "description": "Each seat can hold at most one soldier.",
+          "formal": "For each seat, at most one soldier is placed.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "decision",
+      "description": "Determine if there exists an arrangement of soldiers satisfying the adjacency constraints",
+      "target": "feasibility",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "four_seat_block_isolation",
+          "description": "In each row, the four seats {3,4,5,6} form an isolated block that is not adjacent to seats {1,2} or {7,8}. Therefore, when occupied entirely by soldiers of the same group, it does not create adjacency with any other group.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "independent_two_seat_units",
+          "description": "After allocating four-seat blocks, all remaining usable seats can be partitioned into 2n disjoint two-seat units (pairs {1,2} and {7,8} per row), each of which can hold at most 2 soldiers from a single group and has no adjacency to any other unit, making the remaining problem a packing problem into independent capacity-2 bins.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "unit_demand_formula",
+          "description": "For any group leftover count x after removing multiples of 4, the minimal number of independent two-seat units required to seat them without conflict is ceil(x/2), independent of group identity.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "feasibility_to_extremal_threshold",
+  "rejected_candidates": [
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.2322，落地轴=C, O, V。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 3 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "canonical_witness_applicable",
+      "selection_reason": "原题是可行性决策问题，输出YES/NO，没有要求输出方案。解对象为座位分配方案，存在且可定义规范顺序（如按组号、座号字典序）。原解法并非简单回溯，需要新的构造算法，因此满足升级为带规范性构造输出的条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题描述：输入n行8座，求是否存在安排使得不同组不相邻，输出YES/NO。输出对象可通过座位的组号序列定义，规范顺序可按行、座号排列。原标准解法为贪心判定（见solution_code），不包含构造步骤。规则positive example明确将可行性改为字典序最小构造，与本题匹配。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "feasible_certificate",
+      "selection_reason": "种子题的无解原因可以转化为可局部检查的容量冲突证据：基于独立座位单元划分，每个组剩余士兵的ceil(x/2)下界之和超过可用两座单元总数，该证据直接从输入和固定单元结构就能验证，无需运行原贪心算法，符合局部检查要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "invariant中的four_seat_block_isolation和independent_two_seat_units定义了可计数的容量单元；unit_demand_formula给出了每组的局部需求下界；无解时需求总和>可用单元数构成冲突证据，该证据直接来自主约束，可独立算术验证。",
+        "feedback": "建议在后续规划中明确证据的具体输出结构（如每组剩余数与所需单元数的对照表），并确保证据不依赖复杂的全局推理即可被检查器接受。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "clear_counting_foundation",
+      "selection_reason": "种子题解空间有限（总座位数 8n，分配总数有限），去重规则自然（同组士兵不可区分，解由每个座位所属组决定），且原题不变量已给出四座块和两座单元的独立分解，计数单元明确，可直接改造为计数题。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题座位数为 8n，士兵总数有限，满足解空间有限（schema.core_constraints.seat_capacity_one、full_placement）。题目未区分同组士兵，暗示士兵不可区分，去重规则为不同的组分配方案（同座位分配不同组即不同解）。Schema.invariant 指出四座块 {3,4,5,6} 与两座单元 {1,2} 和 {7,8} 独立，且两座单元可独立处理，这提供了按单元拆分的计数基础。",
+        "feedback": "规则 'existence_to_counting' 适用于该种子题，可进入下一阶段规划。注意变换时需明确定义计数对象和去重规则（如将同组士兵视为不可区分），并利用已有的结构分解构建计数逻辑。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_native_uncertainty",
+      "selection_reason": "原题为确定性排列可行性问题，所有输入均为固定值，不存在顺序不确定、资源波动或局部选择差异，无法提取原生扰动来源。强行添加不确定性只能依赖故事背景硬造对手，违反规则红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "core_constraints 中所有约束均为静态确定性约束，如 full_placement 要求精确放置所有士兵，seat_capacity_one 为每座一人，objective 为 feasibility 判断，无任何不确定因素。原题描述也未提及士兵到达顺序、兵力波动等动态元素。",
+        "feedback": "建议选择本身包含不确定性（如在线选择、资源动态变化、对抗性输入）的种子题，该规则才能合规应用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_threshold_parameter_present",
+      "selection_reason": "原可行性决策问题随行数n呈现单调性：n增大可行区域扩大，且核心约束具有清晰的四座块与双座单元分层结构，自然引出最小行数阈值优化，阈值的引入会实质改变目标与证明义务（从单纯判定转为求临界n并论证极小性），非机械二分包装。",
+      "risk_tags": [
+        "mechanical_bisection_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子题约束：不同组士兵不能邻座，座位布局存在四座块{3,4,5,6}和独立双座单元{1,2}/{7,8}的不变量，可行性完全取决于剩余士兵数是否超过2n个独立双座容量。随着行数n增加，容量单调递增，可行区域不断扩大（所需属性1：单调性/分层结构）；目标从判定YES/NO变为求最小n以恰好容纳所有组（临界参数），可行区域在阈值n_min两侧语义不同（所需属性2：阈值改变可行区域）。",
+        "feedback": "风险在于若不深入重构约束，易退化为外部二分套原判定。建议在后续规划中强制 threshold_parameterization helper 将n作为约束变量嵌入核心容量表达式，并利用 monotone_boundary_invariant 证明下界可达，避免机械二分。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "no_primitive_objective",
+      "selection_reason": "原题是 feasibility 判定问题，不存在数值型最优目标，无法提取自然的第二评价指标并构造真实冲突；强行引入多目标权衡将彻底改变问题本质，违反规则要求的从单目标最优到权衡前沿的扩展逻辑。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "not_applicable"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 objective.type 为 'decision'，target 为 'feasibility'，没有任何最大化/最小化目标；原题描述为判定是否存在合法安排，无收益、代价或其他量化指标；invariants 只涉及座位分配可行性，未暗含优化方向。",
+        "feedback": "规则 'single_objective_to_tradeoff_frontier' 仅适用于原生单目标优化问题，本种子题为约束满足判定，不适合进行双指标扩展。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "strong_inverse_target_natural_operations",
+      "selection_reason": "原题输出为可行性判定（YES/NO），可明确绑定为反向目标（如要求达成YES）。座位分区（四座块、双座单元）的结构化特征提供了自然的修改操作空间，如调整各组士兵数以最小代价满足隔离约束，符合规则要求的目标驱动设计与操作契约。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints定义座位邻接关系与无跨组邻接约束；seed_schema.invariant包含四座块隔离和独立双座单元分解，表明问题具有组合打包结构。rule_under_review.eligibility.required_seed_properties要求反向目标可指定且存在自然修改自由度，原题输出可设为反向目标，修改操作可基于组大小调整并约束于总容量与打包条件。helpers.target_result_binding要求将原题结果绑定为新题目标，helpers.edit_operation_contract要求定义修改集合，均可在座位结构上实现。global_redlines无触发。",
+        "feedback": "建议规划时强化最小修改的证明责任，并利用四座块和双座单元的不变量设计操作代价下界，避免将反向目标退化为简单重新输入。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "EXISTING_COUPLING_DIMINISHES_NOVELTY",
+      "selection_reason": "种子题的四座块和两座对虽为局部单元，但组需求全局约束和解法贪心均表明已存在自然耦合，强行引入新共享资源或全局守恒只会硬加无关约束，难以产生实质创新。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束和标准解法中，四座块和两座对分配并非独立：计算 waste = min(a[j]//4, m) 等依赖全局参数 m (剩余四座块数量) 和组需求总和，可行性检查基于全局容量和剩余需求，已形成跨组件依赖。种子题已满足“通过共享资源、总量自然耦合”的条件，但此耦合并非来自规则引入，导致规则应用后差异不足。",
+        "feedback": "建议评估是否可改变单元属性（如不同大小的座位块）或目标（如最小化浪费座位），但需警惕语义不匹配。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "NO_NATURAL_OPERATIONS",
+      "selection_reason": "原题是静态座位分配可行性判定，不存在可轮流选择、拿取、移动或改变状态的自然操作，无法转为双方轮流选择的博弈过程。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”且“不同操作会改变后续可选状态”。原题要求一次性分配所有士兵到固定座位，没有顺序操作，也不存在对抗方或选择序列，属于 eligibility.forbidden_seed_properties 中的“操作顺序固定且没有选择自由度”和“对抗方只能靠故事背景硬造”。",
+        "feedback": "原题核心是组合约束满足问题，没有任何与博弈相关的状态转移或行动语义，强行引入玩家会违反全局红线“不能凭背景硬造玩家”。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题是基于座位独立单元的组合打包决策问题，缺乏路径、区间或子树等典型局部结构，无法自然扩展为覆盖或割问题。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题Schema中核心约束为邻接定义和不同组隔离，不变量基于四座块和双座对的独立分配；原题摘要中无路径、区间或子树对象，正例要求将路径性质改为点覆盖，与此题结构不符。",
+        "feedback": "建议寻找具有明确路径、区间或子树性质的原题，再应用该规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题只判定可行性（YES/NO），并未对合法方案进行计数，更不存在统计量或权重；不符合规则要求“原题已经有明确有限的计数对象”。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'decision'，target = 'feasibility'，原题描述及输出格式始终为YES/NO，全文中没有任何计数对象或分布统计量。",
+        "feedback": "该种子题为纯粹的可行性判定，无法应用此规则；需先改编为计数版本才可能具备带权扩展的基础。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_applicable",
+      "message": "原题是可行性决策问题，输出YES/NO，没有要求输出方案。解对象为座位分配方案，存在且可定义规范顺序（如按组号、座号字典序）。原解法并非简单回溯，需要新的构造算法，因此满足升级为带规范性构造输出的条件。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题描述：输入n行8座，求是否存在安排使得不同组不相邻，输出YES/NO。输出对象可通过座位的组号序列定义，规范顺序可按行、座号排列。原标准解法为贪心判定（见solution_code），不包含构造步骤。规则positive example明确将可行性改为字典序最小构造，与本题匹配。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "feasible_certificate",
+      "message": "种子题的无解原因可以转化为可局部检查的容量冲突证据：基于独立座位单元划分，每个组剩余士兵的ceil(x/2)下界之和超过可用两座单元总数，该证据直接从输入和固定单元结构就能验证，无需运行原贪心算法，符合局部检查要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.87,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "invariant中的four_seat_block_isolation和independent_two_seat_units定义了可计数的容量单元；unit_demand_formula给出了每组的局部需求下界；无解时需求总和>可用单元数构成冲突证据，该证据直接来自主约束，可独立算术验证。",
+        "feedback": "建议在后续规划中明确证据的具体输出结构（如每组剩余数与所需单元数的对照表），并确保证据不依赖复杂的全局推理即可被检查器接受。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_foundation",
+      "message": "种子题解空间有限（总座位数 8n，分配总数有限），去重规则自然（同组士兵不可区分，解由每个座位所属组决定），且原题不变量已给出四座块和两座单元的独立分解，计数单元明确，可直接改造为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题座位数为 8n，士兵总数有限，满足解空间有限（schema.core_constraints.seat_capacity_one、full_placement）。题目未区分同组士兵，暗示士兵不可区分，去重规则为不同的组分配方案（同座位分配不同组即不同解）。Schema.invariant 指出四座块 {3,4,5,6} 与两座单元 {1,2} 和 {7,8} 独立，且两座单元可独立处理，这提供了按单元拆分的计数基础。",
+        "feedback": "规则 'existence_to_counting' 适用于该种子题，可进入下一阶段规划。注意变换时需明确定义计数对象和去重规则（如将同组士兵视为不可区分），并利用已有的结构分解构建计数逻辑。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_uncertainty",
+      "message": "原题为确定性排列可行性问题，所有输入均为固定值，不存在顺序不确定、资源波动或局部选择差异，无法提取原生扰动来源。强行添加不确定性只能依赖故事背景硬造对手，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "core_constraints 中所有约束均为静态确定性约束，如 full_placement 要求精确放置所有士兵，seat_capacity_one 为每座一人，objective 为 feasibility 判断，无任何不确定因素。原题描述也未提及士兵到达顺序、兵力波动等动态元素。",
+        "feedback": "建议选择本身包含不确定性（如在线选择、资源动态变化、对抗性输入）的种子题，该规则才能合规应用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_threshold_parameter_present",
+      "message": "原可行性决策问题随行数n呈现单调性：n增大可行区域扩大，且核心约束具有清晰的四座块与双座单元分层结构，自然引出最小行数阈值优化，阈值的引入会实质改变目标与证明义务（从单纯判定转为求临界n并论证极小性），非机械二分包装。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.97,
+        "risk_tags": [
+          "mechanical_bisection_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子题约束：不同组士兵不能邻座，座位布局存在四座块{3,4,5,6}和独立双座单元{1,2}/{7,8}的不变量，可行性完全取决于剩余士兵数是否超过2n个独立双座容量。随着行数n增加，容量单调递增，可行区域不断扩大（所需属性1：单调性/分层结构）；目标从判定YES/NO变为求最小n以恰好容纳所有组（临界参数），可行区域在阈值n_min两侧语义不同（所需属性2：阈值改变可行区域）。",
+        "feedback": "风险在于若不深入重构约束，易退化为外部二分套原判定。建议在后续规划中强制 threshold_parameterization helper 将n作为约束变量嵌入核心容量表达式，并利用 monotone_boundary_invariant 证明下界可达，避免机械二分。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_primitive_objective",
+      "message": "原题是 feasibility 判定问题，不存在数值型最优目标，无法提取自然的第二评价指标并构造真实冲突；强行引入多目标权衡将彻底改变问题本质，违反规则要求的从单目标最优到权衡前沿的扩展逻辑。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch",
+          "not_applicable"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 objective.type 为 'decision'，target 为 'feasibility'，没有任何最大化/最小化目标；原题描述为判定是否存在合法安排，无收益、代价或其他量化指标；invariants 只涉及座位分配可行性，未暗含优化方向。",
+        "feedback": "规则 'single_objective_to_tradeoff_frontier' 仅适用于原生单目标优化问题，本种子题为约束满足判定，不适合进行双指标扩展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "strong_inverse_target_natural_operations",
+      "message": "原题输出为可行性判定（YES/NO），可明确绑定为反向目标（如要求达成YES）。座位分区（四座块、双座单元）的结构化特征提供了自然的修改操作空间，如调整各组士兵数以最小代价满足隔离约束，符合规则要求的目标驱动设计与操作契约。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints定义座位邻接关系与无跨组邻接约束；seed_schema.invariant包含四座块隔离和独立双座单元分解，表明问题具有组合打包结构。rule_under_review.eligibility.required_seed_properties要求反向目标可指定且存在自然修改自由度，原题输出可设为反向目标，修改操作可基于组大小调整并约束于总容量与打包条件。helpers.target_result_binding要求将原题结果绑定为新题目标，helpers.edit_operation_contract要求定义修改集合，均可在座位结构上实现。global_redlines无触发。",
+        "feedback": "建议规划时强化最小修改的证明责任，并利用四座块和双座单元的不变量设计操作代价下界，避免将反向目标退化为简单重新输入。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "EXISTING_COUPLING_DIMINISHES_NOVELTY",
+      "message": "种子题的四座块和两座对虽为局部单元，但组需求全局约束和解法贪心均表明已存在自然耦合，强行引入新共享资源或全局守恒只会硬加无关约束，难以产生实质创新。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束和标准解法中，四座块和两座对分配并非独立：计算 waste = min(a[j]//4, m) 等依赖全局参数 m (剩余四座块数量) 和组需求总和，可行性检查基于全局容量和剩余需求，已形成跨组件依赖。种子题已满足“通过共享资源、总量自然耦合”的条件，但此耦合并非来自规则引入，导致规则应用后差异不足。",
+        "feedback": "建议评估是否可改变单元属性（如不同大小的座位块）或目标（如最小化浪费座位），但需警惕语义不匹配。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "NO_NATURAL_OPERATIONS",
+      "message": "原题是静态座位分配可行性判定，不存在可轮流选择、拿取、移动或改变状态的自然操作，无法转为双方轮流选择的博弈过程。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”且“不同操作会改变后续可选状态”。原题要求一次性分配所有士兵到固定座位，没有顺序操作，也不存在对抗方或选择序列，属于 eligibility.forbidden_seed_properties 中的“操作顺序固定且没有选择自由度”和“对抗方只能靠故事背景硬造”。",
+        "feedback": "原题核心是组合约束满足问题，没有任何与博弈相关的状态转移或行动语义，强行引入玩家会违反全局红线“不能凭背景硬造玩家”。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题是基于座位独立单元的组合打包决策问题，缺乏路径、区间或子树等典型局部结构，无法自然扩展为覆盖或割问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题Schema中核心约束为邻接定义和不同组隔离，不变量基于四座块和双座对的独立分配；原题摘要中无路径、区间或子树对象，正例要求将路径性质改为点覆盖，与此题结构不符。",
+        "feedback": "建议寻找具有明确路径、区间或子树性质的原题，再应用该规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题只判定可行性（YES/NO），并未对合法方案进行计数，更不存在统计量或权重；不符合规则要求“原题已经有明确有限的计数对象”。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'decision'，target = 'feasibility'，原题描述及输出格式始终为YES/NO，全文中没有任何计数对象或分布统计量。",
+        "feedback": "该种子题为纯粹的可行性判定，无法应用此规则；需先改编为计数版本才可能具备带权扩展的基础。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.2322,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.2979,
+            "O": 0.3294,
+            "V": 0.3025
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.2979,
+            "objective_type_distance": 0.2913,
+            "objective_text_distance": 0.3865,
+            "invariant_match_distance": 0.3025
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [
+        "mechanical_bisection_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 0.87,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.2322，落地轴=C, O, V。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 3 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_43dc8145a4f7_community_services_20260528_135423",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_43dc8145a4f7\\taco_codeforces_43dc8145a4f7_community_services_20260528_135423_round2.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_43dc8145a4f7\\taco_codeforces_43dc8145a4f7_community_services_20260528_135423_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 2,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 100.0,
+      "divergence_score": 53.3,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例覆盖度稍低",
+          "detail": "现有两个样例分别展示了单大厅多团队和单团队多大厅的简单情况，缺少更复杂的场景（如多团队争夺多个 4 块和 2 块，或团队人数不能填满整块的情形）。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "建议增加一个包含 n=2, k=3 的样例，展示不同团队同时占用 4 块和 2 块的情况，并提供相应解释。"
+        }
+      ],
+      "suggested_revisions": [
+        "建议增加一个包含 n=2, k=3 的样例，展示不同团队同时占用 4 块和 2 块的情况，并提供相应解释。",
+        "增加一个涉及多团队、混合块型使用的样例，增强对 DP 或组合计数步骤的示范"
+      ],
+      "strengths_to_keep": [
+        "块分解与内部计数规则描述清晰，降低了理解难度",
+        "样例解释详实，将计数逻辑逐步展示",
+        "约束全面覆盖数据范围与时空限制",
+        "完整落地 new_schema 中的所有结构选项与约束，忠实实现了从判定到计数的变体转换。",
+        "样例丰富且解释详尽，展示了不同场景下的计数方法，有效帮助理解。",
+        "题面各部分保持一致，表述清晰规范，符合 OJ 标准。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 97.0,
+            "divergence_score": 66.0,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例覆盖度稍低",
+                "detail": "现有两个样例分别展示了单大厅多团队和单团队多大厅的简单情况，缺少更复杂的场景（如多团队争夺多个 4 块和 2 块，或团队人数不能填满整块的情形）。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "建议增加一个包含 n=2, k=3 的样例，展示不同团队同时占用 4 块和 2 块的情况，并提供相应解释。"
+              }
+            ],
+            "suggested_revisions": [
+              "建议增加一个包含 n=2, k=3 的样例，展示不同团队同时占用 4 块和 2 块的情况，并提供相应解释。",
+              "增加一个涉及多团队、混合块型使用的样例，增强对 DP 或组合计数步骤的示范"
+            ],
+            "strengths_to_keep": [
+              "块分解与内部计数规则描述清晰，降低了理解难度",
+              "样例解释详实，将计数逻辑逐步展示",
+              "约束全面覆盖数据范围与时空限制"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 53.3,
+            "failed_hard_checks": [],
+            "issues": [],
+            "suggested_revisions": [],
+            "strengths_to_keep": [
+              "完整落地 new_schema 中的所有结构选项与约束，忠实实现了从判定到计数的变体转换。",
+              "样例丰富且解释详尽，展示了不同场景下的计数方法，有效帮助理解。",
+              "题面各部分保持一致，表述清晰规范，符合 OJ 标准。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 100.0,
+        "latest_divergence_score": 53.3,
+        "suggested_revisions": [
+          "建议增加一个包含 n=2, k=3 的样例，展示不同团队同时占用 4 块和 2 块的情况，并提供相应解释。",
+          "增加一个涉及多团队、混合块型使用的样例，增强对 DP 或组合计数步骤的示范"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例覆盖度稍低",
+            "detail": "现有两个样例分别展示了单大厅多团队和单团队多大厅的简单情况，缺少更复杂的场景（如多团队争夺多个 4 块和 2 块，或团队人数不能填满整块的情形）。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "建议增加一个包含 n=2, k=3 的样例，展示不同团队同时占用 4 块和 2 块的情况，并提供相应解释。"
+          }
+        ],
+        "strengths_to_keep": [
+          "块分解与内部计数规则描述清晰，降低了理解难度",
+          "样例解释详实，将计数逻辑逐步展示",
+          "约束全面覆盖数据范围与时空限制",
+          "完整落地 new_schema 中的所有结构选项与约束，忠实实现了从判定到计数的变体转换。",
+          "样例丰富且解释详尽，展示了不同场景下的计数方法，有效帮助理解。",
+          "题面各部分保持一致，表述清晰规范，符合 OJ 标准。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

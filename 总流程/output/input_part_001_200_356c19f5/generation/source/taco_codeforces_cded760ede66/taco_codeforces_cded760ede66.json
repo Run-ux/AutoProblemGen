@@ -1,0 +1,122 @@
+{
+  "problem_id": "taco_codeforces_cded760ede66",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    },
+    "components": [
+      {
+        "role": "test_case_count",
+        "role_description": "number of test cases",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 1000
+        },
+        "properties": {}
+      },
+      {
+        "role": "all_n",
+        "role_description": "array of n values, one per test case",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 1000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 30
+        },
+        "properties": {
+          "ordered": true
+        }
+      },
+      {
+        "role": "all_k",
+        "role_description": "array of k values, one per test case",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 1000
+        },
+        "value_range": {
+          "min": 2,
+          "max": 100
+        },
+        "properties": {
+          "ordered": true
+        }
+      },
+      {
+        "role": "all_a",
+        "role_description": "array of target arrays a, one per test case",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 1000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "ordered": true
+        }
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "digit_sum_limit_per_place",
+        "description": "In the base-k representation, for each exponent i, the sum of the i-th digits of all a_j must not exceed 1. That is, each power k^i can be used at most once across the entire array.",
+        "formal": "For all non-negative integers e, sum_{j=1}^{n} digit_e(a_j) ≤ 1, where digit_e(x) ∈ {0,1} is the coefficient of k^e in the representation of x as a sum of distinct powers of k.",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "decision",
+    "description": "判断目标数组是否可通过给定操作得到",
+    "target": "",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "unique_exponent_assignment",
+        "description": "每个幂次 k^e 在所有数组元素中最多只能被分配给一个位置,因为每个步骤 i 最多允许一个位置增加 k^i。该约束贯穿整个分解过程,贪心验证从高到低确保没有冲突,一旦发现同一幂次被两个元素需要即判定为不可能。",
+        "properties": {
+          "max_usage_per_power": 1
+        },
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_cded760ede66",
+    "title": "C",
+    "description": "Suppose you are performing the following algorithm. There is an array $v_1, v_2, \\dots, v_n$ filled with zeroes at start. The following operation is applied to the array several times — at $i$-th step ($0$-indexed) you can:   either choose position $pos$ ($1 \\le pos \\le n$) and increase $v_{pos}$ by $k^i$;  or not choose any position and skip this step. \n\nYou can choose how the algorithm would behave on each step and when to stop it. The question is: can you make array $v$ equal to the given array $a$ ($v_j = a_j$ for each $j$) after some step?\n\n\n-----Input-----\n\nThe first line contains one integer $T$ ($1 \\le T \\le 1000$) — the number of test cases. Next $2T$ lines contain test cases — two lines per test case.\n\nThe first line of each test case contains two integers $n$ and $k$ ($1 \\le n \\le 30$, $2 \\le k \\le 100$) — the size of arrays $v$ and $a$ and value $k$ used in the algorithm.\n\nThe second line contains $n$ integers $a_1, a_2, \\dots, a_n$ ($0 \\le a_i \\le 10^{16}$) — the array you'd like to achieve.\n\n\n-----Output-----\n\nFor each test case print YES (case insensitive) if you can achieve the array $a$ after some step or NO (case insensitive) otherwise.\n\n\n-----Example-----\nInput\n5\n4 100\n0 0 0 0\n1 2\n1\n3 4\n1 4 1\n3 2\n0 1 3\n3 9\n0 59049 810\n\nOutput\nYES\nYES\nNO\nNO\nYES\n\n\n\n-----Note-----\n\nIn the first test case, you can stop the algorithm before the $0$-th step, or don't choose any position several times and stop the algorithm.\n\nIn the second test case, you can add $k^0$ to $v_1$ and stop the algorithm.\n\nIn the third test case, you can't make two $1$ in the array $v$.\n\nIn the fifth test case, you can skip $9^0$ and $9^1$, then add $9^2$ and $9^3$ to $v_3$, skip $9^4$ and finally, add $9^5$ to $v_2$.",
+    "input": "5\n4 100\n0 0 0 0\n1 2\n1\n3 4\n1 4 1\n3 2\n0 1 3\n3 9\n0 59049 810",
+    "output": "YES\nYES\nNO\nNO\nYES\n\n\n\n-----Note-----\n\nIn the first test case, you can stop the algorithm before the $0$-th step, or don't choose any position several times and stop the algorithm.\n\nIn the second test case, you can add $k^0$ to $v_1$ and stop the algorithm.\n\nIn the third test case, you can't make two $1$ in the array $v$.\n\nIn the fifth test case, you can skip $9^0$ and $9^1$, then add $9^2$ and $9^3$ to $v_3$, skip $9^4$ and finally, add $9^5$ to $v_2$.",
+    "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+    "source": "codeforces",
+    "standard_solution_code": "for t in range(int(input())):\n\t(n, k) = [*map(int, input().split())]\n\tp = 1\n\twhile p < 1e+16:\n\t\tp *= k\n\ta = [*map(int, input().split())]\n\tvalid = True\n\twhile valid:\n\t\tchk = False\n\t\tfor i in range(len(a)):\n\t\t\tif a[i] >= p:\n\t\t\t\tif chk:\n\t\t\t\t\tvalid = False\n\t\t\t\t\tbreak\n\t\t\t\telse:\n\t\t\t\t\tchk = True\n\t\t\t\t\ta[i] -= p\n\t\tif sum(a) == 0 or p == 1:\n\t\t\tvalid = False\n\t\tp //= k\n\tprint('NO' if sum(a) else 'YES')"
+  }
+}

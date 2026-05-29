@@ -1,0 +1,623 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 84.0,
+    "divergence_score": 65.5,
+    "schema_distance": 0.3535,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "The generated problem accurately implements all aspects of the new_schema: multiple test cases, input format with n, k, s, the flip operation, the k-balanced target, and the minimization objective. No deviations or missing elements.",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "The problem provides all necessary information for independent solving: clear task description, input/output formats, constraints (limits, k even, sum n), and notes. No critical information is omitted.",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 3.0,
+        "rationale": "The sample explanation for the second sample contains a clear internal inconsistency: it claims that flipping positions 2,3,6,7 yields '00110011', but the actual result of that operation is '01101001'. This contradicts the described transformation, though the output value (4) remains correct.",
+        "evidence_refs": [
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 3.0,
+        "rationale": "Two samples are provided with explanations, but the second sample's explanation is erroneous, describing flip positions that do not lead to the stated resulting string. This can mislead solvers and reduces sample quality.",
+        "evidence_refs": [
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 4.0,
+        "rationale": "The problem is well-structured and uses clear, natural language appropriate for an OJ context. The only minor issue is the incorrect sample explanation, which may cause confusion but does not severely detract from overall readability.",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples"
+        ]
+      }
+    ],
+    "strengths": [
+      "Clean thematic mapping to a campus scenario, making the problem engaging.",
+      "Well-specified input/output format with clear constraints.",
+      "Multiple samples that cover both trivial (already balanced) and non-trivial cases.",
+      "Concise and unambiguous definition of the k-balanced condition and allowed operations."
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3535,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.4553,
+        "O": 0.5899,
+        "V": 0.347
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.4553,
+        "objective_type_distance": 0.6632,
+        "objective_text_distance": 0.48,
+        "invariant_match_distance": 0.347
+      }
+    },
+    "schema_distance": 0.3535,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.8,
+    "solution_transfer_risk": 0.4,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "原题是决策问题（判断能否替换'?'得到k-balanced串），新题是优化问题（求最小翻转次数使给定0/1串k-balanced）。任务核心从存在性判定变为最优代价计算，语义差异显著。然而，原题的关键性质——任意k-balanced串必须满足s[i]=s[i+k]——在新题中仍然成立，且是解题的基础。熟悉原题的选手可以快速迁移模k遍历结构，但原题的可行性检查算法无法直接处理最小化目标，必须重新设计代价聚合与贪心选择逻辑，解题框架需要明显调整。背景故事完全替换，没有直接文本复用。因此，语义差异真实成立，解法迁移风险中等，表面换皮风险很低。",
+    "evidence_refs": [
+      "review_context.distance_breakdown.axis_scores",
+      "review_context.changed_axes_realized",
+      "snapshots.new_schema.objective",
+      "snapshots.new_schema.invariant",
+      "snapshots.original_schema.invariant"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.35，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "Sample 2 explanation contains incorrect flip positions",
+      "detail": "The explanation says: '翻转第 2、3、6、7 个位置...得到 00110011'. However, flipping positions 2,3,6,7 of '00001111' yields '01101001', not '00110011'. The correct flips to obtain '00110011' are at positions 3,4,5,6 (1-indexed). This mistake could mislead participants trying to understand the operation.",
+      "evidence_refs": [
+        "generated_problem.samples[1].explanation"
+      ],
+      "fix_hint": "Correct the explanation to either use the correct flip positions (3,4,5,6) or adjust the described resulting string to match the flips (e.g., '01101001'). Ensure the stated flips lead to the claimed string."
+    }
+  ],
+  "suggested_revisions": [
+    "Correct the explanation to either use the correct flip positions (3,4,5,6) or adjust the described resulting string to match the flips (e.g., '01101001'). Ensure the stated flips lead to the claimed string.",
+    "Fix the erroneous flip positions in Sample 2's explanation.",
+    "Consider adding a note about the residue class property to guide weaker participants, though not strictly necessary."
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 84.0,
+    "divergence_score": 65.5,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "Sample 2 explanation contains incorrect flip positions",
+        "detail": "The explanation says: '翻转第 2、3、6、7 个位置...得到 00110011'. However, flipping positions 2,3,6,7 of '00001111' yields '01101001', not '00110011'. The correct flips to obtain '00110011' are at positions 3,4,5,6 (1-indexed). This mistake could mislead participants trying to understand the operation.",
+        "evidence_refs": [
+          "generated_problem.samples[1].explanation"
+        ],
+        "fix_hint": "Correct the explanation to either use the correct flip positions (3,4,5,6) or adjust the described resulting string to match the flips (e.g., '01101001'). Ensure the stated flips lead to the claimed string."
+      }
+    ],
+    "suggested_revisions": [
+      "Correct the explanation to either use the correct flip positions (3,4,5,6) or adjust the described resulting string to match the flips (e.g., '01101001'). Ensure the stated flips lead to the claimed string.",
+      "Fix the erroneous flip positions in Sample 2's explanation.",
+      "Consider adding a note about the residue class property to guide weaker participants, though not strictly necessary."
+    ],
+    "strengths_to_keep": [
+      "Clean thematic mapping to a campus scenario, making the problem engaging.",
+      "Well-specified input/output format with clear constraints.",
+      "Multiple samples that cover both trivial (already balanced) and non-trivial cases.",
+      "Concise and unambiguous definition of the k-balanced condition and allowed operations."
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_cc4196f14da3\\taco_codeforces_cc4196f14da3.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cc4196f14da3\\taco_codeforces_cc4196f14da3_campus_ops_20260528_213202_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_cc4196f14da3\\taco_codeforces_cc4196f14da3_campus_ops_20260528_213202_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_cc4196f14da3",
+      "title": "A",
+      "description": "A bitstring is a string consisting only of the characters 0 and 1. A bitstring is called $k$-balanced if every substring of size $k$ of this bitstring has an equal amount of 0 and 1 characters ($\\frac{k}{2}$ of each).\n\nYou are given an integer $k$ and a string $s$ which is composed only of characters 0, 1, and ?. You need to determine whether you can make a $k$-balanced bitstring by replacing every ? characters in $s$ with either 0 or 1.\n\nA string $a$ is a substring of a string $b$ if $a$ can be obtained from $b$ by deletion of several (possibly, zero or all) characters from the beginning and several (possibly, zero or all) characters from the end.\n\n\n-----Input-----\n\nEach test contains multiple test cases. The first line contains the number of test cases $t$ ($1 \\le t \\le 10^4$). Description of the test cases follows.\n\nThe first line of each test case contains two integers $n$ and $k$ ($2 \\le k \\le n \\le 3 \\cdot 10^5$, $k$ is even)  — the length of the string and the parameter for a balanced bitstring.\n\nThe next line contains the string $s$ ($|s| = n$). It is given that $s$ consists of only 0, 1, and ?.\n\nIt is guaranteed that the sum of $n$ over all test cases does not exceed $3 \\cdot 10^5$.\n\n\n-----Output-----\n\nFor each test case, print YES if we can replace every ? in $s$ with 0 or 1 such that the resulting bitstring is $k$-balanced, or NO if it is not possible.\n\n\n-----Example-----\nInput\n9\n6 4\n100110\n3 2\n1?1\n3 2\n1?0\n4 4\n????\n7 4\n1?0??1?\n10 10\n11??11??11\n4 2\n1??1\n4 4\n?0?0\n6 2\n????00\n\nOutput\nYES\nYES\nNO\nYES\nYES\nNO\nNO\nYES\nNO\n\n\n\n-----Note-----\n\nFor the first test case, the string is already a $4$-balanced bitstring.\n\nFor the second test case, the string can be transformed into 101.\n\nFor the fourth test case, the string can be transformed into 0110.\n\nFor the fifth test case, the string can be transformed into 1100110.",
+      "input": "9\n6 4\n100110\n3 2\n1?1\n3 2\n1?0\n4 4\n????\n7 4\n1?0??1?\n10 10\n11??11??11\n4 2\n1??1\n4 4\n?0?0\n6 2\n????00",
+      "output": "YES\nYES\nNO\nYES\nYES\nNO\nNO\nYES\nNO\n\n\n\n-----Note-----\n\nFor the first test case, the string is already a $4$-balanced bitstring.\n\nFor the second test case, the string can be transformed into 101.\n\nFor the fourth test case, the string can be transformed into 0110.\n\nFor the fifth test case, the string can be transformed into 1100110.",
+      "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "import sys\ninput = sys.stdin.readline\nins = lambda : input().rstrip()\nini = lambda : int(input().rstrip())\ninm = lambda : map(int, input().rstrip().split())\ninl = lambda : list(map(int, input().split()))\nout = lambda x, s='\\n': print(s.join(map(str, x)))\nt = ini()\nfor _ in range(t):\n\t(n, k) = inm()\n\ts = list(ins())\n\tans = True\n\tcount0 = count1 = 0\n\tfor i in range(k):\n\t\ttmp = -1\n\t\tfor j in range(i, n, k):\n\t\t\tif s[j] != '?':\n\t\t\t\tif tmp != -1 and s[j] != tmp:\n\t\t\t\t\tans = False\n\t\t\t\t\tbreak\n\t\t\t\ttmp = s[j]\n\t\tif not ans:\n\t\t\tbreak\n\t\tif tmp == '0':\n\t\t\tcount0 += 1\n\t\telif tmp == '1':\n\t\t\tcount1 += 1\n\tif count0 > k // 2 or count1 > k // 2:\n\t\tans = False\n\tprint('YES' if ans else 'NO')"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_cc4196f14da3",
+        "codeforces",
+        "A bitstring is a string consisting only of the characters 0 and 1. A bitstring is called $k$-balanced if every substring of size $k$ of this bitstring has an equal amount of 0 and 1 characters ($\\frac{k}{2}$ of each)....",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "C: 核心约束从填充?变为允许翻转0/1，并强制最终满足k-balanced；O: 从可行性决策变为最小翻转次数优化；V: 不变量从模k类固定赋值冲突条件变为代价分解和选择下界。",
+      "summary": "原题是判定存在性，新题是求最小修改代价。操作空间从自由赋值变为有代价翻转，证明责任从简单计数变为最优化下界。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inverse_flip_to_kbalanced",
+      "source": "derived_from_codeforces_cc4196f14da3",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "t",
+            "role_description": "number of test cases",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 10000
+            },
+            "properties": {}
+          },
+          {
+            "role": "test_cases",
+            "role_description": "sequence of test cases; each test case consists of integers n and k followed by a string s of length n containing only '0' or '1'",
+            "type": "array",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {
+              "ordered": true,
+              "per_case_fields": {
+                "n": "integer",
+                "k": "even integer",
+                "s": "string of '0' and '1'"
+              }
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "k_even",
+            "description": "k is an even integer (2 ≤ k ≤ n).",
+            "formal": "k ≡ 0 (mod 2)"
+          },
+          {
+            "name": "string_binary",
+            "description": "The input string s consists only of characters '0' and '1'.",
+            "formal": "∀i, s[i] ∈ {'0','1'}"
+          },
+          {
+            "name": "allowed_flip_operation",
+            "description": "We are allowed to flip any character at position i, changing '0' to '1' or '1' to '0'. Each flip counts as one operation.",
+            "formal": "An operation on index i replaces s[i] with 1 - s[i]."
+          },
+          {
+            "name": "k_balanced_target",
+            "description": "After performing a sequence of flip operations, the resulting string must be k-balanced: every contiguous substring of length k contains exactly k/2 zeros and k/2 ones.",
+            "formal": "∃ sequence of indices; let s' be the resulting string; then ∀ 1 ≤ i ≤ n−k+1, |{j:s'[i+j−1]='0'}| = |{j:s'[i+j−1]='1'}| = k/2"
+          }
+        ]
+      },
+      "objective": {
+        "type": "optimization",
+        "description": "For each test case, output the minimum number of flip operations needed to make the string k-balanced. If already k-balanced, output 0.",
+        "target": "minimize number of flips",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "residue_uniformity_required",
+            "description": "In any k-balanced string, for any i, s[i] must equal s[i+k]. This forces each residue class modulo k to have all its characters identical in the final string.",
+            "properties": {
+              "relation": "∀i, if both defined, s'[i] = s'[i+k]"
+            }
+          },
+          {
+            "name": "class_cost_decomposition_lower_bound",
+            "description": "For each residue class r (0≤r<k), let z_r = count of '0's originally in that class, o_r = count of '1's. If we decide final class value is 0, cost is o_r (flip all 1s); if 1, cost is z_r. Because exactly k/2 classes must be 0 and k/2 must be 1, the minimum flips = Σ_r z_r + sum of smallest k/2 values of (o_r - z_r) (where we start with all-1 assignment). This provides a computable lower bound that is achievable.",
+            "properties": {
+              "lower_bound_formula": "min_flips = sum_{r} cost1_r + sum of smallest k/2 (cost0_r - cost1_r) with cost0_r = o_r, cost1_r = z_r"
+            }
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "Medium"
+    },
+    "generated_problem": {
+      "title": "活动均衡计划",
+      "description": "小码是学校社团管理部的干事，他需要为接下来 n 个时段安排教室使用计划。每个时段可以选择进行社团活动（用 0 表示）或课程教学（用 1 表示）。学校规定，为了保证校园活动丰富多彩也不耽误学习，任意连续的 k 个时段内，社团活动和课程教学的数量必须相等，即各有 k/2 个（k 保证为偶数）。\n\n小码已经拟定了一个初步计划，用一个长度为 n 的、仅包含 0 和 1 的字符串表示。但他发现这个计划可能不满足均衡条件。他可以对任意时段的安排进行调整：如果原来安排的是社团活动，可以改为课程教学；如果原来是课程教学，可以改为社团活动。每次这样的调整算作一次操作。\n\n请你帮小码计算出，最少需要进行多少次调整操作，才能让整个计划变成一个 k-均衡的计划。",
+      "input_format": "第一行包含一个整数 t (1 ≤ t ≤ 10000)，表示测试数据的组数。\n接下来每组测试数据包含两行：\n- 第一行包含两个整数 n 和 k (2 ≤ k ≤ n ≤ 3·10^5，k 为偶数)，分别表示时段的个数和均衡窗口的长度。\n- 第二行包含一个长度为 n 的字符串 s，仅由字符 '0' 和 '1' 组成，表示小码的初步计划。\n\n保证所有测试数据的 n 之和不超过 3·10^5。",
+      "output_format": "对于每组测试数据，输出一行一个整数，表示达到 k-均衡计划所需的最少调整次数。",
+      "constraints": [
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "1 ≤ t ≤ 10000",
+        "2 ≤ k ≤ n ≤ 3·10^5，k 为偶数",
+        "字符串 s 仅包含 '0' 和 '1'",
+        "所有测试数据的 n 之和不超过 3·10^5"
+      ],
+      "samples": [
+        {
+          "input": "2\n6 4\n100110\n6 4\n111100",
+          "output": "0\n2",
+          "explanation": "对于第一组测试数据，初始计划已经是 4-均衡的：连续 4 个时段分别为 1001、0011、0110，都恰好包含两个社团活动和两个课程教学，无需任何调整。\n对于第二组测试数据，一种最优方案是将第 1 个和第 2 个时段从课程教学（1）调整为社团活动（0），得到 001100，这时每连续 4 个时段都满足均衡条件，共调整 2 次。可以证明不存在只需 1 次调整的方案。"
+        },
+        {
+          "input": "1\n8 4\n00001111",
+          "output": "4",
+          "explanation": "初始计划 00001111 不满足 4-均衡。一种最优方案是翻转第 2、3、6、7 个位置（将其从 0 变为 1 或从 1 变为 0），得到 00110011，这时所有连续 4 个时段均满足 4-均衡，共调整 4 次。"
+        }
+      ],
+      "notes": "题目保证对于任意满足输入条件的初始计划，总存在一种调整方案能使字符串变为 k-均衡，你只需计算最少操作次数。最优方案中每个时段至多被调整一次。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "原题是判定存在性，新题是求最小修改代价。操作空间从自由赋值变为有代价翻转，证明责任从简单计数变为最优化下界。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3535,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.4553,
+          "O": 0.5899,
+          "V": 0.347
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.4553,
+          "objective_type_distance": 0.6632,
+          "objective_text_distance": 0.48,
+          "invariant_match_distance": 0.347
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "Required to invert the problem direction by making the original property (k-balanced) a target to be achieved.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "Added core constraint 'k_balanced_target' that enforces the resulting string must be k-balanced after operations.",
+            "Changed objective from feasibility decision to minimization of flips to reach that target."
+          ],
+          "innovation_reason": "This flips the solver's task from verifying existence to designing a strategy to meet a goal, converting a decision problem into an optimization one.",
+          "difficulty_reason": "The algorithm must now navigate toward a specified outcome, requiring planning rather than just checking consistency."
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "Necessary to define the allowed modifications (flipping bits) that constitute the inverse design space.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "Added core constraint 'allowed_flip_operation' formalizing the flip operation.",
+            "Added invariant 'residue_uniformity_required' which shows how flips affect feasibility and enforces class consistency, linking operations to the target."
+          ],
+          "innovation_reason": "Introduces a concrete operation set grounded in the original object's structure (bits), moving from abstract substitution to an explicit edit model.",
+          "difficulty_reason": "Requires reasoning about sequences of operations and their effect on the k-balanced property, and proving that any solution can be characterized by class-wise assignments."
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "Mandates that the output demonstrates minimal effort, not just any feasible modification.",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "Objective explicitly requires the minimum number of flips.",
+            "Invariant 'class_cost_decomposition_lower_bound' provides the mathematical structure to prove optimality and serves as a certificate of minimality."
+          ],
+          "innovation_reason": "Elevates the problem from finding any solution to finding the best one, demanding a proof of optimality that was absent in the seed.",
+          "difficulty_reason": "The algorithm must compute a global optimum and the proof must show no better solution exists, typically via exchange argument or sorting-based lower bound."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Check each residue class mod k for conflicts; count forced 0-classes and 1-classes; if either count > k/2, impossible, else possible. O(n).",
+        "reusable_subroutines": "Loop over i from 0 to k-1 with inner loop stepping by k to group characters. This traversal structure is directly reusable.",
+        "new_solver_core": "For each residue class, count occurrences of '0' and '1'. Compute cost0 = count1, cost1 = count0. Set base = sum(cost1). Compute for each class diff = cost0 - cost1. Select the k/2 smallest diffs (possibly negative) and add to base. Return base. Complexity O(n + k log k).",
+        "new_proof_obligation": "Must prove (1) in any valid k-balanced result, all positions in the same residue class are equal, hence the problem reduces to assigning 0/1 to classes; (2) the greedy selection of classes to assign 0 yields the minimum total flips, using exchange argument or sorting.",
+        "why_direct_reuse_fails": "The original solver only counts fixed classes and checks bounds, but has no concept of cost of flipping nor optimization over choices. The new problem requires computing a minimum over assignments, which demands a new algorithmic structure with cost aggregation and selection."
+      },
+      "anti_shallow_rationale": "The transformation is not a superficial relabeling. It fundamentally changes the core question from existence to minimization, introduces a cost model for modifications, and forces a lower-bound proof. The input structure drops '?', adds flip operations, and the objective shifts from YES/NO to an integer. The invariants change from simple counting to cost decomposition and optimal choice. The algorithm changes from O(n) feasibility check to O(n + k log k) combinatorial optimization."
+    }
+  }
+}

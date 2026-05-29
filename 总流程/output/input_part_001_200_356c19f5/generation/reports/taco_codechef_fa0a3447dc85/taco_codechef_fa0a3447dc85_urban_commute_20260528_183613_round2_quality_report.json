@@ -1,0 +1,624 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 57.8,
+    "schema_distance": 0.5075,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的任务变体、输入结构、目标函数、核心约束等均准确落地到 generated_problem 的 description、input_format、output_format 和 constraints 中，包括中位数定义、好度与成本定义、支配关系以及输出帕累托前沿并升序排列等要求。",
+        "evidence_refs": [
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "new_schema.input_structure",
+          "generated_problem.description",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的全部关键信息：任务背景与目标、中位数/好度/成本/支配的定义、输入输出格式、约束条件、样例及解释、数据类型提醒等，选手无需猜测任何规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间无任何矛盾。定义一致，样例输入输出严格符合格式要求，解释与数学描述匹配，输出规则（连续无空行）在样例中正确体现。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "两个样例分别覆盖了 n=2 和 n=3 的情况，且第二个样例包含多个测试用例，展示了连续输出的要求。样例解释详细，逐步说明了非支配点的推导，有助于理解支配关系和前沿输出。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面标题、描述、输入输出格式、约束、样例、注释的结构标准清晰，措辞准确无歧义，无原题泄露或无关文本，易于快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes",
+          "hard_checks.source_leakage"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面定义清晰，完整包含了中位数、好度、成本、支配关系以及非支配前沿的所有必要定义。",
+      "样例解释详细，逐步说明了非支配点的选择过程，有助于理解题目。",
+      "输入输出格式描述准确，特别注意了多测试用例输出无空行的细节。",
+      "约束和数据类型提醒（使用64位整数）对选手友好。",
+      "题面结构与标准OJ题面完全一致，无噪声或干扰信息。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5075,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.8647,
+        "O": 0.5583,
+        "V": 0.5426
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.8647,
+        "objective_type_distance": 0.6462,
+        "objective_text_distance": 0.4265,
+        "invariant_match_distance": 0.5426
+      }
+    },
+    "schema_distance": 0.5075,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.45,
+    "solution_transfer_risk": 0.75,
+    "surface_retheme_risk": 0.15,
+    "verdict": "reject_as_retheme",
+    "rationale": "虽然目标函数从单值最大化变为输出帕累托前沿（axis O 的变化），且约束结构中移除了成本上限 k（axis C 的变化），但核心建模完全一致：给定全局排序的元素，通过贪心分配每行左侧元素和选择中位数，使得最小中位数不低于阈值的同时总成本最小。原题的判定子程序（计算给定 goodnes 的最小成本）可以直接复用于新题计算 f(G)，外层逻辑从二分搜索变为扫描候选值并筛选非支配点，调整量很小。熟悉原题的选手几乎可以原样迁移贪心算法和单调性分析，新题没有实质性的算法创新，仅增加了效率优化的要求。叙事和样例完全重写，表面换皮风险低，但语义差异不足以支撑新题的独立性，解法迁移风险仍高。",
+    "evidence_refs": [
+      "snapshots.original_schema.objective",
+      "snapshots.new_schema.objective",
+      "snapshots.original_schema.core_constraints",
+      "snapshots.new_schema.core_constraints",
+      "snapshots.original_schema.invariant.invariants[2]",
+      "snapshots.new_schema.invariant.invariants[2]",
+      "divergence.schema_distance_breakdown",
+      "snapshots.difference_plan.changed_axes",
+      "snapshots.generated_problem.notes"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.51，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "虽然目标函数从单值最大化变为输出帕累托前沿（axis O 的变化），且约束结构中移除了成本上限 k（axis C 的变化），但核心建模完全一致：给定全局排序的元素，通过贪心分配每行左侧元素和选择中位数，使得最小中位数不低于阈值的同时总成本最小。原题的判定子程序（计算给定 goodnes 的最小成本）可以直接复用于新题计算 f(G)，外层逻辑从二分搜索变为扫描候选值并筛选非支配点，调整量很小。熟悉原题的选手几乎可以原样迁移贪心算法和单调性分析，新题没有实质性的算法创新，仅增加了效率优化的要求。叙事和样例完全重写，表面换皮风险低，但语义差异不足以支撑新题的独立性，解法迁移风险仍高。",
+      "evidence_refs": [
+        "snapshots.original_schema.objective",
+        "snapshots.new_schema.objective",
+        "snapshots.original_schema.core_constraints",
+        "snapshots.new_schema.core_constraints",
+        "snapshots.original_schema.invariant.invariants[2]",
+        "snapshots.new_schema.invariant.invariants[2]",
+        "divergence.schema_distance_breakdown",
+        "snapshots.difference_plan.changed_axes",
+        "snapshots.generated_problem.notes"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "可考虑增加一个 n=1 的测试样例，以验证边界情况（如只有一行一列时的行为），进一步丰富样例覆盖度。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 57.8,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "虽然目标函数从单值最大化变为输出帕累托前沿（axis O 的变化），且约束结构中移除了成本上限 k（axis C 的变化），但核心建模完全一致：给定全局排序的元素，通过贪心分配每行左侧元素和选择中位数，使得最小中位数不低于阈值的同时总成本最小。原题的判定子程序（计算给定 goodnes 的最小成本）可以直接复用于新题计算 f(G)，外层逻辑从二分搜索变为扫描候选值并筛选非支配点，调整量很小。熟悉原题的选手几乎可以原样迁移贪心算法和单调性分析，新题没有实质性的算法创新，仅增加了效率优化的要求。叙事和样例完全重写，表面换皮风险低，但语义差异不足以支撑新题的独立性，解法迁移风险仍高。",
+        "evidence_refs": [
+          "snapshots.original_schema.objective",
+          "snapshots.new_schema.objective",
+          "snapshots.original_schema.core_constraints",
+          "snapshots.new_schema.core_constraints",
+          "snapshots.original_schema.invariant.invariants[2]",
+          "snapshots.new_schema.invariant.invariants[2]",
+          "divergence.schema_distance_breakdown",
+          "snapshots.difference_plan.changed_axes",
+          "snapshots.generated_problem.notes"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "可考虑增加一个 n=1 的测试样例，以验证边界情况（如只有一行一列时的行为），进一步丰富样例覆盖度。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "题面定义清晰，完整包含了中位数、好度、成本、支配关系以及非支配前沿的所有必要定义。",
+      "样例解释详细，逐步说明了非支配点的选择过程，有助于理解题目。",
+      "输入输出格式描述准确，特别注意了多测试用例输出无空行的细节。",
+      "约束和数据类型提醒（使用64位整数）对选手友好。",
+      "题面结构与标准OJ题面完全一致，无噪声或干扰信息。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_fa0a3447dc85\\taco_codechef_fa0a3447dc85.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_fa0a3447dc85\\taco_codechef_fa0a3447dc85_urban_commute_20260528_183613_round2.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_fa0a3447dc85\\taco_codechef_fa0a3447dc85_urban_commute_20260528_183613_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_fa0a3447dc85",
+      "title": "MEDMAX",
+      "description": "Read problem statements in [Mandarin], [Russian], and [Vietnamese] as well.\n\nYou have an n \\times n matrix a. You can rearrange the elements of the matrix in any way. Let m_{1}, m_{2}, \\dots, m_{n} be the medians of each row in a after the rearrangement. The goodness of the matrix a is defined as the minimum median among the medians of all rows i.e \\min(m_{1}, m_{2}, \\dots, m_{n}). Naturally, rearranging values also comes with a cost. The cost of rearrangement is defined as m_{1} + m_{2} + \\dots + m_{n}. \n\nFind the maximum goodness you can achieve after rearranging a matrix a such that the cost of rearrangement doesn't exceed k or -1 if the answer doesn't exist.\n\nThe median of an array a consisting of n elements is the \\lceil{\\frac{n+1}{2}}\\rceil^{th} smallest element of a. The median of [4, 8, 6, 1] is 6 and the median of [1, 6, 2, 4, 5] is 4.\n\n------ Input Format ------ \n\n- The first line of the input contains a single integer t denoting the number of test cases. The description of t test cases follows.\n- The first line of each test case consists of two space-separated integers n and k.\n- n lines follow, each consisting of n space-separated integers denoting the matrix a\n\n------ Output Format ------ \n\nFor each test case, print a single line containing one integer - the maximum goodness you can achieve such that the rearrangement cost does not exceed k or -1 if the answer doesn't exist.\n\n------ Constraints ------ \n\n$1 ≤ t ≤ 100$\n$1 ≤ n ≤ 1000$\n$1 ≤ k ≤ 10^{14}$\n$1 ≤ a_{i, j} ≤ 10^{9}$\n$1 ≤ \\sum n ≤ 1000$\n\n------ subtasks ------ \n\nSubtask 1 (20 points): $k = 10^{14}$\n\nSubtask 2 (40 points): $1 ≤ \\sum n ≤ 70$\n\nSubtask 3 (40 points): Original constraints\n\n----- Sample Input 1 ------ \n3\n4 100\n13 2 1 16\n15 24 3 3\n5 17 9 8\n9 6 11 32\n4 40\n13 2 1 16\n15 24 3 3\n5 17 9 8\n9 6 11 32\n3 1\n3 4 2\n5 7 9\n2 1 1\n\n----- Sample Output 1 ------ \n9\n6\n-1\n----- explanation 1 ------ \nTest case $1$:  We rearrange the matrix as follows:\n$\\begin{bmatrix}\n11 & 2 & 1 & 16\\\\\n17 & 3 & 13 & 3\\\\\n5 & 15 & 6 & 24\\\\\n32& 9 & 8 & 9\n\\end{bmatrix}$\n. The medians of each row are $11, 13, 15, 9$ respectively. The goodness is $9$ and the cost is $48$. There are other rearrangements that may yield the same goodness but $9$ is the maximum goodness we can get. \n\nTest case $2$:  The rearranged matrix is:\n$\\begin{bmatrix}\n17 & 3 & 8 & 3\\\\\n2 & 1 & 6 & 16\\\\\n11& 32 & 15 & 13\\\\\n5 & 24 & 9 & 9\n\\end{bmatrix}$\n. The medians of each row are $8, 6, 15, 9$ respectively. The goodness is $6$ and the cost is $38$. There are other rearrangements that may yield the same goodness but $6$ is the maximum goodness we can get. \n\nTest case $3$:  No matter how we rearrange the elements, the cost is always greater than $k$.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "for z in range(int(input())):\n\t(n, k) = map(int, input().split())\n\tA = []\n\tfor i in range(n):\n\t\tA += list(map(int, input().split()))\n\tA.sort()\n\tleftcount = int(n / 2)\n\trightcount = n - leftcount - 1\n\trighttotal = rightcount * n\n\trmax = n * n - righttotal - 1\n\tans = -1\n\tstart = leftcount\n\tend = n * n - righttotal - (n - 1) - 1\n\twhile start <= end:\n\t\tmid = start + int((end - start) / 2)\n\t\tx = 0\n\t\ty = mid\n\t\tvis = []\n\t\tfor i in range(n * n):\n\t\t\tvis.append(0)\n\t\ttot = 0\n\t\tcnt = 0\n\t\tsums = 0\n\t\twhile tot != n:\n\t\t\tif cnt == leftcount:\n\t\t\t\tif vis[y] == 0:\n\t\t\t\t\tsums += A[y]\n\t\t\t\t\tvis[y] = 1\n\t\t\t\t\ty += 1\n\t\t\t\t\ttot += 1\n\t\t\t\t\tcnt = 0\n\t\t\t\telse:\n\t\t\t\t\ty += 1\n\t\t\telif vis[x] == 0:\n\t\t\t\tvis[x] = 1\n\t\t\t\tx += 1\n\t\t\t\tcnt += 1\n\t\t\telse:\n\t\t\t\tx += 1\n\t\tif sums <= k:\n\t\t\tans = mid\n\t\t\tstart = mid + 1\n\t\telse:\n\t\t\tend = mid - 1\n\tif ans == -1:\n\t\tprint(-1)\n\telse:\n\t\tprint(A[ans])"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_fa0a3447dc85",
+        "MEDMAX",
+        "codechef",
+        "Read problem statements in [Mandarin], [Russian], and [Vietnamese] as well. You have an n \\times n matrix a. You can rearrange the elements of the matrix in any way. Let m_{1}, m_{2}, \\dots, m_{n} be the medians of ea...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "引入第二指标成本，定义支配关系，将目标改为输出前沿点集，不变量相应调整为函数单调性与前沿性质。",
+      "summary": "核心约束新增成本定义与支配关系，目标从最大化好度变为输出帕累托前沿，不变量从单一可行性单调变为支持成本函数计算与前沿提取。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "home_org_tradeoff_frontier_001",
+      "source": "original",
+      "input_structure": {
+        "type": "matrix",
+        "length": {
+          "min": 1,
+          "max": 1000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 1000000000
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "dimension",
+            "role_description": "Number of cabinets (rows), also number of shelves per cabinet (columns).",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "median_definition",
+            "description": "排序后每柜子中位数定义为第 ceil((n+1)/2) 小的物品价值。",
+            "formal": "对于每行r，排序后b_{r,1}≤...≤b_{r,n}，中位数 m_r = b_{r, ceil(n/2)}。"
+          },
+          {
+            "name": "goodness_definition",
+            "description": "好度 G = min_i m_i。"
+          },
+          {
+            "name": "cost_definition",
+            "description": "成本 C = sum_i m_i。"
+          },
+          {
+            "name": "dominance_relation",
+            "description": "方案A(g1,c1)支配方案B(g2,c2)当且仅当 g1≥g2 且 c1≤c2，且至少一个严格。"
+          }
+        ]
+      },
+      "objective": {
+        "type": "output_pareto_frontier",
+        "description": "输出所有不被任何可行排列支配的 (goodness, cost) 对，按 goodnes 升序排列。",
+        "target": "frontier_set",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "sorted_global_order",
+            "description": "物品价值全局排序，简化比较。"
+          },
+          {
+            "name": "min_cost_function_monotonic",
+            "description": "定义函数 f(g) = 在好度至少为g 的条件下能达到的最小成本。f 是单调非减的。"
+          },
+          {
+            "name": "optimal_frontier_property",
+            "description": "输出的每个点 (g, c) 满足 c = f(g) 且对于任何 g'>g 如果 f(g')=f(g) 则 g' 对应的点不出现在输出中。"
+          },
+          {
+            "name": "greedy_min_cost_construction",
+            "description": "对于给定的目标好度 g，可以通过贪心构造达到成本 c = f(g)：先将所有物品排序，对于每行，选最小的 leftcount 个作为左边，选一个值≥g 的最小可能作为中位数，其余任意。"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "收纳达人的物品整理挑战",
+      "description": "张阿姨正在对家里的 n 个完全相同的收纳柜进行大整理。每个收纳柜有 n 个抽屉，每个抽屉只能放一件物品，因此总共可以放入 n×n 件物品。\n\n每件物品都被赋予了一个正整数“重要度”。张阿姨可以任意决定哪些物品放入哪些抽屉，最终每个抽屉恰好有一件物品，并且所有物品都必须被使用。\n\n完成摆放后，张阿姨对每个收纳柜进行评价：她将该收纳柜中的所有物品按照重要度从小到大排序，然后取第 ⌈(n+1)/2⌉ 小的物品重要度作为该收纳柜的“代表重要度”（即中位数）。整个整理方案的“好度” G 定义为所有收纳柜代表重要度的最小值；“总成本” C 定义为所有收纳柜代表重要度之和。\n\n通常来说，更高的好度往往需要付出更高的总成本。张阿姨想全面了解两者之间的取舍关系。对于两个可行的整理方案 A(G₁, C₁) 和 B(G₂, C₂)，我们说 A 支配 B，当且仅当 G₁ ≥ G₂ 且 C₁ ≤ C₂，并且 (G₁, C₁) ≠ (G₂, C₂)。也就是说，A 在好度不降低的前提下，总成本不高于 B（或者在总成本不增加的前提下，好度不低于 B）。\n\n现在张阿姨希望你能帮她列出所有“非支配”的 (好度, 总成本) 数对。一个数对 (G, C) 被认为是非支配的，当且仅当存在至少一种整理方案，其好度为 G、总成本为 C，并且不存在任何其他整理方案能够支配该方案。\n\n请按照好度 G 严格递增的顺序，输出所有的非支配对。注意：物品重要度可能非常大，总成本也可能超过 32 位无符号整数的范围，请使用 64 位整数（例如 C++ 中的 long long）。",
+      "input_format": "第一行包含一个整数 T，表示测试用例的数量。\n\n接下来依次描述 T 个测试用例，每个测试用例的格式如下：\n\n- 第一行包含一个整数 n，表示收纳柜的数量（同时也是每个收纳柜的抽屉数）。\n- 接下来 n 行，每行包含 n 个整数，依次表示一件物品的重要度。这些物品可以被任意重新排列到收纳柜中。\n\n输入保证所有测试用例的 n 之和不超过 1000。",
+      "output_format": "对于每个测试用例，按好度 G 严格递增的顺序，每行输出两个整数 G 和 C，代表一个非支配的 (好度, 总成本) 对。\n\n需要注意的是，不同测试用例的输出之间不要输出任何额外的空行。例如，如果第一个测试用例输出 2 行，第二个测试用例输出 3 行，则程序应连续输出 5 行，中间不留空行。",
+      "constraints": [
+        "1 ≤ T ≤ 100",
+        "1 ≤ n ≤ 1000",
+        "1 ≤ 物品重要度 ≤ 10⁹",
+        "所有测试用例的 n 之和 ≤ 1000",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n2\n1 2\n3 4",
+          "output": "2 6\n3 7",
+          "explanation": "本样例仅包含一个测试用例。\n\nn = 2，四件物品的重要度分别为 1, 2, 3, 4。每行中位数为该行第二小的数。\n\n- 若要达到好度 2：需要每行中位数 ≥ 2。一种最优方案是将物品分为 (1,2) 和 (3,4) 两组，第一行中位数 2，第二行中位数 4，好度 = 2，总成本 = 6。可以证明任何方案的好度不低于 2 时，总成本不可能低于 6。\n- 若要达到好度 3：此时每行中位数 ≥ 3。一个可行方案为 (1,4) 和 (2,3)，中位数分别为 4 和 3，好度 = 3，总成本 = 7。这也是好度不低于 3 时的最小总成本。\n- 好度 1 无法实现（因为每行必须有一个数比中位数小，而最小两个数为 1 和 2，任何方案都会使中位数至少为 2）。好度 4 同样不可行（需要两个中位数都 ≥ 4，但只有两个数 ≥ 4，而每行还需一个更小的数，总共需要两个更小的数，但只有 1 和 2，无法同时满足两行）。\n\n因此，仅存在两个可行的好度值：2 和 3，且 f(2) = 6, f(3) = 7。这两个点均不被对方支配，所以输出 2 6 和 3 7。"
+        },
+        {
+          "input": "2\n2\n1 2\n3 4\n3\n1 2 3\n4 5 6\n7 8 9",
+          "output": "2 6\n3 7\n4 15\n5 18\n6 21\n7 24",
+          "explanation": "本样例包含两个测试用例，其输出应连续打印，中间无空行。\n\n第一个测试用例与样例 1 相同，输出 2 6 和 3 7 两行。\n\n第二个测试用例 n = 3，物品重要度 1 至 9。每行中位数为排序后第二小的数。\n\n- 好度 4：可安排每行中位数分别为 4, 5, 6，总成本 15，且无法更小。\n- 好度 5：中位数 5, 6, 7，最小总成本 18。\n- 好度 6：中位数 6, 7, 8，最小总成本 21。\n- 好度 7：中位数 7, 8, 9，最小总成本 24。\n- 更低的可能好度 (1,2,3) 均被 (4,15) 支配，更高的好度 (8,9) 不可行。\n\n因此输出四个非支配对。\n\n两个用例的输出依次打印，共六行。"
+        }
+      ],
+      "notes": "● 中位数定义：对于长度为 n 的序列（n ≥ 1），中位数为排序后第 ⌈(n+1)/2⌉ 小的元素。例如 n = 2 时中位数是排序后的第二个元素；n = 3 时是排序后的第二个元素。\n● 支配与非支配：称方案 A 支配方案 B，当且仅当 A 的好度不低于 B，且总成本不高于 B，并且 (好度, 总成本) 不同。一个数对 (G, C) 是非支配的，当且仅当存在一种整理方案达到该好度和总成本，并且不存在任何其他方案能够支配它。等价地，输出的点是所有满足 C = f(G) 的数对，其中 f(G) 定义为在好度不低于 G 的条件下能够达到的最小总成本，并且对于任意 G' > G，若 f(G') = f(G)，则 G' 对应的数对不会出现在输出中。因此，输出的好度严格递增，对应的总成本也严格递增。\n● 总成本可能超过 32 位整数范围，建议使用 64 位整数（如 C++ 中的 long long）。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "核心约束新增成本定义与支配关系，目标从最大化好度变为输出帕累托前沿，不变量从单一可行性单调变为支持成本函数计算与前沿提取。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5075,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.8647,
+          "O": 0.5583,
+          "V": 0.5426
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.8647,
+          "objective_type_distance": 0.6462,
+          "objective_text_distance": 0.4265,
+          "invariant_match_distance": 0.5426
+        }
+      },
+      "applied_rule": "single_objective_to_tradeoff_frontier",
+      "applied_helpers": [
+        {
+          "id": "secondary_metric_materialization",
+          "selection_reason": "成本天然来自中位数之和，与原目标好度冲突，是自然的第二指标。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "目标空间从单维扩展到二维，引入真实权衡。",
+          "difficulty_reason": "要求算法同时处理好度和成本，不能只优化一个。"
+        },
+        {
+          "id": "frontier_dominance_rule",
+          "selection_reason": "定义支配关系，要求输出非支配前沿。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "将单点最优解扩展为可比较的前沿语义。",
+          "difficulty_reason": "要求解法维护不可支配性并证明输出完备性。"
+        },
+        {
+          "id": "coupled_state_expansion",
+          "selection_reason": "防止将多目标退化为分别计算两个独立最优值。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "证明不能先独立优化好度与成本再组合。",
+          "difficulty_reason": "算法必须同时跟踪两个指标的变化，并通过状态压缩保证不丢失折中信息。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "二分搜索好度阈值 + 贪心构造判定给定阈值下的最小成本是否不超过k。",
+        "reusable_subroutines": "对于给定好度阈值，计算最小成本的贪心子程序（即给定mid，求最小中位数和）。",
+        "new_solver_core": "扫描所有物品价值作为候选好度，利用双指针/并查集等数据结构在O(n^2)或O(n log n)内计算每个g对应的最小成本，并提取严格上升点构成前沿。",
+        "new_proof_obligation": "证明新算法计算出的f(g)确实是最小成本；证明前沿点选择的正确性和完备性；分析时间复杂度满足输入规模。",
+        "why_direct_reuse_fails": "直接对每个物品价值调用原判定函数会导致O(n^3)复杂度，在n=1000时不可接受，因此必须设计更高效的增量计算方法。"
+      },
+      "anti_shallow_rationale": "新题不仅改变了故事背景，更将单目标最优改变为多目标前沿输出，核心算法从二分+贪心变为遍历函数计算，需要维护两个指标的耦合关系，新增支配定义和输出规范，不能由原解法简单枚举得到，必须设计新算法以避免超时。"
+    }
+  }
+}

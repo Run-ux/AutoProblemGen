@@ -1,0 +1,138 @@
+{
+  "problem_id": "taco_codechef_de9f09c45e9e",
+  "source": "codechef",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "n",
+        "role_description": "Length of array a",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "a",
+        "role_description": "Sorted array of integers",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 1000000
+        },
+        "properties": {
+          "sorted": true
+        }
+      },
+      {
+        "role": "m",
+        "role_description": "Number of queries",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "queries",
+        "role_description": "List of query pairs (t, d)",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "array_non_decreasing",
+        "description": "输入数组 a 已按非递减顺序给出,即 a1 ≤ a2 ≤ … ≤ an。",
+        "formal": "a1 ≤ a2 ≤ … ≤ an",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "query_t_lower_bound",
+        "description": "每个查询中的参数 t 必须不小于数组的最小值 a1。",
+        "formal": "t ≥ a1",
+        "source_sections": [
+          "constraints"
+        ]
+      },
+      {
+        "name": "d_non_negative",
+        "description": "每个查询中的参数 d 为非负数。",
+        "formal": "d ≥ 0",
+        "source_sections": [
+          "constraints"
+        ]
+      },
+      {
+        "name": "answer_condition",
+        "description": "对于查询 (t, d),答案是最小的 i,使得存在某个 k ≥ i,对 j = i,…,k-1 满足 a_j + d ≥ a_{j+1},且 a_k ≤ t,且若 k < n 则 a_{k+1} > t。",
+        "formal": "min i s.t. ∃ k ≥ i: (∀ j ∈ [i, k-1], a_j + d ≥ a_{j+1}) ∧ a_k ≤ t ∧ (k < n → a_{k+1} > t)",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "For each query, find the smallest index i satisfying given chain and threshold conditions.",
+    "target": "index",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "feasible_start_suffix_monotonicity",
+        "description": "For a fixed query (t,d), let idx be the last index with a[idx]≤t. The condition that all adjacent differences from i to idx-1 are ≤d is monotonic in i: if it holds for some i, it also holds for any j>i (j≤idx-1). Thus the set of feasible starts is a suffix of [1,idx-1], enabling binary search.",
+        "properties": {},
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codechef_de9f09c45e9e",
+    "title": "SEAD",
+    "description": "Read problems statements in Mandarin Chinese  and Russian.\n\nSereja has an array consisting of $n$ integers $a_{1}  ≤ a_{2}  ≤ \\ldots ≤ a_{n}$. Based on this array, he has to answer $m$ queries represented by pairs integers $t$ and $d$. \n\nThe answer for a query is the smallest integer $i$ for which there exist some $k$ ($i  ≤  k$) such that $a_{i} + d  ≥  a_{i + 1}$, $a_{i + 1} + d  ≥  a_{i + 2}$, $\\ldots$, $a_{k - 1}  +  d ≥  a_{k}$, $a_{k}  ≤  t$ and $a_{k+1} > t$ (if it exists).\n\nHelp Sereja find the answer for each query. \n\n------  Input ------\nFirst line of input contains a single integer $n$\nNext line contain $n$ space separated integers $a_{1}$, $a_{2}$, $...$, $a_{n}$. \nNext line contains a single integer $m$. \nNext $m$ lines contain pairs of integers representing the queries.\n\n------  Output  ------\nFor each query, output the answer on a separate line.\n\n------  Constraints ------\n$1  ≤  n, m  ≤ 10^{5}$. \n$1 ≤  a_{i}  ≤ 10^{6}$\n$a_{1}  ≤  t  ≤ 10^{6}$\n$0 ≤  d  ≤  10^{6}$\n\n------  Subtasks ------\nSubtask 1 (30 points): $1 ≤ n, m ≤ 10^{4}$\n\nSubtask 2 (70 points): No additional constraints.\n\n------  Example Input ------\n\n5\n1 2 3 10 50\n6\n1 1\n5 3\n11 7\n100000 1\n1000000 1000000\n11 6\n\n------  Example Output ------\n\n1\n1\n1\n5\n1\n4",
+    "input": "",
+    "output": "",
+    "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+    "source": "codechef",
+    "standard_solution_code": "import sys\nfrom math import *\nfrom bisect import *\nMAX = sys.maxsize\nMAXN = 10 ** 5 + 10\nlogT = [0] * MAXN\nfor i in range(2, MAXN):\n\tlogT[i] = logT[i // 2] + 1\n\ndef buildSparse(a):\n\tn = len(a)\n\tk = logT[n] + 1\n\tst = [[-MAX for j in range(k)] for i in range(n)]\n\tfor i in range(n):\n\t\tst[i][0] = a[i]\n\tj = 1\n\twhile 1 << j <= n:\n\t\ti = 0\n\t\twhile i + (1 << j) - 1 < n:\n\t\t\tst[i][j] = max(st[i][j - 1], st[i + (1 << j - 1)][j - 1])\n\t\t\ti += 1\n\t\tj += 1\n\treturn st\n\ndef query(l, r, st, d):\n\tif l > r:\n\t\treturn False\n\ttot = r - l + 1\n\tk = logT[tot]\n\treturn max(st[l][k], st[l + tot - (1 << k)][k]) <= d\nn = int(input())\na = [0] + list(map(int, sys.stdin.readline().strip().split()))\nm = int(input())\ndif = [0] * (n + 1)\nfor i in range(1, n):\n\tdif[i] = a[i + 1] - a[i]\nst = buildSparse(dif)\nfor _ in range(m):\n\t(t, d) = map(int, sys.stdin.readline().strip().split())\n\tidx = bisect(a, t) - 1\n\tlo = 1\n\thi = idx - 1\n\tif idx == 1 or a[idx] - a[idx - 1] > d:\n\t\tans = idx\n\telse:\n\t\twhile lo < hi:\n\t\t\tmid = (lo + hi) // 2\n\t\t\tif query(mid, idx - 1, st, d):\n\t\t\t\thi = mid\n\t\t\telse:\n\t\t\t\tlo = mid + 1\n\t\tans = lo\n\tprint(ans)"
+  }
+}

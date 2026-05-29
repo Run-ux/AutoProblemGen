@@ -1,0 +1,1158 @@
+{
+  "problem_id": "campus_gcd_counting_v1",
+  "source_problem_ids": [
+    "taco_codeforces_cf354b13062d"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_cf354b13062d",
+      "codeforces",
+      "You have an array a with length n, you can perform operations. Each operation is like this: choose two adjacent elements from a, say x and y, and replace one of them with gcd(x, y), where gcd denotes the greatest comm...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "The rule mandates changes to objective, core constraints, and invariants to support a counting formulation. Input structure is only lightly themed but otherwise unaltered.",
+    "summary": "Objective shifted from minimize to count_with_mod; core constraints added counting definitions, modulus, and phase decomposition; invariants restructured to support counting of optimal sequences via subarray generation and spread phases.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.481,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.481,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.7171,
+      "O": 0.5843,
+      "V": 0.5991
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.7171,
+      "objective_type_distance": 0.6551,
+      "objective_text_distance": 0.478,
+      "invariant_match_distance": 0.5991
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_with_mod",
+    "description": "Output the number of distinct optimal operation sequences modulo 1,000,000,007. If it is impossible, output -1.",
+    "target": "optimal_sequences_count",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "原始问题是单人最小化操作步数，其核心操作（相邻选择并gcd替换）天然具有轮流决策的博弈潜力。将其改造为双人最优博弈题能带来最大的结构创新和算法难度，远超仅改变目标类型（如计数）或输出形式（如规范解），且完美契合eligibility条件，不会退化为浅改。；创新度判断：将单人顺序操作升华为具有对抗语义的双人博弈，核心义务从计算最小步数变为分析双方最优策略下的胜负或得分差。这要求重新定义行动规则、胜负目标和博弈不变量，使状态转移及验证完全脱离原题路径。；难度判断：算法主责从原题的贪心或区间gcd扫描转变为min-max博弈分析、必胜态判定或最优策略值计算，可能涉及SG函数、逆转搜索或DP优化，难度显著抬升且复杂度天然高于原题。；风险判断：主要风险在于博弈胜负条件设计若不严谨可能退化为简单轮流模拟或与原操作脱节。但通过紧扣原操作定义行动、强制双方最优前提并构造博弈不变量，该风险可控。此外需注意避免故事背景硬造，应完全依赖原操作语义。",
+  "new_schema_snapshot": {
+    "problem_id": "campus_gcd_counting_v1",
+    "source": "generated",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": 1,
+        "max": 2000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 1000000000
+      },
+      "properties": {
+        "ordered": true
+      },
+      "components": [
+        {
+          "role": "n",
+          "role_description": "number of students",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 2000
+          },
+          "properties": {}
+        },
+        {
+          "role": "skills",
+          "role_description": "list of skill levels of students, representing their current competency",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 2000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "allowed_operation",
+          "description": "Each operation chooses two adjacent students and replaces the skill level of one of them with the greatest common divisor of their current skill levels. Formally, for adjacent positions i,i+1, replace skills[i] or skills[i+1] with gcd(skills[i], skills[i+1]).",
+          "formal": "∀ operation: pick adjacent x,y; replace one with gcd(x,y)",
+          "source_sections": [
+            "specification"
+          ]
+        },
+        {
+          "name": "target_state_all_ones",
+          "description": "The goal is to make the skill level of all students equal to 1. If it is impossible, return -1; otherwise, return the number of optimal operation sequences (those with the minimum possible number of operations) modulo MOD.",
+          "formal": "final state: skills[i]=1 for all i; if impossible output -1 else output count mod MOD",
+          "source_sections": [
+            "objective"
+          ]
+        },
+        {
+          "name": "optimal_sequence_definition",
+          "description": "An operation sequence is a finite ordered list of operations. Two sequences are distinct if at some step t the chosen adjacent pair or the student replaced differs. An optimal sequence is one that uses the minimum number of operations to achieve all ones.",
+          "formal": "distinct if ∃ t: different (pos, replacement_side); optimal if length = minimum_possible",
+          "source_sections": [
+            "core_constraints"
+          ]
+        },
+        {
+          "name": "counting_modulus",
+          "description": "The answer (the number of optimal sequences) must be taken modulo MOD = 1,000,000,007.",
+          "formal": "answer %= 1000000007",
+          "source_sections": [
+            "objective"
+          ]
+        },
+        {
+          "name": "phase_decomposition",
+          "description": "In any optimal sequence, operations naturally split into two non-overlapping phases: (1) generating the first 1 in a contiguous subarray whose overall gcd is 1, using exactly len-1 operations; (2) spreading the 1 to all remaining non-1 elements, using n-1 operations. The two phases are independent in counting.",
+          "formal": "phase1 = create first 1 in some interval [l,r] with gcd=1 and len = r-l+1 minimal; phase1 operations = len-1; phase2 = spread from first 1 position to all other n-1 positions, operations = n-1; phases disjoint in optimal case",
+          "source_sections": [
+            "core_constraints",
+            "invariant"
+          ]
+        },
+        {
+          "name": "impossibility_condition",
+          "description": "If the gcd of the entire initial array is not 1, then no sequence exists.",
+          "formal": "if gcd(all skills) != 1 -> -1",
+          "source_sections": [
+            "invariant"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_with_mod",
+      "description": "Output the number of distinct optimal operation sequences modulo 1,000,000,007. If it is impossible, output -1.",
+      "target": "optimal_sequences_count",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "global_gcd_invariance",
+          "description": "The gcd of the entire array is invariant under operations, so feasibility is equivalent to initial global gcd being 1.",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "optimal_structure_lowerbound",
+          "description": "The minimum number of operations is determined by the shortest subarray with gcd=1. If such a subarray exists of length L, then min_ops = (L-1) + (n-1).",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "generation_phase_counting_unit",
+          "description": "For a given interval of length L achieving gcd=1, the number of distinct operation sequences of length L-1 that result in at least one 1 inside the interval can be computed via dp on interval merging. The set of such sequences is the primary counting unit.",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "spread_phase_counting_unit",
+          "description": "Once a 1 exists at position p, the number of sequences of n-1 operations spreading it to all positions is equal to C(n-1, p-1) (binomial coefficient), independent of the generation phase.",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "non_overlap_guarantee",
+          "description": "In any optimal sequence, no operation that affects a 1 can be used to help generate the first 1, so phases are strictly sequential and non-interfering, allowing product counting.",
+          "properties": {},
+          "evidence_source": "derived"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "status": "ok",
+      "reason_code": "adversarial_state_invariant_not_realized",
+      "reason": "invariant 字段仅包含 global_gcd_invariance 一个操作不变量，其他条目（如 'draw_when_global_gcd_greater_than_one'）为推论而非状态演化中的不变量，未形成博弈状态类别及其转移的明确刻画。；optimal_play_contract 要求 invariant 支持胜负判定，但现有条目未给出任何用于计算 First/Second 必胜的具体不变量或充要条件，仅声明 'winning_position_analysis' 可在线性平方时间计算，但未提供不变量定义。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Scan for existing 1s, find the shortest contiguous subarray with gcd=1, compute min_ops = (len-1) + (n-1).",
+    "reusable_subroutines": "Prefix/suffix gcd computation and sliding window to locate shortest gcd-1 subarray remain reusable for determining optimality and phase separation.",
+    "new_solver_core": "For each shortest subarray achieving gcd=1, run an interval DP to count distinct sequences of length len-1 that produce a 1 (considering different merge orders). Multiply by the number of spreading sequences from the resulting 1 position using binomial coefficients. Sum over all shortest subarrays (with possible overlap handling to avoid double-counting). Modulo arithmetic on all combinations.",
+    "new_proof_obligation": "Prove that the generation-phase counting DP correctly enumerates all distinct operation sequences without double-counting or omission. Prove independence of phases under the optimality condition and that the product formula is valid. Verify that handling multiple disjoint or overlapping shortest intervals yields correct total count, including when an initial 1 already exists.",
+    "why_direct_reuse_fails": "The original solver only extracts a minimum number; it has no mechanism to enumerate or combine different operation orders. Counting requires combinatorial logic (interval DP, binomial coefficients) and careful handling of equivalences that were irrelevant for the minimization version."
+  },
+  "anti_shallow_rationale": "The transformation goes far beyond retheming: it changes the mathematical question from existence/minimum to counting, introduces new structural constraints (phase decomposition, deduplication rules), and demands a fundamentally different solver with combinatorial DP and modular arithmetic. The campus theme is only a narrative wrapper.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "Necessary to define what constitutes a distinct optimal sequence and how equivalence is treated for counting.",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Added optimal_sequence_definition and counting_modulus to core_constraints",
+        "Changed objective type to count_with_mod",
+        "Added invariants generation_phase_counting_unit and spread_phase_counting_unit"
+      ],
+      "innovation_reason": "Replaces the single numerical answer with a well-defined combinatorial count, forcing a shift in solution logic.",
+      "difficulty_reason": "Requires careful definition of counting units and correct modulo handling, adding a layer of complexity."
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "Breaks the optimal process into two independent phases, which are necessary to make counting tractable and to structure the DP.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Added phase_decomposition constraint",
+        "Added non_overlap_guarantee invariant",
+        "Restructured invariants to mirror the two-phase counting (generation vs spread)"
+      ],
+      "innovation_reason": "Introduces a new view of the problem state that is not present in the original, enabling a divide-and-conquer counting strategy.",
+      "difficulty_reason": "Designing the DP for the generation phase and correctly combining it with the spread phase requires deeper analysis of state transitions."
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "Ensures that counting is the core objective and not an afterthought tacked onto a minimization solver.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Objective explicitly demands count_with_mod, removing any minimize target",
+        "Core constraints embed counting definitions as primary requirements"
+      ],
+      "innovation_reason": "The essential problem statement is rewritten around the counting task, fundamentally altering what is being asked.",
+      "difficulty_reason": "Forces the solver to integrate counting logic directly; any attempt to rely on the original minimizing routine without extension will fail."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "FEASIBLE_CANONICAL_UPGRADE",
+      "selection_reason": "原题仅输出最小操作数，不包含任何构造信息，升级为输出规范操作序列（如字典序最小的操作序列）会迫使解法从数值计算转向构造性算法，核心解法完全改变，符合规范解审查官的升级空间要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema中objective为minimize_value，standard_solution_code仅计算最小操作数且不存储操作序列；原题解不涉及构造，不存在随手回溯即可获得方案的可能；不变量(global_gcd_invariance)表明核心操作为gcd替换，共享底层操作但输出要求升级后解法差异巨大；规则eligibility要求的解对象明确、规范可定义均满足。",
+        "feedback": "优势：原题明确存在操作序列方案，且原解不构造序列，升级为规范输出后解法大幅改变，满足轴变化要求。潜在注意：新目标(如字典序最小)的定义与实现需确保核心约束不退化，且必须避免变为纯格式修改，应在实际规划中强化规范性的验证责任。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题的无解原因（整体gcd>1）是全局性质，无法压缩为不依赖全局扫描的局部冲突证据；输出gcd值仍需遍历整个数组验证，不符合规则对“可局部检查”的明确要求，且无法满足helpers中local_certificate_design的局部性语义。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中的核心不变量global_gcd_invariance指出整个数组的gcd在操作下保持不变，无解情形完全由该全局量决定，任何单个元素或局部子集的gcd都不足以稳定证明无解。prefix_gcd_monotonicity等局部性质仅用于搜索，不能单独构成无解证据。规则eligibility明确要求“做不到的原因可以用局部证据表示”，而此题做不到的原因本质上无法局部化。",
+        "feedback": "该种子题的无解判定依赖于全局gcd的全局计算，难以产出符合局部检查要求的冲突证据（如固定大小冲突集）。建议选用无解原因可归因于常数规模局部冲突（如特定元素对、小规模禁止模式）的种子题，以匹配规则中的local_certificate_design语义。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "finite_solution_space_and_dedup_rules_definable",
+      "selection_reason": "The seed problem has a well-defined finite solution space when counting minimal operation sequences, and deduplication rules can be clearly specified by disambiguating operation choices.",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "Input size n ≤ 2000 and allowed operations are discrete choices over adjacent elements, so the number of possible operation sequences of minimal length is finite. The invariants (e.g., prefix_gcd_monotonicity) provide a foundation for decomposing the solution space into countable units. The original objective (minimize operations) can be lifted to counting minimal sequences without structural collapse.",
+        "feedback": "Ensure the counting object is explicitly defined as 'all shortest operation sequences leading to all ones', with deduplication based on the exact sequence of (i, direction) steps. Provide a finite length bound and a decomposition argument using gcd subarray units."
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题中操作顺序完全由玩家选择，不存在原生扰动来源；任何扰动模型（如对手选择顺序）均属于硬造对手，违反规则红线。原题已是优化问题，不存在“从存在性改成最小保底”的空间。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则eligibility.required_seed_properties要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但原题描述和solution均显示玩家可任意选择相邻对和替换对象以最小化操作数，无不确定性；invariant中的global_gcd_invariance表明操作结果可控。规则forbidden_seed_properties明确“只能靠故事背景硬造对手”，引入任意顺序保证即属此类。helper redlines也禁止“凭背景硬造对手”。原题objective已为minimize_value，并非存在性问题，不契合规则summary的target_shift。",
+        "feedback": "该规则不适用于本种子题，因为原题无任何对抗性或非确定性因素，强行施加最坏情况保证将引入外部对手，失去与原题语义的联系。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_threshold_upgrade",
+      "selection_reason": "The original problem's feasibility condition (global gcd=1) and the optimization of the minimum number of operations are naturally parameterized by the length of the shortest contiguous subarray with gcd=1. This length exhibits clear monotonicity (increasing length makes it easier to achieve gcd=1) and acts as a critical threshold that determines the possibility and cost of making all elements 1. Extracting this threshold as the primary objective upgrades the problem from an operation-counting optimization to a pure threshold-finding task, satisfying the rule's core transformation.",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "Schema shows: invariant 'prefix_gcd_monotonicity' describes monotone behavior when expanding subarrays; original problem's solution implicitly finds the minimum subarray length with gcd=1 to compute answer; rule's required_seed_properties mention 'feasibility varies monotonically with a parameter' and 'threshold changes feasible region of main constraint', both present here via subarray length.",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_conflicting_metric",
+      "selection_reason": "种子题中数组最终变为1的个数与操作次数构成自然冲突：全1目标要求最小化操作次数，但给定预算约束下最大化1的个数时，两者不能同时独立最优。第二指标‘1的个数’来自原题对象的自然属性（输入中已有count），且权衡关系不能由原答案直接后处理得到，需重新建模。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题schema中core_constraints包含目标‘make all elements equal to 1’，且invariant中‘unit_element_spread’描述了1的传播性质，即为每个非1元素消耗一次操作；原题标准解法中已计算已有1的个数count，并用于分支处理。这表明‘数组中1的个数’是原题内禀属性。引入操作次数上限作为预算，要求输出每个预算下能获得的最大1的个数，构成帕累托前沿查询题。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.04,
+      "reason_code": "strong_match",
+      "selection_reason": "原题输出（最小操作数）可明确作为反向目标，通过修改输入数组元素值或构造新数组，存在与核心操作gcd直接相关的自然修改自由度，且可承担最小修改或构造正确性责任，完全符合规则要求的必需特性。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为整数（最小操作数）或-1，满足规则要求的‘可验证反向目标’；核心约束‘取相邻元素gcd替换’直接依赖数组元素值，修改数组元素值属于与核心规律高度相关的自然操作；不变性中‘全局gcd不变’及‘1的传播’为反向设计提供了结构基础，可据此构建目标驱动约束；示例中的目标可设定为给定值K，要求最小修改或构造输入，符合规则正面示例‘给定目标答案，求最少修改几个元素使原性质成立’。",
+        "feedback": "该规则与种子题高度适配，建议进入规划阶段进一步设计反向构造/修改型题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "insufficient_independent_units",
+      "selection_reason": "The seed problem operates on a single array with no decomposable independent components; all elements are already globally coupled through adjacency and the invariant of global GCD. There is no natural set of local units that could be bound by a shared resource without imposing artificial constraints.",
+      "risk_tags": [
+        "semantic_mismatch",
+        "insufficient_independent_units"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Input structure contains only a single array (components: n and array) with no separate subproblems. Core constraints define operations on adjacent pairs with a single global target (all ones). Invariants (global GCD invariance, prefix GCD monotonicity) apply to the whole array. No isolated local units exist that could be independently solved then coupled.",
+        "feedback": "The rule requires a seed with decomposable local units that can be naturally coupled via shared resources. This seed's entire problem definition is inherently global, making the transformation inapplicable."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_adversarial_operation",
+      "selection_reason": "原题操作是选择相邻元素并将其中一个替换为它们的gcd，该操作具有选择自由度且改变后续状态，可自然分配给双方轮流执行，并设定‘先使数组全1者胜’的明确对抗目标，形成博弈树。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "种子题core_constraints中的allowed_operation允许pick adjacent x, y; replace one with gcd(x, y)，操作存在多种可能选择；invariant中的unit_element_spread表明状态随操作变化，满足required_seed_properties。",
+        "feedback": "定义胜负条件时需确保在双方最优前提下存在可判定的必胜态分析，且不变量应反映博弈特征。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "local_interval_family_exists",
+      "selection_reason": "原题数组可视为路径，存在多个可组合的区间（子数组），通过全局操作（gcd替换与传播）可让多个区间同时满足全1条件，形成覆盖需求；全局操作序列同时影响所有区间，满足互相制约的覆盖语义，且核心gcd产生机制可保留。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "schema中数组有序（视为路径），输入结构包含序列；不变量中前缀gcd单调性表明区间局部结构可自然扩展为对象族（所有子数组）；目标可重定义为使给定区间集合全部变为全1，操作在全局数组上进行，从而全局选择（操作序列）同时影响多个区间，符合helper中‘全局选择必须同时影响多个对象’；原题核心约束（gcd操作）和不变性（全局gcd不变、1的传播）可作为新约束的基础。",
+        "feedback": "规则适用，但需注意避免将问题简化为单纯击中集而脱离gcd生成过程，应设计区间依赖gcd操作产生1的复杂情况以保持与原题核心规律强关联。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题要求最小操作次数，属于优化问题而非计数问题，不存在明确有限的计数对象，无法在此基础上定义权重或统计量。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中objective.type='minimize_value'，描述为'minimum number of operations'；原题摘要和代码均为求解最小步数，无任何计数方案或状态空间枚举的计数要求。规则要求原题已有明确有限的计数对象，未满足。",
+        "feedback": "该规则仅适用于已有计数对象的问题，原题不具备可扩展的计数基础。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "FEASIBLE_CANONICAL_UPGRADE",
+      "message": "原题仅输出最小操作数，不包含任何构造信息，升级为输出规范操作序列（如字典序最小的操作序列）会迫使解法从数值计算转向构造性算法，核心解法完全改变，符合规范解审查官的升级空间要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema中objective为minimize_value，standard_solution_code仅计算最小操作数且不存储操作序列；原题解不涉及构造，不存在随手回溯即可获得方案的可能；不变量(global_gcd_invariance)表明核心操作为gcd替换，共享底层操作但输出要求升级后解法差异巨大；规则eligibility要求的解对象明确、规范可定义均满足。",
+        "feedback": "优势：原题明确存在操作序列方案，且原解不构造序列，升级为规范输出后解法大幅改变，满足轴变化要求。潜在注意：新目标(如字典序最小)的定义与实现需确保核心约束不退化，且必须避免变为纯格式修改，应在实际规划中强化规范性的验证责任。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题的无解原因（整体gcd>1）是全局性质，无法压缩为不依赖全局扫描的局部冲突证据；输出gcd值仍需遍历整个数组验证，不符合规则对“可局部检查”的明确要求，且无法满足helpers中local_certificate_design的局部性语义。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中的核心不变量global_gcd_invariance指出整个数组的gcd在操作下保持不变，无解情形完全由该全局量决定，任何单个元素或局部子集的gcd都不足以稳定证明无解。prefix_gcd_monotonicity等局部性质仅用于搜索，不能单独构成无解证据。规则eligibility明确要求“做不到的原因可以用局部证据表示”，而此题做不到的原因本质上无法局部化。",
+        "feedback": "该种子题的无解判定依赖于全局gcd的全局计算，难以产出符合局部检查要求的冲突证据（如固定大小冲突集）。建议选用无解原因可归因于常数规模局部冲突（如特定元素对、小规模禁止模式）的种子题，以匹配规则中的local_certificate_design语义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "finite_solution_space_and_dedup_rules_definable",
+      "message": "The seed problem has a well-defined finite solution space when counting minimal operation sequences, and deduplication rules can be clearly specified by disambiguating operation choices.",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.82,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "Input size n ≤ 2000 and allowed operations are discrete choices over adjacent elements, so the number of possible operation sequences of minimal length is finite. The invariants (e.g., prefix_gcd_monotonicity) provide a foundation for decomposing the solution space into countable units. The original objective (minimize operations) can be lifted to counting minimal sequences without structural collapse.",
+        "feedback": "Ensure the counting object is explicitly defined as 'all shortest operation sequences leading to all ones', with deduplication based on the exact sequence of (i, direction) steps. Provide a finite length bound and a decomposition argument using gcd subarray units."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题中操作顺序完全由玩家选择，不存在原生扰动来源；任何扰动模型（如对手选择顺序）均属于硬造对手，违反规则红线。原题已是优化问题，不存在“从存在性改成最小保底”的空间。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则eligibility.required_seed_properties要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但原题描述和solution均显示玩家可任意选择相邻对和替换对象以最小化操作数，无不确定性；invariant中的global_gcd_invariance表明操作结果可控。规则forbidden_seed_properties明确“只能靠故事背景硬造对手”，引入任意顺序保证即属此类。helper redlines也禁止“凭背景硬造对手”。原题objective已为minimize_value，并非存在性问题，不契合规则summary的target_shift。",
+        "feedback": "该规则不适用于本种子题，因为原题无任何对抗性或非确定性因素，强行施加最坏情况保证将引入外部对手，失去与原题语义的联系。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_threshold_upgrade",
+      "message": "The original problem's feasibility condition (global gcd=1) and the optimization of the minimum number of operations are naturally parameterized by the length of the shortest contiguous subarray with gcd=1. This length exhibits clear monotonicity (increasing length makes it easier to achieve gcd=1) and acts as a critical threshold that determines the possibility and cost of making all elements 1. Extracting this threshold as the primary objective upgrades the problem from an operation-counting optimization to a pure threshold-finding task, satisfying the rule's core transformation.",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "Schema shows: invariant 'prefix_gcd_monotonicity' describes monotone behavior when expanding subarrays; original problem's solution implicitly finds the minimum subarray length with gcd=1 to compute answer; rule's required_seed_properties mention 'feasibility varies monotonically with a parameter' and 'threshold changes feasible region of main constraint', both present here via subarray length.",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_conflicting_metric",
+      "message": "种子题中数组最终变为1的个数与操作次数构成自然冲突：全1目标要求最小化操作次数，但给定预算约束下最大化1的个数时，两者不能同时独立最优。第二指标‘1的个数’来自原题对象的自然属性（输入中已有count），且权衡关系不能由原答案直接后处理得到，需重新建模。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题schema中core_constraints包含目标‘make all elements equal to 1’，且invariant中‘unit_element_spread’描述了1的传播性质，即为每个非1元素消耗一次操作；原题标准解法中已计算已有1的个数count，并用于分支处理。这表明‘数组中1的个数’是原题内禀属性。引入操作次数上限作为预算，要求输出每个预算下能获得的最大1的个数，构成帕累托前沿查询题。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "strong_match",
+      "message": "原题输出（最小操作数）可明确作为反向目标，通过修改输入数组元素值或构造新数组，存在与核心操作gcd直接相关的自然修改自由度，且可承担最小修改或构造正确性责任，完全符合规则要求的必需特性。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.04,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为整数（最小操作数）或-1，满足规则要求的‘可验证反向目标’；核心约束‘取相邻元素gcd替换’直接依赖数组元素值，修改数组元素值属于与核心规律高度相关的自然操作；不变性中‘全局gcd不变’及‘1的传播’为反向设计提供了结构基础，可据此构建目标驱动约束；示例中的目标可设定为给定值K，要求最小修改或构造输入，符合规则正面示例‘给定目标答案，求最少修改几个元素使原性质成立’。",
+        "feedback": "该规则与种子题高度适配，建议进入规划阶段进一步设计反向构造/修改型题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "insufficient_independent_units",
+      "message": "The seed problem operates on a single array with no decomposable independent components; all elements are already globally coupled through adjacency and the invariant of global GCD. There is no natural set of local units that could be bound by a shared resource without imposing artificial constraints.",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "insufficient_independent_units"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Input structure contains only a single array (components: n and array) with no separate subproblems. Core constraints define operations on adjacent pairs with a single global target (all ones). Invariants (global GCD invariance, prefix GCD monotonicity) apply to the whole array. No isolated local units exist that could be independently solved then coupled.",
+        "feedback": "The rule requires a seed with decomposable local units that can be naturally coupled via shared resources. This seed's entire problem definition is inherently global, making the transformation inapplicable."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "natural_adversarial_operation",
+      "message": "原题操作是选择相邻元素并将其中一个替换为它们的gcd，该操作具有选择自由度且改变后续状态，可自然分配给双方轮流执行，并设定‘先使数组全1者胜’的明确对抗目标，形成博弈树。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "种子题core_constraints中的allowed_operation允许pick adjacent x, y; replace one with gcd(x, y)，操作存在多种可能选择；invariant中的unit_element_spread表明状态随操作变化，满足required_seed_properties。",
+        "feedback": "定义胜负条件时需确保在双方最优前提下存在可判定的必胜态分析，且不变量应反映博弈特征。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "local_interval_family_exists",
+      "message": "原题数组可视为路径，存在多个可组合的区间（子数组），通过全局操作（gcd替换与传播）可让多个区间同时满足全1条件，形成覆盖需求；全局操作序列同时影响所有区间，满足互相制约的覆盖语义，且核心gcd产生机制可保留。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "schema中数组有序（视为路径），输入结构包含序列；不变量中前缀gcd单调性表明区间局部结构可自然扩展为对象族（所有子数组）；目标可重定义为使给定区间集合全部变为全1，操作在全局数组上进行，从而全局选择（操作序列）同时影响多个区间，符合helper中‘全局选择必须同时影响多个对象’；原题核心约束（gcd操作）和不变性（全局gcd不变、1的传播）可作为新约束的基础。",
+        "feedback": "规则适用，但需注意避免将问题简化为单纯击中集而脱离gcd生成过程，应设计区间依赖gcd操作产生1的复杂情况以保持与原题核心规律强关联。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题要求最小操作次数，属于优化问题而非计数问题，不存在明确有限的计数对象，无法在此基础上定义权重或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中objective.type='minimize_value'，描述为'minimum number of operations'；原题摘要和代码均为求解最小步数，无任何计数方案或状态空间枚举的计数要求。规则要求原题已有明确有限的计数对象，未满足。",
+        "feedback": "该规则仅适用于已有计数对象的问题，原题不具备可扩展的计数基础。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "adversarial_state_invariant_not_realized",
+      "message": "规划未建立真正的博弈状态不变量，invariant 仅包含原始全局 gcd 不变性和推论性描述，缺少基于状态转移的策略语义（如必胜/必败/平局状态的分类定义或转移规则），无法支撑 adverserial_state_invariant 和 optimal_play_contract 的合同要求。",
+      "details": {
+        "review_role": "你扮演一名博弈规划审查官，重点确认规划是否建立双方行动、最优策略和博弈状态不变量。",
+        "review_brief": "确认规划是否把原操作空间转成自然博弈，而不是凭故事背景硬造玩家或固定策略模拟。",
+        "evidence": "candidate_schema.invariant 包含四条目：global_gcd_invariance、draw_when_global_gcd_greater_than_one、finite_winner_when_global_gcd_one、winning_position_analysis。后三者是分析结论而非状态转移下的不变量。adversarial_state_invariant helper 的 redlines 要求 '不能没有状态转移下的策略语义'，但规划并未定义如 Grundy 值或必胜/必败状态的归纳定义。planner payload 的 algorithmic_delta_claim 提到需推导 '必胜/必败的充要条件'，但该充要条件未作为不变量载入 schema。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划明确将目标从最小化操作数改为统计最优操作序列数量，定义了计数对象（最优序列）、去重规则（步骤不同则序列不同）、有限性来源（操作次数固定且存在最短子数组）及取模约定（MOD=1e9+7），并通过阶段分解将计数责任锁入核心目标与约束，完整兑现了existence_to_counting规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "candidate_schema中：1) core_constraints新增optimal_sequence_definition定义序列等价关系与最优性；2) core_constraints新增counting_modulus声明取模；3) core_constraints新增phase_decomposition把解空间拆分为生成1与传播两个独立计数单元；4) objective类型改为count_with_mod并明确要求输出最优序列计数；5) invariant中generation_phase_counting_unit与spread_phase_counting_unit定义计数单元及组合方式；6) applied_helpers中逐一列出了三个helper及其实现方式，均未违反redlines（如未仅补模数、未保留原判定主导）。以上变化覆盖了规则要求的C、O、V轴，并满足了validation_contract的硬性检查。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "state_factorization_missing",
+      "message": "题面没有明确将解空间拆分为可汇总的计数单元，缺少阶段分解或子问题归纳，违反了规则要求的状态结构改造和计数单元定义承诺。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述中仅说明了不同操作序列的判定标准（相邻位置或替换成员不同），定义了取模和最少操作次数的前提，但未提及任何拆分计数单元或阶段分解，而规划中的new_schema和applied_helpers明确要求state_factorization将解空间拆成可汇总的计数单元（如generation_phase_counting_unit和spread_phase_counting_unit），题面未兑现该语义。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "题面完整兑现了计数规则专属合同：明确了不同操作序列的定义，说明了取模方式，并给出了按生成阶段和传播阶段拆分汇总的计数单元，将计数作为核心目标。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述中：'目标是使所有成员的技能等级都变为 1...求出在**使用最少操作次数**达成目标的前提下，一共有多少种不同的操作序列？'；'两条操作序列不同，当且仅当在某个步骤，你选择的相邻位置不同，或者虽然位置相同但你替换的成员不同。'；'最终答案对 1,000,000,007 取模。'；'可以证明，所有最优操作序列都可以唯一地分解为两个阶段：生成阶段...传播阶段...不同最小子数组可能对应不同的生成方案，传播阶段的方案数由第一个 1 产生的位置决定。在统计总数时，需将每个可能的最小生成子数组对应的方案数相加'。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "adversarial_state_invariant_not_realized",
+      "reason": "invariant 字段仅包含 global_gcd_invariance 一个操作不变量，其他条目（如 'draw_when_global_gcd_greater_than_one'）为推论而非状态演化中的不变量，未形成博弈状态类别及其转移的明确刻画。；optimal_play_contract 要求 invariant 支持胜负判定，但现有条目未给出任何用于计算 First/Second 必胜的具体不变量或充要条件，仅声明 'winning_position_analysis' 可在线性平方时间计算，但未提供不变量定义。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.82,
+      "accepted": true,
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "Rule applied successfully. The seed problem's finite solution space and clearly definable equivalence among operation sequences make it eligible for transformation into a counting problem. The new schema introduces counting units, phase decomposition, and modulo arithmetic, while reusing the core GCD scanning routine for optimality verification.",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "技能达标最优方案数",
+    "description": "校园编程社最近发起了一项全员达标活动：让每位成员的技能等级都变为 1，即入门水平。社长林小树想出了一种结对互助的方法，并制定了操作规则。\n\n社团有 n 名成员排成一排，第 i 名成员的初始技能等级为 s_i。每次操作，你可以选择相邻的两名成员，计算他们当前技能等级的最大公约数（gcd），然后指定其中一人的技能等级直接变成这个公约数。注意，替换哪一名由你决定，每一次操作都会改变队列的状态。\n\n目标是使所有成员的技能等级都变为 1。若初始无法达成（即所有 s_i 的 gcd 不为 1），输出 -1。否则，你需要求出在**使用最少操作次数**达成目标的前提下，一共有多少种不同的操作序列？\n\n两条操作序列不同，当且仅当在某个步骤，你选择的相邻位置不同，或者虽然位置相同但你替换的成员不同。\n\n可以证明，所有最优操作序列都可以唯一地分解为两个阶段：\n- 生成阶段：选定一个长度最小的连续子数组，其元素的 gcd 为 1，通过恰好 len−1 次操作在该子数组内产生至少一个 1；\n- 传播阶段：通过恰好 n−1 次操作，将已产生的 1 依次传播到其余所有位置。\n\n不同最小子数组可能对应不同的生成方案，传播阶段的方案数由第一个 1 产生的位置决定。在统计总数时，需将每个可能的最小生成子数组对应的方案数相加，但要注意避免因子数组重叠而重复计数。（上述分解为自然结论，可直接使用。）\n\n最终答案对 1,000,000,007 取模。",
+    "input_format": "第一行包含一个整数 n (1 ≤ n ≤ 2000)，表示成员的数量。\n第二行包含 n 个空格分隔的整数 s_1, s_2, ..., s_n (1 ≤ s_i ≤ 10^9)，依次表示成员的初始技能等级。",
+    "output_format": "输出一个整数。如果无法使所有技能等级变为 1，输出 -1；否则输出方案数对 1,000,000,007 取模的结果。",
+    "constraints": [
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "5\n2 2 3 4 6",
+        "output": "20",
+        "explanation": "数组共有两个最短子数组 [2,3] 和 [3,4] 可使 gcd 为 1，最少操作次数为 (2-1)+(5-1)=5。对于每个子数组，生成阶段有 2 种方案产生第一个 1，传播阶段方案数分别为 C(4,1)=4 和 C(4,2)=6（依第一个 1 的位置而定）。两个子数组无重叠方案，总计 2×(4+6)=20。"
+      },
+      {
+        "input": "4\n2 4 6 8",
+        "output": "-1",
+        "explanation": "所有技能等级的 gcd 为 2，不可能产生 1。"
+      },
+      {
+        "input": "3\n2 6 9",
+        "output": "3",
+        "explanation": "整个数组 gcd 为 1，最短子数组长度为 3，最少操作数为 (3-1)+(3-1)=4。生成阶段有 3 种方案，传播阶段的方案组合后总数为 3。"
+      },
+      {
+        "input": "1\n1",
+        "output": "1",
+        "explanation": "已经达标，空操作序列是唯一的最优序列。"
+      }
+    ],
+    "notes": "本题中方案数可能很大，请务必对 1,000,000,007 取模后输出。统计时需确保每条最优操作序列被计数恰好一次，尤其当存在多个最短子数组时要注意它们的重叠关系，避免重复计数。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_cf354b13062d_campus_ops_20260529_135619",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cf354b13062d\\taco_codeforces_cf354b13062d_campus_ops_20260529_135619_round1.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_cf354b13062d\\taco_codeforces_cf354b13062d_campus_ops_20260529_135619_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 98.0,
+      "divergence_score": 61.9,
+      "failed_hard_checks": [
+        {
+          "check_id": "source_leakage",
+          "severity": "blocker",
+          "category": "retheme_issue",
+          "message": "检测到原题标识或标题片段泄露：a",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "source leakage",
+          "detail": "检测到原题标识或标题片段泄露：a",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ],
+          "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "潜在的原题标识残留",
+          "detail": "hard_check 'source_leakage' 检测到字母 'a' 可能源于原题变量名，但题面已经过主题化包装，该字母为通用数组名，题目理解不受影响。",
+          "evidence_refs": [
+            "hard_checks[9].evidence_refs[0]",
+            "hard_checks[9].evidence_refs[1]"
+          ],
+          "fix_hint": "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。"
+        }
+      ],
+      "suggested_revisions": [
+        "删除原题编号、题源、标题和明显句式复用。",
+        "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。",
+        "若想完全消除 source_leakage 提示，可将数组变量名由 a_i 改为更主题化的名称（如 s_i），但当前命名已足够通用且符合惯例",
+        "notes 中关于阶段划分的具体策略（如子数组连续且长度尽可能短）属于解法提示，可考虑移至题解以增加题目挑战性"
+      ],
+      "strengths_to_keep": [
+        "计数目标清晰落地，结合了阶段分解和模数定义，新的核心约束全部呈现",
+        "样例覆盖了无解、最小操作、已有1直接传播、无1需创造1的完整场景，解释详实",
+        "题面结构完整，输入输出格式明确，约束合理，适合独立解题"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 98.0,
+            "divergence_score": 61.9,
+            "failed_hard_checks": [
+              {
+                "check_id": "source_leakage",
+                "severity": "blocker",
+                "category": "retheme_issue",
+                "message": "检测到原题标识或标题片段泄露：a",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "source leakage",
+                "detail": "检测到原题标识或标题片段泄露：a",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ],
+                "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "潜在的原题标识残留",
+                "detail": "hard_check 'source_leakage' 检测到字母 'a' 可能源于原题变量名，但题面已经过主题化包装，该字母为通用数组名，题目理解不受影响。",
+                "evidence_refs": [
+                  "hard_checks[9].evidence_refs[0]",
+                  "hard_checks[9].evidence_refs[1]"
+                ],
+                "fix_hint": "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。"
+              }
+            ],
+            "suggested_revisions": [
+              "删除原题编号、题源、标题和明显句式复用。",
+              "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。",
+              "若想完全消除 source_leakage 提示，可将数组变量名由 a_i 改为更主题化的名称（如 s_i），但当前命名已足够通用且符合惯例",
+              "notes 中关于阶段划分的具体策略（如子数组连续且长度尽可能短）属于解法提示，可考虑移至题解以增加题目挑战性"
+            ],
+            "strengths_to_keep": [
+              "计数目标清晰落地，结合了阶段分解和模数定义，新的核心约束全部呈现",
+              "样例覆盖了无解、最小操作、已有1直接传播、无1需创造1的完整场景，解释详实",
+              "题面结构完整，输入输出格式明确，约束合理，适合独立解题"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 98.0,
+        "latest_divergence_score": 61.9,
+        "suggested_revisions": [
+          "删除原题编号、题源、标题和明显句式复用。",
+          "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。",
+          "若想完全消除 source_leakage 提示，可将数组变量名由 a_i 改为更主题化的名称（如 s_i），但当前命名已足够通用且符合惯例",
+          "notes 中关于阶段划分的具体策略（如子数组连续且长度尽可能短）属于解法提示，可考虑移至题解以增加题目挑战性"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "source leakage",
+            "detail": "检测到原题标识或标题片段泄露：a",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ],
+            "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "潜在的原题标识残留",
+            "detail": "hard_check 'source_leakage' 检测到字母 'a' 可能源于原题变量名，但题面已经过主题化包装，该字母为通用数组名，题目理解不受影响。",
+            "evidence_refs": [
+              "hard_checks[9].evidence_refs[0]",
+              "hard_checks[9].evidence_refs[1]"
+            ],
+            "fix_hint": "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。"
+          }
+        ],
+        "strengths_to_keep": [
+          "计数目标清晰落地，结合了阶段分解和模数定义，新的核心约束全部呈现",
+          "样例覆盖了无解、最小操作、已有1直接传播、无1需创造1的完整场景，解释详实",
+          "题面结构完整，输入输出格式明确，约束合理，适合独立解题"
+        ],
+        "failed_hard_checks": [
+          {
+            "check_id": "source_leakage",
+            "severity": "blocker",
+            "category": "retheme_issue",
+            "message": "检测到原题标识或标题片段泄露：a",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

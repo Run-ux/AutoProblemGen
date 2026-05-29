@@ -1,0 +1,696 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 97.0,
+    "divergence_score": 58.8,
+    "schema_distance": 0.3941,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema中定义的任务变体（树结构、同步移动、捕获条件、基于回合的衡量、人数-时间帕累托前沿）均已准确地体现在题面的描述、输入输出及约束中。目标函数从单一最小人数变为前沿集合输出，对无解情况的特殊标记（-1）也得到实现。",
+        "evidence_refs": [
+          "new_schema.objective",
+          "new_schema.core_constraints",
+          "generated_problem.description",
+          "generated_problem.output_format"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的全部信息：清晰的任务描述、完整的输入输出格式、约束（n,k范围、∑n限制、时间空间限制）、样例及解释，以及必要的说明（支配定义、捕获回合起始）。不存在遗漏的关键规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "描述、输入格式、输出格式、约束和样例之间相互一致。节点数量、朋友位置、边数量、样例输入输出与题意匹配，解释支持理解。无字段冲突或符号歧义。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 4.0,
+        "rationale": "样例数量为2，覆盖了有解与无解两种情况，解释清晰。但缺少展示多个帕累托前沿方案的样例，对于要求输出前沿集合的题面，一个多方案样例能更好地帮助选手理解输出格式和支配关系。",
+        "evidence_refs": [
+          "hard_checks.sample_count",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，措辞明确，使用标准OJ风格，包含标题、描述、输入输出格式、约束、样例及注释。无明显来源污染或无关文本，便于读者快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      }
+    ],
+    "strengths": [
+      "目标函数创新性地从单一最小人数拓展为人数-时间帕累托前沿，大幅提升问题深度。",
+      "题面逻辑严谨，各章节间高度一致，支配定义与排序规则清晰。",
+      "样例解释充分说明了最优策略的推演过程。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3941,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.4463,
+        "O": 0.5536,
+        "V": 0.6089
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.4463,
+        "objective_type_distance": 0.6118,
+        "objective_text_distance": 0.4662,
+        "invariant_match_distance": 0.6089
+      }
+    },
+    "schema_distance": 0.3941,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.6,
+    "solution_transfer_risk": 0.55,
+    "surface_retheme_risk": 0.5,
+    "verdict": "pass",
+    "rationale": "The core game rules (tree structure, simultaneous movement, capture condition) remain identical, so the semantics are only partially changed by the shift from minimizing a single number of friends to enumerating a Pareto frontier of (c, t). The original solver’s BFS‑based feasibility check can be reused, but outputting a frontier requires a new outer search and careful pruning, so the solution transfer risk is moderate. The theme and narrative were replaced, but the problem structure and phrasing are still close to the original, giving a moderate surface retheme risk.",
+    "evidence_refs": [
+      "divergence.schema_distance_breakdown",
+      "snapshots.difference_plan",
+      "hard_checks[11].evidence_refs",
+      "hard_checks[12].evidence_refs"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.39，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "缺乏多方案帕累托前沿样例",
+      "detail": "当前样例仅包含单个方案或无解的情况，没有展示同时输出多个非支配方案（例如 (c=1,t=4) 和 (c=2,t=2)）的例子。对于需要理解输出格式和支配关系的题目，增加一个多前沿样例可有效避免选手对排序和互不支配要求的误解。",
+      "evidence_refs": [
+        "generated_problem.samples",
+        "hard_checks.sample_count"
+      ],
+      "fix_hint": "添加一个包含多个帕累托最优方案的样例，例如在链状树中设置不同志愿者初始位置，使前沿包含两点。"
+    }
+  ],
+  "suggested_revisions": [
+    "添加一个包含多个帕累托最优方案的样例，例如在链状树中设置不同志愿者初始位置，使前沿包含两点。",
+    "增加至少一个包含多个前沿点的样例，以强化对输出格式的理解。",
+    "在描述或注释中可进一步说明可行性单调性（c增加时t不增），虽非必要但能辅助选手理解问题。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 97.0,
+    "divergence_score": 58.8,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "缺乏多方案帕累托前沿样例",
+        "detail": "当前样例仅包含单个方案或无解的情况，没有展示同时输出多个非支配方案（例如 (c=1,t=4) 和 (c=2,t=2)）的例子。对于需要理解输出格式和支配关系的题目，增加一个多前沿样例可有效避免选手对排序和互不支配要求的误解。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks.sample_count"
+        ],
+        "fix_hint": "添加一个包含多个帕累托最优方案的样例，例如在链状树中设置不同志愿者初始位置，使前沿包含两点。"
+      }
+    ],
+    "suggested_revisions": [
+      "添加一个包含多个帕累托最优方案的样例，例如在链状树中设置不同志愿者初始位置，使前沿包含两点。",
+      "增加至少一个包含多个前沿点的样例，以强化对输出格式的理解。",
+      "在描述或注释中可进一步说明可行性单调性（c增加时t不增），虽非必要但能辅助选手理解问题。"
+    ],
+    "strengths_to_keep": [
+      "目标函数创新性地从单一最小人数拓展为人数-时间帕累托前沿，大幅提升问题深度。",
+      "题面逻辑严谨，各章节间高度一致，支配定义与排序规则清晰。",
+      "样例解释充分说明了最优策略的推演过程。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_campus_ops_20260528_235542_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_campus_ops_20260528_235542_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_65e2144e4f0c",
+      "title": "E2",
+      "description": "The only difference with E1 is the question of the problem.\n\nVlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Thus, the room system forms an undirected tree.\n\nVlad invited $k$ friends to play a game with them.\n\nVlad starts the game in the room $1$ and wins if he reaches a room other than $1$, into which exactly one corridor leads. Friends are placed in the maze: the friend with number $i$ is in the room $x_i$, and no two friends are in the same room (that is, $x_i \\neq x_j$ for all $i \\neq j$). Friends win if one of them meets Vlad in any room or corridor before he wins.\n\nFor one unit of time, each participant of the game can go through one corridor. All participants move at the same time. Participants may not move. Each room can fit all participants at the same time.\n\nFriends know the plan of a maze and intend to win. They don't want to waste too much energy. They ask you to determine if they can win and if they can, what minimum number of friends must remain in the maze so that they can always catch Vlad.\n\nIn other words, you need to determine the size of the minimum (by the number of elements) subset of friends who can catch Vlad or say that such a subset does not exist.\n\n\n-----Input-----\n\nThe first line of the input contains an integer $t$ ($1 \\le t \\le 10^4$) — the number of test cases in the input. The input contains an empty string before each test case.\n\nThe first line of the test case contains two numbers $n$ and $k$ ($1 \\le k < n \\le 2\\cdot 10^5$) — the number of rooms and friends, respectively.\n\nThe next line of the test case contains $k$ integers $x_1, x_2, \\dots, x_k$ ($2 \\le x_i \\le n$) — numbers of rooms with friends. All $x_i$ are different.\n\nThe next $n-1$ lines contain descriptions of the corridors, two numbers per line $v_j$ and $u_j$ ($1 \\le u_j, v_j \\le n$) — numbers of rooms that connect the $j$ corridor. All corridors are bidirectional. From any room, you can go to any other by moving along the corridors.\n\nIt is guaranteed that the sum of the values $n$ over all test cases in the test is not greater than $2\\cdot10^5$.\n\n\n-----Output-----\n\nPrint $t$ lines, each line containing the answer to the corresponding test case. The answer to a test case should be $-1$ if Vlad wins anyway and a minimal number of friends otherwise.\n\n\n-----Examples-----\n\nInput\n4\n\n8 2\n5 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n8 4\n6 5 7 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n3 1\n2\n1 2\n2 3\n\n3 2\n2 3\n3 1\n1 2\nOutput\n-1\n2\n1\n2\n\n\n-----Note-----\n\nIn the first set of inputs, even if all the friends stay in the maze, Vlad can still win. Therefore, the answer is \"-1\".\n\nIn the second set of inputs it is enough to leave friends from rooms $6$ and $7$. Then Vlad will not be able to win. The answer is \"2\".\n\nIn the third and fourth sets of inputs Vlad cannot win only if all his friends stay in the maze. Therefore the answers are \"1\" and \"2\".",
+      "input": "4\n\n8 2\n5 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n8 4\n6 5 7 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n3 1\n2\n1 2\n2 3\n\n3 2\n2 3\n3 1\n1 2",
+      "output": "-1\n2\n1\n2\n\n\n-----Note-----\n\nIn the first set of inputs, even if all the friends stay in the maze, Vlad can still win. Therefore, the answer is \"-1\".\n\nIn the second set of inputs it is enough to leave friends from rooms $6$ and $7$. Then Vlad will not be able to win. The answer is \"2\".\n\nIn the third and fourth sets of inputs Vlad cannot win only if all his friends stay in the maze. Therefore the answers are \"1\" and \"2\".",
+      "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "def solve():\n\tinput()\n\t(n, k) = map(int, input().split())\n\tf = list(enumerate(list(map(lambda x: int(x) - 1, input().split()))))\n\tg = {i: [] for i in range(n)}\n\tfor i in range(n - 1):\n\t\t(a, b) = map(int, input().split())\n\t\ta -= 1\n\t\tb -= 1\n\t\tg[a].append(b)\n\t\tg[b].append(a)\n\tneeded = {}\n\tvlad = [0]\n\tvisited = [False] * n\n\tfriends = [-1] * n\n\twhile len(vlad):\n\t\tnf = []\n\t\tfor (i, f1) in f:\n\t\t\tif friends[f1] != -1:\n\t\t\t\tcontinue\n\t\t\tfriends[f1] = i\n\t\t\tfor e in g[f1]:\n\t\t\t\tnf.append((i, e))\n\t\tf = nf\n\t\tnew_vlad = []\n\t\tfor v in vlad:\n\t\t\tif friends[v] != -1:\n\t\t\t\tneeded[friends[v]] = True\n\t\t\t\tcontinue\n\t\t\tif visited[v] == True:\n\t\t\t\tcontinue\n\t\t\tvisited[v] = True\n\t\t\tif len(g[v]) == 1 and v != 0:\n\t\t\t\treturn -1\n\t\t\tfor e in g[v]:\n\t\t\t\tnew_vlad.append(e)\n\t\tvlad = new_vlad\n\treturn len(needed)\nn = int(input())\nfor i in range(n):\n\tprint(solve())"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_65e2144e4f0c",
+        "E2",
+        "codeforces",
+        "The only difference with E1 is the question of the problem. Vlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Th...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "引入第二指标（时间）并定义折中前沿必然改变约束（增加回合度量与支配定义）、目标（从单个最小值变为非支配前沿集合）和不变量（需维护双指标状态与剪枝条件）。",
+      "summary": "在保持树结构、同步移动等核心约束的前提下，将客观函数从单一的最小人数替换为（人数，时间）的帕累托前沿输出，同时额外约束必须显式记录回合数并定义方案间的支配关系。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "campus_tradeoff_frontier_001",
+      "source": "taco_codeforces_65e2144e4f0c_ext",
+      "input_structure": {
+        "type": "composite",
+        "components": [
+          {
+            "role": "parameters",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": 2,
+              "max": 200000
+            },
+            "properties": {
+              "description": "n (rooms) and k (friends)"
+            }
+          },
+          {
+            "role": "friend_positions",
+            "type": "array",
+            "length": {
+              "min": 0,
+              "max": null
+            },
+            "value_range": {
+              "min": 2,
+              "max": null
+            },
+            "properties": {
+              "distinct": true,
+              "description": "distinct room indices of friends"
+            }
+          },
+          {
+            "role": "tree_edges",
+            "type": "tree",
+            "length": {
+              "min": 1,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 200000
+            },
+            "properties": {
+              "connected": true,
+              "acyclic": true,
+              "simple": true
+            }
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "tree_structure",
+            "description": "房间和走廊形成无向树：n 个节点，n-1 条边，连通无环。",
+            "formal": "G = (V, E) is a tree, |V| = n, |E| = n-1, connected.",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "vlad_win_condition",
+            "description": "Vlad 从 1 号房间出发，若到达除 1 以外的任意叶节点（度数为 1）则获胜。",
+            "formal": "start = 1; goal = {v ∈ V \\ {1} | deg(v) = 1}.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "friends_initial_positions",
+            "description": "有 k 个朋友，初始分别位于互不相同的房间，编号 2..n。",
+            "formal": "Positions {x_i} ⊂ {2, 3, ..., n}, x_i ≠ x_j for i ≠ j.",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "simultaneous_movement",
+            "description": "所有参与者每单位时间可沿一条边移动或停留在当前房间。",
+            "formal": "∀ player, at each step: move to adjacent node or stay.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "capture_condition",
+            "description": "若在某回合内 Vlad 与任一朋友处于同一节点或相向穿过同一条边，则朋友获胜。",
+            "formal": "Capture if ∃ t < T_win, friend and Vlad share a node or traverse the same edge simultaneously.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "turn_based_time_metric",
+            "description": "游戏以回合进行，从回合 1 开始计数；捕获发生的回合数定义为时间指标 T。",
+            "formal": "∀ feasible strategy profile, capture occurs at round T ≥ 1.",
+            "source_sections": [
+              "description",
+              "new"
+            ]
+          },
+          {
+            "name": "tradeoff_conflict",
+            "description": "存在不同方案 (c1,t1) 与 (c2,t2) 满足 c1 < c2 但 t1 > t2，即无法同时最小化人数与时间。",
+            "formal": "∃ strategies with (c1,t1) and (c2,t2) s.t. c1 < c2 ∧ t1 > t2.",
+            "source_sections": [
+              "new"
+            ]
+          },
+          {
+            "name": "dominance_definition",
+            "description": "方案 A (c, t) 支配方案 B (c, t') 当 c ≤ c' 且 t ≤ t' 且至少一个严格小于。帕累托前沿由所有非支配方案构成。",
+            "formal": "(c,t) dominates (c',t') iff c ≤ c' ∧ t ≤ t' ∧ (c < c' ∨ t < t').",
+            "source_sections": [
+              "new"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "pareto_frontier",
+        "description": "输出所有非支配的帕累托最优方案 (c, t)，其中 c 为激活的朋友数量，t 为需要的最少捕获回合数。无可行方案时输出空集或特殊标记。",
+        "target": "frontier_set",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "synchronized_step_time",
+            "description": "朋友和 Vlad 的移动严格同步，每回合递增，从而朋友到达节点的时间与 Vlad 到达时间存在可比性。",
+            "properties": {
+              "turns": "integer strictly increasing"
+            },
+            "evidence_source": "solution_code"
+          },
+          {
+            "name": "feasibility_monotonicity",
+            "description": "若用 c 个朋友可在 T 回合内捕获，则对任意 c' ≥ c，也可在 T 回合内捕获；类似地，若在 T 回合内可捕获，则对任意 T' ≥ T 同样可行。该单调性支撑剪枝。",
+            "properties": {
+              "monotone": "true"
+            },
+            "evidence_source": "new_proof_obligation"
+          },
+          {
+            "name": "dominance_pruning_in_state",
+            "description": "搜索或 DP 过程中，仅需维护每个可能人数对应的最小时间，被支配的 (c, t) 可安全丢弃。",
+            "properties": {
+              "prune_rule": "c1>c2 and t1>=t2 => discard (c1,t1)"
+            },
+            "evidence_source": "new_proof_obligation"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "校园大逃亡：最优戒备方案",
+      "description": "小源是一名学生，校园由 $n$ 间教室和 $n-1$ 条走廊构成，教室和走廊组成一棵树。小源从 $1$ 号教室出发，希望到达任意一间**只有一扇门**的教室（即度数为 $1$，且不是 $1$ 号教室）。一旦到达，他就成功逃脱。\n\n不幸的是，校园中还有 $k$ 名志愿者，他们初始分别位于一些教室中，这些教室互不相同且编号在 $2$ 到 $n$ 之间。志愿者们可以移动，试图在小源逃脱前抓住他。\n\n游戏以回合进行，每个回合所有参与者（小源和所有激活的志愿者）**同时**行动：可以移动到相邻教室，也可以停留在原地。\n\n如果某个回合内，小源和任意一名激活的志愿者出现在**同一间教室**，或者**相向穿过同一条走廊**，志愿者就成功抓住小源，游戏结束。\n\n社团可以任意选择一部分志愿者**激活**（不能激活不存在的志愿者），未被激活的志愿者不会参加游戏。社团希望综合考虑**两个指标**：\n- 激活的志愿者人数 $c$；\n- 在最坏情况下（小源总是采取最优逃生策略、志愿者也采取最优协作策略）能够保证抓住小源的**最少回合数** $t$。\n\n一般而言，使用更少的志愿者可能需要更多的回合才能保证抓住，而使用更多的志愿者可能更快抓住。社团想要找出所有**非支配**的方案。\n\n称方案 $(c_1, t_1)$ **支配** $(c_2, t_2)$，当且仅当 $c_1 \\le c_2$、$t_1 \\le t_2$，且至少有一个严格不等。不被任何方案支配的方案称为**帕累托最优**方案。你需要计算并输出所有帕累托最优方案。\n\n如果根本不存在任何志愿者子集能够保证抓住小源（即小源总有办法逃脱），则输出 $-1$。",
+      "input_format": "第一行包含一个整数 $t$，表示测试用例的数量。接下来是 $t$ 组测试数据。\n\n每组测试数据格式如下：\n第一行包含两个整数 $n$ 和 $k$，表示教室数量和志愿者人数。\n第二行包含 $k$ 个互不相同的整数 $x_1, x_2, \\dots, x_k$，表示志愿者初始所在的教室编号，保证 $2 \\le x_i \\le n$。\n接下来 $n-1$ 行，每行两个整数 $u, v$，表示一条连接教室 $u$ 和 $v$ 的走廊。保证给出的图是一棵树。\n\n所有测试用例的 $n$ 之和不超过 $2 \\times 10^5$。",
+      "output_format": "对于每组测试数据，按以下规则输出：\n- 若不存在任何可行方案，输出一行 $-1$。\n- 否则，输出若干行，每行包含两个整数 $c$ 和 $t$，表示一种帕累托最优方案。这些行必须按照 $c$ 升序排列，如果 $c$ 相同则按 $t$ 升序排列。\n\n注意：输出的所有方案互不支配，且没有其他可行方案能支配它们。",
+      "constraints": [
+        "$1 \\le t$",
+        "$1 \\le k < n \\le 2 \\times 10^5$",
+        "$2 \\le x_i \\le n$，且所有 $x_i$ 互不相同",
+        "对于每组数据，$\\sum n \\le 2 \\times 10^5$",
+        "时间限制：$2$ 秒",
+        "空间限制：$256$ MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n5 1\n5\n1 2\n2 3\n3 4\n4 5",
+          "output": "1 2",
+          "explanation": "只有一名志愿者，必须激活。小源最有利的选择是直接走向叶子 $5$。第 $1$ 回合：小源走到 $2$，志愿者走到 $4$；第 $2$ 回合：小源走到 $3$，志愿者走到 $3$，相遇，捕获。此时 $c=1$, $t=2$。更大的 $c$ 无法减少 $t$，因此前沿中仅此方案。"
+        },
+        {
+          "input": "1\n5 2\n4 5\n1 2\n1 3\n2 4\n2 5",
+          "output": "-1",
+          "explanation": "无论激活哪些志愿者，小源都可以直接前往教室 $3$（叶子）。最近志愿者距离教室 $3$ 也有 $3$ 步，而小源仅需 $1$ 步就能到达，故无法拦截，小源必然逃脱。因此无解，输出 $-1$。"
+        }
+      ],
+      "notes": "帕累托支配的正式定义：方案 $A(c, t)$ 支配 $B(c', t')$ 当且仅当 $c \\le c'$ 且 $t \\le t'$ 且两者不全相等。请确保输出的方案集合不被任何其他可行方案支配。\n\n捕获回合从第 $1$ 回合开始计数。多个志愿者可以协调行动；为了计算 $t$，我们假设小源知道志愿者的策略并选择最坏路径，志愿者则采取最佳协作以尽快确保捕获。\n\n如果某个方案可被另一个方案支配，它不应出现在输出中。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "在保持树结构、同步移动等核心约束的前提下，将客观函数从单一的最小人数替换为（人数，时间）的帕累托前沿输出，同时额外约束必须显式记录回合数并定义方案间的支配关系。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3941,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.4463,
+          "O": 0.5536,
+          "V": 0.6089
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.4463,
+          "objective_type_distance": 0.6118,
+          "objective_text_distance": 0.4662,
+          "invariant_match_distance": 0.6089
+        }
+      },
+      "applied_rule": "single_objective_to_tradeoff_frontier",
+      "applied_helpers": [
+        {
+          "id": "secondary_metric_materialization",
+          "selection_reason": "原题天然存在“回合数”作为第二指标，且与朋友数量冲突，符合 helper 要求。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 中新增 turn_based_time_metric 与 tradeoff_conflict 约束",
+            "objective 从 minimize_value 改为 pareto_frontier 集合输出"
+          ],
+          "innovation_reason": "将目标空间从一维线性扩展到二维平面，使问题从“求最少人数”变为“探索人数-时间权衡”，算法需要处理真正的多目标决策。",
+          "difficulty_reason": "要求解法同时跟踪人数和时间两个维度，不可能仅通过贪婪或单次 BFS 直接得到完整前沿。"
+        },
+        {
+          "id": "frontier_dominance_rule",
+          "selection_reason": "为将答案从单个最优值提升为可比较的前沿语义，必须明确定义支配关系，并建立非支配输出口径。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 类型变为 pareto_frontier，输出集合需保持无支配性质",
+            "invariant 中增加 dominance_pruning_in_state，保证搜索状态可安全剪枝"
+          ],
+          "innovation_reason": "从数值答案跨越到集合答案，要求算法能识别并维持非支配状态，这从根本上改变了输出语义。",
+          "difficulty_reason": "维护非支配前沿需要额外的比较与剪枝逻辑，并且需要证明剪枝不影响最终正确性。"
+        },
+        {
+          "id": "coupled_state_expansion",
+          "selection_reason": "为防止问题退化成“先固定人数求时间，再固定时间求人数”的两个独立阶段，必须使状态同时编码人数与时间。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 中的新约束 tradeoff_conflict 强调冲突不可解耦",
+            "invariant 中 feasibility_monotonicity 和 dominance_pruning 都依赖双变量耦合状态"
+          ],
+          "innovation_reason": "避免算法先优化一个指标再优化另一个，保证真正的多目标集成推理。",
+          "difficulty_reason": "要求证明状态空间内不会丢失折中信息，且任何单指标贪心顺序都会与全局前沿不一致。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "多源 BFS 计算朋友到达各点时间 + Vlad 移动模拟，用贪心判断所需最少朋友数。",
+        "reusable_subroutines": "树上的 BFS/多源 BFS、最短路计算、叶子判断、节点度数统计、Vlad 的路径枚举。",
+        "new_solver_core": "在外层增加参数化搜索（如对 T 二分或对 c 递增），对每个 (c, T) 组合调用扩展的可行性检查（需考虑时间界限），合并结果输出帕累托前沿。",
+        "new_proof_obligation": "必须证明（1）可行性检查对 c 和 T 的单调性，从而正确剪枝；（2）前沿输出的完整性，即所有非支配方案均被正确地枚举；（3）状态压缩（对每个 c 保留最小 t）不会丢失可能改进的解。",
+        "why_direct_reuse_fails": "原求解器仅输出单个最小 c 值，无法返回时间维度，也不能直接给出多个人数下的最小时间，必须修改内部逻辑以跟踪回合界限并支持多重查询/搜索。"
+      },
+      "anti_shallow_rationale": "本规划不是仅换故事背景或微调输入输出。真实引入了与原目标冲突的第二指标（时间），显式定义了支配关系与前沿输出格式，要求算法在树上的追逃问题中同时考虑资源数量与捕获时长的折中，并需要新的正确性证明（单调性、前沿完备性）。这些改变导致核心状态必须同时编码人数和时间，无法通过在原答案上简单后处理实现。"
+    }
+  }
+}

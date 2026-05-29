@@ -1,0 +1,700 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 98.0,
+    "divergence_score": 61.9,
+    "schema_distance": 0.3652,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的操作规则、全1目标、计数定义（最小序列数模1e9+7）、阶段分解及输入结构均在题面中准确落地，描述、输入输出格式和样例均一致。",
+        "evidence_refs": [
+          "new_schema.core_constraints.constraints[0]",
+          "new_schema.core_constraints.constraints[1]",
+          "new_schema.core_constraints.constraints[2]",
+          "new_schema.core_constraints.constraints[3]",
+          "new_schema.objective",
+          "new_schema.input_structure",
+          "generated_problem.description",
+          "generated_problem.output_format",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了完整的独立做题信息：任务说明、操作规则、目标、计数定义、输入格式、输出格式、约束（范围、时空限制）、样例解释及必要备注，读者无需猜测核心规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "描述、输入格式、输出格式、约束和样例之间互相一致，操作定义、目标状态、计数方式在所有部分均无矛盾，样例解释与计数规则吻合。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "共有4个样例，覆盖无解、最小输入、已有1的情况、需创造1的复杂情况，且每个样例附带清晰的解释，有助于理解计数规则。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 4.0,
+        "rationale": "题面结构清晰、表达准确，符合OJ题面习惯。但hard_checks中 source_leakage 检测到字母'a'的潜在原题标识泄露，虽实际影响轻微（仅为通用变量名），但仍属微瑕。",
+        "evidence_refs": [
+          "hard_checks[9].passed",
+          "hard_checks[9].evidence_refs",
+          "generated_problem.title",
+          "generated_problem.description"
+        ]
+      }
+    ],
+    "strengths": [
+      "计数目标清晰落地，结合了阶段分解和模数定义，新的核心约束全部呈现",
+      "样例覆盖了无解、最小操作、已有1直接传播、无1需创造1的完整场景，解释详实",
+      "题面结构完整，输入输出格式明确，约束合理，适合独立解题"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3652,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5,
+        "O": 0.5409,
+        "V": 0.4
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5,
+        "objective_type_distance": 0.6558,
+        "objective_text_distance": 0.3686,
+        "invariant_match_distance": 0.4
+      }
+    },
+    "schema_distance": 0.3652,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.65,
+    "solution_transfer_risk": 0.4,
+    "surface_retheme_risk": 0.45,
+    "verdict": "pass",
+    "rationale": "The objective changes from minimizing operations to counting minimal-length operation sequences modulo 1e9+7, and constraints introduce stage decomposition and distinctness rules (axes C, O, V realized). The original solution's core (checking presence of 1, finding shortest subarray with gcd=1) remains necessary to determine the minimal length, but the counting of all distinct sequences requires new combinatorial modeling (DP, factorial products, stage-wise summation) that cannot be derived by simple variable renaming. The input structure and allowed operation are identical, and the narrative maps 'array → laboratories', 'gcd → standard parts', etc., showing surface re-theming in the first part of the description, but the problem statement then diverges to define counting and modulo. Thus, semantic difference is significant, solution transfer requires substantial adaptation, and surface re-theme is present but not dominant.",
+    "evidence_refs": [
+      "new_schema.core_constraints.constraints[2].description",
+      "new_schema.objective",
+      "generated_problem.description",
+      "generated_problem.output_format",
+      "review_context.algorithmic_delta_claim.new_solver_core",
+      "hard_checks[8].message"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.37，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：a",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=4。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：a",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "潜在的原题标识残留",
+      "detail": "hard_check 'source_leakage' 检测到字母 'a' 可能源于原题变量名，但题面已经过主题化包装，该字母为通用数组名，题目理解不受影响。",
+      "evidence_refs": [
+        "hard_checks[9].evidence_refs[0]",
+        "hard_checks[9].evidence_refs[1]"
+      ],
+      "fix_hint": "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。"
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。",
+    "若想完全消除 source_leakage 提示，可将数组变量名由 a_i 改为更主题化的名称（如 s_i），但当前命名已足够通用且符合惯例",
+    "notes 中关于阶段划分的具体策略（如子数组连续且长度尽可能短）属于解法提示，可考虑移至题解以增加题目挑战性"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 98.0,
+    "divergence_score": 61.9,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：a",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：a",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "潜在的原题标识残留",
+        "detail": "hard_check 'source_leakage' 检测到字母 'a' 可能源于原题变量名，但题面已经过主题化包装，该字母为通用数组名，题目理解不受影响。",
+        "evidence_refs": [
+          "hard_checks[9].evidence_refs[0]",
+          "hard_checks[9].evidence_refs[1]"
+        ],
+        "fix_hint": "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。"
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "检查题面全文是否无意保留了原题特有标识（如特定人名、专有名词），若仅为 a_i 此类通用符号则无需修改。",
+      "若想完全消除 source_leakage 提示，可将数组变量名由 a_i 改为更主题化的名称（如 s_i），但当前命名已足够通用且符合惯例",
+      "notes 中关于阶段划分的具体策略（如子数组连续且长度尽可能短）属于解法提示，可考虑移至题解以增加题目挑战性"
+    ],
+    "strengths_to_keep": [
+      "计数目标清晰落地，结合了阶段分解和模数定义，新的核心约束全部呈现",
+      "样例覆盖了无解、最小操作、已有1直接传播、无1需创造1的完整场景，解释详实",
+      "题面结构完整，输入输出格式明确，约束合理，适合独立解题"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_cf354b13062d\\taco_codeforces_cf354b13062d.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cf354b13062d\\taco_codeforces_cf354b13062d_campus_ops_20260529_135619_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_cf354b13062d\\taco_codeforces_cf354b13062d_campus_ops_20260529_135619_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_cf354b13062d",
+      "title": "A",
+      "description": "You have an array a with length n, you can perform operations. Each operation is like this: choose two adjacent elements from a, say x and y, and replace one of them with gcd(x, y), where gcd denotes the greatest common divisor.\n\nWhat is the minimum number of operations you need to make all of the elements equal to 1?\n\n\n-----Input-----\n\nThe first line of the input contains one integer n (1 ≤ n ≤ 2000) — the number of elements in the array.\n\nThe second line contains n space separated integers a_1, a_2, ..., a_{n} (1 ≤ a_{i} ≤ 10^9) — the elements of the array.\n\n\n-----Output-----\n\nPrint -1, if it is impossible to turn all numbers to 1. Otherwise, print the minimum number of operations needed to make all numbers equal to 1.\n\n\n-----Examples-----\nInput\n5\n2 2 3 4 6\n\nOutput\n5\n\nInput\n4\n2 4 6 8\n\nOutput\n-1\n\nInput\n3\n2 6 9\n\nOutput\n4\n\n\n\n-----Note-----\n\nIn the first sample you can turn all numbers to 1 using the following 5 moves:\n\n  [2, 2, 3, 4, 6].  [2, 1, 3, 4, 6]  [2, 1, 3, 1, 6]  [2, 1, 1, 1, 6]  [1, 1, 1, 1, 6]  [1, 1, 1, 1, 1] \n\nWe can prove that in this case it is not possible to make all numbers one using less than 5 moves.",
+      "input": "5\n2 2 3 4 6\n\n4\n2 4 6 8\n\n3\n2 6 9",
+      "output": "5\n\n-1\n\n4\n\n\n\n-----Note-----\n\nIn the first sample you can turn all numbers to 1 using the following 5 moves:\n\n  [2, 2, 3, 4, 6].  [2, 1, 3, 4, 6]  [2, 1, 3, 1, 6]  [2, 1, 1, 1, 6]  [1, 1, 1, 1, 6]  [1, 1, 1, 1, 1] \n\nWe can prove that in this case it is not possible to make all numbers one using less than 5 moves.",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "import math\nn = int(input())\nl = list(map(int, input().split()))\ncount = 0\nfor i in range(n):\n\tif l[i] == 1:\n\t\tcount += 1\nif count != 0:\n\tprint(n - count)\n\texit()\nss = 0\nmi = 10 ** 9 + 7\nfor i in range(n):\n\tss = l[i]\n\tfor j in range(i + 1, n):\n\t\tss = math.gcd(l[j], ss)\n\t\tif ss == 1:\n\t\t\tmi = min(mi, j - i)\nif mi == 10 ** 9 + 7:\n\tprint(-1)\nelse:\n\tprint(mi + n - 1)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_cf354b13062d",
+        "codeforces",
+        "You have an array a with length n, you can perform operations. Each operation is like this: choose two adjacent elements from a, say x and y, and replace one of them with gcd(x, y), where gcd denotes the greatest comm...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "The objective axis (O) is changed from a minimization to a counting goal. The constraints axis (C) is extended with counting-specific rules (definition of distinct sequences, stage decomposition). The invariant axis (V) is augmented with invariants that support counting correctness and stage-wise multiplication.",
+      "summary": "Shift from 'minimum operations' to 'number of minimal operation sequences mod M', with new obligations around counting units, deduplication, and stage factorization.",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_cf_354b13062d_count",
+      "source": "codeforces_extension",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": 1,
+          "max": 2000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 1000000000
+        },
+        "properties": {
+          "ordered": true
+        },
+        "components": [
+          {
+            "role": "n",
+            "role_description": "number of elements in the array",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 2000
+            },
+            "properties": {}
+          },
+          {
+            "role": "array",
+            "role_description": "sequence of integers to operate on",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 2000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000000000
+            },
+            "properties": {
+              "ordered": true
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "allowed_operation",
+            "description": "Each operation must choose two adjacent elements from the array and replace one of them with their greatest common divisor.",
+            "formal": "∀ operation: pick adjacent x, y; replace one with gcd(x, y)",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "target_state_all_ones",
+            "description": "The goal is to make all elements of the array equal to 1. If it is impossible, output -1.",
+            "formal": "final state: a_i = 1 for all i",
+            "source_sections": [
+              "description",
+              "output"
+            ]
+          },
+          {
+            "name": "counting_definition",
+            "description": "Count the number of distinct operation sequences of minimal length that lead to all ones. Two sequences are considered distinct if they differ in at least one operation (choice of adjacent pair or choice of which element to replace). Output the count modulo 1,000,000,007. The minimal length is the minimum possible number of operations to achieve all ones (the value sought in the original problem).",
+            "formal": "Define S = {sequences of operations achieving all ones}. Let L_min = min_{seq in S} |seq|. Count |{seq in S : |seq| = L_min}| mod 1e9+7.",
+            "source_sections": [
+              "new"
+            ]
+          },
+          {
+            "name": "stage_decomposition",
+            "description": "The problem decomposes into two stages for counting: (Stage 1) if no 1 exists initially, create the first 1 using a minimal-length subarray; (Stage 2) spread 1s to all other positions. If a 1 exists initially, skip directly to Stage 2.",
+            "formal": "For counting, solutions factor according to these stages.",
+            "source_sections": [
+              "new"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count",
+        "description": "Number of distinct minimal-length operation sequences modulo 1e9+7",
+        "target": "count",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "global_gcd_invariance",
+            "description": "The greatest common divisor of the entire array remains unchanged under any sequence of operations, because replacing one of two adjacent elements with their gcd does not alter the overall gcd of the array.",
+            "properties": {},
+            "evidence_source": "statement"
+          },
+          {
+            "name": "unit_element_spread",
+            "description": "Once the array contains at least one 1, each operation can propagate the 1 to an adjacent non-1 element, so the minimum number of operations to make all elements 1 equals the count of non-1 elements.",
+            "properties": {},
+            "evidence_source": "both"
+          },
+          {
+            "name": "prefix_gcd_monotonicity",
+            "description": "When expanding a contiguous subarray from a fixed start index to the right, the gcd of the subarray is non-increasing with respect to the inclusion of additional elements.",
+            "properties": {},
+            "evidence_source": "solution_code"
+          },
+          {
+            "name": "counting_stage_invariance",
+            "description": "In Stage 2, the number of ways to spread is independent of the exact positions of existing 1s beyond their count, and follows a combinatorially describable multiplication principle.",
+            "properties": {},
+            "evidence_source": "new"
+          },
+          {
+            "name": "minimal_length_deterministic",
+            "description": "The minimal operation length is fully determined by the original problem's solution; the counting problem only concerns sequences of that fixed length.",
+            "properties": {},
+            "evidence_source": "new"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "实验室的标准化调整",
+      "description": "小明所在的大学有一条长长的走廊，走廊上依次排列着 n 间实验室，编号为 1,2,…,n，它们的顺序固定不变。第 i 间实验室里原本存放了一些标准件，数量为 a_i。\n\n为了统一管理，学校希望有一天每间实验室恰好都只保留 1 件标准件。每天可以进行一次调整：挑选两间相邻的实验室（即编号相差 1 的两间）i 和 i+1，然后选择其中一间，将其标准件数量修改为这两间实验室标准件数量的最大公约数。注意这里“相邻”严格由实验室的编号顺序决定，不能跨编号选择。\n\n如果无论如何都无法让所有实验室都变为 1，则认为无法达成目标。\n\n现在，教务部想知道：在达成目标的前提下，要使得调整的总天数最少，那么有多少种不同的调整方案？这里的“调整方案”指的是恰好达到最少天数的一系列操作序列。两个方案不同当且仅当在某一天，所选的相邻实验室对 (i, i+1) 不同，或者虽然选了对相同，但被替换标准件数量的实验室不同（即替换了 i 或 i+1）。\n\n由于可能的方案数很大，你只需要输出方案数对 1,000,000,007 取模后的结果。\n\n可以观察到，整个调整过程可以划分为两个阶段：\n- 阶段一：如果初始时没有任何实验室的数量为 1，则需要先通过若干次操作产生第一个 1；\n- 阶段二：一旦数组中出现至少一个 1，之后每一次操作都可以将一个非 1 的相邻位置变为 1，直到所有位置都是 1。\n这两个阶段的操作序列互不重叠，且所有达到最少天数的方案都可以唯一地按照「第一个 1 是在哪一步被创造出来的」进行划分，因此总的方案数等于所有可能的第一阶段方案数乘上对应状态下的第二阶段方案数之和。",
+      "input_format": "第一行包含一个整数 n (1 ≤ n ≤ 2000)，表示实验室的数量。\n第二行包含 n 个由空格分隔的整数 a_1, a_2, …, a_n (1 ≤ a_i ≤ 10^9)，依次表示各间实验室的标准件初始数量。",
+      "output_format": "如果无法达到目标，输出一行 −1；否则，输出一个整数，表示恰好使用最少天数的不同调整方案数对 1,000,000,007 取模的结果。",
+      "constraints": [
+        "1 ≤ n ≤ 2000",
+        "1 ≤ a_i ≤ 10^9",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3\n2 2 2",
+          "output": "-1",
+          "explanation": "所有数的最大公约数是 2，无论如何操作都不可能产生 1，因此无法达成目标。"
+        },
+        {
+          "input": "2\n2 3",
+          "output": "2",
+          "explanation": "最少需要 2 天。第 1 天必须在相邻的 2 和 3 之间产生一个 1，有两种方式：将第 1 间实验室的 2 替换为 1，或者将第 2 间实验室的 3 替换为 1；第 2 天再用剩下的一次操作将另一间实验室变为 1。所以共有 2 种方案。"
+        },
+        {
+          "input": "4\n1 2 1 3",
+          "output": "2",
+          "explanation": "最少需要 2 天。因为已有两个 1，只需将第 2 间实验室的 2 和第 4 间实验室的 3 变为 1。这两步的先后顺序有两种（先变第 2 间或先变第 4 间），每种顺序都是合法的，因此共 2 种方案。"
+        },
+        {
+          "input": "3\n2 2 3",
+          "output": "3",
+          "explanation": "最少需要 3 天。初始没有 1，必须先通过操作产生一个 1。唯一的产生方式是选择相邻对 (2,3)（即第 2 间和第 3 间实验室），将其中的一个替换为 1。这一步有两种可能：替换第 2 间得到 [2,1,3]，或替换第 3 间得到 [2,2,1]。\n- 若得到 [2,1,3]，接下来需要用两步将剩余的两个非 1 位置变为 1。这里后续的第二步有 2 种选择（将第 1 间的 2 变 1 或将第 3 间的 3 变 1），每种选择对应的第三步唯一，因此有 2 种后续方案。\n- 若得到 [2,2,1]，后续只有一种方式：先将第 2 间的 2 变为 1，再将第 1 间的 2 变为 1。\n总的方案数为 1×2 + 1×1 = 3。"
+        }
+      ],
+      "notes": "方案数需要对 1,000,000,007 取模。若初始整个数组的最大公约数大于 1，则必然无解，请输出 −1。两个方案不同当且仅当存在某一天，选择的相邻实验室对 (i,i+1) 不同，或者被替换标准件数量的实验室不同（即替换了 i 还是 i+1）。在阶段划分中，第一阶段产生第一个 1 的子数组必须连续且长度尽可能短；第二阶段的操作顺序自由度由组合数计算，并不唯一由原始最小长度决定。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "Shift from 'minimum operations' to 'number of minimal operation sequences mod M', with new obligations around counting units, deduplication, and stage factorization.",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3652,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5,
+          "O": 0.5409,
+          "V": 0.4
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5,
+          "objective_type_distance": 0.6558,
+          "objective_text_distance": 0.3686,
+          "invariant_match_distance": 0.4
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "The rule requires explicit definition of what is counted and how duplicates are identified.",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "Added counting_definition constraint with distinctness rule and modulo",
+            "Changed objective type to count",
+            "Added invariants about minimal length and distinctness"
+          ],
+          "innovation_reason": "Elevates the problem from a single-number answer to a combinatorial enumeration with precise equivalence classes.",
+          "difficulty_reason": "Counting correct distinct sequences demands careful handling of sequence identity, which was not required before."
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "The rule demands that the solution space is split into summable units to make counting natural.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "Added stage_decomposition constraint",
+            "Added counting_stage_invariance invariant"
+          ],
+          "innovation_reason": "The state is no longer viewed monolithically; the process is divided into stages with multiplicative combinatorics.",
+          "difficulty_reason": "Decomposing the problem into stages and proving their independence increases algorithmic complexity and proof burden."
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "The primary goal must be counting, not a secondary metric.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "Objective changed from minimize_value to count",
+            "Core constraints now explicitly define counting objective as the main goal"
+          ],
+          "innovation_reason": "The problem's purpose is completely shifted to counting, forcing solvers to adopt combinatorial paradigms.",
+          "difficulty_reason": "Solvers can no longer rely on greedy or shortest-path thinking; they must design a counting DP or combinatorial formula."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Check if any 1 exists; if so, answer n - count(1). Otherwise, find the shortest subarray whose gcd is 1, then answer (length - 1) + (n - 1).",
+        "reusable_subroutines": "gcd computation, checking presence of 1, finding minimal subarray with gcd=1, computing minimal operation count.",
+        "new_solver_core": "Decompose into stages: (Stage 2) For an array with k starting 1s, the number of minimal sequences to spread them equals (n-k)! / (product over components of something)? Actually for a line, it's known: the number of ways to spread from a set of roots equals the product of (size of connected component of non-1s) choose order? Investigate combinatorial formula. (Stage 1) For arrays without 1, sum over all minimal-length subarrays that can produce the first 1: for each such subarray, multiply the number of internal operation sequences to get a 1 by the spread count thereafter. Dynamic programming or combinatorics to count internal sequences.",
+        "new_proof_obligation": "Prove that the decomposition into stages is complete and non-overlapping. Prove the combinatorial formula for spreading 1s (DP or inclusion-exclusion). Prove that for Stage 1, only minimal-length subarrays contribute and their internal sequences can be counted correctly. Prove that the counting modulo a prime does not affect correctness.",
+        "why_direct_reuse_fails": "The original solver only finds the minimum number, without enumerating or counting distinct operation sequences. Directly reusing its output gives the length but not the count, and the state progression is not tracked for counting purposes."
+      },
+      "anti_shallow_rationale": "The transformation redefines the objective from a simple value to a count, introduces new combinatorial state factorisation, and adds proof obligations around deduplication and stage-wise counting. Mere addition of a modulus or renaming would not yield these structural changes."
+    }
+  }
+}

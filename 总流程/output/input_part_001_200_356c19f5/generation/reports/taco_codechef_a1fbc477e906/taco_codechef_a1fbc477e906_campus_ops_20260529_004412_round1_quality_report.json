@@ -1,0 +1,688 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 97.0,
+    "divergence_score": 76.9,
+    "schema_distance": 0.4893,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的多测试用例结构、输入对象 (N, K, S, T_target)、最小化翻转次数的目标函数、二进制字符串约束等都已准确落地到 generated_problem 的 description、input_format、output_format、constraints 和 samples，没有遗漏或偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.objective",
+          "new_schema.core_constraints",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含了独立解题所需的所有关键信息：任务说明清晰定义了窗口特征序列的计算方式和翻转操作，输入输出格式完整，约束涵盖范围、长度、字符集和存在性保证，没有需要猜测的规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间在 N、K、S/T 长度、字符限制、输出格式等方面保持完全一致，样例输入输出与题目描述相符，无任何矛盾。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 4.0,
+        "rationale": "两个样例覆盖了答案为0和答案大于0的典型场景，解释详细，格式正确，但样例数量偏少，缺少边界情况（如 K=N 或 K=1）的演示，可能影响选手对部分情形的理解。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面使用校园文化节的故事背景，语言朴实易懂，采用‘输入格式’、‘输出格式’、‘约束’等规范标题，结构清晰，无来源污染或无关文本，便于快速准确理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "目标函数（最小翻转次数）在题面和输出格式中表达明确，无歧义。",
+      "输入输出格式规范，多测试用例的结构交代清楚，便于选手编写代码。",
+      "样例解释详细，展示了计算过程和翻转方案，有助于理解题意。",
+      "约束中明确保证至少存在一种方案，避免了无解情况的讨论。",
+      "故事背景（校园文化节）与题目逻辑自然融合，降低了抽象难度。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4893,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.7895,
+        "O": 0.4796,
+        "V": 0.6628
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.7895,
+        "objective_type_distance": 0.5075,
+        "objective_text_distance": 0.4378,
+        "invariant_match_distance": 0.6628
+      }
+    },
+    "schema_distance": 0.4893,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.8,
+    "solution_transfer_risk": 0.35,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "新题将原题的正向计算（给定S求异或结果的popcount）反转成逆向最小修改（给定S和目标T，求最少翻转使异或结果等于T）。这一变化在输入结构（增加目标串T）、约束（新增翻转操作和目标匹配）和目标函数（从求值变为最小化操作数）上产生了实质差异。解题思路从直接利用前缀异或公式输出popcount，转变为需要根据目标T反向构造前缀异或数组、比较差异并用差分确定最小翻转集，并证明该构造的最优性。虽然底层数学规律（列区间结构、前缀异或关系）与原题相同，但解题方向和核心算法完全不同，原题解法无法直接迁移，选手必须重新建模。表面叙述完全更换为校园活动计划背景，无文字或样例复用。因此，新题不是简单的换皮，应予以通过。",
+    "evidence_refs": [
+      "snapshots.original_schema.objective",
+      "snapshots.new_schema.objective",
+      "snapshots.new_schema.core_constraints",
+      "snapshots.generated_problem.description",
+      "snapshots.generated_problem.input_format",
+      "snapshots.generated_problem.output_format",
+      "hard_checks[7].evidence_refs",
+      "hard_checks[8].evidence_refs",
+      "divergence.schema_distance_breakdown",
+      "snapshots.difference_plan.changed_axes"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.49，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例数量偏少",
+      "detail": "目前只有两个样例，虽然分别演示了无需翻转和需要翻转的情况，但缺少更极端的边界样例（如 K=N 或 K=1），可能让选手对某些特殊情形产生疑惑。",
+      "evidence_refs": [
+        "generated_problem.samples"
+      ],
+      "fix_hint": "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。"
+    }
+  ],
+  "suggested_revisions": [
+    "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。",
+    "增加第3个样例，覆盖 K=N 或 K=1 等边界情况，帮助选手验证极端输入的正确性。",
+    "在描述中可再强调一次翻转操作是同时影响后续窗口的（非独立），但现有表述已足够，可酌情考虑。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 97.0,
+    "divergence_score": 76.9,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例数量偏少",
+        "detail": "目前只有两个样例，虽然分别演示了无需翻转和需要翻转的情况，但缺少更极端的边界样例（如 K=N 或 K=1），可能让选手对某些特殊情形产生疑惑。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ],
+        "fix_hint": "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。"
+      }
+    ],
+    "suggested_revisions": [
+      "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。",
+      "增加第3个样例，覆盖 K=N 或 K=1 等边界情况，帮助选手验证极端输入的正确性。",
+      "在描述中可再强调一次翻转操作是同时影响后续窗口的（非独立），但现有表述已足够，可酌情考虑。"
+    ],
+    "strengths_to_keep": [
+      "目标函数（最小翻转次数）在题面和输出格式中表达明确，无歧义。",
+      "输入输出格式规范，多测试用例的结构交代清楚，便于选手编写代码。",
+      "样例解释详细，展示了计算过程和翻转方案，有助于理解题意。",
+      "约束中明确保证至少存在一种方案，避免了无解情况的讨论。",
+      "故事背景（校园文化节）与题目逻辑自然融合，降低了抽象难度。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_campus_ops_20260529_004412_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_campus_ops_20260529_004412_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_a1fbc477e906",
+      "title": "KLXOR",
+      "description": "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you.\n\nYou are given a binary string S of length N. Let string T be the result of taking the XOR of all substrings of size K of S. You need to find the number of 1 bits in T.\n\nNote:\nA substring is a continuous part of string which can be obtained by deleting some (may be none) character's from the beginning and some (may be none) character's from the end.\nXOR of many similar-sized strings is defined [here].\n\n------ Input Format ------ \n\n- The first line of the input contains an integer T - the number of test cases. The test cases then follow.\n- The first line of each test case contains two integers N and K.\n- The second line of each test case contains a binary string S of size N.\n\n------ Output Format ------ \n\nFor each test case, output on a single line number of 1 bits in the XOR of all substrings of size K of S.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 10$\n$1 ≤ K ≤N ≤ 2 \\cdot 10^{5}$\n$|S| = N$\n$S$ only contains characters 0 and 1.\n\n----- Sample Input 1 ------ \n4\n4 1\n1010\n4 2\n1001\n4 3\n1111\n4 4\n0110\n\n----- Sample Output 1 ------ \n0\n2\n0\n2\n\n----- explanation 1 ------ \n- Test case $1$: All $1$-sized substrings of $S$ are:\n- 0\n- 1\n- 1\n- 0\n\nThe XOR of these strings is 0, therefore the number of 1 bits is $0$.\n- Test case $2$: All $2$-sized substrings of $S$ are:\n- 10\n- 00\n- 01\n\nThe XOR of these strings is 11, therefore the number of 1 bits is $2$.\n- Test case $3$: All $3$-sized substrings of $S$ are:\n- 111\n- 111\n\nThe XOR of these strings is 000, therefore the number of 1 bits is $0$.\n- Test case $4$: All $4$-sized substrings of $S$ are:\n- 0110\n\nThe XOR of these strings is 0110, therefore the number of 1 bits is $2$.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "def Test(n, a, k):\n\tdp = [0] * n\n\tdp[0] = a[0]\n\tfor i in range(1, n):\n\t\tdp[i] = dp[i - 1] + a[i]\n\ts = [0] * k\n\tr = 0\n\tfor i in range(k):\n\t\ts[i] = dp[n - k + i] - r & 1\n\t\tr = dp[i]\n\treturn s.count(1)\nfor _ in range(int(input())):\n\t(n, k) = map(int, input().split())\n\ta = list(map(int, [*input()]))\n\tprint(Test(n, a, k))"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_a1fbc477e906",
+        "KLXOR",
+        "codechef",
+        "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you. You are given a binary string S of length N. Let string T be the result of taking the XOR...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束增加目标串与翻转操作定义；目标从输出 popcount 变为最小化翻转次数；不变式扩展为包含翻转影响、前缀异或关系以及构造唯一性，支撑反向设计和最小性证明。",
+      "summary": "求解方向从给定输入计算结果反转成给定结果设计输入，要求最小化修改并证明最优性，利用原核心规律实现反向推导。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inverse_klxor_minflips",
+      "source": "衍生自 taco_codechef_a1fbc477e906",
+      "input_structure": {
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 10
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true,
+          "ordered": true
+        },
+        "components": [
+          {
+            "role": "test_case",
+            "role_description": "每个测试用例包含 N, K, 原始串 S 和目标串 T",
+            "type": "tuple",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {},
+            "components": [
+              {
+                "role": "n",
+                "role_description": "字符串长度",
+                "type": "integer",
+                "length": null,
+                "value_range": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "properties": {}
+              },
+              {
+                "role": "k",
+                "role_description": "子串长度",
+                "type": "integer",
+                "length": null,
+                "value_range": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "properties": {}
+              },
+              {
+                "role": "s",
+                "role_description": "原始二进制串 S",
+                "type": "string",
+                "length": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "value_range": null,
+                "properties": {
+                  "binary": true
+                }
+              },
+              {
+                "role": "t_target",
+                "role_description": "目标异或结果串 T，长度 N-K+1",
+                "type": "string",
+                "length": {
+                  "min": 1,
+                  "max": 200000
+                },
+                "value_range": null,
+                "properties": {
+                  "binary": true,
+                  "length_relation": "n - k + 1"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "binary_string_s",
+            "description": "原始串 S 仅由字符 '0' 和 '1' 组成。",
+            "formal": "S ⊆ {0,1}",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "binary_string_t",
+            "description": "目标串 T_target 仅由字符 '0' 和 '1' 组成，且长度等于 N-K+1。",
+            "formal": "T_target ⊆ {0,1} ∧ |T_target| = N-K+1",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "flip_operation",
+            "description": "一次操作可以选择一个索引 i（0 ≤ i < N），将 S[i] 翻转（0 变 1，1 变 0）。",
+            "formal": "op(i): S[i] := 1 - S[i]",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "target_matching",
+            "description": "经过若干次翻转后，由修改后的 S 计算出的所有长度为 K 的子串的按位异或结果串 T 必须等于给定的 T_target。",
+            "formal": "Compute(K, modified_S) = T_target",
+            "source_sections": [
+              "objective_related"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization",
+        "description": "求所需的最少翻转次数（整数），使得最终计算出的 T 与 T_target 相等。",
+        "target": "min_operations",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "column_interval_structure",
+            "description": "对于结果串 T 的第 j 位（0 ≤ j < N-K+1），T[j] 等于 S[j] 到 S[j+N-K] 这 N-K+1 位的异或和。",
+            "properties": {
+              "interval_length": "N - K + 1",
+              "start_index": "j",
+              "end_index": "j + N - K"
+            },
+            "evidence_source": "derived"
+          },
+          {
+            "name": "prefix_xor_relation",
+            "description": "令 P[i] 为 S[0..i-1] 的异或前缀（P[0]=0），则 T[j] = P[j+N-K+1] XOR P[j]。",
+            "properties": {},
+            "evidence_source": "derived"
+          },
+          {
+            "name": "flip_effect",
+            "description": "翻转 S[i] 会切换所有满足 max(0, i-(N-K)) ≤ j ≤ min(i, K-1) 的 T[j] 的值；等价地，翻转 S[i] 会切换所有 k > i 的 P[k] 的值。",
+            "properties": {},
+            "evidence_source": "derived"
+          },
+          {
+            "name": "reconstruction_uniqueness",
+            "description": "给定目标 T_target，可以唯一地重构所需的前缀异或数组 P_target（P_target[0]=0, P_target[j+N-K+1] = T_target[j] XOR P_target[j]）。令原始前缀异或为 P_initial，定义差异 d[i] = P_initial[i] XOR P_target[i]（d[0]=0），则必须翻转的位置集合为 { i | d[i+1] XOR d[i] = 1 }。此集合大小即为最小翻转次数，且任何可行方案至少需要这些翻转。",
+            "properties": {},
+            "evidence_source": "solution_construction"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "活动计划的最小调整",
+      "description": "校园文化节要到了，学校要在连续 N 天里安排社团活动。每天的状态用一个二进制位表示：0 表示当天没有社团占用教室，1 表示有占用。\n\n为了评估活动的分布情况，学校将每连续 K 天作为一个观察窗口，共得到 N-K+1 个窗口。对于每个窗口，统计窗口内被占用天数的奇偶性（窗口内所有天的状态之和除以 2 的余数），从而得到一个长度为 N-K+1 的二进制序列，称为窗口特征序列。\n\n现在，你已经知道各个社团提交的初步占用计划 S（一个长度为 N 的二进制串），以及学校期望的目标窗口特征序列 T（长度为 N-K+1 的二进制串）。\n\n作为活动管理员，你拥有修改计划的权力：在任意一天，你可以将该天的状态翻转（把 0 改成 1，或把 1 改成 0）。每次翻转都会给该天的社团带来不便，因此你希望总的翻转天数尽可能少。\n\n你的任务是：给定初始计划 S 和目标窗口特征序列 T，计算最少需要翻转多少天，使得修改后的计划计算出的窗口特征序列恰好等于 T。",
+      "input_format": "第一行一个整数 CaseNum，表示测试用例的数量。接下来每个测试用例包含三行：\n- 第一行两个整数 N 和 K，分别表示总天数和观察窗口的长度。\n- 第二行一个长度为 N 的字符串 S，仅包含字符 '0' 和 '1'，表示初始占用计划。\n- 第三行一个长度为 N-K+1 的字符串 T，仅包含字符 '0' 和 '1'，表示目标窗口特征序列。",
+      "output_format": "对于每个测试用例，输出一行一个整数，表示达到目标所需的最少翻转天数。",
+      "constraints": [
+        "1 ≤ CaseNum ≤ 10",
+        "1 ≤ K ≤ N ≤ 200000",
+        "|S| = N，且 S 仅包含字符 '0' 和 '1'",
+        "|T| = N-K+1，且 T 仅包含字符 '0' 和 '1'",
+        "输入保证至少存在一种翻转方案使窗口特征序列等于 T",
+        "时间限制：1 秒（C/C++）",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n4 2\n1001\n101",
+          "output": "0",
+          "explanation": "初始占用计划为 \"1001\"，K=2，计算出的窗口特征序列为 \"101\"（窗口1：1⊕0=1，窗口2：0⊕0=0，窗口3：0⊕1=1），已经等于目标 \"101\"，因此不需要翻转，答案为 0。"
+        },
+        {
+          "input": "1\n4 2\n1001\n000",
+          "output": "2",
+          "explanation": "初始占用计划为 \"1001\"，计算出的窗口特征序列为 \"101\"，不等于目标 \"000\"。可以翻转第2天和第4天（将 \"1001\" 变为 \"1100\"），修改后的计划得到的窗口特征序列为 \"000\"。可以证明没有更少的翻转方案，故答案为 2。"
+        }
+      ],
+      "notes": "每个测试用例的答案唯一。翻转操作可以按任意顺序进行，只需计算最少翻转天数。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "求解方向从给定输入计算结果反转成给定结果设计输入，要求最小化修改并证明最优性，利用原核心规律实现反向推导。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4893,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.7895,
+          "O": 0.4796,
+          "V": 0.6628
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.7895,
+          "objective_type_distance": 0.5075,
+          "objective_text_distance": 0.4378,
+          "invariant_match_distance": 0.6628
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "原题计算结果 T（或其 popcount）可自然作为反向目标绑定，驱动设计任务。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "将计算方向翻转为目标驱动的构造设计，突破单向求解模式。",
+          "difficulty_reason": "要求算法围绕目标约束逆向推导必要操作。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "翻转二进制位是原串结构下最自然的修改操作，与核心规律直接相关。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "将反向设计落实为可形式化、可优化的操作空间，与 XOR 子串结构紧密挂钩。",
+          "difficulty_reason": "要求证明操作序列与目标结果之间的精确对应关系。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "需输出最小翻转次数并提供正确性证明，而非任意可行方案。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "让答案必须承担最小性责任，防止简单输出任意可行修改。",
+          "difficulty_reason": "要求算法证明无法用更少操作达成目标，增加论证深度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "使用前缀异或与区间长度规律在 O(N) 内计算 T 和 popcount。",
+        "reusable_subroutines": "前缀异或数组计算；从前缀异或计算 T；列区间结构不变式。",
+        "new_solver_core": "通过目标 T_target 反向构造 P_target，与初始 P_initial 比较，利用差分唯一确定翻转集，输出集合大小。",
+        "new_proof_obligation": "需证明构造出的翻转集确实使最终 T 等于目标，且任何可行方案至少需翻转这些位（唯一性与最小性）。",
+        "why_direct_reuse_fails": "原解只输出最终 popcount，无法直接给出如何修改输入以达成指定输出的方法。"
+      },
+      "anti_shallow_rationale": "新题不是简单询问原计算结果是否等于给定值，而是要求主动设计输入以达到目标，同时承担最小修改责任，翻转操作与 XOR 子串规律深度绑定，避免了仅换故事背景或输出格式的浅层改动。"
+    }
+  }
+}

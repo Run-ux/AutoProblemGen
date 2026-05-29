@@ -1,0 +1,1375 @@
+{
+  "problem_id": "cs_inv_001",
+  "source_problem_ids": [
+    "taco_codechef_13e5c69e5656"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_13e5c69e5656",
+      "DQUERY",
+      "codechef",
+      "Chef has prepared a menu for his new restaurant. The menu consists of N dishes whose flavour is given by M_{1}, M_{2}, \\dots, M_{N}, where M_{i} denotes the flavour of the i^{th} dish. Chef has some rules in his resta...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "目标从最大化变为最小化修改代价，核心约束新增修改操作和联合查询要求，不变量调整为修改‑重排下的可行性下界。",
+    "summary": "原题仅需计算每个查询的最大前缀和，新题需要在满足多个查询目标的前提下，最小化对序列的修改总代价。算法从贪心前缀计算变为组合优化，原题解法的核心逻辑无法直接复用。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4595,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4595,
+    "axis_scores": {
+      "I": 0.0909,
+      "C": 0.6509,
+      "O": 0.5496,
+      "V": 0.5205
+    },
+    "components": {
+      "input_tree_distance": 0.0909,
+      "constraint_match_distance": 0.6509,
+      "objective_type_distance": 0.5072,
+      "objective_text_distance": 0.6132,
+      "invariant_match_distance": 0.5205
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_cost",
+    "description": "最小化总修改代价，即 sum_i |A'_i - A_i|。",
+    "target": "total_modification_cost"
+  },
+  "rule_selection_reason": "种子题由多个独立查询构成，每个查询可看作局部单元，且所有查询天然共享同一个数组，因此全局耦合可将独立重排改为仅允许一次全局重排，从根本上改变问题结构，避免原题单独贪心解法的直接迁移。相较之下，逆设计需发明修改操作，有浅层包装风险；鲁棒优化则因缺乏原生扰动而难以适用。此选择直接回应 revision_context 中要求增加实质变化、降低解法迁移风险的核心诉求。；创新度判断：原题每个查询允许独立重排，新题要求所有查询基于同一次重排结果，核心义务从‘局部贪心提取最大可移动元素’转变为‘全局一次决策以满足多个前缀和约束’，彻底打破了局部独立分解的可能性，引入了跨查询的强耦合不变量。；难度判断：主求解责任从对单个 k 的 O(log n) 查找最大元素并求和，上升为寻找一种全局重排，使得一系列前缀和的目标函数（如总和最大或最差值最优）达到最优，必须统筹考虑元素在不同前缀中的多重角色，算法可能需要 DP、排序后贪心平衡或更复杂的优化策略，难度显著提升。；风险判断：主要风险在于全局目标函数若定义不当（如仅优化某一查询而忽略其他），可能导致问题退化为原题变种或过于简单。控制措施：明确要求所有查询答案必须基于同一重排，并设置合理的目标（如最大化所有查询答案之和），同时保证数据范围使暴力不可行，促使设计高效算法。",
+  "new_schema_snapshot": {
+    "problem_id": "cs_inv_001",
+    "source": "codechef",
+    "input_structure": {
+      "type": "composite",
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "N",
+          "description": "Number of service points",
+          "type": "integer",
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          }
+        },
+        {
+          "role": "A",
+          "description": "Initial service durations",
+          "type": "array",
+          "length": "N",
+          "element_type": "integer",
+          "element_value_range": {
+            "min": 1,
+            "max": 100000
+          }
+        },
+        {
+          "role": "Q",
+          "description": "Number of resident requirements",
+          "type": "integer",
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          }
+        },
+        {
+          "role": "requirements",
+          "description": "Each requirement: prime p, window length k, target sum T",
+          "type": "array",
+          "length": "Q",
+          "element_structure": {
+            "p": {
+              "type": "integer",
+              "value_range": {
+                "min": 2,
+                "max": 100000
+              },
+              "properties": {
+                "prime": true
+              }
+            },
+            "k": {
+              "type": "integer",
+              "value_range": {
+                "min": 1,
+                "max": "N"
+              }
+            },
+            "T": {
+              "type": "integer",
+              "value_range": {
+                "min": 1,
+                "max": 1000000000000
+              }
+            }
+          }
+        }
+      ],
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "edit_operation",
+          "description": "你可以选择一个服务点，将其服务时长增加 1 或减少 1。每次操作代价为 1。最终得到修改后的序列 A'，总修改代价为 sum_i |A'_i - A_i|。",
+          "formal": "cost = Σ|A'_i - A_i|"
+        },
+        {
+          "name": "reorder_rule",
+          "description": "对于每个需求 (p, k, T)，在序列 A' 中，时长能被 p 整除的服务点称为灵活服务点，它们可以在 A' 内任意交换位置；其他服务点的位置固定不变。注意该重排是虚拟的，每个需求独立进行，但所有需求共享同一个 A'。",
+          "formal": "令 S = {i: p | A'_i}；重排后序列 B 满足 B_i = A'_i (i∉S)，且 B 在位置 S 上是 A'_i (i∈S) 的一个排列。"
+        },
+        {
+          "name": "joint_feasibility",
+          "description": "必须存在一个序列 A'（经由编辑操作从原始 A 获得），使得对于每一个需求 (p, k, T)，都能通过上述重排规则得到某个序列 B，使得 B 的前 k 项之和 ≥ T。",
+          "formal": "∀j ∃重排 B_j ：sum_{i=1..k_j} B_j,i ≥ T_j"
+        }
+      ],
+      "additional_constraints": [
+        {
+          "name": "prime_p",
+          "description": "每个需求的 p 是质数。"
+        },
+        {
+          "name": "range_limits",
+          "description": "所有数据在指定范围内，总 N 和 Q 不超过 2×10^5。"
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_cost",
+      "description": "最小化总修改代价，即 sum_i |A'_i - A_i|。",
+      "target": "total_modification_cost"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "lower_bound_per_demand",
+          "description": "对于任何一个需求 (p, k, T)，在最终的 A' 下，令 F 为所有灵活服务点的集合，c 为前 k 个位置（任意重排后）所能包含的最大灵活服务点数量（由原固定点间隔决定）。则任何可行前缀和 ≤ sum_{固定点} + sum_{F 中最大的 c 个值}。这给出了达到 T 的修改代价下界。",
+          "properties": {},
+          "evidence_source": "analysis"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "status": "ok",
+      "reason_code": "new_output_object_missing",
+      "reason": "规划结果没有形成新的输出对象或新的输出责任。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "对每个质数 p，收集可被 p 整除的元素索引与值，排序并求前缀和；对每个查询 (p,k)，二分查找前 k 个位置中可移动元素的数量，选择最大的填入，得到最大前缀和。预处理 O(N·√M + 质数种类·log N) 等。",
+    "reusable_subroutines": "质数分解函数可以复用；单个需求下前 k 位置固定元素和的计算可复用，但由于 A' 未知，这些固定元素值会变化。",
+    "new_solver_core": "需要求解一个组合优化：选择修改每个 A_i 的值，最小化绝对值代价，同时满足多个线性不等式约束（每个需求产生的不等式）。可能转化为最小代价流或整数规划，利用需求的层次进行贪心或动态规划。由于数据范围大，需创新设计多项式算法。",
+    "new_proof_obligation": "证明找到的修改方案确实最小化全局代价，并给出下界的严格证明。可能需要利用对偶理论或构造一组不可改进的界。",
+    "why_direct_reuse_fails": "原算法只适用于固定序列，利用贪心即可求出最大值。新问题中，修改操作会改变可移动集合，且需要同时满足多个不同 p 的需求，单一贪心策略无法处理代价与多目标的权衡，全局最优性要求全新算法。"
+  },
+  "anti_shallow_rationale": "新问题不只是将最大化改为计数或加最小性，而是引入了有代价的修改操作和需要同时满足多个需求的联合约束。核心决策从无代价的重排优化变为资源分配式的全局修改优化，算法必须彻底重新设计，原题解法的任何子模块都无法直接套用。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "必须将原题的正向结果转换为反向目标。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "翻转求解方向，从计算最优值变为设计输入以满足目标。",
+      "difficulty_reason": "要求算法围绕多个目标约束反向推导状态，增加约束组合的复杂性。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "必须定义允许的修改操作。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "将反向设计落实到可优化的操作空间，而非抽象要求。",
+      "difficulty_reason": "要求证明操作序列、修改结果与目标之间的精确对应，最小代价的搜索空间极大。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "确保输出的是最优代价，而非任意可行解。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "强制最优性责任，提升问题深度。",
+      "difficulty_reason": "最小性证明往往需要坚实的理论分析或巧妙的构造。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "shared_core_risk",
+      "selection_reason": "原题核心解法在计算最大和时已隐含构造方案所需的信息，构造输出几乎直接由已计算的中间结果导出，不会迫使主要算法重新设计，且规范解的定义（如按特定顺序放置可移动元素）很难避免退化为输出后处理。种子题缺少复杂的全局结构从而定义有意义的规范解验证责任。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束仅允许对特定集合元素重排，目标只与排序后的较大元素有关；标准解法中已预先对每个素数排序其可移动元素并计算前缀和，为输出最优排列只需将最大元素填入可移动位置即可，这符合规则 forbidden_seed_properties 中“原解只要顺手回溯就能拿到方案”的场景。helper 要求“不能让规范解要求退化为输出后处理”，但种子题的求解过程使得即便要求输出规范解也无法实质增加算法深度。",
+        "feedback": "建议寻找具有更复杂的全局约束或交互结构的种子题，使得规范性条件（如顺序）能嵌入到求解过程的决策中，而非仅仅在计算最值后线性构造。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_always_feasible",
+      "selection_reason": "原题对于任意询问都存在可行解（原排列即为一种合法方案），不存在‘做不到’的情形，无法构造局部冲突证据，违背规则要求的‘做不到的原因可以用局部证据表示’。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束定义：对于查询(p,k)，可重排所有能被p整除的元素，而不动其他元素。原排列始终满足该约束，且总是可选的，因此每个询问都存在可行解，最优化问题总是有目标值，无需输出‘做不到’的证据。规则要求输出方案或冲突证据，但冲突证据分支永远无法触发。",
+        "feedback": "该规则要求种子题存在无解情形，但本题为最优化且可行域非空，无法适配。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "种子题DQUERY的最大化问题改为计数最优方案数后，仅需计算阶乘即可得到答案，未能带来新的算法责任或状态结构变化，不符合规则要求的‘不能保持原状态结构不动’和‘不能把计数只当成结果后处理’。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题通过预处理素数索引和值、二分查找与贪心替换即可得到最大值。计数时，达到最大值的方案数即为可移动元素个数的阶乘，无需分解解空间或定义新的等价关系，这违背了helper 'state_factorization' 的红线‘不能保持原状态结构不动’和 'counting_obligation_lock' 的红线‘不能把计数目标放进备注’（实质等同于后处理）。",
+        "feedback": "该种子题的核心在于贪心选择最大的可移动元素，解空间虽有限，但去重规则简单（序列不同即不同），计数对象为全排列阶乘，缺乏‘按单元拆分并汇总’的复杂度，强行使用本规则只会导致浅层变化，建议选择具有更多复合约束或状态依赖的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": true,
+      "score": 0.77,
+      "reason_code": "native_perturbation_present",
+      "selection_reason": "原题中每查询独立的(p, k)变化构成天然资源波动与局部选择差异，可被放大为对抗性查询序列，形成最小保底优化问题，且最坏情况保证仍落入合法重排与部分固定前缀的原有语义。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "schema.core_constraints.assertions.independent_queries 与 original_problem.description 表明查询参数 p 和 k 在不同查询中独立变化，构成输入扰动；native_perturbation_model helper 要求将此类不确定性写成正式扰动模型；仍可通过在约束内定义对抗性多重查询来实现保底，而不依赖故事背景硬造对手。",
+        "feedback": "建议将扰动模型明确定义为对查询序列的全局对抗，并确保保底阈值与主约束耦合（如二元阈值搜索直接绑定前缀可移动计数），以避免流于对外层二分包装。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_not_feasibility_or_decision",
+      "selection_reason": "种子题是一个最大化优化问题（求最大前缀和），而非判定或可行性问题。规则要求原题是可行性随参数单调变化的判定题，而种子题直接输出最优值，缺少可自然升级为临界阈值的参数化可行性结构。强行扩展只会在外层加二分查询原优化结果，属于'机械二分'，违反 helpers 的红线。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 DQUERY 的 objective 为 'maximize_value'，目标是最大化前 k 道菜的总和，是一个优化问题。规则的 required_seed_properties 包括 '原题可行性随某个参数具有清晰的单调性或分层结构'，且规则描述为 '把判定或可行性问题扩展为求最小阈值、最大容量或临界参数的优化题'。种子题根本不是判定问题，没有明确的可行性概念。其核心约束中的参数 p 和 k 都是查询输入的一部分，没有明显的阈值参数需要临界值。标准解法通过预处理质因子和前缀和直接计算每个查询的最大值，没有涉及任何阈值搜索。",
+        "feedback": "若要应用此规则，需要选择一个本身是可行性判定的种子题，例如'是否存在一种重排使得总和达到某个目标'，并且该可行性随某个参数（如 k 或容量）单调变化，然后才能自然扩展为求临界参数。当前种子题不具备这种结构，强行改造只会得到与原题等价的二分查找包装，不符合新题创新要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_conflicting_metric",
+      "selection_reason": "原题只关心在独立查询下最大化前 k 个元素之和，没有其他自然冲突的评价维度。任何附加指标都会导致语义不匹配或退化为同义改写。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为最大化前 k 个元素之和，核心约束为仅可重排被 p 整除的元素。标准解法通过预处理素数前缀和和索引二分，单步完成最大化，没有其他内在权衡。原题未提及任何冲突目标如最小化变动成本、最大化其他属性等。",
+        "feedback": "此种子题不适合扩展为多目标权衡，因为缺乏真实冲突的第二指标。建议更换种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "inverse_design_feasible",
+      "selection_reason": "原题输出为最大化美味度总和，可自然作为反向目标；存在重排作为自然修改操作，且可扩展为输入构造或最小修改问题，满足反向设计条件。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题schema中objective为maximize_value，输出总和；core_constraints定义了基于质数整除性的重排规则（reorderable_set_condition），该操作是原题对象的自然修改；原题输入M为整数数组，设计自由度充分；forbidden_seed_properties均不触发。",
+        "feedback": "通过反向设计，可将原题输出目标化，并引入构造或最小修改责任，如“给定目标总和S，判断是否存在重排达成S，或构造M使最大美味度恰好为S”，符合规则核心变换。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "natural_global_coupling_exists",
+      "selection_reason": "原题明确声明每个查询独立（'Each query is independent'），查询成为可分解的局部单元；所有查询共享同一个初始菜单M，引入全局共享的重排机会（如整体只允许一次菜单重排）或总重排预算，即可自然耦合所有查询，迫使算法在共享资源下统筹局部决策。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "原题约束 independent_queries：'Each query is independent; any rearrangement performed for one query does not affect the original menu for other queries.'；核心对象 initial menu M 是所有查询的共同变量；helpers shared_resource_constraint 的 prompt_guidance 指出共享资源必须直接约束多个局部单元，本例可将独立重排取消改为单一共享重排，符合要求。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_sequential_operations",
+      "selection_reason": "原题的重排操作是一次性全局优化，不存在逐步的轮流选择过程，无法自然转化为双方博弈；强行创造对抗方将违反‘对抗方只能靠故事背景硬造’的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "no_natural_adversary"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为‘仅可重排被质数 p 整除的元素，其余元素位置固定’，目标为‘最大化前缀和’，整个过程由单人一次性完成，没有分步的、可交替执行的动作序列。规则要求种子具有‘可轮流选择、拿取、移动或改变状态的自然操作’，而本题只有单一的全局重排规划，不满足该条件。若强行分配玩家轮流放置可整除元素，则需要虚构厨房与顾客的对抗背景，属于规则明确禁止的‘对抗方只能靠故事背景硬造’。",
+        "feedback": "建议选择本身具有逐步操作且可拆分为对抗动作的题目，如取石子、棋子移动等经典游戏种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子问题是独立的多个查询，每个查询单独求解，不存在可自然形成覆盖或割关系的局部对象族，扩展为全局覆盖问题只能依靠无关附加限制，违反规则禁止条件。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题描述中明确'Each query is independent'，核心约束为每个查询独立重新排序并计算前缀和，不涉及多个前缀或区间之间的覆盖/割关系。规则负例‘分别对每条路径运行原算法后输出结果列表’与本种子行为一致。原题不具有路径、区间等可组合的对象族，任何覆盖关系均为额外施加，不符合 eligibility 要求的自然形成覆盖关系。",
+        "feedback": "该种子缺乏局部对象族和多对象联动基础，强行扩展将导致规则红线违规，建议拒绝。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting_problem",
+      "selection_reason": "种子题是最大化美味度的优化问题，不涉及任何明确的计数对象，因此不存在‘自然权重、等级或统计量’，无法满足规则前提条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 'maximize_value'，描述为 'For each query, maximize the total flavour of the first k dishes'。整个题目没有要求计数任意组合对象，只要求输出最大和，不属于计数类题目。",
+        "feedback": "该规则要求种子题为普通计数题，且计数对象上存在自然权重或统计量。当前种子题不符合，请选用真正常规计数题（如计数满足某条件的序列个数）作为种子。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "shared_core_risk",
+      "message": "原题核心解法在计算最大和时已隐含构造方案所需的信息，构造输出几乎直接由已计算的中间结果导出，不会迫使主要算法重新设计，且规范解的定义（如按特定顺序放置可移动元素）很难避免退化为输出后处理。种子题缺少复杂的全局结构从而定义有意义的规范解验证责任。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.3,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束仅允许对特定集合元素重排，目标只与排序后的较大元素有关；标准解法中已预先对每个素数排序其可移动元素并计算前缀和，为输出最优排列只需将最大元素填入可移动位置即可，这符合规则 forbidden_seed_properties 中“原解只要顺手回溯就能拿到方案”的场景。helper 要求“不能让规范解要求退化为输出后处理”，但种子题的求解过程使得即便要求输出规范解也无法实质增加算法深度。",
+        "feedback": "建议寻找具有更复杂的全局约束或交互结构的种子题，使得规范性条件（如顺序）能嵌入到求解过程的决策中，而非仅仅在计算最值后线性构造。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_always_feasible",
+      "message": "原题对于任意询问都存在可行解（原排列即为一种合法方案），不存在‘做不到’的情形，无法构造局部冲突证据，违背规则要求的‘做不到的原因可以用局部证据表示’。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束定义：对于查询(p,k)，可重排所有能被p整除的元素，而不动其他元素。原排列始终满足该约束，且总是可选的，因此每个询问都存在可行解，最优化问题总是有目标值，无需输出‘做不到’的证据。规则要求输出方案或冲突证据，但冲突证据分支永远无法触发。",
+        "feedback": "该规则要求种子题存在无解情形，但本题为最优化且可行域非空，无法适配。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "种子题DQUERY的最大化问题改为计数最优方案数后，仅需计算阶乘即可得到答案，未能带来新的算法责任或状态结构变化，不符合规则要求的‘不能保持原状态结构不动’和‘不能把计数只当成结果后处理’。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题通过预处理素数索引和值、二分查找与贪心替换即可得到最大值。计数时，达到最大值的方案数即为可移动元素个数的阶乘，无需分解解空间或定义新的等价关系，这违背了helper 'state_factorization' 的红线‘不能保持原状态结构不动’和 'counting_obligation_lock' 的红线‘不能把计数目标放进备注’（实质等同于后处理）。",
+        "feedback": "该种子题的核心在于贪心选择最大的可移动元素，解空间虽有限，但去重规则简单（序列不同即不同），计数对象为全排列阶乘，缺乏‘按单元拆分并汇总’的复杂度，强行使用本规则只会导致浅层变化，建议选择具有更多复合约束或状态依赖的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "pass",
+      "reason_code": "native_perturbation_present",
+      "message": "原题中每查询独立的(p, k)变化构成天然资源波动与局部选择差异，可被放大为对抗性查询序列，形成最小保底优化问题，且最坏情况保证仍落入合法重排与部分固定前缀的原有语义。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.77,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "schema.core_constraints.assertions.independent_queries 与 original_problem.description 表明查询参数 p 和 k 在不同查询中独立变化，构成输入扰动；native_perturbation_model helper 要求将此类不确定性写成正式扰动模型；仍可通过在约束内定义对抗性多重查询来实现保底，而不依赖故事背景硬造对手。",
+        "feedback": "建议将扰动模型明确定义为对查询序列的全局对抗，并确保保底阈值与主约束耦合（如二元阈值搜索直接绑定前缀可移动计数），以避免流于对外层二分包装。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "seed_not_feasibility_or_decision",
+      "message": "种子题是一个最大化优化问题（求最大前缀和），而非判定或可行性问题。规则要求原题是可行性随参数单调变化的判定题，而种子题直接输出最优值，缺少可自然升级为临界阈值的参数化可行性结构。强行扩展只会在外层加二分查询原优化结果，属于'机械二分'，违反 helpers 的红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 DQUERY 的 objective 为 'maximize_value'，目标是最大化前 k 道菜的总和，是一个优化问题。规则的 required_seed_properties 包括 '原题可行性随某个参数具有清晰的单调性或分层结构'，且规则描述为 '把判定或可行性问题扩展为求最小阈值、最大容量或临界参数的优化题'。种子题根本不是判定问题，没有明确的可行性概念。其核心约束中的参数 p 和 k 都是查询输入的一部分，没有明显的阈值参数需要临界值。标准解法通过预处理质因子和前缀和直接计算每个查询的最大值，没有涉及任何阈值搜索。",
+        "feedback": "若要应用此规则，需要选择一个本身是可行性判定的种子题，例如'是否存在一种重排使得总和达到某个目标'，并且该可行性随某个参数（如 k 或容量）单调变化，然后才能自然扩展为求临界参数。当前种子题不具备这种结构，强行改造只会得到与原题等价的二分查找包装，不符合新题创新要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_metric",
+      "message": "原题只关心在独立查询下最大化前 k 个元素之和，没有其他自然冲突的评价维度。任何附加指标都会导致语义不匹配或退化为同义改写。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为最大化前 k 个元素之和，核心约束为仅可重排被 p 整除的元素。标准解法通过预处理素数前缀和和索引二分，单步完成最大化，没有其他内在权衡。原题未提及任何冲突目标如最小化变动成本、最大化其他属性等。",
+        "feedback": "此种子题不适合扩展为多目标权衡，因为缺乏真实冲突的第二指标。建议更换种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_design_feasible",
+      "message": "原题输出为最大化美味度总和，可自然作为反向目标；存在重排作为自然修改操作，且可扩展为输入构造或最小修改问题，满足反向设计条件。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题schema中objective为maximize_value，输出总和；core_constraints定义了基于质数整除性的重排规则（reorderable_set_condition），该操作是原题对象的自然修改；原题输入M为整数数组，设计自由度充分；forbidden_seed_properties均不触发。",
+        "feedback": "通过反向设计，可将原题输出目标化，并引入构造或最小修改责任，如“给定目标总和S，判断是否存在重排达成S，或构造M使最大美味度恰好为S”，符合规则核心变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "natural_global_coupling_exists",
+      "message": "原题明确声明每个查询独立（'Each query is independent'），查询成为可分解的局部单元；所有查询共享同一个初始菜单M，引入全局共享的重排机会（如整体只允许一次菜单重排）或总重排预算，即可自然耦合所有查询，迫使算法在共享资源下统筹局部决策。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "原题约束 independent_queries：'Each query is independent; any rearrangement performed for one query does not affect the original menu for other queries.'；核心对象 initial menu M 是所有查询的共同变量；helpers shared_resource_constraint 的 prompt_guidance 指出共享资源必须直接约束多个局部单元，本例可将独立重排取消改为单一共享重排，符合要求。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_sequential_operations",
+      "message": "原题的重排操作是一次性全局优化，不存在逐步的轮流选择过程，无法自然转化为双方博弈；强行创造对抗方将违反‘对抗方只能靠故事背景硬造’的红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "no_natural_adversary"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为‘仅可重排被质数 p 整除的元素，其余元素位置固定’，目标为‘最大化前缀和’，整个过程由单人一次性完成，没有分步的、可交替执行的动作序列。规则要求种子具有‘可轮流选择、拿取、移动或改变状态的自然操作’，而本题只有单一的全局重排规划，不满足该条件。若强行分配玩家轮流放置可整除元素，则需要虚构厨房与顾客的对抗背景，属于规则明确禁止的‘对抗方只能靠故事背景硬造’。",
+        "feedback": "建议选择本身具有逐步操作且可拆分为对抗动作的题目，如取石子、棋子移动等经典游戏种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子问题是独立的多个查询，每个查询单独求解，不存在可自然形成覆盖或割关系的局部对象族，扩展为全局覆盖问题只能依靠无关附加限制，违反规则禁止条件。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题描述中明确'Each query is independent'，核心约束为每个查询独立重新排序并计算前缀和，不涉及多个前缀或区间之间的覆盖/割关系。规则负例‘分别对每条路径运行原算法后输出结果列表’与本种子行为一致。原题不具有路径、区间等可组合的对象族，任何覆盖关系均为额外施加，不符合 eligibility 要求的自然形成覆盖关系。",
+        "feedback": "该种子缺乏局部对象族和多对象联动基础，强行扩展将导致规则红线违规，建议拒绝。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting_problem",
+      "message": "种子题是最大化美味度的优化问题，不涉及任何明确的计数对象，因此不存在‘自然权重、等级或统计量’，无法满足规则前提条件。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 'maximize_value'，描述为 'For each query, maximize the total flavour of the first k dishes'。整个题目没有要求计数任意组合对象，只要求输出最大和，不属于计数类题目。",
+        "feedback": "该规则要求种子题为普通计数题，且计数对象上存在自然权重或统计量。当前种子题不符合，请选用真正常规计数题（如计数满足某条件的序列个数）作为种子。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "new_output_object_missing",
+      "message": "规划结果没有形成新的输出对象或新的输出责任。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "main_goal_unchanged",
+      "message": "语义硬判据通过。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "main_state_unchanged",
+      "message": "语义硬判据通过。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "reuse_risk_high",
+      "message": "语义硬判据通过。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_target_defined_and_minimality_proven",
+      "message": "规划已将正向最大化前缀和问题成功翻转为给定目标前缀和的最小修改反向设计题，定义了编辑操作、最小代价目标以及下界证明要求，完全兑现了三个helper的专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "candidate_schema 的 objective 明确为 'minimize_cost'，核心约束 edit_operation 与 reorder_rule 定义了允许的修改和重排操作，并引入 joint_feasibility 条件将原输出（最大前缀和）转化为需满足的目标 T。applied_helpers 记录了 target_result_binding 将原题结果绑定为反向目标（核心约束中 '前 k 项之和 ≥ T'）、edit_operation_contract 定义了元素值 ±1 修改操作（C、V 轴变化）、minimality_or_certificate_lock 要求最小化总修改代价并由 lower_bound_per_demand 不变量承担下界证明责任。规则声明中的三个 hard_checks（反向目标来自原结果语义、修改操作与原核心对象相关、承担最小性或设计正确性责任）均已满足。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确将原题的正向前缀和计算反转为目标驱动的最小修改设计，定义了编辑操作、目标约束和最小化代价，完整兑现了 forward_solution_to_inverse_design 规则的专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中“你需要帮助管理员决定最小的总修改代价”对应 minimality_or_certificate_lock 的最小性要求；core_constraints 中 edit_operation 定义了修改操作（edit_operation_contract）；joint_feasibility 将原题的前缀和结果绑定为每个需求必须达到的目标 T（target_result_binding）。样例解释中给出了最小性的证明思路，确保了输出承担最小化责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "ALL_RULE_HELPERS_REALIZED",
+      "message": "题面通过反向目标绑定、编辑操作契约和最小性锁定三个 helper，完整兑现了 forward_solution_to_inverse_design 规则的专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面将原题结果语义转移为需求中的目标前缀和 T（target_result_binding），在核心约束中定义了基于增减服务时长的编辑操作及代价（edit_operation_contract），目标明确要求最小化总修改代价并给出了下界分析（minimality_or_certificate_lock），且样例论证了最小性。所有 helpers 的关键语义均已写实在题面、new_schema 和规划摘要中，不存在语义缺失或违反红线的情形。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "forward_solution_to_inverse_design_fulfilled",
+      "message": "题面清晰地将原题的正向最大前缀和计算转化为给定目标前缀和的反向最小修改设计：定义了每次增减1的编辑操作，并要求最小化总修改代价以满足多个住户需求，完整兑现了最小修改、目标绑定和操作合约三条专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题目描述中明确写道“你需要帮助管理员决定最小的总修改代价，使得存在一个序列 A'，能够同时满足所有 Q 个住户的需求”，并定义了编辑操作为“每次操作可以选择一个服务点，将其服务时长增加 1 或减少 1，每次操作的代价为 1”，目标源自正向结果的前缀和阈值 T。样例解释亦展示了通过最小代价方案满足所有需求的过程，落实了最小性责任。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "new_output_object_missing",
+      "reason": "规划结果没有形成新的输出对象或新的输出责任。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "社区服务的完美协调",
+    "description": "在一个社区中，有 N 个服务点按固定顺序排成一排，每个服务点 i 的当前服务时长记为 A_i。为了满足住户的日常需求，社区管理员可以对服务点进行一次性的时长调整：每次操作可以选择一个服务点，将其服务时长增加 1 或减少 1，每次操作的代价为 1。最终得到一个新的服务时长序列 A'。\n\n现在有 Q 位住户提出了自己的服务需求。每个需求由三个参数 (p, k, T) 描述：\n- p 是一个质数，住户特别关注服务时长能被 p 整除的服务点。\n- k 表示住户希望在排班表的前 k 个服务点中获得服务。\n- T 是住户期望前 k 个服务点的时长总和不小于 T。\n\n管理员可以利用一个特殊的重排规则：对于任意一个需求 (p, k, T)，在序列 A' 中，所有时长能被 p 整除的服务点被视为“灵活服务点”，它们可以在 A' 中任意交换位置；而其他服务点的位置固定不变。注意，这个重排操作是虚拟的——每个需求独立进行重排，不会真正改变序列 A'，但所有需求共享同一个最终序列 A'。\n\n你需要帮助管理员决定最小的总修改代价，使得存在一个序列 A'，能够同时满足所有 Q 个住户的需求。如果不可能，请输出 -1。",
+    "input_format": "第一行包含一个整数 T，表示测试数据的组数。\n每组测试数据按以下格式给出：\n第一行一个整数 N，表示服务点的数量。\n第二行包含 N 个整数 A_1, A_2, ..., A_N，表示初始服务时长。\n第三行一个整数 Q，表示需求的数量。\n接下来 Q 行，每行三个整数 p, k, T，描述一个需求。p 保证是质数。",
+    "output_format": "对于每组测试数据，输出一行一个整数，表示最小的总修改代价。如果不存在满足所有需求的序列 A'，输出 -1。",
+    "constraints": [
+      "1 ≤ T ≤ 100",
+      "1 ≤ N ≤ 10^5",
+      "1 ≤ A_i ≤ 10^5",
+      "1 ≤ Q ≤ 10^5",
+      "2 ≤ p ≤ 10^5，且 p 为质数",
+      "1 ≤ k ≤ N",
+      "1 ≤ T ≤ 10^12",
+      "单个测试数据中 N 与 Q 的总和不超过 2×10^5",
+      "所有测试数据中 N 与 Q 的总和不超过 2×10^5",
+      "时间限制：2 秒",
+      "空间限制：512 MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n5\n1 2 3 4 5\n1\n2 3 8",
+        "output": "0",
+        "explanation": "初始序列为 [1,2,3,4,5]。唯一的需求是 p=2, k=3, T=8。\n在 A'=A 时，能被 2 整除的元素是 2 和 4，分别位于位置 2 和位置 4。在前 3 个位置（索引 1,2,3）中，位置 1 固定为 1，位置 3 固定为 3，位置 2 是灵活位置。我们可以把最大的灵活元素 4 放到位置 2，得到 [1,4,3,2,5]，前 3 项之和为 1+4+3=8，恰好达到目标。因此不需要任何修改，代价为 0。"
+      },
+      {
+        "input": "1\n4\n1 2 3 4\n2\n2 2 5\n3 3 8",
+        "output": "2",
+        "explanation": "初始序列为 [1,2,3,4]。需求 1：p=2, k=2, T=5；需求 2：p=3, k=3, T=8。\n首先考虑不修改：\n- 需求 1：灵活元素为 {2,4}，固定元素 {1,3}。前 2 位置中，位置 1 固定为 1，位置 2 灵活。将 4 移到位置 2 得到 [1,4,3,2]，前 2 和为 5，满足。\n- 需求 2：灵活元素为 {3}，固定元素 {1,2,4}。前 3 位置中，位置 1,2 固定为 1,2，位置 3 灵活为 3，前 3 和为 6 < 8。不满足，必须修改。\n若将位置 3 的值由 3 改为 5，则 A'=[1,2,5,4]，代价=|5-3|=2。\n- 对于需求 1，灵活元素为 {2,4}（2 和 4 均能被 2 整除），固定为 1,5。前 2 和=1+4=5，满足。\n- 对于需求 2，p=3：检查 A' 中是否有能被 3 整除的元素，2,4,5,1 均不能被 3 整除，因此没有灵活元素，序列不可重排，保持 [1,2,5,4]。前 3 项和为 1+2+5=8，满足。\n可以验证，任何总代价为 1 的方案都无法同时满足两个需求（若只修改一点，需求 2 的前 3 项最大只能为 7）。故最小代价为 2。"
+      },
+      {
+        "input": "1\n3\n2 3 5\n1\n2 2 10",
+        "output": "5",
+        "explanation": "初始序列为 [2,3,5]，需求 p=2, k=2, T=10。初始时只有 2 是灵活点，前 2 项最大和为 2+3=5（不能重排，因为位置 2 固定），无法达到 10。修改方案：将位置 1 的 2 改为 3，位置 2 的 3 改为 7，得到 A'=[3,7,5]，代价=|3-2|+|7-3|=5。此时所有元素均不能被 2 整除，因此没有灵活点，序列不可重排，前 2 项和恰好为 3+7=10，满足需求。可以证明任何代价 ≤4 的修改都无法使前 2 项和达到 10（例如修改一处最大只能得到 2+9=11 或 1+9=10，但代价至少 5）。故最小代价为 5。"
+      }
+    ],
+    "notes": "服务时长 A'_i 可以超出原有范围（即修改后的值可以是任意整数），只由修改代价定义绝对值差。所有需求的 p 均为质数。在题目给定的数据中，一定存在可行解，因此你不需要特别处理无解情况；但为了完整性，如果确实不存在满足要求的序列，请输出 -1。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_13e5c69e5656_community_services_20260529_030835",
+    "round_index": 5,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 2,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656_community_services_20260529_030835_round4.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656_community_services_20260529_030835_round4_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "pass",
+      "generated_status": "ok",
+      "quality_score": 86.0,
+      "divergence_score": 76.0,
+      "non_full_dimensions": [
+        {
+          "dimension": "cross_section_consistency",
+          "score": 3.0,
+          "rationale": "样例 2 的解释中出现与规则矛盾：修改后序列 [1,2,5,4] 中，p=3 的需求没有任何能被 3 整除的元素，但解释却称“灵活元素为 {5}”。这直接违反了重排规则的定义，导致 description 与 samples 之间不一致。",
+          "evidence_refs": [
+            "snapshots.generated_problem.samples[1].explanation",
+            "snapshots.new_schema.core_constraints.reorder_rule"
+          ]
+        },
+        {
+          "dimension": "sample_quality",
+          "score": 3.0,
+          "rationale": "样例数量为 3，覆盖了无修改、单需求和多需求等基本情况，格式正确。但样例 2 的解释存在错误，可能严重误导读者对规则的理解，降低了样例的教学价值。",
+          "evidence_refs": [
+            "snapshots.generated_problem.samples",
+            "snapshots.generated_problem.samples[1].explanation"
+          ]
+        }
+      ],
+      "suggested_revisions": [
+        "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。",
+        "增加一个包含不可移动服务点的样例，以更全面地覆盖重排规则的各种情况",
+        "可考虑在约束中直接写明取模的质数 1,000,000,007，而仅靠输出格式和 notes 提醒，以增强一致性",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "优先改写核心任务定义，而不是继续替换故事背景。",
+        "增加一个样例，其数据使得不存在可行序列 A'，输出 -1，并在解释中说明为什么无解。",
+        "增加一个输出 -1 的样例，演示无解情况（例如需求 T 过大，即使将所有灵活点最大化也无法达到）。",
+        "修改解释，指出序列 [1,2,5,4] 中没有能被 3 整除的元素，因此该需求下序列不可重排，但前 3 项和 1+2+5=8 恰好满足目标；或者改用其他能保持灵活元素的修改方案（例如将服务点 1 改为 3）并重新撰写解释。",
+        "修正样例 2 的解释，确保灵活元素的认定符合 p=3 的质数规则。",
+        "可考虑在 notes 中明确 0 或负数能否被质数整除，以避免歧义。"
+      ],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例未覆盖不可移动点的情况",
+          "detail": "提供的两个样例中，所有服务点的服务时长都能被 p 整除，导致所有点都是灵活服务点。没有展示当存在不可移动点时，部分灵活点重排与固定点相对顺序保持不变的场景，可能导致选手对规则的理解不够全面。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "新题将原题的最大化前k项和改为计数达到该最大和的方案数，但核心约束（仅可重排被质数p整除的元素）和最优性结构（cnt个最大灵活元素放入前k个灵活位置）完全一致。原题的预处理、二分查找cnt等步骤可直接复用，计数只需额外计算cnt! * (total-cnt)!并取模，算法迁移风险极高。主题从餐厅换为社区服务，但任务结构、输入输出格式高度对应，表层换皮明显。",
+          "evidence_refs": [
+            "original_schema.core_constraints.reorderable_set_condition",
+            "new_schema.core_constraints.reorderable_set_condition",
+            "new_schema.objective",
+            "review_context.algorithmic_delta_claim",
+            "hard_checks.schema_distance_threshold"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例未包含无解情况",
+          "detail": "题面说明当无法满足所有需求时应输出 -1，但提供的两个样例均返回非负整数（0 和 2），缺少 -1 的样例，可能导致参赛者无法直观理解无解的场景或验证边界条件。",
+          "evidence_refs": [
+            "snapshots.generated_problem.samples",
+            "snapshots.generated_problem.notes"
+          ],
+          "fix_hint": "增加一个样例，其数据使得不存在可行序列 A'，输出 -1，并在解释中说明为什么无解。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例 2 解释中的灵活元素认定错误",
+          "detail": "样例 2 的第二个需求 p=3，修改后序列为 [1,2,5,4]。其中没有任何元素能被 3 整除，因此不存在灵活元素，但解释中却声称“灵活元素为 {5}”，与重排规则矛盾。",
+          "evidence_refs": [
+            "snapshots.generated_problem.samples[1].explanation"
+          ],
+          "fix_hint": "修改解释，指出序列 [1,2,5,4] 中没有能被 3 整除的元素，因此该需求下序列不可重排，但前 3 项和 1+2+5=8 恰好满足目标；或者改用其他能保持灵活元素的修改方案（例如将服务点 1 改为 3）并重新撰写解释。"
+        }
+      ],
+      "strengths_to_keep": [
+        "主题映射自然，将原题包装为社区服务场景，易于理解",
+        "规则描述准确，对灵活点、重排限制、独立查询、去重等价类等关键点定义清晰",
+        "样例解释非常详细，逐步列出了所有符合条件的最终序列，有助于验证问题和理解去重规则",
+        "特殊约束（如 p 为质数、答案取模）在题面中多处强调，不易忽略",
+        "new_schema 中的核心约束与目标完全转化为清晰的题面描述，尤其是计数要求与元素区分性定义明确。",
+        "样例设计典型，解释充分，覆盖了主要边界情况。",
+        "题面结构规范，输入输出格式及约束详尽，便于选手理解和 OJ 判题。",
+        "题面描述完整且准确，操作规则、重排机制、修改代价定义清晰无歧义。",
+        "输入输出格式与约束完全对齐 new_schema，多测试用例处理明确。",
+        "样例解释详细，逐步展示推理过程，有助于理解复杂规则。",
+        "注释部分澄清了 A'_i 可超出原始范围，避免误解。",
+        "任务变体忠实落地，编辑、重排和联合可行性描述清晰。",
+        "约束和边界条件明确，包括多测试数据的总和限制以及修改后值域自由。",
+        "选题主题温馨，贴近日常协作，便于选手代入。"
+      ],
+      "previous_generated_problem": {
+        "title": "社区服务的完美协调",
+        "description": "在一个社区中，有 N 个服务点按固定顺序排成一排，每个服务点 i 的当前服务时长记为 A_i。为了满足住户的日常需求，社区管理员可以对服务点进行一次性的时长调整：每次操作可以选择一个服务点，将其服务时长增加 1 或减少 1，每次操作的代价为 1。最终得到一个新的服务时长序列 A'。\n\n现在有 Q 位住户提出了自己的服务需求。每个需求由三个参数 (p, k, T) 描述：\n- p 是一个质数，住户特别关注服务时长能被 p 整除的服务点。\n- k 表示住户希望在排班表的前 k 个服务点中获得服务。\n- T 是住户期望前 k 个服务点的时长总和不小于 T。\n\n管理员可以利用一个特殊的重排规则：对于任意一个需求 (p, k, T)，在序列 A' 中，所有时长能被 p 整除的服务点被视为“灵活服务点”，它们可以在 A' 中任意交换位置；而其他服务点的位置固定不变。注意，这个重排操作是虚拟的——每个需求独立进行重排，不会真正改变序列 A'，但所有需求共享同一个最终序列 A'。\n\n你需要帮助管理员决定最小的总修改代价，使得存在一个序列 A'，能够同时满足所有 Q 个住户的需求。如果不可能，请输出 -1。",
+        "input_format": "第一行包含一个整数 T，表示测试数据的组数。\n每组测试数据按以下格式给出：\n第一行一个整数 N，表示服务点的数量。\n第二行包含 N 个整数 A_1, A_2, ..., A_N，表示初始服务时长。\n第三行一个整数 Q，表示需求的数量。\n接下来 Q 行，每行三个整数 p, k, T，描述一个需求。p 保证是质数。",
+        "output_format": "对于每组测试数据，输出一行一个整数，表示最小的总修改代价。如果不存在满足所有需求的序列 A'，输出 -1。",
+        "constraints": [
+          "1 ≤ T ≤ 100",
+          "1 ≤ N ≤ 10^5",
+          "1 ≤ A_i ≤ 10^5",
+          "1 ≤ Q ≤ 10^5",
+          "2 ≤ p ≤ 10^5，且 p 为质数",
+          "1 ≤ k ≤ N",
+          "1 ≤ T ≤ 10^12",
+          "单个测试数据中 N 与 Q 的总和不超过 2×10^5",
+          "所有测试数据中 N 与 Q 的总和不超过 2×10^5",
+          "时间限制：2 秒",
+          "空间限制：512 MB"
+        ],
+        "samples": [
+          {
+            "input": "1\n5\n1 2 3 4 5\n1\n2 3 8",
+            "output": "0",
+            "explanation": "初始序列为 [1,2,3,4,5]。唯一的需求是 p=2, k=3, T=8。\n在 A' = A 时，能被 2 整除的元素是 2 和 4，分别位于位置 2 和位置 4。在前 3 个位置（索引 1,2,3）中，位置 1 固定为 1，位置 3 固定为 3，位置 2 是灵活位置。我们可以把最大的灵活元素 4 放到位置 2，得到 [1,4,3,2,5]，前 3 项之和为 1+4+3=8，恰好达到目标。因此不需要任何修改，最小代价为 0。"
+          },
+          {
+            "input": "1\n4\n1 2 3 4\n2\n2 2 5\n3 3 8",
+            "output": "2",
+            "explanation": "初始序列为 [1,2,3,4]。有两个需求：\n需求 1：p=2, k=2, T=5。\n需求 2：p=3, k=3, T=8。\n首先考虑不修改的情况：\n- 对于需求 1，灵活元素为 {2,4}，固定元素为 {1,3}。前 2 个位置中，位置 1 固定为 1，位置 2 是灵活位置。将 4 移到位置 2 可得 [1,4,3,2]，前 2 和为 5，满足 T=5。\n- 对于需求 2，灵活元素为 {3}，固定元素为 {1,2,4}。前 3 个位置中，位置 1、2 固定为 1、2，位置 3 灵活为 3，前 3 和为 1+2+3=6，小于 T=8。因此必须修改。\n若只增加服务点 3 的时长 1 单位，序列变为 [1,2,4,4]，需求 2 的前 3 和变为 1+2+4=7，仍不足；若增加 2 单位至 5，序列变为 [1,2,5,4]。此时：\n- 需求 2：灵活元素为 {5}，固定元素不变，前 3 和 = 1+2+5=8，满足。\n- 需求 1：灵活元素为 {2,4}，固定元素为 {1,5}，前 2 和 = 1+4=5，依然满足。\n总修改代价为 |5-3|+0 = 2。可以证明不存在代价更小的方案（代价为 1 时，需求 2 的目标无法达到）。故最小代价为 2。"
+          },
+          {
+            "input": "1\n3\n2 3 5\n1\n2 2 10",
+            "output": "5",
+            "explanation": "初始序列为 [2,3,5]，唯一需求为 p=2, k=2, T=10。\n初始时，只有服务点 1 的时长 2 能被 2 整除，是灵活点；其余两个点均为固定点。\n修改后，前两项的和必须至少为 10。考虑几种可能的修改方案：\n- 将服务点 2 从 3 增加 5 单位到 8，此时 A' = [2,8,5]，灵活点仍为 2，固定点为 8 和 5。前两项之和为 2+8=10，满足需求。代价 = 5。\n- 将服务点 1 从 2 增加 1 单位到 3，服务点 2 从 3 增加 4 单位到 7，此时 A' = [3,7,5]。注意，3 和 7 都不能被 2 整除，因此没有灵活点，序列不可重排，但前两项之和为 3+7=10，同样满足。代价 = 1+4=5。\n- 可以验证，若总代价 ≤4，无论如何修改，前两项之和最大只能为 9（例如将服务点 2 改为 7，服务点 1 保持 2，和为 9），均无法达到 10。因此最小代价为 5。"
+          }
+        ],
+        "notes": "如果不存在满足所有需求的序列 A'，输出 -1。\n每个需求的 p 保证为质数。\n重排操作仅针对单个需求独立进行，不影响最终序列 A'。\n服务时长始终为正整数，但 A'_i 可以小于 1 或大于 10^5，只需保证修改代价定义。\n理论上，由于 A'_i 可以任意增大，总存在可行解，但为完整性保留 -1 输出，实际数据中可能出现不可能的情况（例如需求之间不可调和的矛盾）。",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": ""
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 97.0,
+            "divergence_score": 64.1,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例未覆盖不可移动点的情况",
+                "detail": "提供的两个样例中，所有服务点的服务时长都能被 p 整除，导致所有点都是灵活服务点。没有展示当存在不可移动点时，部分灵活点重排与固定点相对顺序保持不变的场景，可能导致选手对规则的理解不够全面。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。",
+              "增加一个包含不可移动服务点的样例，以更全面地覆盖重排规则的各种情况",
+              "可考虑在约束中直接写明取模的质数 1,000,000,007，而仅靠输出格式和 notes 提醒，以增强一致性"
+            ],
+            "strengths_to_keep": [
+              "主题映射自然，将原题包装为社区服务场景，易于理解",
+              "规则描述准确，对灵活点、重排限制、独立查询、去重等价类等关键点定义清晰",
+              "样例解释非常详细，逐步列出了所有符合条件的最终序列，有助于验证问题和理解去重规则",
+              "特殊约束（如 p 为质数、答案取模）在题面中多处强调，不易忽略"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 36.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "新题将原题的最大化前k项和改为计数达到该最大和的方案数，但核心约束（仅可重排被质数p整除的元素）和最优性结构（cnt个最大灵活元素放入前k个灵活位置）完全一致。原题的预处理、二分查找cnt等步骤可直接复用，计数只需额外计算cnt! * (total-cnt)!并取模，算法迁移风险极高。主题从餐厅换为社区服务，但任务结构、输入输出格式高度对应，表层换皮明显。",
+                "evidence_refs": [
+                  "original_schema.core_constraints.reorderable_set_condition",
+                  "new_schema.core_constraints.reorderable_set_condition",
+                  "new_schema.objective",
+                  "review_context.algorithmic_delta_claim",
+                  "hard_checks.schema_distance_threshold"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "new_schema 中的核心约束与目标完全转化为清晰的题面描述，尤其是计数要求与元素区分性定义明确。",
+              "样例设计典型，解释充分，覆盖了主要边界情况。",
+              "题面结构规范，输入输出格式及约束详尽，便于选手理解和 OJ 判题。"
+            ]
+          }
+        },
+        {
+          "round_index": 3,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 3,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 97.0,
+            "divergence_score": 74.5,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例未包含无解情况",
+                "detail": "题面说明当无法满足所有需求时应输出 -1，但提供的两个样例均返回非负整数（0 和 2），缺少 -1 的样例，可能导致参赛者无法直观理解无解的场景或验证边界条件。",
+                "evidence_refs": [
+                  "snapshots.generated_problem.samples",
+                  "snapshots.generated_problem.notes"
+                ],
+                "fix_hint": "增加一个样例，其数据使得不存在可行序列 A'，输出 -1，并在解释中说明为什么无解。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加一个样例，其数据使得不存在可行序列 A'，输出 -1，并在解释中说明为什么无解。",
+              "增加一个输出 -1 的样例，演示无解情况（例如需求 T 过大，即使将所有灵活点最大化也无法达到）。"
+            ],
+            "strengths_to_keep": [
+              "题面描述完整且准确，操作规则、重排机制、修改代价定义清晰无歧义。",
+              "输入输出格式与约束完全对齐 new_schema，多测试用例处理明确。",
+              "样例解释详细，逐步展示推理过程，有助于理解复杂规则。",
+              "注释部分澄清了 A'_i 可超出原始范围，避免误解。"
+            ]
+          }
+        },
+        {
+          "round_index": 4,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 4,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 86.0,
+            "divergence_score": 76.0,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例 2 解释中的灵活元素认定错误",
+                "detail": "样例 2 的第二个需求 p=3，修改后序列为 [1,2,5,4]。其中没有任何元素能被 3 整除，因此不存在灵活元素，但解释中却声称“灵活元素为 {5}”，与重排规则矛盾。",
+                "evidence_refs": [
+                  "snapshots.generated_problem.samples[1].explanation"
+                ],
+                "fix_hint": "修改解释，指出序列 [1,2,5,4] 中没有能被 3 整除的元素，因此该需求下序列不可重排，但前 3 项和 1+2+5=8 恰好满足目标；或者改用其他能保持灵活元素的修改方案（例如将服务点 1 改为 3）并重新撰写解释。"
+              }
+            ],
+            "suggested_revisions": [
+              "修改解释，指出序列 [1,2,5,4] 中没有能被 3 整除的元素，因此该需求下序列不可重排，但前 3 项和 1+2+5=8 恰好满足目标；或者改用其他能保持灵活元素的修改方案（例如将服务点 1 改为 3）并重新撰写解释。",
+              "修正样例 2 的解释，确保灵活元素的认定符合 p=3 的质数规则。",
+              "可考虑在 notes 中明确 0 或负数能否被质数整除，以避免歧义。"
+            ],
+            "strengths_to_keep": [
+              "任务变体忠实落地，编辑、重排和联合可行性描述清晰。",
+              "约束和边界条件明确，包括多测试数据的总和限制以及修改后值域自由。",
+              "选题主题温馨，贴近日常协作，便于选手代入。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 4,
+        "latest_round_index": 4,
+        "latest_iteration_phase": "full_score_polish",
+        "latest_overall_status": "pass",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 86.0,
+        "latest_divergence_score": 76.0,
+        "suggested_revisions": [
+          "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。",
+          "增加一个包含不可移动服务点的样例，以更全面地覆盖重排规则的各种情况",
+          "可考虑在约束中直接写明取模的质数 1,000,000,007，而仅靠输出格式和 notes 提醒，以增强一致性",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "优先改写核心任务定义，而不是继续替换故事背景。",
+          "增加一个样例，其数据使得不存在可行序列 A'，输出 -1，并在解释中说明为什么无解。",
+          "增加一个输出 -1 的样例，演示无解情况（例如需求 T 过大，即使将所有灵活点最大化也无法达到）。",
+          "修改解释，指出序列 [1,2,5,4] 中没有能被 3 整除的元素，因此该需求下序列不可重排，但前 3 项和 1+2+5=8 恰好满足目标；或者改用其他能保持灵活元素的修改方案（例如将服务点 1 改为 3）并重新撰写解释。",
+          "修正样例 2 的解释，确保灵活元素的认定符合 p=3 的质数规则。",
+          "可考虑在 notes 中明确 0 或负数能否被质数整除，以避免歧义。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例未覆盖不可移动点的情况",
+            "detail": "提供的两个样例中，所有服务点的服务时长都能被 p 整除，导致所有点都是灵活服务点。没有展示当存在不可移动点时，部分灵活点重排与固定点相对顺序保持不变的场景，可能导致选手对规则的理解不够全面。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "增加一个样例，其中 p 不能整除部分服务时长，展示只有部分服务点可重排，且固定点维持原来顺序，并给出相应的计数计算过程。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "新题将原题的最大化前k项和改为计数达到该最大和的方案数，但核心约束（仅可重排被质数p整除的元素）和最优性结构（cnt个最大灵活元素放入前k个灵活位置）完全一致。原题的预处理、二分查找cnt等步骤可直接复用，计数只需额外计算cnt! * (total-cnt)!并取模，算法迁移风险极高。主题从餐厅换为社区服务，但任务结构、输入输出格式高度对应，表层换皮明显。",
+            "evidence_refs": [
+              "original_schema.core_constraints.reorderable_set_condition",
+              "new_schema.core_constraints.reorderable_set_condition",
+              "new_schema.objective",
+              "review_context.algorithmic_delta_claim",
+              "hard_checks.schema_distance_threshold"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例未包含无解情况",
+            "detail": "题面说明当无法满足所有需求时应输出 -1，但提供的两个样例均返回非负整数（0 和 2），缺少 -1 的样例，可能导致参赛者无法直观理解无解的场景或验证边界条件。",
+            "evidence_refs": [
+              "snapshots.generated_problem.samples",
+              "snapshots.generated_problem.notes"
+            ],
+            "fix_hint": "增加一个样例，其数据使得不存在可行序列 A'，输出 -1，并在解释中说明为什么无解。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例 2 解释中的灵活元素认定错误",
+            "detail": "样例 2 的第二个需求 p=3，修改后序列为 [1,2,5,4]。其中没有任何元素能被 3 整除，因此不存在灵活元素，但解释中却声称“灵活元素为 {5}”，与重排规则矛盾。",
+            "evidence_refs": [
+              "snapshots.generated_problem.samples[1].explanation"
+            ],
+            "fix_hint": "修改解释，指出序列 [1,2,5,4] 中没有能被 3 整除的元素，因此该需求下序列不可重排，但前 3 项和 1+2+5=8 恰好满足目标；或者改用其他能保持灵活元素的修改方案（例如将服务点 1 改为 3）并重新撰写解释。"
+          }
+        ],
+        "strengths_to_keep": [
+          "主题映射自然，将原题包装为社区服务场景，易于理解",
+          "规则描述准确，对灵活点、重排限制、独立查询、去重等价类等关键点定义清晰",
+          "样例解释非常详细，逐步列出了所有符合条件的最终序列，有助于验证问题和理解去重规则",
+          "特殊约束（如 p 为质数、答案取模）在题面中多处强调，不易忽略",
+          "new_schema 中的核心约束与目标完全转化为清晰的题面描述，尤其是计数要求与元素区分性定义明确。",
+          "样例设计典型，解释充分，覆盖了主要边界情况。",
+          "题面结构规范，输入输出格式及约束详尽，便于选手理解和 OJ 判题。",
+          "题面描述完整且准确，操作规则、重排机制、修改代价定义清晰无歧义。",
+          "输入输出格式与约束完全对齐 new_schema，多测试用例处理明确。",
+          "样例解释详细，逐步展示推理过程，有助于理解复杂规则。",
+          "注释部分澄清了 A'_i 可超出原始范围，避免误解。",
+          "任务变体忠实落地，编辑、重排和联合可行性描述清晰。",
+          "约束和边界条件明确，包括多测试数据的总和限制以及修改后值域自由。",
+          "选题主题温馨，贴近日常协作，便于选手代入。"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

@@ -1,0 +1,1109 @@
+{
+  "problem_id": "taco_community_count",
+  "source_problem_ids": [
+    "taco_codechef_dadaf7f5b77f"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_dadaf7f5b77f",
+      "OPERATE",
+      "codechef",
+      "Given $K$ arrays of length $N$ where the elements are bounded in the range $[L, R]$. The Function value of an array is defined as the sum of all elements present in it. In one move you can change at most $1$ element f...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "O‑轴从最小化操作次数变为计数满足条件的配置数；C‑轴新增操作预算上限B并重新定义‘不同解’的去重规则，同时约束了解空间的可分解性；V‑轴将原先仅用于存在性判断的区间单调性替换为支撑计数分解的配置数生成与合并不变量。",
+    "summary": "引入操作预算B作为输入，将单一的最优值输出替换为模M的计数结果；核心约束中增加了操作次数上限和去重定义；不变量转为描述每个数组修改x次后能达到各和值的配置数目，从而支撑整体计数。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3758,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3758,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4769,
+      "O": 0.5787,
+      "V": 0.4401
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4769,
+      "objective_type_distance": 0.6796,
+      "objective_text_distance": 0.4273,
+      "invariant_match_distance": 0.4401
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_configurations_with_budget",
+    "description": "Count the number of distinct final element value configurations that can be obtained after at most B operations such that all array sums are equal, modulo 1e9+7.",
+    "modulus": 1000000007,
+    "target": "number_of_configurations_mod_M",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "上一次生成的帕累托前沿题被判定为换皮，因为核心算法仅需在原贪心上做简单循环，没有实质改变主求解责任。canonical_witness要求输出规范构造序列（如字典序最小的操作方案），这迫使题目从‘求最小操作数’上升到‘寻找并验证规范解’，必须重新设计状态空间和转移逻辑，从而打破原解法的直接迁移。相比之下，existence_to_counting存在去重规则难以清晰定义的隐患，且容易退化为区间内整点计数，无法保证足够差异；inverse_design在上次尝试中已暴露出高度换皮风险，故不优先采纳。；创新度判断：该规则把输出义务从单一的最优数值（最小操作数）变更为可校验的规范方案（如字典序最小的修改序列）。原题核心只需判断可行性与区间单调性，新题要求解法在满足全局相等目标的同时，按照预定义的规范顺序产出构造，这会将状态演化、验证责任和顺序约束深度耦合，彻底离开原题的贪心–区间轨道。；难度判断：主求解责任从‘寻找最小j’变为‘在满足最小操作数的前提下，构造并证明规范解’，要求算法额外处理顺序约束，可能引入动态规划、优先队列或回溯剪枝等新机制，原贪心方法无法直接给出字典序最优方案，难度显著提高。；风险判断：主要风险在于规范定义若仅停留在输出后处理（例如先任意构造再排序），则仍会退化为浅改。通过启用canonical_order_pressure等helper，强制规范顺序影响核心约束与状态转移，可将风险控制在可接受范围内。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_community_count",
+    "source": "generated",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case_count",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 5
+          },
+          "properties": {}
+        },
+        {
+          "role": "test_case_params",
+          "type": "tuple",
+          "length": {
+            "min": 5,
+            "max": 5
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "K": {
+              "min": 1,
+              "max": 100000
+            },
+            "N": {
+              "min": 1,
+              "max": 100000
+            },
+            "L": {
+              "min": 1,
+              "max": 1000000000
+            },
+            "R": {
+              "min": 1,
+              "max": 1000000000,
+              "gte": "L"
+            },
+            "B": {
+              "min": 1,
+              "max": "min(N*K, 1000)"
+            }
+          },
+          "description": "K: number of communities, N: number of residents per community, L,R: value bounds, B: operation budget upper bound"
+        },
+        {
+          "role": "arrays",
+          "type": "array",
+          "length": {
+            "min": "K",
+            "max": "K"
+          },
+          "value_range": {
+            "min": "L",
+            "max": "R"
+          },
+          "properties": {
+            "elements_per_array": "N",
+            "total_elements": "K*N <= 100000"
+          },
+          "description": "K arrays each of length N, containing initial resident demand values"
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "element_value_range",
+          "description": "Initial and final values must be integers in [L,R].",
+          "formal": "∀ array i, ∀ position j, a_{i,j} ∈ [L,R] before and after operations"
+        },
+        {
+          "name": "per_move_single_change",
+          "description": "In one operation, at most one element across all arrays can be changed to any integer in [L,R].",
+          "formal": "Each operation changes exactly one element's value; total count of changed elements across all arrays ≤ B."
+        },
+        {
+          "name": "final_sums_equal",
+          "description": "After operations, the sum of elements in each array must be equal.",
+          "formal": "∃ S such that ∀ array i, ∑_{j} final_{i,j} = S"
+        },
+        {
+          "name": "configuration_distinctness",
+          "description": "Two final configurations are considered distinct if there exists at least one element whose final value differs. The order of operations does not matter; only the resulting element values define a configuration.",
+          "formal": "Configuration ≠ Configuration' ⇔ ∃ i,j: final_{i,j} ≠ final'_{i,j}"
+        },
+        {
+          "name": "operation_budget_limit",
+          "description": "Total number of elements changed across all arrays must be ≤ B.",
+          "formal": "∑_{i} (#elements changed in array i) ≤ B"
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_configurations_with_budget",
+      "description": "Count the number of distinct final element value configurations that can be obtained after at most B operations such that all array sums are equal, modulo 1e9+7.",
+      "modulus": 1000000007,
+      "target": "number_of_configurations_mod_M",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "array_configuration_counts_per_operations",
+          "description": "For each array i, if we change exactly x elements (0 ≤ x ≤ min(N,B)), the resulting possible sum S belongs to the interval [low_i(x), high_i(x)], where low_i(x) = sum_i - (sum of largest x elements) + x*L and high_i(x) = sum_i - (sum of smallest x elements) + x*R. For each such S, the number of distinct configurations of array i with sum S after exactly x element changes is denoted CFG[i][x][S]. This can be computed via combinatorial enumeration or DP over elements, respecting value bounds. The overall answer is the sum over all x_i ≥0 with total ≤ B and equal S of ∏_i CFG[i][x_i][S].",
+          "formal": "∀ array i, define reachable interval [low_i(x), high_i(x)] for x changes; CFG[i][x][S] = |{config_i : after exactly x changes, sum = S}|. Total configurations = ∑_{x_1,...,x_K: ∑x_i ≤ B} ∑_{S} ∏_i CFG[i][x_i][S] where all S equal.",
+          "evidence_source": "derived"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Iterates over number of per-array allowed changes j; computes reachable sum intervals using extreme element replacements; checks if intervals intersect to find smallest feasible j.",
+    "reusable_subroutines": "Sorting each array, computing prefix sums for extreme element selection to calculate interval boundaries. These help compute low_i(x) and high_i(x) in O(K log N) preprocessing.",
+    "new_solver_core": "Compute for each array i and each operation count x (0..B) a representation of the distribution of possible sums and the number of configurations leading to each sum (CFG[i][x][S]). Then combine across arrays using DP over total operations and target sum S, aggregating products modulo M. Complexity O(K * B^2) or better if using convolution optimization.",
+    "new_proof_obligation": "Must prove that the per-array configuration counting (CFG) correctly enumerates all distinct final element value assignments without double counting, and that the combination DP over independent arrays with sum equality and total operation budget constraint correctly yields the total number of global configurations.",
+    "why_direct_reuse_fails": "The seed algorithm only detects the existence of a common sum S for given j, not the number of distinct configurations that achieve it. It does not track the internal element changes within each array, which are essential for counting distinct final states. Hence, it cannot be directly extended to output counts without a fundamentally different combinatorial enumeration approach."
+  },
+  "anti_shallow_rationale": "引入操作预算B作为额外输入，将原题的最小操作次数问题转变为给定预算下的配置计数问题。这不仅改变了输入结构和核心约束，也迫求解策略从简单的区间交集存在性判断转向组合计数与DP聚合。原题解法的核心（循环j检查区间交集）无法转换为计数结果，必须设计全新的配置数生成与合并算法，杜绝了直接换皮的可能。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "必须明确计数的原子单元及其等价关系，以及去重规则，以替换原来的单一最小值目标。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在core_constraints中加入configuration_distinctness约束，定义两个最终配置不同的条件。",
+        "在objective中规定计数对象为满足所有约束的最终元素值配置，而非操作序列。",
+        "在invariant中，将计数单元定义为每个数组在不同修改次数下的可能配置，并去重基于元素值。"
+      ],
+      "innovation_reason": "直接将原题的存在性/最小值目的改写为具有明确定义和去重口径的计数问题，是产生创新性的第一步。",
+      "difficulty_reason": "引入去重规则迫使解法必须保证不重复统计，增加了正确性严格证明的要求。"
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "为使计数可行，必须将解空间按数组和修改次数分解成可独立计算的单元。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束中加入operation_budget_limit，限制总修改次数，促使每个数组的变化量可以独立度量。",
+        "不变量中明确描述每个数组在特定修改次数下的可能和区间与对应配置数CFG[i][x][S]，从而分解解空间。",
+        "整体答案组合为乘积求和的形式写进不变量。"
+      ],
+      "innovation_reason": "将原题的整体一次判定改为先分解后聚合的计数框架，这本质上改变了状态的组织方式，使思路不再与种子题一致。",
+      "difficulty_reason": "状态因子化要求解法能够分别处理每个数组的内部配置，再通过背包/卷积组合，增加了算法设计和实现复杂度。"
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "确保新题的主目标就是计数本身，而不是在原有优化目标基础上附带统计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "目标类型从minimize_value变为count_configurations_with_budget，并指定模数。",
+        "操作预算B被纳入核心约束而非目标，使得计数完全主导解法方向。"
+      ],
+      "innovation_reason": "通过锁定计数为目标，彻底移除了原题最小操作数的优化责任，逼迫算法以计数正确性和去重正确性为首要义务。",
+      "difficulty_reason": "解法必须承担枚举和去重的全部复杂度，不能依靠原判定流程投机取巧。这显著提升了问题的算法和证明难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "seed_properties_met",
+      "selection_reason": "种子题求最小操作数，其最终数组序列构成明确的解对象，且存在自然顺序（数组优先字典序），可定义规范解。要求输出规范解改变了目标（多目标优化）、约束（引入规范顺序）和输出，原解法并非简单回溯即可得到规范方案，需要额外构造与优化，具有足够的算法差异。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题标准解法通过排序和区间交集确定最小修改次数，不涉及具体构造。规则要求输出规范解（如字典序最小最终序列），使新题目标变为最小化操作次数与字典序的联合目标，约束增加规范顺序定义，输出变为构造方案。标准解仅提供修改次数，要实现规范构造需额外算法（如动态规划选择具体修改），核心思路可能仍需区间交集，但增加了显著的构造复杂性。规则要求‘不能让规范顺序进入合法性或最优性定义’，本例中规范顺序作为次要目标进入最优性定义，符合规则。",
+        "feedback": "风险在于规范构造可能被视为在原核心基础上的附加步骤，但选择字典序最小方案需在优化过程中综合考虑，不仅仅是后处理，故认为有足够差异。需确保新题不会退化为先确定j后任意构造。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_lacks_necessary_property",
+      "selection_reason": "原题OPERATE总是有解，不存在“做不到”的情形，从而无法落成可局部检查的阻碍证据，不符合规则要求的“做不到的原因可以用局部证据表示”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中操作最多可以改变所有元素，当j=N时每个数组的和范围覆盖[N*L, N*R]，交集非空，故最小操作数总是存在。标准解法也是寻找最小j，无一例外。因此无法构造局部冲突证据。",
+        "feedback": "规则要求输出方案或冲突证据，但种子题根本没有失败情形，无法产生失败分支，建议更换种子题或调整规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "eligible_by_finite_solution_space_and_clear_dedup",
+      "selection_reason": "原题为最小操作数优化问题，满足单一最优值输入条件；解空间由有限长度的操作序列组成，每一步操作在有限值域内选择，总方案数有限；可明确定义操作序列全序去重规则，等价关系清晰；不变量展示了按数组改变元素个数拆分区间的单调性，为计数单元划分提供了自然基础，因此适合转化为计数题。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema中objective为minimize_value，约束element_value_range限定值域有限，per_move_single_change限定了每一步改变一个元素的离散动作，操作次数由目标最小化确定且该最小值有限（可通过原题算法求得），因此解空间为有限个操作序列的集合；去重可通过定义序列全序相同性实现；invariant中的monotonicity_of_reachable_intervals表明可按每个数组改变元素数目j将解空间分解为可汇总的单元。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题OPERATE是确定性的最小操作数问题，元素值给定，操作由解题者完全控制，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。无法从原题语义中提取合法的扰动模型，强行引入会违反仅凭故事背景硬造对手的红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'Given K arrays of length N where the elements are bounded in the range [L,R]. In one move you can change at most 1 element from all the arrays and the changed value must lie within the range [L, R].' 约束中没有任何顺序或外部干扰，解题者可任意选择改变哪个元素。规则要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但原题不具备。",
+        "feedback": "规则不适用，因为原题没有可被放大的原生扰动来源。建议选择具有内在不确定性的种子题（如在线决策、对抗环境、资源分配中的波动）以利用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题直接求最小操作数，已经是一个极值阈值问题，其可行性单调性被显式利用；将此规则应用于该种子只会产生等价表述，缺乏实质变换。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 minimize_value，目标是最小操作数；core_constraints 中包含 per_move_single_change 和 final_sums_equal；标准解法对 j 从 0 到 N 依次检查可行区域交集，利用单调性直接定位临界阈值，无需额外判定层。",
+        "feedback": "规则要求从判定问题升级为阈值优化，但种子题已经是阈值优化本身。强行套用只会重置为‘给定操作数判定是否可行’再二分，但原题已隐含这一过程，无新约束或证明义务产生。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "postprocessable",
+      "selection_reason": "第二指标最大共同和S直接隐含在原算法每步的可达区间内，前沿点可通过继续循环并记录min(max_sums)获得，不要求改变核心逻辑，属于原答案后处理。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题解法增量维护每个数组允许j次操作后的可达和区间[x[y][0], x[y][1]]，最大共同和S恰为所有数组x[y][1]的最小值，该值已在循环内计算。扩展为帕累托前沿只需不提前break并记录每个j对应的该值，不需重构状态或约束。",
+        "feedback": "种子题缺乏天然必须重构算法的冲突指标，若强行扩展将退化为输出附属统计，不符合helper红线。建议选择存在非平凡耦合第二指标的种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "strong_inverse_target",
+      "selection_reason": "原题的目标是最小操作数，该数值可作为反向设计的目标，要求构造输入或修改方案使得恰好需要给定步数；原题中改变数组元素的操作为自然修改，存在充分的设计自由度，可将求解翻转为驱动设计；核心约束可在新题中保持并围绕目标展开验证。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 为 minimize 类型，输出是操作次数（schema.objective.target='operations'）；core_constraints 定义了元素范围 [L,R] 和每次至多修改一个元素的操作，这些操作可直接作为 edit_operation_contract；invariant 中的单调性可支持目标可达性证明；规则 required_seed_properties 要求原题输出可作为反向目标且存在自然修改操作，种子题均满足。",
+        "feedback": "建议在后续规划中明确目标为恰好达到特定操作数 M，并要求证明不可能用少于 M 次操作达成，以避免简化为纯可行性判定。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题OPERATE的核心求解已经依赖全局耦合：各数组的可达和区间通过操作次数j统一枚举，且要求区间交集存在，这本身就是共享操作限制下的全局可行责任。进一步施加此规则只会改变表述而不会产生实质性算法难度差异。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束包括'每次操作只能改变一个元素'(per_move_single_change)和'最终所有数组和相等'(final_sums_equal)，解法通过枚举每个数组最多改变j个元素时的可达区间并检查交集，该算法已自然捆绑局部单元(数组)于全局一致性条件。规则要求的'共享资源或跨组件依赖'和'全局最优或全局可行责任'已存在于原题中，无需进一步扩展。",
+        "feedback": "种子题并非独立单元求解，而是固有全局耦合题，难以通过此规则生成有意义的差异。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题OPERATE是单人优化问题，目标是最小化操作次数使所有数组和相等，没有天然的对抗语义；转化为双人博弈需要硬造玩家和目标，缺乏原有结构的自然支撑。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'In one move you can change at most 1 element... What is the minimum number of operations required to make the function value of all arrays equal?' 操作选择存在但目的是全局优化，不存在两个玩家轮流行动并追求相反目标的对抗结构。规则negative示例指出“只是把两个玩家名字写进原确定性过程”属于失败转化，本场景类似。",
+        "feedback": "规则要求的博弈化不适用于此种子题，因为核心是最小化操作次数而非对抗决策；强行转化会流于表面叙事替换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "The seed problem already embodies global cover semantics: it requires making all array sums equal by modifying elements, which inherently involves the interaction of multiple local objects (each array's reachable sum interval) under a single global condition. Transforming it via 'local_path_to_global_cover' would merely restate the existing multi-object linkage without introducing a novel cover, cut, or dominance structure distinct from the original constraints.",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "The seed problem's core constraint 'final_sums_equal' directly defines a global consistency over all arrays. The invariant 'monotonicity_of_reachable_intervals' shows that for each array a reachable sum interval exists, and the solution finds the minimal operation count where these intervals intersect, i.e., a global cover. This already matches the rule's target (global cover from local intervals). Hence, the rule risks producing a problem that is essentially the original with superficial changes, violating global redlines.",
+        "feedback": "Consider selecting a seed that genuinely has a single local object (e.g., a single path, interval, or subtree property) to expand into a cover/cut problem, rather than a problem already spanning multiple objects."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "NO_COUNTING_OBJECT",
+      "selection_reason": "原题是最小化操作数的优化问题，没有明确的有限计数对象，不符合规则要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为'minimize_value'，描述为'minimum number of operations to make all array sums equal'；核心约束均为操作限制，无任何计数对象定义。",
+        "feedback": "规则要求种子题为计数题，但OPERATE是优化题，无法定义自然权重或统计量，拒绝放行。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_properties_met",
+      "message": "种子题求最小操作数，其最终数组序列构成明确的解对象，且存在自然顺序（数组优先字典序），可定义规范解。要求输出规范解改变了目标（多目标优化）、约束（引入规范顺序）和输出，原解法并非简单回溯即可得到规范方案，需要额外构造与优化，具有足够的算法差异。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.87,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题标准解法通过排序和区间交集确定最小修改次数，不涉及具体构造。规则要求输出规范解（如字典序最小最终序列），使新题目标变为最小化操作次数与字典序的联合目标，约束增加规范顺序定义，输出变为构造方案。标准解仅提供修改次数，要实现规范构造需额外算法（如动态规划选择具体修改），核心思路可能仍需区间交集，但增加了显著的构造复杂性。规则要求‘不能让规范顺序进入合法性或最优性定义’，本例中规范顺序作为次要目标进入最优性定义，符合规则。",
+        "feedback": "风险在于规范构造可能被视为在原核心基础上的附加步骤，但选择字典序最小方案需在优化过程中综合考虑，不仅仅是后处理，故认为有足够差异。需确保新题不会退化为先确定j后任意构造。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_necessary_property",
+      "message": "原题OPERATE总是有解，不存在“做不到”的情形，从而无法落成可局部检查的阻碍证据，不符合规则要求的“做不到的原因可以用局部证据表示”。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中操作最多可以改变所有元素，当j=N时每个数组的和范围覆盖[N*L, N*R]，交集非空，故最小操作数总是存在。标准解法也是寻找最小j，无一例外。因此无法构造局部冲突证据。",
+        "feedback": "规则要求输出方案或冲突证据，但种子题根本没有失败情形，无法产生失败分支，建议更换种子题或调整规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "eligible_by_finite_solution_space_and_clear_dedup",
+      "message": "原题为最小操作数优化问题，满足单一最优值输入条件；解空间由有限长度的操作序列组成，每一步操作在有限值域内选择，总方案数有限；可明确定义操作序列全序去重规则，等价关系清晰；不变量展示了按数组改变元素个数拆分区间的单调性，为计数单元划分提供了自然基础，因此适合转化为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema中objective为minimize_value，约束element_value_range限定值域有限，per_move_single_change限定了每一步改变一个元素的离散动作，操作次数由目标最小化确定且该最小值有限（可通过原题算法求得），因此解空间为有限个操作序列的集合；去重可通过定义序列全序相同性实现；invariant中的monotonicity_of_reachable_intervals表明可按每个数组改变元素数目j将解空间分解为可汇总的单元。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题OPERATE是确定性的最小操作数问题，元素值给定，操作由解题者完全控制，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。无法从原题语义中提取合法的扰动模型，强行引入会违反仅凭故事背景硬造对手的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'Given K arrays of length N where the elements are bounded in the range [L,R]. In one move you can change at most 1 element from all the arrays and the changed value must lie within the range [L, R].' 约束中没有任何顺序或外部干扰，解题者可任意选择改变哪个元素。规则要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但原题不具备。",
+        "feedback": "规则不适用，因为原题没有可被放大的原生扰动来源。建议选择具有内在不确定性的种子题（如在线决策、对抗环境、资源分配中的波动）以利用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题直接求最小操作数，已经是一个极值阈值问题，其可行性单调性被显式利用；将此规则应用于该种子只会产生等价表述，缺乏实质变换。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 minimize_value，目标是最小操作数；core_constraints 中包含 per_move_single_change 和 final_sums_equal；标准解法对 j 从 0 到 N 依次检查可行区域交集，利用单调性直接定位临界阈值，无需额外判定层。",
+        "feedback": "规则要求从判定问题升级为阈值优化，但种子题已经是阈值优化本身。强行套用只会重置为‘给定操作数判定是否可行’再二分，但原题已隐含这一过程，无新约束或证明义务产生。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "postprocessable",
+      "message": "第二指标最大共同和S直接隐含在原算法每步的可达区间内，前沿点可通过继续循环并记录min(max_sums)获得，不要求改变核心逻辑，属于原答案后处理。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题解法增量维护每个数组允许j次操作后的可达和区间[x[y][0], x[y][1]]，最大共同和S恰为所有数组x[y][1]的最小值，该值已在循环内计算。扩展为帕累托前沿只需不提前break并记录每个j对应的该值，不需重构状态或约束。",
+        "feedback": "种子题缺乏天然必须重构算法的冲突指标，若强行扩展将退化为输出附属统计，不符合helper红线。建议选择存在非平凡耦合第二指标的种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "strong_inverse_target",
+      "message": "原题的目标是最小操作数，该数值可作为反向设计的目标，要求构造输入或修改方案使得恰好需要给定步数；原题中改变数组元素的操作为自然修改，存在充分的设计自由度，可将求解翻转为驱动设计；核心约束可在新题中保持并围绕目标展开验证。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 为 minimize 类型，输出是操作次数（schema.objective.target='operations'）；core_constraints 定义了元素范围 [L,R] 和每次至多修改一个元素的操作，这些操作可直接作为 edit_operation_contract；invariant 中的单调性可支持目标可达性证明；规则 required_seed_properties 要求原题输出可作为反向目标且存在自然修改操作，种子题均满足。",
+        "feedback": "建议在后续规划中明确目标为恰好达到特定操作数 M，并要求证明不可能用少于 M 次操作达成，以避免简化为纯可行性判定。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题OPERATE的核心求解已经依赖全局耦合：各数组的可达和区间通过操作次数j统一枚举，且要求区间交集存在，这本身就是共享操作限制下的全局可行责任。进一步施加此规则只会改变表述而不会产生实质性算法难度差异。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.3,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束包括'每次操作只能改变一个元素'(per_move_single_change)和'最终所有数组和相等'(final_sums_equal)，解法通过枚举每个数组最多改变j个元素时的可达区间并检查交集，该算法已自然捆绑局部单元(数组)于全局一致性条件。规则要求的'共享资源或跨组件依赖'和'全局最优或全局可行责任'已存在于原题中，无需进一步扩展。",
+        "feedback": "种子题并非独立单元求解，而是固有全局耦合题，难以通过此规则生成有意义的差异。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题OPERATE是单人优化问题，目标是最小化操作次数使所有数组和相等，没有天然的对抗语义；转化为双人博弈需要硬造玩家和目标，缺乏原有结构的自然支撑。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'In one move you can change at most 1 element... What is the minimum number of operations required to make the function value of all arrays equal?' 操作选择存在但目的是全局优化，不存在两个玩家轮流行动并追求相反目标的对抗结构。规则negative示例指出“只是把两个玩家名字写进原确定性过程”属于失败转化，本场景类似。",
+        "feedback": "规则要求的博弈化不适用于此种子题，因为核心是最小化操作次数而非对抗决策；强行转化会流于表面叙事替换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "The seed problem already embodies global cover semantics: it requires making all array sums equal by modifying elements, which inherently involves the interaction of multiple local objects (each array's reachable sum interval) under a single global condition. Transforming it via 'local_path_to_global_cover' would merely restate the existing multi-object linkage without introducing a novel cover, cut, or dominance structure distinct from the original constraints.",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "The seed problem's core constraint 'final_sums_equal' directly defines a global consistency over all arrays. The invariant 'monotonicity_of_reachable_intervals' shows that for each array a reachable sum interval exists, and the solution finds the minimal operation count where these intervals intersect, i.e., a global cover. This already matches the rule's target (global cover from local intervals). Hence, the rule risks producing a problem that is essentially the original with superficial changes, violating global redlines.",
+        "feedback": "Consider selecting a seed that genuinely has a single local object (e.g., a single path, interval, or subtree property) to expand into a cover/cut problem, rather than a problem already spanning multiple objects."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "NO_COUNTING_OBJECT",
+      "message": "原题是最小化操作数的优化问题，没有明确的有限计数对象，不符合规则要求的种子属性。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为'minimize_value'，描述为'minimum number of operations to make all array sums equal'；核心约束均为操作限制，无任何计数对象定义。",
+        "feedback": "规则要求种子题为计数题，但OPERATE是优化题，无法定义自然权重或统计量，拒绝放行。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "all_helper_contracts_fulfilled",
+      "message": "规划成功将原最小操作次数问题升级为明确定义计数对象、去重规则、有限性来源和分解单元的计数问题，三个助手合同均已兑现。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "helper counting_unit_definition: 新增约束configuration_distinctness定义不同解，目标改为计数，不变量明确定义计数单元；helper state_factorization: 新增operation_budget_limit分解操作次数，不变量拆分为CFG[i][x][S]并将总和写为乘积求和，改变了原状态组织；helper counting_obligation_lock: 目标类型变为count_configurations_with_budget并指定模数，操作预算B作为约束而非目标，计数主导求解。hard_checks: 去重规则在configuration_distinctness中说明，有限性通过值域和操作次数保证并在目标中取模，分解单元在invariant中明确为每个数组的修改次数和可能和。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "missing_state_factorization_in_problem_text",
+      "message": "题面未实现 helper ‘state_factorization’ 的关键语义：核心约束中没有说明如何把解空间拆分为可汇总的计数单元（如按社区和操作次数分解），导致选手无法从题面理解拆分方式，也未能满足 hard check ‘必须说明按什么单元拆分和汇总’。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "规则 state_factorization 的 prompt_guidance 要求‘让核心约束说明如何拆成计数单元’，而生成的题面核心约束仅包含 element_value_range、per_move_single_change、final_sums_equal、configuration_distinctness、operation_budget_limit，未提及任何拆分结构。同时，new_schema 的 invariant 虽描述了 array_configuration_counts_per_operations 的分解方法，但该内容并未出现在选手可见的题面描述中。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "counting_contract_fulfilled",
+      "message": "题面明确定义了计数对象为最终分配方案，给出了去重口径（任意一户最终值不同即不同方案），说明了取模方式（1e9+7），并通过值域和操作次数上限保证了可数性。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述中声明“我们只关心最终每户家庭被调整成什么需求值...如果至少有一户家庭的最终需求值不同，就视为不同的最终分配方案”，明确了计数单元和去重规则；输出格式要求“输出方案数对1,000,000,007取模”，规定了模数；输入范围L、R、B有限，且约束N×K≤100,000，隐含解空间有限。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "ALL_HELPERS_REALIZED",
+      "message": "题面完整兑现了计数单元定义、状态因子化与计数义务锁三项 helper 的语义合同。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "规则声明 helper 'counting_unit_definition' 要求明确计数对象与去重口径，题面描述中写明“如果至少有一户家庭的最终需求值不同，就视为不同的最终分配方案”，并在备注中重申“最终分配方案由所有家庭的最终需求值完全决定”，满足不同答案判定。helper 'state_factorization' 要求解空间拆成可汇总的计数单元，备注中“操作次数预算 B 可以在不同社区间自由分配，即总共修改的元素个数不超过 B 即可”直接表明了每个社区独立分配操作次数并可汇总，实现了分解与汇总的承诺。helper 'counting_obligation_lock' 要求计数成为主目标，题面目标为“计算可能的最终分配方案数模 1,000,000,007”，且约束中操作预算仅用于限制，无保留原判定过程，锁定计数义务。同时取模方式已给出，满足有限性说明要求。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.87,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "社区需求均衡调整",
+    "description": "某街道共有 K 个社区，每个社区内有 N 户家庭。社区服务中心每天会记录每户家庭的服务需求指数，这些指数都是介于 L 到 R 之间的整数。由于近期各社区的需求总和差异较大，管理员决定对部分家庭的指数进行调整，以使得资源分配更加均衡。\n\n每次调整时，管理员可以从所有社区的全部家庭中选择至多一户，将其需求指数修改为 [L, R] 内的任意整数值。管理员总共最多只能进行 B 次调整。\n\n我们只关心最终每户家庭被调整成什么需求值，而不关心中间的调整顺序。如果至少有一户家庭的最终需求值不同，就视为不同的最终分配方案。\n\n请你帮忙计算，在总共调整次数不超过 B 的前提下，有多少种可能的最终分配方案，能够使得所有社区的需求总和恰好相等。由于答案可能很大，请输出对 1,000,000,007 取模后的结果。",
+    "input_format": "第一行包含一个整数 T，表示测试数据的组数。\n\n接下来依次给出每组测试数据。每组数据的格式如下：\n\n第一行包含五个用空格隔开的整数 K, N, L, R, B，分别表示社区数量、每个社区的居民户数、需求值的下界、需求值的上界以及允许的最大调整次数。\n\n接下来 K 行，每行包含 N 个用空格隔开的整数，按照社区编号顺序给出每户家庭的当前需求指数。",
+    "output_format": "对于每组测试数据，输出一行一个整数，表示符合要求的最终分配方案数对 1,000,000,007 取模的结果。",
+    "constraints": [
+      "1 ≤ T ≤ 5",
+      "1 ≤ K ≤ 100,000",
+      "1 ≤ N ≤ 100,000",
+      "1 ≤ N × K ≤ 100,000",
+      "1 ≤ L ≤ R ≤ 1,000,000,000",
+      "1 ≤ B ≤ min(N × K, 1000)",
+      "所有测试数据的 N × K 总和不超过 100,000",
+      "时间限制：1 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n2 1 1 10 1\n5\n3",
+        "output": "2",
+        "explanation": "该测试数据包含 K=2 个社区，每个社区有 N=1 户家庭。需求值下界 L=1，上界 R=10。允许的最多调整次数 B=1。初始需求值分别为 5 和 3。\n\n由于每个社区只有一户家庭，总和即等于该户的需求值。要让两个社区总和相等，最终两个值必须相同。\n\n在最多 1 次调整的限制下，有两种可行的最终方案：\n- 将第一个社区的值从 5 改为 3，得到最终值 3 和 3；\n- 将第二个社区的值从 3 改为 5，得到最终值 5 和 5。\n注意不能同时修改两户，因为 B=1。此外，修改为其他值（例如 4）会使两个值不同，不满足要求。\n因此方案总数为 2。"
+      },
+      {
+        "input": "1\n1 2 1 3 1\n1 2",
+        "output": "5",
+        "explanation": "该测试数据包含 K=1 个社区，社区内有 N=2 户家庭，需求值范围为 [1,3]，当前需求值为 1 和 2。允许最多调整 1 次。\n\n因为只有一个社区，任何最终需求分配都能使“所有社区总和相等”自动成立。问题变为：在不超过 1 次调整的前提下，可以有多少种不同的最终需求值分配？\n\n初始方案 (1,2) 可以不调整获得。\n若调整第一户，可以将其改为 1, 2 或 3，得到方案 (1,2), (2,2), (3,2)。\n若调整第二户，可以将其改为 1, 2 或 3，得到方案 (1,1), (1,2), (1,3)。\n将这些方案去重后，最终不同的方案为 (1,1), (1,2), (1,3), (2,2), (3,2)，共 5 种。"
+      }
+    ],
+    "notes": "最终分配方案由所有家庭的最终需求值完全决定，只要存在一户的值不同即视为不同方案。答案需要对 1,000,000,007 取模。操作次数预算 B 可以在不同社区间自由分配，即总共修改的元素个数不超过 B 即可。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_dadaf7f5b77f_urban_commute_20260529_185210",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_dadaf7f5b77f\\taco_codechef_dadaf7f5b77f_urban_commute_20260529_185210_round1.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codechef_dadaf7f5b77f\\taco_codechef_dadaf7f5b77f_urban_commute_20260529_185210_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 100.0,
+      "divergence_score": 43.0,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "The new problem shifts the objective from minimizing operations to outputting a Pareto frontier of (budget, maximum common sum), but the core problem of making array sums equal by changing elements within [L,R] is unchanged. The interval computation and monotonicity invariant from the original are reused exactly; the only algorithmic extension is to continue the loop beyond the first feasible j and record strictly increasing S(j). This makes direct solution transfer very easy (add a few lines of code). The input format is identical, and the first sample reuses the exact same data as the original, only expanding the output. The bus-line theme is a superficial relabeling of arrays and elements. Despite moderate schema distance (0.38), the semantic difference is limited and the risk of solution migration is high, confirming the problem is essentially a retheme.",
+          "evidence_refs": [
+            "generated_problem.samples[0].input",
+            "original_problem.description",
+            "review_context.algorithmic_delta_claim",
+            "new_schema.invariant",
+            "hard_checks.schema_distance_threshold",
+            "distance_breakdown.axis_scores"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "suggested_revisions": [
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "strengths_to_keep": [
+        "Flawless mapping from new_schema to a clear and self-contained problem statement.",
+        "Pareto frontier objective is precisely defined, with S(-1)=0 ensuring consistent output even for j=0.",
+        "Samples with detailed explanations effectively illustrate the trade‑off logic.",
+        "Constraints (including N×K ≤ 1e5 and time/memory) are realistic and well-specified."
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 43.0,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "The new problem shifts the objective from minimizing operations to outputting a Pareto frontier of (budget, maximum common sum), but the core problem of making array sums equal by changing elements within [L,R] is unchanged. The interval computation and monotonicity invariant from the original are reused exactly; the only algorithmic extension is to continue the loop beyond the first feasible j and record strictly increasing S(j). This makes direct solution transfer very easy (add a few lines of code). The input format is identical, and the first sample reuses the exact same data as the original, only expanding the output. The bus-line theme is a superficial relabeling of arrays and elements. Despite moderate schema distance (0.38), the semantic difference is limited and the risk of solution migration is high, confirming the problem is essentially a retheme.",
+                "evidence_refs": [
+                  "generated_problem.samples[0].input",
+                  "original_problem.description",
+                  "review_context.algorithmic_delta_claim",
+                  "new_schema.invariant",
+                  "hard_checks.schema_distance_threshold",
+                  "distance_breakdown.axis_scores"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "Flawless mapping from new_schema to a clear and self-contained problem statement.",
+              "Pareto frontier objective is precisely defined, with S(-1)=0 ensuring consistent output even for j=0.",
+              "Samples with detailed explanations effectively illustrate the trade‑off logic.",
+              "Constraints (including N×K ≤ 1e5 and time/memory) are realistic and well-specified."
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 100.0,
+        "latest_divergence_score": 43.0,
+        "suggested_revisions": [
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "The new problem shifts the objective from minimizing operations to outputting a Pareto frontier of (budget, maximum common sum), but the core problem of making array sums equal by changing elements within [L,R] is unchanged. The interval computation and monotonicity invariant from the original are reused exactly; the only algorithmic extension is to continue the loop beyond the first feasible j and record strictly increasing S(j). This makes direct solution transfer very easy (add a few lines of code). The input format is identical, and the first sample reuses the exact same data as the original, only expanding the output. The bus-line theme is a superficial relabeling of arrays and elements. Despite moderate schema distance (0.38), the semantic difference is limited and the risk of solution migration is high, confirming the problem is essentially a retheme.",
+            "evidence_refs": [
+              "generated_problem.samples[0].input",
+              "original_problem.description",
+              "review_context.algorithmic_delta_claim",
+              "new_schema.invariant",
+              "hard_checks.schema_distance_threshold",
+              "distance_breakdown.axis_scores"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "Flawless mapping from new_schema to a clear and self-contained problem statement.",
+          "Pareto frontier objective is precisely defined, with S(-1)=0 ensuring consistent output even for j=0.",
+          "Samples with detailed explanations effectively illustrate the trade‑off logic.",
+          "Constraints (including N×K ≤ 1e5 and time/memory) are realistic and well-specified."
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

@@ -1,0 +1,669 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 98.0,
+    "divergence_score": 70.0,
+    "schema_distance": 0.483,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的任务变体（调整路线后旋转/移动）、输入对象（A, B, C）、目标函数（最小化曼哈顿距离）已准确落地到 generated_problem 的 description、input_format、output_format、constraints 和 samples 中，无遗漏或偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure.components",
+          "new_schema.core_constraints.constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了完整的独立解题信息：任务说明（旋转、加路线、调整方式）、输入格式（三行坐标）、输出格式（非负整数）、约束（坐标范围、时空限制）以及补充说明（曼哈顿距离、答案为0的情况），关键信息无一缺失。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间保持高度一致：操作定义与样例行为匹配，输入顺序与样例输入一致，输出格式与样例输出对应，约束范围内无冲突。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "样例数量为3个，覆盖了需要调整、直接调整后到达、无需调整的三种典型情形；每个样例均配有清晰的解释，能够帮助选手理解规则和输出含义。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 4.0,
+        "rationale": "题面整体结构清晰、措辞明确、无歧义，符合 OJ 表达习惯。但 hard_checks 中的 source_leakage 检查未通过，提示可能存在原题标识或标题片段泄露（如字符 'c'），虽未在可见题面中造成明显污染，但仍可能影响原创性与阅读纯净度，故扣1分。",
+        "evidence_refs": [
+          "hard_checks[10].check_id",
+          "hard_checks[10].message",
+          "hard_checks[10].evidence_refs"
+        ]
+      }
+    ],
+    "strengths": [
+      "将抽象的几何操作映射为贴近日常的社区服务场景，阅读门槛低。",
+      "核心操作（旋转、加路线）和调整成本定义准确，样例解释详细，易于选手理解。",
+      "输入输出格式简洁明了，字段说明无歧义。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.483,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.8067,
+        "O": 0.6036,
+        "V": 0.4505
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.8067,
+        "objective_type_distance": 0.619,
+        "objective_text_distance": 0.5804,
+        "invariant_match_distance": 0.4505
+      }
+    },
+    "schema_distance": 0.483,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.75,
+    "solution_transfer_risk": 0.55,
+    "surface_retheme_risk": 0.35,
+    "verdict": "pass",
+    "rationale": "任务语义发生实质变化：决策问题变为最小成本优化问题，约束中新增编辑操作并保留了核心操作集，不变式从可达性条件扩展到最小代价下界推导。原题解法（旋转+整除性检查）可作为子模块复用，但必须新增因子枚举和距离最小化逻辑，无法原样迁移。表面重主题风险较低：叙事从几何课转为巴士路线，标题和样例均改写，输入结构虽同构但描述独立，无文本直接复用。综合判定该题已形成独立问题语境，不属于换皮。",
+    "evidence_refs": [
+      "divergence.schema_distance_breakdown",
+      "snapshots.original_problem",
+      "snapshots.generated_problem",
+      "hard_checks.changed_axes_realized",
+      "review_context.difference_plan.changed_axes"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.48，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：c",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：c",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "存在原题标识或标题片段泄露",
+      "detail": "hard_checks 中的 source_leakage 检查未通过，指出检测到原题标识或标题片段泄露（'c'）。该泄露可能来自原题中使用的字符或标识，虽然在题面正文中未明显出现，但可能影响题目原创性并构成潜在抄袭风险。",
+      "evidence_refs": [
+        "hard_checks[10].check_id",
+        "hard_checks[10].message",
+        "hard_checks[10].evidence_refs"
+      ],
+      "fix_hint": "检查生成题面的所有文本（包括标题、变量命名等），确保不包含原题的特有标识或残留字符（如原题名、原题变量小写 'c' 等），如有则替换或删除。"
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "检查生成题面的所有文本（包括标题、变量命名等），确保不包含原题的特有标识或残留字符（如原题名、原题变量小写 'c' 等），如有则替换或删除。",
+    "根据 source_leakage 检查反馈，审查题面是否包含原题标识或标题片段，若有则进行移除或改写，确保完全独立于原题文本。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 98.0,
+    "divergence_score": 70.0,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：c",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：c",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "存在原题标识或标题片段泄露",
+        "detail": "hard_checks 中的 source_leakage 检查未通过，指出检测到原题标识或标题片段泄露（'c'）。该泄露可能来自原题中使用的字符或标识，虽然在题面正文中未明显出现，但可能影响题目原创性并构成潜在抄袭风险。",
+        "evidence_refs": [
+          "hard_checks[10].check_id",
+          "hard_checks[10].message",
+          "hard_checks[10].evidence_refs"
+        ],
+        "fix_hint": "检查生成题面的所有文本（包括标题、变量命名等），确保不包含原题的特有标识或残留字符（如原题名、原题变量小写 'c' 等），如有则替换或删除。"
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "检查生成题面的所有文本（包括标题、变量命名等），确保不包含原题的特有标识或残留字符（如原题名、原题变量小写 'c' 等），如有则替换或删除。",
+      "根据 source_leakage 检查反馈，审查题面是否包含原题标识或标题片段，若有则进行移除或改写，确保完全独立于原题文本。"
+    ],
+    "strengths_to_keep": [
+      "将抽象的几何操作映射为贴近日常的社区服务场景，阅读门槛低。",
+      "核心操作（旋转、加路线）和调整成本定义准确，样例解释详细，易于选手理解。",
+      "输入输出格式简洁明了，字段说明无歧义。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_2a6e96230e7d\\taco_codeforces_2a6e96230e7d.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_2a6e96230e7d\\taco_codeforces_2a6e96230e7d_community_services_20260529_111616_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_2a6e96230e7d\\taco_codeforces_2a6e96230e7d_community_services_20260529_111616_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_2a6e96230e7d",
+      "title": "C",
+      "description": "At a geometry lesson Gerald was given a task: to get vector B out of vector A. Besides, the teacher permitted him to perform the following operations with vector А:\n\n  * Turn the vector by 90 degrees clockwise.\n  * Add to the vector a certain vector C.\n\n\n\nOperations could be performed in any order any number of times.\n\nCan Gerald cope with the task?\n\nInput\n\nThe first line contains integers x1 и y1 — the coordinates of the vector A ( - 108 ≤ x1, y1 ≤ 108). The second and the third line contain in the similar manner vectors B and C (their coordinates are integers; their absolute value does not exceed 108).\n\nOutput\n\nPrint \"YES\" (without the quotes) if it is possible to get vector B using the given operations. Otherwise print \"NO\" (without the quotes).\n\nExamples\n\nInput\n\n0 0\n1 1\n0 1\n\n\nOutput\n\nYES\n\n\nInput\n\n0 0\n1 1\n1 1\n\n\nOutput\n\nYES\n\n\nInput\n\n0 0\n1 1\n2 2\n\n\nOutput\n\nNO",
+      "input": "The first line contains integers x1 и y1 — the coordinates of the vector A ( - 108 ≤ x1, y1 ≤ 108). The second and the third line contain in the similar manner vectors B and C (their coordinates are integers; their absolute value does not exceed 108).",
+      "output": "Print \"YES\" (without the quotes) if it is possible to get vector B using the given operations. Otherwise print \"NO\" (without the quotes).",
+      "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "import math\n\ndef ok(xa, ya):\n\t(x, y) = (xb - xa, yb - ya)\n\td = math.gcd(abs(xc), abs(yc))\n\tif xc == 0 and yc == 0:\n\t\treturn x == 0 and y == 0\n\tif xc == 0:\n\t\treturn x % yc == 0 and y % yc == 0\n\tif yc == 0:\n\t\treturn x % xc == 0 and y % xc == 0\n\tif x % d != 0 or y % d != 0:\n\t\treturn 0\n\t(a, b, c1, c2) = (xc // d, yc // d, x // d, -y // d)\n\tif a == 0 and b == 0:\n\t\treturn c1 == 0 and c2 == 0\n\tif (c1 * b + c2 * a) % (a * a + b * b) != 0:\n\t\treturn 0\n\tyy = (c1 * b + c2 * a) / (a * a + b * b)\n\tif a == 0:\n\t\treturn (c2 - a * yy) % b == 0\n\telse:\n\t\treturn (c1 - b * yy) % a == 0\n(xa, ya) = map(int, input().split())\n(xb, yb) = map(int, input().split())\n(xc, yc) = map(int, input().split())\nif ok(xa, ya) or ok(-ya, xa) or ok(-xa, -ya) or ok(ya, -xa):\n\tprint('YES')\nelse:\n\tprint('NO')"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_2a6e96230e7d",
+        "codeforces",
+        "At a geometry lesson Gerald was given a task: to get vector B out of vector A. Besides, the teacher permitted him to perform the following operations with vector А: * Turn the vector by 90 degrees clockwise. * Add to...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "The core constraint (C) is expanded to allow editing C; the objective (O) shifts from a boolean decision to a minimal‑cost integer; the invariant (V) must now support a proof that the found cost is minimal and that the modified reachability condition is necessary and sufficient.",
+      "summary": "The problem morphs from 'can we reach B?' to 'how little must we tweak the bus route (C) to make a trip from A to B possible?', preserving the original operation semantics while adding an optimization layer.",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inv_design_community_route_1",
+      "source": "generated_from_taco_codeforces_2a6e96230e7d",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "resident_position",
+            "role_description": "Coordinates of the resident's starting location (original vector A).",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": -100000000,
+              "max": 100000000
+            },
+            "properties": {}
+          },
+          {
+            "role": "service_point_position",
+            "role_description": "Coordinates of the target service point (original vector B).",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": -100000000,
+              "max": 100000000
+            },
+            "properties": {}
+          },
+          {
+            "role": "original_route_vector",
+            "role_description": "The existing fixed‑route bus vector C (each ride adds this displacement).",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": -100000000,
+              "max": 100000000
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "base_operations_preserved",
+            "description": "The allowed movements for the resident remain exactly: rotate direction by 90° clockwise, or add the current bus route vector C′ (where C′ is the modified route).",
+            "formal": "Operations = { Rot90, Add(C′) }",
+            "source_sections": [
+              "derived_from_seed"
+            ]
+          },
+          {
+            "name": "editing_contract",
+            "description": "Before any movement, the community may adjust the bus route by choosing an integer vector D = (dx, dy). The new route becomes C′ = C + D. The incurred cost is |dx| + |dy| (Manhattan distance). After this change, the resident can use the standard operations to try to reach the service point.",
+            "formal": "Allowed edit: choose D ∈ ℤ², set C′ = C + D, cost = |dx|+|dy|. Then the system proceeds with Rot90 and Add(C′).",
+            "source_sections": [
+              "edit_operation_contract"
+            ]
+          },
+          {
+            "name": "reachability_requirement",
+            "description": "There must exist a sequence of Rot90 and Add(C′) that, starting from the resident's position, ends exactly at the service point.",
+            "formal": "∃ sequence of ops from Resident Position to Service Point Position.",
+            "source_sections": [
+              "target_result_binding"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization",
+        "description": "Output a single non‑negative integer: the minimum possible cost (Manhattan distance of the change to C) such that after the modification the resident can reach the service point. It can be proved that a feasible modification always exists.",
+        "target": "min(|dx|+|dy|)",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "lattice_reachability_with_modified_C",
+            "description": "For a fixed modified route C′, the reachable points from the resident position correspond exactly to the union over the four rotation states i=0..3 of { Rⁱ(pos) + u·C′ | u ∈ ℤ }. Hence reachability of the service point is equivalent to ∃ i, ∃ u ∈ ℤ such that ServicePoint − Rⁱ(ResidentPos) = u·C′.",
+            "properties": {},
+            "evidence_source": "both"
+          },
+          {
+            "name": "minimum_cost_lower_bound",
+            "description": "If a modification C′ = C + D is feasible, then for some rotation state i and integer u we have Δ = ServicePoint − Rⁱ(ResidentPos) = u·C′. Therefore C′ = Δ/u (with u dividing both components of Δ and producing integer coordinates). The cost |D|₁ = |C′ − C|₁ must be at least min_{i,u} |(Δ/u) − C|₁, where the minimum is taken over all i and all positive integers u that evenly divide Δ. The algorithm that enumerates these candidates provably finds the global minimum.",
+            "properties": {},
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "最优巴士路线调整",
+      "description": "社区为方便住户出行，开通了一条巴士接驳线路，该线路用一个二维向量 $C$ 表示，每次乘坐巴士会使住户的当前位置增加 $C$。同时，住户可以在任何时刻原地顺时针旋转 90 度（即 $(x,y)$ 变为 $(y,-x)$）。\n\n现在，社区计划对巴士路线进行微调，以更好地服务住户。调整方式为选择一个整数向量 $D=(dx,dy)$，将原路线 $C$ 改为 $C' = C + D$。调整所需的成本定义为曼哈顿距离 $|dx| + |dy|$。\n\n已知住户的初始位置 $A$ 和目标位置 $B$（社区服务中心），目标是通过多次旋转和乘坐调整后的巴士，从 $A$ 到达 $B$。可以证明，总存在一种调整方案使得住户能够到达目标。\n\n请计算满足要求的最小调整成本（非负整数）。",
+      "input_format": "输入包含三行，每行两个整数，用空格分隔：\n第一行是住户初始位置的坐标 $x_A, y_A$。\n第二行是服务中心位置的坐标 $x_B, y_B$。\n第三行是原巴士路线向量的坐标 $x_C, y_C$。",
+      "output_format": "输出一个非负整数，表示使得住户能够到达服务中心所需的最小调整成本。",
+      "constraints": [
+        "所有坐标均为整数，绝对值不超过 $10^8$。",
+        "时间限制：1.0 秒",
+        "空间限制：256.0 MB"
+      ],
+      "samples": [
+        {
+          "input": "2 2\n3 3\n1 0",
+          "output": "1",
+          "explanation": "将原路线从 $(1,0)$ 调整为 $(1,1)$，成本为 $|1-1|+|1-0|=1$。住户从 $(2,2)$ 出发，直接乘坐一次巴士（无需旋转）即可到达 $(3,3)$。"
+        },
+        {
+          "input": "0 0\n1 1\n0 1",
+          "output": "1",
+          "explanation": "将原路线从 $(0,1)$ 调整为 $(1,1)$，成本为 $|1-0|+|1-1|=1$。住户从 $(0,0)$ 出发，乘坐一次巴士即可到达 $(1,1)$。"
+        },
+        {
+          "input": "0 0\n0 0\n5 5",
+          "output": "0",
+          "explanation": "起点与终点重合，无需调整路线即可到达（只需不移动），成本为 $0$。"
+        }
+      ],
+      "notes": "曼哈顿距离定义为 $|dx|+|dy|$。若某个旋转状态下住户位置已等于服务中心，则无需调整即可到达，此时答案为 $0$。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "The problem morphs from 'can we reach B?' to 'how little must we tweak the bus route (C) to make a trip from A to B possible?', preserving the original operation semantics while adding an optimization layer.",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.483,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.8067,
+          "O": 0.6036,
+          "V": 0.4505
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.8067,
+          "objective_type_distance": 0.619,
+          "objective_text_distance": 0.5804,
+          "invariant_match_distance": 0.4505
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "The seed's output (reachability of B) is the natural target to enforce after editing. We bind it by making the new objective require a modification that makes the target reachable.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "Added a reachability_requirement constraint that the modified C must enable a path from A to B.",
+            "Changed the objective from a Boolean decision to a cost that ensures the target is met."
+          ],
+          "innovation_reason": "Flips the solving direction from 'is it possible?' to 'make it possible with minimal change', introducing a design layer.",
+          "difficulty_reason": "Demands that the solver now works backward from the target to select an optimal parameter, not just verify a condition."
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "The natural editable object is the additive vector C, which directly controls the lattice of reachable points. Modifying C stays within the seed's original operation logic.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "Defined a formal editing operation (pick D, C′= C + D) in core_constraints.",
+            "Updated the invariant to express reachability in terms of the edited C′ and to relate cost to the edit distance."
+          ],
+          "innovation_reason": "Concretizes the inverse task into a well‑defined action space, preventing vague or unrelated modifications.",
+          "difficulty_reason": "Forces the algorithm to respect the edit operation's structure and to correctly map edits to changes in the reachability condition."
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "The problem must output the minimum cost, not just any feasible edit. This locks the solution into a provably optimal answer and guards against trivial guarantees.",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "Set the objective to minimize the Manhattan distance of the edit.",
+            "Added the minimum_cost_lower_bound invariant that provides the theoretical lower bound and the justification for the algorithm's optimality."
+          ],
+          "innovation_reason": "Transforms a feasibility problem into a proper optimization problem, substantially raising the intellectual demand.",
+          "difficulty_reason": "Requires the solver to devise a method that certifies no smaller cost exists, often needing a proof of completeness over all possible factorizations."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Check reachability by testing whether, for each of the four rotations of A, the difference B − R(A) lies in the integer lattice generated by C. This reduces to verifying divisibility conditions involving GCDs.",
+        "reusable_subroutines": "The rotation operation (90° clockwise) and the computation of the difference vectors are directly reusable. The number‑theoretic tools (GCD, checking divisibility) are reused in the new solver to identify valid integer factors u.",
+        "new_solver_core": "For each rotation state i, compute Δ = (dx, dy). Enumerate all positive integers u that divide both dx and dy (such that (dx/u, dy/u) are integers). For each such u, compute candidate C′ = Δ/u and the cost |C′ − C|₁. Return the minimum cost over all i and u. The enumeration of u must be done efficiently (e.g., via divisors of gcd(|dx|,|dy|) or bounding the number of candidates using the size of C).",
+        "new_proof_obligation": "Prove that (1) the set of all u dividing Δ (with integer‑coordinate quotient) is sufficient to capture every possible feasible C′; a feasible C′ must equal Δ/u for some such u; (2) the algorithm enumerates all such u, hence finds the true minimum; (3) the optimal cost cannot be achieved by a non‑integer C′ or a C′ not of the form Δ/u.",
+        "why_direct_reuse_fails": "The original solver only answers a boolean. It does not search for a nearby C′ nor does it minimize any distance. The new problem requires a search over possible divisors and a distance computation, which is an optimization layer absent in the seed."
+      },
+      "anti_shallow_rationale": "The change is not a mere reskin or simple boolean inversion. The core solving paradigm shifts from a reachability test (a four‑case divisibility check) to a combinatorial optimization over divisors of a vector, demanding a new algorithm and a non‑trivial correctness argument. The addition of the edit operation and the minimality requirement fundamentally alters the structure of the state space and the solution technique."
+    }
+  }
+}

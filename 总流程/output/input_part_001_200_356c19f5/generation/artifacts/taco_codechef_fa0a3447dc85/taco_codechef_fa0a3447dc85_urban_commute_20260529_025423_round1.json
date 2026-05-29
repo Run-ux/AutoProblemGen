@@ -1,0 +1,876 @@
+{
+  "problem_id": "urban_commute_inverse_medmax",
+  "source_problem_ids": [
+    "taco_codechef_fa0a3447dc85"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_fa0a3447dc85",
+      "MEDMAX",
+      "codechef",
+      "Read problem statements in [Mandarin], [Russian], and [Vietnamese] as well. You have an n \\times n matrix a. You can rearrange the elements of the matrix in any way. Let m_{1}, m_{2}, \\dots, m_{n} be the medians of ea...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束从 cost ≤ k 变为每行 median ≥ G；目标从最大化 min(median) 变为最小化 sum(medians)；不变量从二分单调性调整为代价关于 G 的单调性与贪心构造的最小性证明。",
+    "summary": "把原题的“给定 k 求最大 goodness”逆置为“给定 goodness 求最小 k”，保留矩阵重排操作，引入最小代价证明义务。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3974,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3974,
+    "axis_scores": {
+      "I": 0.0833,
+      "C": 0.7111,
+      "O": 0.4321,
+      "V": 0.2763
+    },
+    "components": {
+      "input_tree_distance": 0.0833,
+      "constraint_match_distance": 0.7111,
+      "objective_type_distance": 0.5072,
+      "objective_text_distance": 0.3194,
+      "invariant_match_distance": 0.2763
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_cost",
+    "description": "最小化总代价（所有行中位数之和），若无法通过重排达到目标则输出 -1。",
+    "target": "total_cost",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "逆设计规则最能利用种子题「最大goodness」作为反向目标，自然引入元素修改操作并翻转求解方向，创新度与难度提升显著；而构造或障碍规则因无解原因无法稳定写成局部证据，适用性不足；存在性改计数则因去重对象难以清晰定义且原题最优化结构易退化为浅改。；创新度判断：将原题「给定矩阵求最大goodness」的正向优化，翻转成「给定目标goodness求最小修改代价」的逆向设计，核心义务从输出一个值变成构造一组修改并证明最小性，引入了新的决策维度（修改哪些元素），与重排核心规律深度交织。；难度判断：主求解责任从二分判定可行goodness变成在修改代价与重排可行性之间平衡优化，需同时处理元素值变化导致的排序变化、中位数约束的保持，并要求下界或最优性证明，算法复杂度与推理深度显著提高。；风险判断：主要风险是新设计可能因修改操作与重排的组合导致状态空间爆炸，但可通过限定修改代价模型（如单点调整、总预算）并复用原题排序贪心结构，将问题约束在可多项式求解范围内，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "urban_commute_inverse_medmax",
+    "source": "derived from taco_codechef_fa0a3447dc85",
+    "input_structure": {
+      "type": "matrix",
+      "length": {
+        "min": 1,
+        "max": 1000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 1000000000
+      },
+      "properties": {
+        "multiple_test_cases": true,
+        "note": "矩阵元素代表公交站点间的通勤时间"
+      },
+      "components": [
+        {
+          "role": "dimension",
+          "role_description": "公交线路数量，同时也是每条线路的站点数",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {}
+        },
+        {
+          "role": "target_goodness",
+          "role_description": "要求达到的最小线路中位数（服务质量目标）",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "rearrangement_only",
+          "description": "只能重新排列矩阵元素（即只改变站点到线路的分配），不能修改任何元素值（通勤时间），且必须填满 n×n 网格。",
+          "formal": "∃ permutation π of the n² elements such that the resulting matrix A' uses exactly the same multiset of values.",
+          "source_sections": [
+            "reverse_engineered"
+          ]
+        },
+        {
+          "name": "median_lower_bound",
+          "description": "重排后，每行中位数必须至少为 G（目标 goodness）。",
+          "formal": "∀ i, median(row_i) ≥ G",
+          "source_sections": [
+            "reverse_engineered"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_cost",
+      "description": "最小化总代价（所有行中位数之和），若无法通过重排达到目标则输出 -1。",
+      "target": "total_cost",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "sorted_global_order",
+          "description": "全局排序后元素非递减，排序顺序用于构造、下界分析和代价计算。",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "cost_monotonicity_wrt_goodness",
+          "description": "对于排序后的元素数组 A，若目标 Goodness G 增大，则所需的最小总代价单调不减，因此可直接在排序数组中定位 G 对应的最小 feasible index 并计算代价。",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "greedy_minimal_median_sum_for_given_lower_bound",
+          "description": "给定每行中位数必须 ≥ A[mid] 的下界，贪心构造（分配最小可能元素作每行左半部分，并选取足够大的中位数）产生唯一的最小总代价；该代价用于判定目标 G 是否可行。",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "similar to original"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "二分答案 + 贪心构造与可行性判定",
+    "reusable_subroutines": "全局排序，贪心构造给定中位数下界的最小代价函数（包括分配 left 元素和选择 median）",
+    "new_solver_core": "在排序数组中定位不小于 G 的最小元素下标 mid，调用原贪心构造并验证是否可行，若可行则该最小代价即为答案，否则输出 -1。",
+    "new_proof_obligation": "需证明：1) 当目标 G 固定时，由贪心产生的代价是所有可行重排中的最小代价；2) 该最小代价关于 G 的单调性保证了只需检查最紧的 mid 即得最优；3) 若贪心构造失败（例如元素不够分配），则不存在任何合法重排。",
+    "why_direct_reuse_fails": "原解法迭代调整 goodness 上界并检查 feasibility，而新问题要求直接计算给定 goodness 对应的最小代价，算法流程从二分搜索变为一次确定性计算，无法简单包装原函数。"
+  },
+  "anti_shallow_rationale": "不是简单地问“能否达到 goodess = G？”，而是要求给出达到该目标所需的最小代价，并承担最小性证明；核心约束从 cost 上限变为 median 下限，求解方向从 max-min 优化变为 min-cost 设计，深度变化明显。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题 goodness 正是结果，绑定为反向目标自然成立",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 增加 median_lower_bound (每行 median ≥ G)",
+        "objective 从 maximize goodness 改为 minimize cost"
+      ],
+      "innovation_reason": "将题目转向“为了达到指定服务水平，需要付出多少代价”，引入目标驱动的设计思维",
+      "difficulty_reason": "要求算法面向给定目标决策，增加了对单调性与构造最小性的依赖"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "原题重排是自然且唯一的修改自由度，无需扩展为其他无关操作",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 新增 rearrangement_only，明确只允许重排",
+        "invariant 加入排序与贪心构造说明如何利用重排达成下界"
+      ],
+      "innovation_reason": "通过显式限定操作空间，使反向设计问题落脚于可控的排列搜索，与原题数据结构强相关",
+      "difficulty_reason": "迫使算法精确刻画操作对结果的影响，并证明在该操作空间下代价的下界"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "反向设计必须要求最优性，否则退化为可行性问题",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确最小化 total_cost，且输出必须为最小可行值",
+        "invariant 新增 greedy_minimal_median_sum_for_given_lower_bound，承诺构造的最优性"
+      ],
+      "innovation_reason": "输出承担最小性承诺，考验选手对构造下界的严格把握",
+      "difficulty_reason": "需要证明为何给出的代价不能更小，通常要求组合下界论证，提高推理难度"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题解法在二分检查时已依赖贪心构造，记录分配即可输出方案；且该构造很可能自然满足字典序最小，改动仅成后处理，未触发核心约束变化，不符合 must_change 要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为 cost_upper_bound (∑ median ≤ k)，目标为最大化 goodness；解法使用排序数组 A，通过二分 mid 与贪心分配（左小、中位数、右大）检查可行性，并隐式生成可行构造。若要求输出规范方案（如字典序最小），可在成功二分后复用同一次贪心遍历记录每个元素位置，整个过程与求 goodness 的数字阶段紧密耦合，未迫使核心约束或目标结构发生实质性转变。规则要求必须改变约束、目标与不变量（C、O、V），但此修改仅将目标从输出数值改为附带输出方案，未使规范要求进入主约束优先级，不满足 constraint_reweighting 等 helper 的要求，且触发 forbidden_seed_properties 中‘原解只要顺手回溯就能拿到方案’的红线。",
+        "feedback": "该种子题不适合 canonical_witness 规则，因为其优化版本已内含构造步骤，输出方案仅需简单记录，无算法级变化。建议寻找解对象天然缺失或需完全重新定义构造顺序的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "certificate_localizable",
+      "selection_reason": "原题无解时，可基于贪心构造的最小中位数和输出可局部检查的下界证明作为冲突证据，满足角色要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题MEDMAX的invariant中greedy_minimal_median_sum提供了构造最小中位数和的方法；核心约束cost_upper_bound要求成本不超过k；当最小和>k时无解，该计算步骤可以封装为可独立验证的局部证据。",
+        "feedback": "规则可以进入规划，但需确保证据输出为结构化可检查对象，而非单纯解释。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "feasible_counting_core",
+      "selection_reason": "种子题有有限且明确的重排方案空间，可以通过定义‘分配方案’（以元素分组的等价类）来建立去重规则，并转化为统计满足给定中位数约束的方案数，符合existence_to_counting要求。",
+      "risk_tags": [
+        "deduplication_complexity"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "规则要求解空间有限、去重规则清晰、可按单元拆分汇总。原题MEDMAX中矩阵元素固定，所有重排方案有限；方案间的等价关系可定义为基于行元素多集的同一性；可拆分为按中位数选择子序列和剩余元素分配的计数单元。",
+        "feedback": "中等把握度，因为需要清晰定义去重规则（元素重复时的等价处理），但具备可行性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题中元素重排是我们可以完全控制的决策，不存在无法控制的不确定性，无法在不硬造对手的前提下构造保底优化扰动模型，不符合规则要求。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述“You can rearrange the elements of the matrix in any way”，且核心约束允许自由选择排列以优化目标，无天然对手或随机性。规则要求原生扰动来源（如顺序不确定、资源波动），但本题排列是决策变量而非扰动。",
+        "feedback": "建议选择具有天然不确定性的种子题，如在线算法、资源波动或部分已知条件下的鲁棒优化问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题MEDMAX已经是一个临界阈值优化问题（求最大goodness满足成本约束），其核心解法正是基于单调可行性二分搜索求极值。规则要求的‘从判断是否可行改成求临界阈值’在原题中已完全实现，新题将无法产生实质性的概念或算法变化，最多只会包装原判定或对称转换，不满足规则对约束、目标和验证的深层变更要求。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective字段为‘maximize_value’类型，目标描述为‘maximize the minimum row median subject to cost constraint’，已经是求临界阈值。原题invariant中包含‘monotonic_feasibility’和二分搜索，证明goodness阈值的单调性和可搜索性。规则core_transformation的target_shift是‘从判断是否可行改成求临界阈值’，但种子题已经处于临界阈值求解状态。规则helper‘threshold_parameterization’和‘extremal_answer_contract’所要求的内容在原题中均已具备。",
+        "feedback": "建议选择纯判定问题（如判断给定条件下是否存在合法安排）作为种子，再应用本规则将之扩展为求最小可行参数等临界阈值问题。当前的种子题已经是阈值优化，若强行套用规则，生成的新题将与原题几乎等价，不符合规则的设计意图。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "post_processing_feasible",
+      "selection_reason": "原题已存在天然冲突的第二指标（代价），但其权衡关系可完全由原解法后处理得到：二分搜索中对每个候选goodness计算最小代价，并利用单调性得到前沿，无需改变算法核心。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题invariant包含monotonic_feasibility和greedy_minimal_median_sum，说明原解法已隐式构建了goodness与cost的权衡，并能在check步骤中得到给定goodness下的最小cost，直接导出前沿。",
+        "feedback": "将cost提升为第二目标后，前沿生成仅是原二分过程的重复，不符合规则对算法创新的要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "inverse_design_applicable",
+      "selection_reason": "原题最大化goodness结果可作为反向目标，引入修改矩阵元素的操作是自然的，与中位数和成本约束直接相关，且可定义最小修改代价，符合规则要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为最大化goodness，seed_schema中定义goodness为各行中位数的最小值，并且有成本约束。规则required_seed_properties要求原题输出可作为反向目标，这里goodness数值可指定为任意目标。forbidden_seed_properties中'无法定义可验证的反向目标'不适用，因为给定目标goodness后，可通过最小修改元素使条件成立且答案可核验。规则validation_contract要求'修改操作必须与原核心对象相关'，修改矩阵元素直接影响中位数，高度相关。helpers中target_result_binding要求把原题结果绑成反向目标，我们可设目标goodness为X；edit_operation_contract要求定义修改操作集合，修改单个元素是自然操作；minimality_or_certificate_lock要求输出最小修改代价。原题核心算法基于二分和贪心，新题将引入最小修改，会造成算法差异，不违反anti_shallow红线。",
+        "feedback": "规则适用，因为原题输出goodness可清晰作为反向目标，且修改矩阵元素的操作与核心约束自然关联，能够定义最小修改问题，符合反向设计要求。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_already_coupled",
+      "selection_reason": "种子题 MEDMAX 本身已经是一个全局耦合问题：所有行共享矩阵元素池，中位数总和上限约束使得各行决策相互依赖。原题不存在‘可分解的局部单元’，无法从局部独立变成全局耦合，因为已经是全局耦合，应用规则只是复述原题，无创新。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints 中的 cost_upper_bound (∑ row_medians ≤ k) 已经将各行绑定到同一全局预算下； invariant 中的 greedy_minimal_median_sum 表明构造需要全局排序并竞争有限元素，已构成跨组件依赖。这些直接违反规则所需的种子性质: ‘原题存在可分解的局部单元’，而原题局部单元之间早已通过共享资源和全局约束强耦合。",
+        "feedback": "建议选择具有真正独立局部单元的种子题，如多个互不重叠的区间选点问题，然后引入共享预算使其耦合。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_alternating_moves_in_seed",
+      "selection_reason": "原题是一个一次性全局重排的优化问题，不存在可被双方轮流选取或操作的自然状态转移步骤，强制转化为对抗游戏将违背红线‘不能凭背景硬造玩家’。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：‘You can rearrange the elements of the matrix in any way.’ 决策是单一的、整体的，没有逐步选择过程；输入仅包含矩阵和成本上限k，不包含任何操作序列或回合结构；解决方案基于排序和贪心构造，不具备对抗状态空间。",
+        "feedback": "该规则要求种子题具有可轮流选择、拿取、移动或改变状态的自然操作，而MEDMAX的核心是全局排列与中位数优化，缺乏此类操作原语。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "SEED_ALREADY_GLOBAL",
+      "selection_reason": "原题本身就是多行矩阵重排的全局优化问题，核心约束与目标已涉及所有行的中位数共同满足成本上限，规则试图从局部扩展到全局，但原题已具备全局对象族管理，无有效的局部到全局扩展增量。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "Schema显示core_constraints为'∑_{i=1}^{n} median(row_i) ≤ k'，涉及所有行；objective为'maximize the minimum row median'，对每行中位数取最小；invariant中'greedy_minimal_median_sum'描述所有行中位数和的全局构造。原题结构已是全局多对象处理，规则所需从单局部对象扩展的起点不存在。",
+        "feedback": "建议寻找单条路径、区间或子树性质的种子题，例如求一棵树中某路径性质，再应用此规则扩展为覆盖所有路径的问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_compatible",
+      "selection_reason": "原题不是计数问题，没有明确有限的计数对象，不符合规则要求的seed properties。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“Find the maximum goodness...”，目标是最大化最小值，属于组合优化，且无计数方案的总数或分布的要求。核心约束是代价上限，不涉及计数。规则 eligibility 明确要求“原题已经有明确有限的计数对象”，种子题不满足。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 要求种子题已经是计数问题，此种子题不适用。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题解法在二分检查时已依赖贪心构造，记录分配即可输出方案；且该构造很可能自然满足字典序最小，改动仅成后处理，未触发核心约束变化，不符合 must_change 要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为 cost_upper_bound (∑ median ≤ k)，目标为最大化 goodness；解法使用排序数组 A，通过二分 mid 与贪心分配（左小、中位数、右大）检查可行性，并隐式生成可行构造。若要求输出规范方案（如字典序最小），可在成功二分后复用同一次贪心遍历记录每个元素位置，整个过程与求 goodness 的数字阶段紧密耦合，未迫使核心约束或目标结构发生实质性转变。规则要求必须改变约束、目标与不变量（C、O、V），但此修改仅将目标从输出数值改为附带输出方案，未使规范要求进入主约束优先级，不满足 constraint_reweighting 等 helper 的要求，且触发 forbidden_seed_properties 中‘原解只要顺手回溯就能拿到方案’的红线。",
+        "feedback": "该种子题不适合 canonical_witness 规则，因为其优化版本已内含构造步骤，输出方案仅需简单记录，无算法级变化。建议寻找解对象天然缺失或需完全重新定义构造顺序的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "certificate_localizable",
+      "message": "原题无解时，可基于贪心构造的最小中位数和输出可局部检查的下界证明作为冲突证据，满足角色要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题MEDMAX的invariant中greedy_minimal_median_sum提供了构造最小中位数和的方法；核心约束cost_upper_bound要求成本不超过k；当最小和>k时无解，该计算步骤可以封装为可独立验证的局部证据。",
+        "feedback": "规则可以进入规划，但需确保证据输出为结构化可检查对象，而非单纯解释。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "feasible_counting_core",
+      "message": "种子题有有限且明确的重排方案空间，可以通过定义‘分配方案’（以元素分组的等价类）来建立去重规则，并转化为统计满足给定中位数约束的方案数，符合existence_to_counting要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [
+          "deduplication_complexity"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "规则要求解空间有限、去重规则清晰、可按单元拆分汇总。原题MEDMAX中矩阵元素固定，所有重排方案有限；方案间的等价关系可定义为基于行元素多集的同一性；可拆分为按中位数选择子序列和剩余元素分配的计数单元。",
+        "feedback": "中等把握度，因为需要清晰定义去重规则（元素重复时的等价处理），但具备可行性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题中元素重排是我们可以完全控制的决策，不存在无法控制的不确定性，无法在不硬造对手的前提下构造保底优化扰动模型，不符合规则要求。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述“You can rearrange the elements of the matrix in any way”，且核心约束允许自由选择排列以优化目标，无天然对手或随机性。规则要求原生扰动来源（如顺序不确定、资源波动），但本题排列是决策变量而非扰动。",
+        "feedback": "建议选择具有天然不确定性的种子题，如在线算法、资源波动或部分已知条件下的鲁棒优化问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题MEDMAX已经是一个临界阈值优化问题（求最大goodness满足成本约束），其核心解法正是基于单调可行性二分搜索求极值。规则要求的‘从判断是否可行改成求临界阈值’在原题中已完全实现，新题将无法产生实质性的概念或算法变化，最多只会包装原判定或对称转换，不满足规则对约束、目标和验证的深层变更要求。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective字段为‘maximize_value’类型，目标描述为‘maximize the minimum row median subject to cost constraint’，已经是求临界阈值。原题invariant中包含‘monotonic_feasibility’和二分搜索，证明goodness阈值的单调性和可搜索性。规则core_transformation的target_shift是‘从判断是否可行改成求临界阈值’，但种子题已经处于临界阈值求解状态。规则helper‘threshold_parameterization’和‘extremal_answer_contract’所要求的内容在原题中均已具备。",
+        "feedback": "建议选择纯判定问题（如判断给定条件下是否存在合法安排）作为种子，再应用本规则将之扩展为求最小可行参数等临界阈值问题。当前的种子题已经是阈值优化，若强行套用规则，生成的新题将与原题几乎等价，不符合规则的设计意图。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "post_processing_feasible",
+      "message": "原题已存在天然冲突的第二指标（代价），但其权衡关系可完全由原解法后处理得到：二分搜索中对每个候选goodness计算最小代价，并利用单调性得到前沿，无需改变算法核心。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题invariant包含monotonic_feasibility和greedy_minimal_median_sum，说明原解法已隐式构建了goodness与cost的权衡，并能在check步骤中得到给定goodness下的最小cost，直接导出前沿。",
+        "feedback": "将cost提升为第二目标后，前沿生成仅是原二分过程的重复，不符合规则对算法创新的要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_design_applicable",
+      "message": "原题最大化goodness结果可作为反向目标，引入修改矩阵元素的操作是自然的，与中位数和成本约束直接相关，且可定义最小修改代价，符合规则要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为最大化goodness，seed_schema中定义goodness为各行中位数的最小值，并且有成本约束。规则required_seed_properties要求原题输出可作为反向目标，这里goodness数值可指定为任意目标。forbidden_seed_properties中'无法定义可验证的反向目标'不适用，因为给定目标goodness后，可通过最小修改元素使条件成立且答案可核验。规则validation_contract要求'修改操作必须与原核心对象相关'，修改矩阵元素直接影响中位数，高度相关。helpers中target_result_binding要求把原题结果绑成反向目标，我们可设目标goodness为X；edit_operation_contract要求定义修改操作集合，修改单个元素是自然操作；minimality_or_certificate_lock要求输出最小修改代价。原题核心算法基于二分和贪心，新题将引入最小修改，会造成算法差异，不违反anti_shallow红线。",
+        "feedback": "规则适用，因为原题输出goodness可清晰作为反向目标，且修改矩阵元素的操作与核心约束自然关联，能够定义最小修改问题，符合反向设计要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_already_coupled",
+      "message": "种子题 MEDMAX 本身已经是一个全局耦合问题：所有行共享矩阵元素池，中位数总和上限约束使得各行决策相互依赖。原题不存在‘可分解的局部单元’，无法从局部独立变成全局耦合，因为已经是全局耦合，应用规则只是复述原题，无创新。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints 中的 cost_upper_bound (∑ row_medians ≤ k) 已经将各行绑定到同一全局预算下； invariant 中的 greedy_minimal_median_sum 表明构造需要全局排序并竞争有限元素，已构成跨组件依赖。这些直接违反规则所需的种子性质: ‘原题存在可分解的局部单元’，而原题局部单元之间早已通过共享资源和全局约束强耦合。",
+        "feedback": "建议选择具有真正独立局部单元的种子题，如多个互不重叠的区间选点问题，然后引入共享预算使其耦合。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_alternating_moves_in_seed",
+      "message": "原题是一个一次性全局重排的优化问题，不存在可被双方轮流选取或操作的自然状态转移步骤，强制转化为对抗游戏将违背红线‘不能凭背景硬造玩家’。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：‘You can rearrange the elements of the matrix in any way.’ 决策是单一的、整体的，没有逐步选择过程；输入仅包含矩阵和成本上限k，不包含任何操作序列或回合结构；解决方案基于排序和贪心构造，不具备对抗状态空间。",
+        "feedback": "该规则要求种子题具有可轮流选择、拿取、移动或改变状态的自然操作，而MEDMAX的核心是全局排列与中位数优化，缺乏此类操作原语。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "SEED_ALREADY_GLOBAL",
+      "message": "原题本身就是多行矩阵重排的全局优化问题，核心约束与目标已涉及所有行的中位数共同满足成本上限，规则试图从局部扩展到全局，但原题已具备全局对象族管理，无有效的局部到全局扩展增量。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "Schema显示core_constraints为'∑_{i=1}^{n} median(row_i) ≤ k'，涉及所有行；objective为'maximize the minimum row median'，对每行中位数取最小；invariant中'greedy_minimal_median_sum'描述所有行中位数和的全局构造。原题结构已是全局多对象处理，规则所需从单局部对象扩展的起点不存在。",
+        "feedback": "建议寻找单条路径、区间或子树性质的种子题，例如求一棵树中某路径性质，再应用此规则扩展为覆盖所有路径的问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_compatible",
+      "message": "原题不是计数问题，没有明确有限的计数对象，不符合规则要求的seed properties。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“Find the maximum goodness...”，目标是最大化最小值，属于组合优化，且无计数方案的总数或分布的要求。核心约束是代价上限，不涉及计数。规则 eligibility 明确要求“原题已经有明确有限的计数对象”，种子题不满足。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 要求种子题已经是计数问题，此种子题不适用。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "RULE_CONTRACT_SATISFIED",
+      "message": "规划成功将正向求解转换为反向设计：将原题输出（goodness）绑定为反向目标，通过 core_constraints 的 median_lower_bound 和 objective 的 minimize cost 实现目标翻转；明确仅允许重排操作并由 rearrangement_only 约束；通过贪心构造不变量承诺最小代价证明，满足所有 helper 的 redlines 和轴变化要求。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "applied_helpers 中的 target_result_binding 通过在 core_constraints 增加 median_lower_bound 并将 objective 改为 minimize cost 兑现了 C/O 轴变化；edit_operation_contract 通过 core_constraints 中的 rearrangement_only 和 invariant 中的贪心构造说明兑现了 C/V 轴变化；minimality_or_certificate_lock 通过 objective 要求最小化 total_cost 和 invariant 中的 greedy_minimal_median_sum_for_given_lower_bound 兑现了 O/V 轴变化。新 schema 与规划负载一致，未违反任何 redlines。anti_shallow_rationale 明确这不是简单验证而是要求最小性证明。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "新题与原题在算法核心上几乎没有变化：原题的解是通过二分查找+贪心构造来判断可行性并最大化goodness；新题无非是将给定的goodness G直接映射到排序数组的下标，然后调用完全相同的贪心构造计算最小总代价。熟悉原题的选手只需删除二分循环并做一次下标查找即可复用原代码。",
+    "feedback": "The inversion of the parameter (from “given k, maximize goodness” to “given G, minimize cost”) does not introduce a new algorithmic challenge. The greedy construction subroutine (which computes the minimal sum of medians for a given median lower bound) is directly reusable, and the overall solution is a trivial adaptation of the original. No new proof obligations or structural changes prevent direct reuse."
+  },
+  "iteration": {
+    "run_id": "taco_codechef_fa0a3447dc85_urban_commute_20260529_025423",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

@@ -1,0 +1,829 @@
+{
+  "problem_id": "taco_codeforces_64e32891f3cb",
+  "source_problem_ids": [
+    "taco_codeforces_64e32891f3cb"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_64e32891f3cb",
+      "codeforces",
+      "Furik and Rubik love playing computer games. Furik has recently found a new game that greatly interested Rubik. The game consists of n parts and to complete each part a player may probably need to complete some other...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "Counting optimal strategies either trivializes (if only counting initial choice and block partitions) or leads to intractable topological sort counting (#P-hard) without polynomial solution for n=200.",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "最小化完成所有依赖任务所需的总时间,包括任务执行与电脑间移动时间",
+    "target": "total_time",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "计数规则比逆问题规则更适合此种子题。逆问题可能通过多次调用原算法实现，容易退化为“先修改再求解”的串联，违反全局红线。计数规则直接颠覆原题优化目标，要求重新定义状态、去重和有限性，带来本质算法创新，且种子题具备有限解空间和明确定义单元的条件，落地风险更低。；创新度判断：核心义务从“求最小总时间”变为“统计所有达到最小总时间的合法执行序列”，需要明确定义序列等同性（去重），并将计数责任从附带统计提升为主目标。原题依赖贪心或简单拓扑模拟的解法失效，算法必须转向基于路径区分的 DP 或组合计数。；难度判断：难度大幅提升在于：需设计状态表示捕捉不同执行顺序的影响（如计算机切换时机、任务选择顺序），在依赖约束下保证不重不漏地计数，同时证明解空间有限性。对 n=200，直接枚举不可能，要求精巧的 DP 和去重逻辑，证明正确性也更复杂。；风险判断：主要风险在于确保去重规则清晰且不遗漏特殊情况（如对称路径），以及解空间虽有限但可能巨大带来的状态爆炸，但可通过状态压缩或只计数等价类控制。原题给出的依赖 DAG 和固定移动成本为设计计数单元提供了稳定基础，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_64e32891f3cb",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "graph",
+      "length": {
+        "min": 1,
+        "max": 200
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "directed": true,
+        "acyclic": true,
+        "simple": true
+      },
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "fixed_task_duration",
+          "description": "每完成任意一个游戏部分固定消耗1小时,与部分内容和所在电脑无关。",
+          "formal": "∀i, duration(i) = 1",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "task_computer_assignment",
+          "description": "每个游戏部分只能在唯一指定的电脑（1、2或3之一）上完成,该指派由输入给出且不可更改。",
+          "formal": "∀i, computer(i) ∈ {1,2,3} as given by c_i",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "acyclic_dependencies",
+          "description": "游戏部分之间的先行依赖关系不形成任何环,保证游戏可以完全完成。",
+          "formal": "dependency graph is a DAG",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "movement_cost_rules",
+          "description": "在3台电脑之间移动的耗时规则为:1→2:1h, 1→3:2h, 2→1:2h, 2→3:1h, 3→1:1h, 3→2:2h。移动只能在完成某部分后或初始时发生。",
+          "formal": "cost(1,2)=1, cost(1,3)=2, cost(2,1)=2, cost(2,3)=1, cost(3,1)=1, cost(3,2)=2; staying cost 0",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "最小化完成所有依赖任务所需的总时间,包括任务执行与电脑间移动时间",
+      "target": "total_time",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "remaining_prerequisites_conservation",
+          "description": "For every unfinished part, the set of its still-uncompleted direct prerequisites is maintained as the initial prerequisite set minus the set of already completed parts. This invariant guarantees that a part becomes ready (its prerequisite set becomes empty) exactly when all its required predecessors have been finished, preserving the correctness of the execution order under the acyclic dependency graph.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "progress_monotonicity",
+          "description": "The set of remaining parts strictly decreases each time a part is completed, and the algorithm never re-adds a completed part. Together with the bounded total number of parts, this ensures termination within a finite number of completion and computer‑switch steps.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "Counting optimal strategies either trivializes (if only counting initial choice and block partitions) or leads to intractable topological sort counting (#P-hard) without polynomial solution for n=200."
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "Counting optimal strategies either trivializes (if only counting initial choice and block partitions) or leads to intractable topological sort counting (#P-hard) without polynomial solution for n=200.",
+  "planning_feedback": "已尝试 2 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题仅输出最小总时间，升级为输出规范解时，可定义的规范顺序仅影响每台计算机上满足依赖部分的完成顺序（如按编号排序），本质上只是贪心策略上的输出后处理，不会改变主解法中状态转移和移动决策的核心逻辑，违反规范要求必须影响主要解法的硬性检查。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "规则 summary 要求'输出一个可以直接检查的规范方案'，helper redline 要求'不能退化为输出后处理'且'不能只加字典序描述'。原题解法的核心是固定循环移动与贪心完成可执行部分，要得到字典序最小的完成序列只需在每一步对可完成集合排序，不会使解法承担新的规范性证明。此外，forbidden 属性指出'原解只要顺手回溯就能拿到方案'，原解法虽未显式记录方案，但完成顺序可轻易在贪心过程中记录，符合顺手回溯情形。",
+        "feedback": "规范解要求未触及主约束或目标，也未改变状态演化方式，仅增加输出格式化要求，不符合规范性构造输出的意图。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_obstruction",
+      "selection_reason": "种子题保证有解，不存在'做不到'的情形，无法产生可局部检查的冲突证据，违反规则要求的必需种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目约束'acyclic_dependencies'明确声明'游戏部分之间的先行依赖关系不形成任何环,保证游戏可以完全完成'，因此输入始终可解，不存在无解情况，无法满足规则要求的'做不到的原因可以用局部证据表示'和'冲突证据可以从输出直接检查'。",
+        "feedback": "建议选择本身可能无解或可诱导无解约束的种子题，以匹配该规则的构造/阻碍双分支要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "clear_counting_target",
+      "selection_reason": "种子题求最小化完成所有依赖任务的总时间，解空间是所有可行调度，其中使总时间等于最小值的调度数量有限，因为总时间有上界且动作离散；计数对象可定义为满足依赖、电脑指派和移动规则且总时间等于最小值的所有事件序列，该定义无歧义，去重规则即为序列是否相同，清晰且可验证；解空间可自然按初始电脑或拓扑阶拆分为计数单元。规则要求的有限性、去重明确性和可汇总性均已满足。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "core_constraints给出固定任务历时、任务电脑指派和移动成本规则，保证了动作的离散性和总时间的上界；invariant中progress_monotonicity确认任务逐步完成，确保总步数有限；原题输出单一最小值，变换为计数题只需将目标改为计数所有总时间等于最小值的调度，去重规则依据事件序列是否相等，无需额外等价类划分，符合counting_unit_definition的要求。",
+        "feedback": "建议在变换中明确定义事件序列格式（初始位置、任务完成与移动事件），并声明计数对象为严格按照时间顺序排列的事件序列，以消除任何关于等价或部分序列合并的歧义。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题为确定性调度优化，任务耗时固定为1h、移动成本固定、依赖图为DAG，玩家完全控制执行顺序，不存在任何原生不确定性或波动。强行引入最坏情况保证只能靠虚构对手，违反红线‘不能只靠背景硬造对手’，规则要求的扰动来源无法从原题语义中稳定提取。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "core_constraints中fixed_task_duration明确‘∀i, duration(i) = 1’，movement_cost_rules固定移动耗时，无资源波动；原题描述中玩家‘可以任意选择初始电脑’且自行决定下一步，无外部干扰，否定原生扰动存在。规则eligibility.required_seed_properties要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但本题均不满足。",
+        "feedback": "该规则高度依赖种子题自带的不确定性结构，当前种子完全确定，即使可以形式上定义‘任意合法执行顺序’的扰动，也已脱离原题语义，属于背景硬造对手，应拒绝准入。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_suitable_seed_property",
+      "selection_reason": "原题已经是直接求解最小总时间的优化问题，缺少从可行性判定升级为临界阈值求解的自然转化基础。没有清晰的单调参数使得可行区域随其变化，阈值无法进入核心约束并改变主求解目标。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为'最小化完成所有依赖任务所需的总时间'，属于优化问题而非判定问题。规则要求'原题可行性随某个参数具有清晰的单调性或分层结构'，但原题中电脑数量固定为3，没有可变化的容量或临界参数。核心约束中的时间消耗、移动规则均为固定值，不存在'阈值变化会改变主约束的可行区域'的条件。",
+        "feedback": "该规则适用于从判定问题（如是否存在可行解）升级为求临界参数（如最小容量）的场景。建议选择原题明确为可行性判定、且存在自然阈值参数（如资源限制、容量上限）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_second_objective",
+      "selection_reason": "种子题只定义了单一最小化总时间的目标，题目描述和输入未提及任何其他自然的评价维度；移动次数或电脑使用时间虽可计算，但并非题目固有的衡量标准，且与总时间无必然冲突，不满足规则要求的自然且冲突的第二指标。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 'minimize total_time'，schema 中无任何其他指标。原题描述未暗示需平衡其他因素，仅要求输出最小总时间。移动成本已体现在总时间内，任何基于移动的属性均非独立目标。",
+        "feedback": "不适合应用权衡前沿变换，因为缺乏自然冲突的第二指标。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_inverse_target_and_edits",
+      "selection_reason": "原题输出最小完成时间可作为反向设计的目标值；允许修改任务的电脑指派是自然的操作，且该修改直接受原题移动规则和依赖结构约束，与原核心规律紧密相关；容易定义最小修改代价，从而形成‘给定目标时间，求最少修改几个任务的电脑指派使最小完成时间等于目标’的明确问题，完全符合 helpers 的正例和红线要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 seed_schema.core_constraints.constraints[1] (task_computer_assignment) 规定每个任务只能在其指定电脑完成且不可更改，这是可修改的自然对象；seed_schema.objective.type 为 minimize_value，目标值为 total_time，该值可直接作为反向目标；原题描述中移动时间规则（constraint movement_cost_rules）和依赖无环性（acyclic_dependencies）保证了修改指派后仍可计算完成时间，验证代价可行；helpers 中的 target_result_binding 要求目标来自原结果语义，edit_operation_contract 要求修改操作来自原题自然结构，minimality_or_certificate_lock 要求承担最小性责任，均能由该反向设计满足。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题任务之间已有先决依赖（acyclic_dependencies）和移动成本，本身就是全局耦合求解，不存在可独立处理的局部单元；强行加入共享资源或跨组件依赖将与原核心规律无关，违反红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "核心约束'acyclic_dependencies'明确指出部分间存在先行依赖，每个任务不能独立完成；移动成本规则将不同电脑上的任务绑定，且目标函数已是最小化全局总时间，标准解法也需考虑全局顺序，无局部独立分量。",
+        "feedback": "原题已具备全局耦合性质，不需要此规则扩展。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是单人优化问题，不存在自然的双方轮流选择操作。强行引入第二玩家将违反博弈行动必须来自原题自然操作的红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题操作仅涉及Rubik一人完成游戏部分并在电脑间移动，决策是单人的顺序选择与移动规划。规则eligible.required_seed_properties要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题没有第二个参与者，所有动作均由单人执行，不存在对抗性的轮流。规则forbidden_seed_properties禁止“对抗方只能靠故事背景硬造”，若从Furik和Rubik名字硬造双方轮流则触发此红线。",
+        "feedback": "这道种子题没有可自然对抗化的选择过程，博弈化将导致核心操作完全脱离原题语义。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "lack_of_local_object_family",
+      "selection_reason": "种子题是一个DAG上的最小完成时间调度问题，核心是任务执行顺序和电脑切换，不存在可组合的局部对象族（如多条路径、区间或子树）以天然形成覆盖或割关系。强行扩展将需要凭空引入路径集合，违反forbidden_seed_properties中的“不存在可组合的局部对象族”。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.input_structure: directed acyclic graph；core_constraints: 任务有固定电脑分配、无环依赖、移动成本已知；original_problem.summary: 计算完成所有n个任务的最小时间，无任何预定义路径集合或区间；required_seed_properties: 要求“原题核心对象具有路径、区间、子树、集合等局部结构”，种子题只有单个任务图，未体现多条局部对象。",
+        "feedback": "该种子题的核心结构是一个完整的依赖DAG，而非多条独立路径或区间。规则依赖的局部对象族不存在，扩展将违反禁止条件。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是一道最小化总时间的优化问题，没有明确的计数对象，与规则要求的“原题已经有明确有限的计数对象”冲突。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题已经有明确有限的计数对象”；种子题 schema.objective.type 为 'minimize_value'，描述为“最小化完成所有依赖任务所需的总时间”，核心约束均为任务依赖、计算机指派和移动时间，未出现任何计数元素。",
+        "feedback": "该规则仅适用于计数题，建议选择具有明确计数对象（如方案数、路径数）的种子题进行扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题仅输出最小总时间，升级为输出规范解时，可定义的规范顺序仅影响每台计算机上满足依赖部分的完成顺序（如按编号排序），本质上只是贪心策略上的输出后处理，不会改变主解法中状态转移和移动决策的核心逻辑，违反规范要求必须影响主要解法的硬性检查。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "规则 summary 要求'输出一个可以直接检查的规范方案'，helper redline 要求'不能退化为输出后处理'且'不能只加字典序描述'。原题解法的核心是固定循环移动与贪心完成可执行部分，要得到字典序最小的完成序列只需在每一步对可完成集合排序，不会使解法承担新的规范性证明。此外，forbidden 属性指出'原解只要顺手回溯就能拿到方案'，原解法虽未显式记录方案，但完成顺序可轻易在贪心过程中记录，符合顺手回溯情形。",
+        "feedback": "规范解要求未触及主约束或目标，也未改变状态演化方式，仅增加输出格式化要求，不符合规范性构造输出的意图。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_obstruction",
+      "message": "种子题保证有解，不存在'做不到'的情形，无法产生可局部检查的冲突证据，违反规则要求的必需种子属性。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目约束'acyclic_dependencies'明确声明'游戏部分之间的先行依赖关系不形成任何环,保证游戏可以完全完成'，因此输入始终可解，不存在无解情况，无法满足规则要求的'做不到的原因可以用局部证据表示'和'冲突证据可以从输出直接检查'。",
+        "feedback": "建议选择本身可能无解或可诱导无解约束的种子题，以匹配该规则的构造/阻碍双分支要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_target",
+      "message": "种子题求最小化完成所有依赖任务的总时间，解空间是所有可行调度，其中使总时间等于最小值的调度数量有限，因为总时间有上界且动作离散；计数对象可定义为满足依赖、电脑指派和移动规则且总时间等于最小值的所有事件序列，该定义无歧义，去重规则即为序列是否相同，清晰且可验证；解空间可自然按初始电脑或拓扑阶拆分为计数单元。规则要求的有限性、去重明确性和可汇总性均已满足。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "core_constraints给出固定任务历时、任务电脑指派和移动成本规则，保证了动作的离散性和总时间的上界；invariant中progress_monotonicity确认任务逐步完成，确保总步数有限；原题输出单一最小值，变换为计数题只需将目标改为计数所有总时间等于最小值的调度，去重规则依据事件序列是否相等，无需额外等价类划分，符合counting_unit_definition的要求。",
+        "feedback": "建议在变换中明确定义事件序列格式（初始位置、任务完成与移动事件），并声明计数对象为严格按照时间顺序排列的事件序列，以消除任何关于等价或部分序列合并的歧义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题为确定性调度优化，任务耗时固定为1h、移动成本固定、依赖图为DAG，玩家完全控制执行顺序，不存在任何原生不确定性或波动。强行引入最坏情况保证只能靠虚构对手，违反红线‘不能只靠背景硬造对手’，规则要求的扰动来源无法从原题语义中稳定提取。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "core_constraints中fixed_task_duration明确‘∀i, duration(i) = 1’，movement_cost_rules固定移动耗时，无资源波动；原题描述中玩家‘可以任意选择初始电脑’且自行决定下一步，无外部干扰，否定原生扰动存在。规则eligibility.required_seed_properties要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但本题均不满足。",
+        "feedback": "该规则高度依赖种子题自带的不确定性结构，当前种子完全确定，即使可以形式上定义‘任意合法执行顺序’的扰动，也已脱离原题语义，属于背景硬造对手，应拒绝准入。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_suitable_seed_property",
+      "message": "原题已经是直接求解最小总时间的优化问题，缺少从可行性判定升级为临界阈值求解的自然转化基础。没有清晰的单调参数使得可行区域随其变化，阈值无法进入核心约束并改变主求解目标。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为'最小化完成所有依赖任务所需的总时间'，属于优化问题而非判定问题。规则要求'原题可行性随某个参数具有清晰的单调性或分层结构'，但原题中电脑数量固定为3，没有可变化的容量或临界参数。核心约束中的时间消耗、移动规则均为固定值，不存在'阈值变化会改变主约束的可行区域'的条件。",
+        "feedback": "该规则适用于从判定问题（如是否存在可行解）升级为求临界参数（如最小容量）的场景。建议选择原题明确为可行性判定、且存在自然阈值参数（如资源限制、容量上限）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_objective",
+      "message": "种子题只定义了单一最小化总时间的目标，题目描述和输入未提及任何其他自然的评价维度；移动次数或电脑使用时间虽可计算，但并非题目固有的衡量标准，且与总时间无必然冲突，不满足规则要求的自然且冲突的第二指标。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 'minimize total_time'，schema 中无任何其他指标。原题描述未暗示需平衡其他因素，仅要求输出最小总时间。移动成本已体现在总时间内，任何基于移动的属性均非独立目标。",
+        "feedback": "不适合应用权衡前沿变换，因为缺乏自然冲突的第二指标。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "natural_inverse_target_and_edits",
+      "message": "原题输出最小完成时间可作为反向设计的目标值；允许修改任务的电脑指派是自然的操作，且该修改直接受原题移动规则和依赖结构约束，与原核心规律紧密相关；容易定义最小修改代价，从而形成‘给定目标时间，求最少修改几个任务的电脑指派使最小完成时间等于目标’的明确问题，完全符合 helpers 的正例和红线要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 seed_schema.core_constraints.constraints[1] (task_computer_assignment) 规定每个任务只能在其指定电脑完成且不可更改，这是可修改的自然对象；seed_schema.objective.type 为 minimize_value，目标值为 total_time，该值可直接作为反向目标；原题描述中移动时间规则（constraint movement_cost_rules）和依赖无环性（acyclic_dependencies）保证了修改指派后仍可计算完成时间，验证代价可行；helpers 中的 target_result_binding 要求目标来自原结果语义，edit_operation_contract 要求修改操作来自原题自然结构，minimality_or_certificate_lock 要求承担最小性责任，均能由该反向设计满足。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题任务之间已有先决依赖（acyclic_dependencies）和移动成本，本身就是全局耦合求解，不存在可独立处理的局部单元；强行加入共享资源或跨组件依赖将与原核心规律无关，违反红线。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "核心约束'acyclic_dependencies'明确指出部分间存在先行依赖，每个任务不能独立完成；移动成本规则将不同电脑上的任务绑定，且目标函数已是最小化全局总时间，标准解法也需考虑全局顺序，无局部独立分量。",
+        "feedback": "原题已具备全局耦合性质，不需要此规则扩展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是单人优化问题，不存在自然的双方轮流选择操作。强行引入第二玩家将违反博弈行动必须来自原题自然操作的红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题操作仅涉及Rubik一人完成游戏部分并在电脑间移动，决策是单人的顺序选择与移动规划。规则eligible.required_seed_properties要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题没有第二个参与者，所有动作均由单人执行，不存在对抗性的轮流。规则forbidden_seed_properties禁止“对抗方只能靠故事背景硬造”，若从Furik和Rubik名字硬造双方轮流则触发此红线。",
+        "feedback": "这道种子题没有可自然对抗化的选择过程，博弈化将导致核心操作完全脱离原题语义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "lack_of_local_object_family",
+      "message": "种子题是一个DAG上的最小完成时间调度问题，核心是任务执行顺序和电脑切换，不存在可组合的局部对象族（如多条路径、区间或子树）以天然形成覆盖或割关系。强行扩展将需要凭空引入路径集合，违反forbidden_seed_properties中的“不存在可组合的局部对象族”。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.input_structure: directed acyclic graph；core_constraints: 任务有固定电脑分配、无环依赖、移动成本已知；original_problem.summary: 计算完成所有n个任务的最小时间，无任何预定义路径集合或区间；required_seed_properties: 要求“原题核心对象具有路径、区间、子树、集合等局部结构”，种子题只有单个任务图，未体现多条局部对象。",
+        "feedback": "该种子题的核心结构是一个完整的依赖DAG，而非多条独立路径或区间。规则依赖的局部对象族不存在，扩展将违反禁止条件。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是一道最小化总时间的优化问题，没有明确的计数对象，与规则要求的“原题已经有明确有限的计数对象”冲突。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题已经有明确有限的计数对象”；种子题 schema.objective.type 为 'minimize_value'，描述为“最小化完成所有依赖任务所需的总时间”，核心约束均为任务依赖、计算机指派和移动时间，未出现任何计数元素。",
+        "feedback": "该规则仅适用于计数题，建议选择具有明确计数对象（如方案数、路径数）的种子题进行扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "planner_rejected",
+      "message": "Counting optimal strategies either trivializes (if only counting initial choice and block partitions) or leads to intractable topological sort counting (#P-hard) without polynomial solution for n=200.",
+      "details": {
+        "planner_status": "difference_insufficient"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "Counting optimal strategies either trivializes (if only counting initial choice and block partitions) or leads to intractable topological sort counting (#P-hard) without polynomial solution for n=200.",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "Counting optimal strategies either trivializes (if only counting initial choice and block partitions) or leads to intractable topological sort counting (#P-hard) without polynomial solution for n=200.",
+    "feedback": "已尝试 2 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_64e32891f3cb_home_organization_20260529_131921",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

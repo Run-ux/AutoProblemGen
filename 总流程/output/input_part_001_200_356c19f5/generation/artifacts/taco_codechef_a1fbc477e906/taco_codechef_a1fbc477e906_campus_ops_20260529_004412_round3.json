@@ -1,0 +1,1197 @@
+{
+  "problem_id": "inverse_klxor_minflips",
+  "source_problem_ids": [
+    "taco_codechef_a1fbc477e906"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_a1fbc477e906",
+      "KLXOR",
+      "codechef",
+      "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you. You are given a binary string S of length N. Let string T be the result of taking the XOR...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束增加目标串与翻转操作定义；目标从输出 popcount 变为最小化翻转次数；不变式扩展为包含翻转影响、前缀异或关系以及构造唯一性，支撑反向设计和最小性证明。",
+    "summary": "求解方向从给定输入计算结果反转成给定结果设计输入，要求最小化修改并证明最优性，利用原核心规律实现反向推导。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4893,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4893,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.7895,
+      "O": 0.4796,
+      "V": 0.6628
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.7895,
+      "objective_type_distance": 0.5075,
+      "objective_text_distance": 0.4378,
+      "invariant_match_distance": 0.6628
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "求所需的最少翻转次数（整数），使得最终计算出的 T 与 T_target 相等。",
+    "target": "min_operations",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（popcount）可作为反向目标；修改二进制字符串中的字符是原题对象的自然操作，与核心异或计算直接相关；通过最小翻转数可定义最小性责任，满足所有硬检查。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_klxor_minflips",
+    "source": "衍生自 taco_codechef_a1fbc477e906",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 10
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true,
+        "ordered": true
+      },
+      "components": [
+        {
+          "role": "test_case",
+          "role_description": "每个测试用例包含 N, K, 原始串 S 和目标串 T",
+          "type": "tuple",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {},
+          "components": [
+            {
+              "role": "n",
+              "role_description": "字符串长度",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 1,
+                "max": 200000
+              },
+              "properties": {}
+            },
+            {
+              "role": "k",
+              "role_description": "子串长度",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 1,
+                "max": 200000
+              },
+              "properties": {}
+            },
+            {
+              "role": "s",
+              "role_description": "原始二进制串 S",
+              "type": "string",
+              "length": {
+                "min": 1,
+                "max": 200000
+              },
+              "value_range": null,
+              "properties": {
+                "binary": true
+              }
+            },
+            {
+              "role": "t_target",
+              "role_description": "目标异或结果串 T，长度 N-K+1",
+              "type": "string",
+              "length": {
+                "min": 1,
+                "max": 200000
+              },
+              "value_range": null,
+              "properties": {
+                "binary": true,
+                "length_relation": "n - k + 1"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "binary_string_s",
+          "description": "原始串 S 仅由字符 '0' 和 '1' 组成。",
+          "formal": "S ⊆ {0,1}",
+          "source_sections": [
+            "constraints"
+          ]
+        },
+        {
+          "name": "binary_string_t",
+          "description": "目标串 T_target 仅由字符 '0' 和 '1' 组成，且长度等于 N-K+1。",
+          "formal": "T_target ⊆ {0,1} ∧ |T_target| = N-K+1",
+          "source_sections": [
+            "constraints"
+          ]
+        },
+        {
+          "name": "flip_operation",
+          "description": "一次操作可以选择一个索引 i（0 ≤ i < N），将 S[i] 翻转（0 变 1，1 变 0）。",
+          "formal": "op(i): S[i] := 1 - S[i]",
+          "source_sections": [
+            "constraints"
+          ]
+        },
+        {
+          "name": "target_matching",
+          "description": "经过若干次翻转后，由修改后的 S 计算出的所有长度为 K 的子串的按位异或结果串 T 必须等于给定的 T_target。",
+          "formal": "Compute(K, modified_S) = T_target",
+          "source_sections": [
+            "objective_related"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "求所需的最少翻转次数（整数），使得最终计算出的 T 与 T_target 相等。",
+      "target": "min_operations",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "column_interval_structure",
+          "description": "对于结果串 T 的第 j 位（0 ≤ j < N-K+1），T[j] 等于 S[j] 到 S[j+N-K] 这 N-K+1 位的异或和。",
+          "properties": {
+            "interval_length": "N - K + 1",
+            "start_index": "j",
+            "end_index": "j + N - K"
+          },
+          "evidence_source": "derived"
+        },
+        {
+          "name": "prefix_xor_relation",
+          "description": "令 P[i] 为 S[0..i-1] 的异或前缀（P[0]=0），则 T[j] = P[j+N-K+1] XOR P[j]。",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "flip_effect",
+          "description": "翻转 S[i] 会切换所有满足 max(0, i-(N-K)) ≤ j ≤ min(i, K-1) 的 T[j] 的值；等价地，翻转 S[i] 会切换所有 k > i 的 P[k] 的值。",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "reconstruction_uniqueness",
+          "description": "给定目标 T_target，可以唯一地重构所需的前缀异或数组 P_target（P_target[0]=0, P_target[j+N-K+1] = T_target[j] XOR P_target[j]）。令原始前缀异或为 P_initial，定义差异 d[i] = P_initial[i] XOR P_target[i]（d[0]=0），则必须翻转的位置集合为 { i | d[i+1] XOR d[i] = 1 }。此集合大小即为最小翻转次数，且任何可行方案至少需要这些翻转。",
+          "properties": {},
+          "evidence_source": "solution_construction"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "使用前缀异或与区间长度规律在 O(N) 内计算 T 和 popcount。",
+    "reusable_subroutines": "前缀异或数组计算；从前缀异或计算 T；列区间结构不变式。",
+    "new_solver_core": "通过目标 T_target 反向构造 P_target，与初始 P_initial 比较，利用差分唯一确定翻转集，输出集合大小。",
+    "new_proof_obligation": "需证明构造出的翻转集确实使最终 T 等于目标，且任何可行方案至少需翻转这些位（唯一性与最小性）。",
+    "why_direct_reuse_fails": "原解只输出最终 popcount，无法直接给出如何修改输入以达成指定输出的方法。"
+  },
+  "anti_shallow_rationale": "新题不是简单询问原计算结果是否等于给定值，而是要求主动设计输入以达到目标，同时承担最小修改责任，翻转操作与 XOR 子串规律深度绑定，避免了仅换故事背景或输出格式的浅层改动。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题计算结果 T（或其 popcount）可自然作为反向目标绑定，驱动设计任务。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "将计算方向翻转为目标驱动的构造设计，突破单向求解模式。",
+      "difficulty_reason": "要求算法围绕目标约束逆向推导必要操作。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "翻转二进制位是原串结构下最自然的修改操作，与核心规律直接相关。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "将反向设计落实为可形式化、可优化的操作空间，与 XOR 子串结构紧密挂钩。",
+      "difficulty_reason": "要求证明操作序列与目标结果之间的精确对应关系。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "需输出最小翻转次数并提供正确性证明，而非任意可行方案。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "让答案必须承担最小性责任，防止简单输出任意可行修改。",
+      "difficulty_reason": "要求算法证明无法用更少操作达成目标，增加论证深度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "rule_not_applicable",
+      "selection_reason": "原题仅要求计算1的个数，无构造方案输出，且值不可直接恢复为规范解，缺乏升级空间。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为value_computation，输出为整数；题目描述要求'number of 1 bits'，无任何构造要求；标准解法仅计数，未构建完整方案。",
+        "feedback": "种子题缺乏适合规范化的解对象，无法扩展为需要输出规范解的变体。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "seed_lacks_obstruction",
+      "selection_reason": "原题是求值问题，没有构造要求，因此不存在无解情形，无法稳定地输出局部冲突证据，不满足required_seed_properties。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标是计算popcount，不存在构造方案或做不到的情况；核心约束仅限制了字符串为二进制，没有不可兼容关系；解决方案基于奇偶性和区间结构，没有局部冲突证据的概念。",
+        "feedback": "规则要求种子题存在可局部证据化的无解情形，但本题是确定型计算问题，强行改造容易脱离原始核心规律。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_type_mismatch",
+      "selection_reason": "原题不是存在性或最优值问题，不满足规则要求的种子属性，无法应用计数变换。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 KLXOR 的目标是计算确定的 popcount，无解空间概念；规则要求种子必须具有有限解空间和可定义的等价关系，但原题无多个解，去重规则无从谈起。",
+        "feedback": "规则仅适用于存在性或最优值问题，当前种子题不匹配，不应进入规划阶段。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_native_perturbation",
+      "selection_reason": "原题 KLXOR 中不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法定义来自原题语义的扰动模型。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "从 seed_schema 看，输入为 T, N, K, S，没有顺序不确定或资源波动；原题摘要描述为计算固定 K 子串 XOR 的 1 个数，核心操作确定。不变量涉及 parity 和 interval，无不确定性。",
+        "feedback": "该规则依赖于原题本身含有可放大的扰动，但本题是确定性计算问题，建议尝试其他规则如 scale_aware 或 structural_merge。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_feasibility_seed",
+      "selection_reason": "原题是一个直接计算 popcount 的值计算问题，不包含任何可行性判定或单调性条件，无法满足规则要求的“可行性随参数单调变化”这一核心种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective 明确为 value_computation，target 为 popcount；original_problem.description 说明目标是求 1 的个数，不存在可行/不可行的判断。",
+        "feedback": "该种子题缺乏可行性判定的基础结构，若强行扩展为阈值优化题将违背规则 forbid 项，无法产生有意义的临界参数。建议替换为具有自然单调可行性条件的判题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_optimization",
+      "selection_reason": "原题目标是计算一个确定值，而不是寻找最优解，不存在优化目标，因此无法引入冲突的第二评价指标进行权衡。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的objective.type为'value_computation'，描述为'计算所有长度为K的子串按位异或后结果中1的个数'，没有最优概念。原题没有最大化或最小化任何量。",
+        "feedback": "规则要求种子题是单目标最优题，但当前种子题是计算题，不包含优化目标。建议更换为有明确优化目标的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "inverse_target_and_natural_edit_exist",
+      "selection_reason": "原题输出（popcount）可作为反向目标；修改二进制字符串中的字符是原题对象的自然操作，与核心异或计算直接相关；通过最小翻转数可定义最小性责任，满足所有硬检查。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题要求计算所有长度为K的子串按位异或后1的个数，输出为一个整数，可作为新题反向目标；种子题对象为二进制字符串，允许翻转字符的操作自然存在，且翻转字符会直接影响异或结果，与原核心规律紧密相关；方案可要求最小修改次数以达到目标popcount，满足helpers要求。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题KLXOR中，每个结果位的计算是独立确定的，不存在可选择的局部单元，无法引入共享资源或跨组件依赖，硬加约束会破坏核心规律。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中每个结果位由固定区间贡献的模2和决定，没有选择或分配；invariant的区间结构表明局部单元独立；标准解法独立处理每个位。",
+        "feedback": "规则要求局部单元之间能通过共享资源或全局选择耦合，但该题只有确定性计算，无选择，无法自然耦合，建议换含决策的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_choice_operation",
+      "selection_reason": "原题是纯确定性计算（对所有长度为K的子串做异或并计数1），不存在任何可自然对抗化的轮流选择、拿取、移动或改变状态的操作。强制加博弈只能硬造玩家和操作，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，且操作会改变后续可选状态。原题摘要显示任务为：给定二进制串S，计算所有长度为K的子串异或后结果中1的个数，输入输出均为固定数值，无状态转移或决策步骤。原题solution_code为线性扫描和前缀和异或，无互动或选择。核心约束只有字符串为二进制，不变式为异或和列的区间结构，均不涉及任何可选择的动作。",
+        "feedback": "该规则要求原题具备可博弈化的操作基础，而KLXOR完全是计算题，不涉及任何参与者的决策。强行应用会导致对抗方靠故事背景硬造，违反规则红线。建议更换种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "local_object_family_not_suitable",
+      "selection_reason": "种子题KLXOR的核心是计算所有长度为K的子串异或结果的1的个数，其算法本质利用了前缀和与区间奇偶性，但题目目标与覆盖、割或支配没有任何语义关联；虽然解后分析揭示了每个结果位对应一个固定区间，但这些区间仅为计算中间产物，并非问题要求的局部对象族，强行定义覆盖关系将引入与原题核心规律无关的附加限制，违反规则红线和forbidden属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为“popcount”，仅计算异或后1的个数；原题core_constraints仅约束二进制字符串，无覆盖要求；invariant中虽有区间结构，但仅用于推导解，并非题目给出的对象族。规则要求局部对象间自然形成覆盖或割关系，而原题的K长度子串虽可形成点覆盖关系，但该关系与异或计算规律无关，属于“覆盖关系只能靠无关附加限制产生”的forbidden情况。",
+        "feedback": "建议更换种子题，优先选择本身以局部结构（如路径、区间）上的最优选择、覆盖或割为核心目标的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_counting_object",
+      "selection_reason": "原题KLXOR目标是计算XOR和popcount，不是计数对象，不符合规则要求'原题已经有明确有限的计数对象'。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "根据seed_schema.objective.type='value_computation'，target是popcount；规则eligibility.required_seed_properties要求'原题已经有明确有限的计数对象'，但本题不存在计数问题。",
+        "feedback": "建议更换种子题，选择具有明确计数对象（如方案数目）的题目，且对象上存在自然权重或统计量才能适用此规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "rule_not_applicable",
+      "message": "原题仅要求计算1的个数，无构造方案输出，且值不可直接恢复为规范解，缺乏升级空间。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.3,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为value_computation，输出为整数；题目描述要求'number of 1 bits'，无任何构造要求；标准解法仅计数，未构建完整方案。",
+        "feedback": "种子题缺乏适合规范化的解对象，无法扩展为需要输出规范解的变体。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_obstruction",
+      "message": "原题是求值问题，没有构造要求，因此不存在无解情形，无法稳定地输出局部冲突证据，不满足required_seed_properties。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标是计算popcount，不存在构造方案或做不到的情况；核心约束仅限制了字符串为二进制，没有不可兼容关系；解决方案基于奇偶性和区间结构，没有局部冲突证据的概念。",
+        "feedback": "规则要求种子题存在可局部证据化的无解情形，但本题是确定型计算问题，强行改造容易脱离原始核心规律。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "seed_type_mismatch",
+      "message": "原题不是存在性或最优值问题，不满足规则要求的种子属性，无法应用计数变换。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 KLXOR 的目标是计算确定的 popcount，无解空间概念；规则要求种子必须具有有限解空间和可定义的等价关系，但原题无多个解，去重规则无从谈起。",
+        "feedback": "规则仅适用于存在性或最优值问题，当前种子题不匹配，不应进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "missing_native_perturbation",
+      "message": "原题 KLXOR 中不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法定义来自原题语义的扰动模型。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "从 seed_schema 看，输入为 T, N, K, S，没有顺序不确定或资源波动；原题摘要描述为计算固定 K 子串 XOR 的 1 个数，核心操作确定。不变量涉及 parity 和 interval，无不确定性。",
+        "feedback": "该规则依赖于原题本身含有可放大的扰动，但本题是确定性计算问题，建议尝试其他规则如 scale_aware 或 structural_merge。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "missing_feasibility_seed",
+      "message": "原题是一个直接计算 popcount 的值计算问题，不包含任何可行性判定或单调性条件，无法满足规则要求的“可行性随参数单调变化”这一核心种子属性。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective 明确为 value_computation，target 为 popcount；original_problem.description 说明目标是求 1 的个数，不存在可行/不可行的判断。",
+        "feedback": "该种子题缺乏可行性判定的基础结构，若强行扩展为阈值优化题将违背规则 forbid 项，无法产生有意义的临界参数。建议替换为具有自然单调可行性条件的判题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "seed_not_optimization",
+      "message": "原题目标是计算一个确定值，而不是寻找最优解，不存在优化目标，因此无法引入冲突的第二评价指标进行权衡。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的objective.type为'value_computation'，描述为'计算所有长度为K的子串按位异或后结果中1的个数'，没有最优概念。原题没有最大化或最小化任何量。",
+        "feedback": "规则要求种子题是单目标最优题，但当前种子题是计算题，不包含优化目标。建议更换为有明确优化目标的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_target_and_natural_edit_exist",
+      "message": "原题输出（popcount）可作为反向目标；修改二进制字符串中的字符是原题对象的自然操作，与核心异或计算直接相关；通过最小翻转数可定义最小性责任，满足所有硬检查。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题要求计算所有长度为K的子串按位异或后1的个数，输出为一个整数，可作为新题反向目标；种子题对象为二进制字符串，允许翻转字符的操作自然存在，且翻转字符会直接影响异或结果，与原核心规律紧密相关；方案可要求最小修改次数以达到目标popcount，满足helpers要求。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题KLXOR中，每个结果位的计算是独立确定的，不存在可选择的局部单元，无法引入共享资源或跨组件依赖，硬加约束会破坏核心规律。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中每个结果位由固定区间贡献的模2和决定，没有选择或分配；invariant的区间结构表明局部单元独立；标准解法独立处理每个位。",
+        "feedback": "规则要求局部单元之间能通过共享资源或全局选择耦合，但该题只有确定性计算，无选择，无法自然耦合，建议换含决策的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_choice_operation",
+      "message": "原题是纯确定性计算（对所有长度为K的子串做异或并计数1），不存在任何可自然对抗化的轮流选择、拿取、移动或改变状态的操作。强制加博弈只能硬造玩家和操作，违反红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，且操作会改变后续可选状态。原题摘要显示任务为：给定二进制串S，计算所有长度为K的子串异或后结果中1的个数，输入输出均为固定数值，无状态转移或决策步骤。原题solution_code为线性扫描和前缀和异或，无互动或选择。核心约束只有字符串为二进制，不变式为异或和列的区间结构，均不涉及任何可选择的动作。",
+        "feedback": "该规则要求原题具备可博弈化的操作基础，而KLXOR完全是计算题，不涉及任何参与者的决策。强行应用会导致对抗方靠故事背景硬造，违反规则红线。建议更换种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "local_object_family_not_suitable",
+      "message": "种子题KLXOR的核心是计算所有长度为K的子串异或结果的1的个数，其算法本质利用了前缀和与区间奇偶性，但题目目标与覆盖、割或支配没有任何语义关联；虽然解后分析揭示了每个结果位对应一个固定区间，但这些区间仅为计算中间产物，并非问题要求的局部对象族，强行定义覆盖关系将引入与原题核心规律无关的附加限制，违反规则红线和forbidden属性。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为“popcount”，仅计算异或后1的个数；原题core_constraints仅约束二进制字符串，无覆盖要求；invariant中虽有区间结构，但仅用于推导解，并非题目给出的对象族。规则要求局部对象间自然形成覆盖或割关系，而原题的K长度子串虽可形成点覆盖关系，但该关系与异或计算规律无关，属于“覆盖关系只能靠无关附加限制产生”的forbidden情况。",
+        "feedback": "建议更换种子题，优先选择本身以局部结构（如路径、区间）上的最优选择、覆盖或割为核心目标的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "missing_counting_object",
+      "message": "原题KLXOR目标是计算XOR和popcount，不是计数对象，不符合规则要求'原题已经有明确有限的计数对象'。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "根据seed_schema.objective.type='value_computation'，target是popcount；规则eligibility.required_seed_properties要求'原题已经有明确有限的计数对象'，但本题不存在计数问题。",
+        "feedback": "建议更换种子题，选择具有明确计数对象（如方案数目）的题目，且对象上存在自然权重或统计量才能适用此规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_fulfilled",
+      "message": "规划完整兑现代理合同，所有 helper 均生效：绑定原题结果为反向目标，定义自然操作集合，强制最小修改证明。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "target_result_binding: candidate_schema.core_constraints 增加 target_matching 约束，objective 改为最小化达成目标，反向目标来自原题 XOR 结果串，非简单相等验证。edit_operation_contract: core_constraints 定义 flip_operation，invariant 增加 flip_effect 解释操作影响。minimality_or_certificate_lock: objective 要求最少翻转次数，invariant 的 reconstruction_uniqueness 证明唯一性与最小性。所有 helper 均满足 redlines，changed_axes 覆盖 C/O/V。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面完整兑现了反向设计规则：目标来自原题结果语义（目标窗口特征序列），修改操作是翻转原串的位，要求输出最少翻转数并承担最小性责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中明确要求“给定初始计划 S 和目标窗口特征序列 T，计算最少需要翻转多少天，使得修改后的计划计算出的窗口特征序列恰好等于 T”；操作定义为“在任意一天，你可以将该天的状态翻转”；约束中包含 flip_operation 和 target_matching；样例输出最小次数并给出证明；最小性由所有样例和 notes 中的答案唯一性暗示。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "helpers_fully_realized",
+      "message": "题面完整兑现了三个helper的语义：目标结果绑定为窗口特征序列T，修改操作定义为二进制位翻转且与原始对象紧密关联，目标要求最少翻转次数并提供正确性证明责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：'学校期望的目标窗口特征序列 T'（target_result_binding）；'在任意一天，你可以将该天的状态翻转'（edit_operation_contract）；'计算最少需要翻转多少天'且样例解释'可以证明没有更少的翻转方案'（minimality_or_certificate_lock）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "invariant_missing",
+      "message": "题面缺少关键的不变量描述，未能将修改操作对目标的影响以及最小性证明所需的语义写实。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "规则 forward_solution_to_inverse_design 的 helpers edit_operation_contract 和 minimality_or_certificate_lock 均要求在 invariant 部分实现关键语义。new_schema 中定义了 flip_effect 和 reconstruction_uniqueness 等不变量，但生成的题面 descriptions 和 constraints 中并未包含这些内容，仅仅描述了翻转操作本身，没有说明其如何影响计算结果以及为何能达到最小性。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_target_and_minimal_edit_fulfilled",
+      "message": "题面明确定义了反向目标（使修改后的S计算的窗口特征序列等于T），修改操作（翻转S的任意位）自然源于原题对象，且要求输出最少翻转次数并提供了最小性的构造性证明说辞，完整兑现了规则合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中给出目标窗口特征序列T，并定义翻转操作；备注指出'所需的最少翻转天数由初始计划与目标特征序列唯一确定，并且能够通过分析前缀差异精确求出，该值同时给出了最小性的严格下界'，体现了最小性责任。约束和不变式部分（如plan中new_schema的invariant）详细说明了翻转如何影响T以及唯一重构方法，确保了操作空间的自然性和最小性证明。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_and_hard_checks_pass",
+      "message": "题面完整兑现了 reverse design 规则：将原题窗口特征序列设为反向目标，定义翻转操作为唯一修改方式，并明确要求输出最小翻转数且说明下界可证。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "目标绑定：题面 description 声明“学校期望的目标窗口特征序列 T”，且 core_constraints 中 target_matching 约束最终计算特征等于给定 T_target，对应 helper target_result_binding。修改操作：core_constraints 中 flip_operation 定义翻转第 i 天的精确影响，invariant 中 flip_effect 描述操作如何改变特征序列，对应 edit_operation_contract。最小性：objective 为最小化翻转次数，invariant 中 reconstruction_uniqueness 陈述“此集合大小即为最小翻转次数，且任何可行方案至少需要这些翻转”，notes 强调“严格求出下界”，对应 minimality_or_certificate_lock。修改操作与原二进制串核心对象直接相关，反向目标源于原题计算结果，规则硬性检查全部满足。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "新题与种子题底层数学结构高度一致，熟悉原题解法的选手只需将原前缀异或计算子程序复用，并反向推导翻转集，即构成主要解法。目标翻转任务未迫使选手重新设计全新算法，解法迁移风险过高。",
+    "feedback": "虽然背景故事和任务方向改变了，但核心约束（滑动窗口异或、区间长度 N-K+1、前缀异或）仍与种子题完全一致，导致 difference_plan 未能创造出足够差异。"
+  },
+  "iteration": {
+    "run_id": "taco_codechef_a1fbc477e906_campus_ops_20260529_004412",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 2,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_campus_ops_20260529_004412_round2.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codechef_a1fbc477e906\\taco_codechef_a1fbc477e906_campus_ops_20260529_004412_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 100.0,
+      "divergence_score": 53.7,
+      "non_full_dimensions": [],
+      "suggested_revisions": [
+        "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。",
+        "增加第3个样例，覆盖 K=N 或 K=1 等边界情况，帮助选手验证极端输入的正确性。",
+        "在描述中可再强调一次翻转操作是同时影响后续窗口的（非独立），但现有表述已足够，可酌情考虑。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例数量偏少",
+          "detail": "目前只有两个样例，虽然分别演示了无需翻转和需要翻转的情况，但缺少更极端的边界样例（如 K=N 或 K=1），可能让选手对某些特殊情形产生疑惑。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "虽然背景故事从异或子串变成了校园活动窗口，且任务从计算异或结果中1的个数逆转为求最小翻转次数，但底层数学结构（滑动窗口异或、前缀异或、区间长度均为N-K+1）完全一致。熟悉原题解法的选手会立刻发现，通过目标T反推期望前缀异或、与原始前缀异或比较差异并统计翻转次数即可得到答案，原题的前缀异或计算子程序可高度复用。新题没有迫使选手重新建模或设计全新算法，解法迁移风险极高，语义差异有限，实质仍是换皮。",
+          "evidence_refs": [
+            "review_context.distance_breakdown.axis_scores.C",
+            "review_context.distance_breakdown.axis_scores.O",
+            "review_context.algorithmic_delta_claim.reusable_subroutines",
+            "hard_checks[0].evidence_refs",
+            "hard_checks[8].evidence_refs"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "strengths_to_keep": [
+        "目标函数（最小翻转次数）在题面和输出格式中表达明确，无歧义。",
+        "输入输出格式规范，多测试用例的结构交代清楚，便于选手编写代码。",
+        "样例解释详细，展示了计算过程和翻转方案，有助于理解题意。",
+        "约束中明确保证至少存在一种方案，避免了无解情况的讨论。",
+        "故事背景（校园文化节）与题目逻辑自然融合，降低了抽象难度。",
+        "任务目标明确，从计算问题反转成设计问题，考验逆向思维。",
+        "操作效果描述清晰，两种等价方式（窗口包含与索引区间）便于选手选择理解。",
+        "样例覆盖边界情况（K=N, K=1）并给出逐步演算，降低理解成本。",
+        "题面故事化自然，无原题痕迹，符合防抄袭要求。"
+      ],
+      "previous_generated_problem": {
+        "title": "活动计划的最小调整",
+        "description": "校园文化节要到了，学校要在连续 N 天里安排社团活动。每天的状态用一个二进制位表示：0 表示当天没有社团占用教室，1 表示有占用。\n\n为了评估活动的分布情况，学校将每连续 K 天作为一个观察窗口，共得到 N-K+1 个窗口。对于每个窗口，统计窗口内被占用天数的奇偶性（窗口内所有天的状态之和除以 2 的余数），从而得到一个长度为 N-K+1 的二进制序列，称为窗口特征序列。\n\n现在，你已经知道各个社团提交的初步占用计划 S（一个长度为 N 的二进制串），以及学校期望的目标窗口特征序列 T（长度为 N-K+1 的二进制串）。\n\n作为活动管理员，你拥有修改计划的权力：在任意一天，你可以将该天的状态翻转（把 0 改成 1，或把 1 改成 0）。注意：翻转第 i 天（1-indexed）会改变所有包含该天的窗口的特征值。具体来说，对于每一个窗口 j，如果 j ≤ i ≤ j+K-1，则该窗口的特征位会发生翻转（0 变 1，1 变 0）。换言之，一次翻转会影响所有从 max(1, i-K+1) 到 min(i, N-K+1) 的连续窗口。翻转操作的先后顺序不会影响最终的窗口特征序列，你只需要决定哪些天被翻转。\n\n你的任务是：给定初始计划 S 和目标窗口特征序列 T，计算最少需要翻转多少天，使得修改后的计划计算出的窗口特征序列恰好等于 T。",
+        "input_format": "第一行一个整数 CaseNum，表示测试用例的数量。接下来每个测试用例按顺序包含三行：\n- 第一行两个整数 N 和 K，分别表示总天数和观察窗口的长度。\n- 第二行一个长度为 N 的字符串 S，仅包含字符 '0' 和 '1'，表示初始占用计划。\n- 第三行一个长度为 N-K+1 的字符串 T，仅包含字符 '0' 和 '1'，表示目标窗口特征序列。",
+        "output_format": "对于每个测试用例，按输入顺序输出一行一个整数，表示达到目标所需的最少翻转天数。",
+        "constraints": [
+          "1 ≤ CaseNum ≤ 10",
+          "1 ≤ K ≤ N ≤ 200000",
+          "|S| = N，且 S 仅包含字符 '0' 和 '1'",
+          "|T| = N-K+1，且 T 仅包含字符 '0' 和 '1'",
+          "输入保证至少存在一种翻转方案使窗口特征序列等于 T",
+          "时间限制：1 秒（C/C++）",
+          "空间限制：256 MB"
+        ],
+        "samples": [
+          {
+            "input": "1\n4 2\n1001\n101",
+            "output": "0",
+            "explanation": "初始计划 \"1001\"，K=2，计算出的窗口特征序列为：窗口1（第1-2天）1⊕0=1，窗口2（第2-3天）0⊕0=0，窗口3（第3-4天）0⊕1=1，得到 \"101\"，恰好等于目标 \"101\"，无需翻转，答案为 0。"
+          },
+          {
+            "input": "1\n4 2\n1001\n000",
+            "output": "2",
+            "explanation": "初始计划 \"1001\" 的窗口特征序列为 \"101\"，不等于目标 \"000\"。一种最优方案：翻转第2天和第3天，得到 \"1111\"，此时窗口1：1⊕1=0，窗口2：1⊕1=0，窗口3：1⊕1=0，序列为 \"000\"。可以证明仅需翻转2天，故答案为 2。"
+          },
+          {
+            "input": "1\n5 5\n10101\n0",
+            "output": "1",
+            "explanation": "N=5, K=5，只有一个窗口覆盖全部5天。初始计划 \"10101\" 的窗口特征为 1⊕0⊕1⊕0⊕1 = 1，即 \"1\"，不等于目标 \"0\"。只需翻转任意一天（例如第2天），原串变为 \"11101\"，则异或结果为 1⊕1⊕1⊕0⊕1 = 0，目标达成。最少翻转次数为 1。"
+          },
+          {
+            "input": "1\n4 1\n1100\n0000",
+            "output": "2",
+            "explanation": "K=1，每个窗口就是一天本身，窗口特征序列即为原串。目标 \"0000\" 要求所有天都不占用。当前 \"1100\" 有2个1，需翻转第1天和第2天，答案为 2。"
+          }
+        ],
+        "notes": "翻转操作具有连续性：翻转第 i 天会影响 max(1, i-K+1) 到 min(i, N-K+1) 之间的所有窗口特征位。可以证明，对于任意合法输入，最少翻转天数由初始计划与目标特征序列唯一确定，并且能够通过分析前缀差异严格求出下界。测试数据保证至少存在一种方案，且答案唯一。",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": "已根据new_schema重写题面，明确翻转操作顺序无关性，修正样例2错误，增加K=N和K=1的边界样例，质量提升。"
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 97.0,
+            "divergence_score": 76.9,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例数量偏少",
+                "detail": "目前只有两个样例，虽然分别演示了无需翻转和需要翻转的情况，但缺少更极端的边界样例（如 K=N 或 K=1），可能让选手对某些特殊情形产生疑惑。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。"
+              }
+            ],
+            "suggested_revisions": [
+              "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。",
+              "增加第3个样例，覆盖 K=N 或 K=1 等边界情况，帮助选手验证极端输入的正确性。",
+              "在描述中可再强调一次翻转操作是同时影响后续窗口的（非独立），但现有表述已足够，可酌情考虑。"
+            ],
+            "strengths_to_keep": [
+              "目标函数（最小翻转次数）在题面和输出格式中表达明确，无歧义。",
+              "输入输出格式规范，多测试用例的结构交代清楚，便于选手编写代码。",
+              "样例解释详细，展示了计算过程和翻转方案，有助于理解题意。",
+              "约束中明确保证至少存在一种方案，避免了无解情况的讨论。",
+              "故事背景（校园文化节）与题目逻辑自然融合，降低了抽象难度。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 53.7,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "虽然背景故事从异或子串变成了校园活动窗口，且任务从计算异或结果中1的个数逆转为求最小翻转次数，但底层数学结构（滑动窗口异或、前缀异或、区间长度均为N-K+1）完全一致。熟悉原题解法的选手会立刻发现，通过目标T反推期望前缀异或、与原始前缀异或比较差异并统计翻转次数即可得到答案，原题的前缀异或计算子程序可高度复用。新题没有迫使选手重新建模或设计全新算法，解法迁移风险极高，语义差异有限，实质仍是换皮。",
+                "evidence_refs": [
+                  "review_context.distance_breakdown.axis_scores.C",
+                  "review_context.distance_breakdown.axis_scores.O",
+                  "review_context.algorithmic_delta_claim.reusable_subroutines",
+                  "hard_checks[0].evidence_refs",
+                  "hard_checks[8].evidence_refs"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "任务目标明确，从计算问题反转成设计问题，考验逆向思维。",
+              "操作效果描述清晰，两种等价方式（窗口包含与索引区间）便于选手选择理解。",
+              "样例覆盖边界情况（K=N, K=1）并给出逐步演算，降低理解成本。",
+              "题面故事化自然，无原题痕迹，符合防抄袭要求。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "full_score_polish",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 100.0,
+        "latest_divergence_score": 53.7,
+        "suggested_revisions": [
+          "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。",
+          "增加第3个样例，覆盖 K=N 或 K=1 等边界情况，帮助选手验证极端输入的正确性。",
+          "在描述中可再强调一次翻转操作是同时影响后续窗口的（非独立），但现有表述已足够，可酌情考虑。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例数量偏少",
+            "detail": "目前只有两个样例，虽然分别演示了无需翻转和需要翻转的情况，但缺少更极端的边界样例（如 K=N 或 K=1），可能让选手对某些特殊情形产生疑惑。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "添加一个样例，例如 N=5, K=5, S=\"10101\", T=\"0\" 或 N=5, K=1, S=\"11111\", T=\"00000\"，以覆盖窗口长度与总长度相等或窗口长度为1的情形。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "虽然背景故事从异或子串变成了校园活动窗口，且任务从计算异或结果中1的个数逆转为求最小翻转次数，但底层数学结构（滑动窗口异或、前缀异或、区间长度均为N-K+1）完全一致。熟悉原题解法的选手会立刻发现，通过目标T反推期望前缀异或、与原始前缀异或比较差异并统计翻转次数即可得到答案，原题的前缀异或计算子程序可高度复用。新题没有迫使选手重新建模或设计全新算法，解法迁移风险极高，语义差异有限，实质仍是换皮。",
+            "evidence_refs": [
+              "review_context.distance_breakdown.axis_scores.C",
+              "review_context.distance_breakdown.axis_scores.O",
+              "review_context.algorithmic_delta_claim.reusable_subroutines",
+              "hard_checks[0].evidence_refs",
+              "hard_checks[8].evidence_refs"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "目标函数（最小翻转次数）在题面和输出格式中表达明确，无歧义。",
+          "输入输出格式规范，多测试用例的结构交代清楚，便于选手编写代码。",
+          "样例解释详细，展示了计算过程和翻转方案，有助于理解题意。",
+          "约束中明确保证至少存在一种方案，避免了无解情况的讨论。",
+          "故事背景（校园文化节）与题目逻辑自然融合，降低了抽象难度。",
+          "任务目标明确，从计算问题反转成设计问题，考验逆向思维。",
+          "操作效果描述清晰，两种等价方式（窗口包含与索引区间）便于选手选择理解。",
+          "样例覆盖边界情况（K=N, K=1）并给出逐步演算，降低理解成本。",
+          "题面故事化自然，无原题痕迹，符合防抄袭要求。"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

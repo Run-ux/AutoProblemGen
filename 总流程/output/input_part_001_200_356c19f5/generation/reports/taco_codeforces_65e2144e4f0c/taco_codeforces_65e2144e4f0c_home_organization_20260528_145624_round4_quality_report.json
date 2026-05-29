@@ -1,0 +1,639 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 75.7,
+    "schema_distance": 0.3864,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "新架构中的目标任务（统计最小可行子集数量并取模）在题面描述、输入输出格式、约束和样例中都得到准确实现，无偏差。",
+        "evidence_refs": [
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的全部信息：任务说明、输入输出格式、约束条件、关键规则（树结构、移动规则、捕获判定、子集可行性定义、取模要求）以及样例解释，没有遗漏。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "描述、输入格式、输出格式、约束和样例之间相互一致，字段数量、目标定义、符号含义均无冲突。样例输入输出与规则匹配。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供了3个样例，覆盖了线性树、简单分支树和复杂分支树的情况，每个样例都有清晰的解释，帮助理解规则和计数逻辑。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，段落分明，语言平实易懂，无来源污染或不必要的噪声，符合OJ题面表达习惯。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      }
+    ],
+    "strengths": [
+      "新目标统计最小可行子集数量，定义清晰，与规则一致。",
+      "样例设计多样，解释详实，有助于参赛者理解。",
+      "约束完整，包括多测试用例总和限制，便于选手判断复杂度。",
+      "输出取模说明明确，避免歧义。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3864,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.3953,
+        "O": 0.5835,
+        "V": 0.6095
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.3953,
+        "objective_type_distance": 0.6331,
+        "objective_text_distance": 0.509,
+        "invariant_match_distance": 0.6095
+      }
+    },
+    "schema_distance": 0.3864,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.15,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "新旧问题虽然输入结构相同，树和游戏规则一致，但任务语义从“求最小子集大小”变为“统计全局最小子集个数”，需要将解法从贪心BFS改为树形DP与计数，原解无法直接迁移；新题表层叙事全新，未复用原题文本，因此判定为实质性变化。",
+    "evidence_refs": [
+      "new_schema.core_constraints.constraints[3]",
+      "new_schema.objective",
+      "review_context.algorithmic_delta_claim",
+      "review_context.anti_shallow_rationale"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.39，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 4,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 75.7,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "新目标统计最小可行子集数量，定义清晰，与规则一致。",
+      "样例设计多样，解释详实，有助于参赛者理解。",
+      "约束完整，包括多测试用例总和限制，便于选手判断复杂度。",
+      "输出取模说明明确，避免歧义。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_home_organization_20260528_145624_round4.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_home_organization_20260528_145624_round4.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_65e2144e4f0c",
+      "title": "E2",
+      "description": "The only difference with E1 is the question of the problem.\n\nVlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Thus, the room system forms an undirected tree.\n\nVlad invited $k$ friends to play a game with them.\n\nVlad starts the game in the room $1$ and wins if he reaches a room other than $1$, into which exactly one corridor leads. Friends are placed in the maze: the friend with number $i$ is in the room $x_i$, and no two friends are in the same room (that is, $x_i \\neq x_j$ for all $i \\neq j$). Friends win if one of them meets Vlad in any room or corridor before he wins.\n\nFor one unit of time, each participant of the game can go through one corridor. All participants move at the same time. Participants may not move. Each room can fit all participants at the same time.\n\nFriends know the plan of a maze and intend to win. They don't want to waste too much energy. They ask you to determine if they can win and if they can, what minimum number of friends must remain in the maze so that they can always catch Vlad.\n\nIn other words, you need to determine the size of the minimum (by the number of elements) subset of friends who can catch Vlad or say that such a subset does not exist.\n\n\n-----Input-----\n\nThe first line of the input contains an integer $t$ ($1 \\le t \\le 10^4$) — the number of test cases in the input. The input contains an empty string before each test case.\n\nThe first line of the test case contains two numbers $n$ and $k$ ($1 \\le k < n \\le 2\\cdot 10^5$) — the number of rooms and friends, respectively.\n\nThe next line of the test case contains $k$ integers $x_1, x_2, \\dots, x_k$ ($2 \\le x_i \\le n$) — numbers of rooms with friends. All $x_i$ are different.\n\nThe next $n-1$ lines contain descriptions of the corridors, two numbers per line $v_j$ and $u_j$ ($1 \\le u_j, v_j \\le n$) — numbers of rooms that connect the $j$ corridor. All corridors are bidirectional. From any room, you can go to any other by moving along the corridors.\n\nIt is guaranteed that the sum of the values $n$ over all test cases in the test is not greater than $2\\cdot10^5$.\n\n\n-----Output-----\n\nPrint $t$ lines, each line containing the answer to the corresponding test case. The answer to a test case should be $-1$ if Vlad wins anyway and a minimal number of friends otherwise.\n\n\n-----Examples-----\n\nInput\n4\n\n8 2\n5 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n8 4\n6 5 7 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n3 1\n2\n1 2\n2 3\n\n3 2\n2 3\n3 1\n1 2\nOutput\n-1\n2\n1\n2\n\n\n-----Note-----\n\nIn the first set of inputs, even if all the friends stay in the maze, Vlad can still win. Therefore, the answer is \"-1\".\n\nIn the second set of inputs it is enough to leave friends from rooms $6$ and $7$. Then Vlad will not be able to win. The answer is \"2\".\n\nIn the third and fourth sets of inputs Vlad cannot win only if all his friends stay in the maze. Therefore the answers are \"1\" and \"2\".",
+      "input": "4\n\n8 2\n5 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n8 4\n6 5 7 3\n4 7\n2 5\n1 6\n3 6\n7 2\n1 7\n6 8\n\n3 1\n2\n1 2\n2 3\n\n3 2\n2 3\n3 1\n1 2",
+      "output": "-1\n2\n1\n2\n\n\n-----Note-----\n\nIn the first set of inputs, even if all the friends stay in the maze, Vlad can still win. Therefore, the answer is \"-1\".\n\nIn the second set of inputs it is enough to leave friends from rooms $6$ and $7$. Then Vlad will not be able to win. The answer is \"2\".\n\nIn the third and fourth sets of inputs Vlad cannot win only if all his friends stay in the maze. Therefore the answers are \"1\" and \"2\".",
+      "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "def solve():\n\tinput()\n\t(n, k) = map(int, input().split())\n\tf = list(enumerate(list(map(lambda x: int(x) - 1, input().split()))))\n\tg = {i: [] for i in range(n)}\n\tfor i in range(n - 1):\n\t\t(a, b) = map(int, input().split())\n\t\ta -= 1\n\t\tb -= 1\n\t\tg[a].append(b)\n\t\tg[b].append(a)\n\tneeded = {}\n\tvlad = [0]\n\tvisited = [False] * n\n\tfriends = [-1] * n\n\twhile len(vlad):\n\t\tnf = []\n\t\tfor (i, f1) in f:\n\t\t\tif friends[f1] != -1:\n\t\t\t\tcontinue\n\t\t\tfriends[f1] = i\n\t\t\tfor e in g[f1]:\n\t\t\t\tnf.append((i, e))\n\t\tf = nf\n\t\tnew_vlad = []\n\t\tfor v in vlad:\n\t\t\tif friends[v] != -1:\n\t\t\t\tneeded[friends[v]] = True\n\t\t\t\tcontinue\n\t\t\tif visited[v] == True:\n\t\t\t\tcontinue\n\t\t\tvisited[v] = True\n\t\t\tif len(g[v]) == 1 and v != 0:\n\t\t\t\treturn -1\n\t\t\tfor e in g[v]:\n\t\t\t\tnew_vlad.append(e)\n\t\tvlad = new_vlad\n\treturn len(needed)\nn = int(input())\nfor i in range(n):\n\tprint(solve())"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_65e2144e4f0c",
+        "E2",
+        "codeforces",
+        "The only difference with E1 is the question of the problem. Vlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Th...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "O轴从最小化目标变为计数；C轴新增模数约束、方案等价明确定义，并调整状态转移约束以支持计数；V轴由原来的同步步进不变性转变为DP状态划分完整性、无重复计数的计数不变性。",
+      "summary": "输出改为计数值，核心约束增加模数取余与方案区分规则，不变量重构为计数正确性保证。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "campoo_wardrobe_counting_v1",
+      "source": "codeforces",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "parameters",
+            "role_description": "number of rooms n and number of friends k",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          },
+          {
+            "role": "friend_positions",
+            "role_description": "distinct rooms where friends start (2..n)",
+            "type": "array",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 2,
+              "max": null
+            },
+            "properties": {
+              "distinct": true
+            }
+          },
+          {
+            "role": "tree_edges",
+            "role_description": "n-1 edges forming a tree",
+            "type": "tree",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": null
+            },
+            "properties": {
+              "connected": true,
+              "acyclic": true,
+              "simple": true
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "tree_structure",
+            "description": "房间和走廊构成树：n个节点，n-1条边，连通，无环。",
+            "formal": "G=(V,E) is a tree, |V|=n, |E|=n-1, connected.",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "game_rules",
+            "description": "小明从1号房间出发，朋友从给定位置出发；同时移动，每步可沿一条边移动或不动；小明到达除1外的叶节点则获胜；若朋友在任何房间或走廊与小明相遇（包括同时交换边），则朋友获胜。",
+            "formal": "Adversarial pursuit-evasion on tree with simultaneous moves; capture if occupied same node or traversed same edge in opposite directions at same step before Vlad reaches a leaf ≠1.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "friend_positions",
+            "description": "k个朋友初始位于2到n之间互不相同的房间。",
+            "formal": "Positions {x_i} ⊂ {2,3,...,n}, x_i distinct.",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "feasible_subset_definition",
+            "description": "一个守卫子集S可行当且仅当S中的朋友能够通过移动确保抓住小明（小明必败）。计数对象为所有可行子集中大小最小的那些子集。两个子集不同当且仅当包含的守卫索引集合不同。",
+            "formal": "A subset S of friends is feasible if those friends can guarantee capture. We count the number of smallest feasible subsets. Two subsets are distinct if their element sets differ.",
+            "source_sections": [
+              "objective",
+              "new"
+            ]
+          },
+          {
+            "name": "modulo_constraint",
+            "description": "由于答案可能很大，输出方案数对 1,000,000,007 (10^9+7) 取模的结果。",
+            "formal": "Answer = (number_of_smallest_feasible_subsets) mod 1000000007.",
+            "source_sections": [
+              "output"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_mod",
+        "description": "统计有多少种不同的选择守卫子集的方式，使得子集大小为全局最小可行大小，并保证抓住小明。输出该数量对 10^9+7 取模。",
+        "target": "smallest_feasible_subset_count_mod",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "dp_state_integrity",
+            "description": "树形DP过程中，每个节点维护的状态 (min_guards, ways_mod) 严格刻画以该节点为根的子树内，覆盖所有叶子路径所需的最小守卫数及达到该数的方案数（模MOD），状态转移保证无重复、无遗漏。",
+            "properties": {},
+            "evidence_source": "new_solver_core"
+          },
+          {
+            "name": "counting_correctness",
+            "description": "最终答案由根节点的DP状态导出，并考虑全局约束；不存在未计入的可行方案，所有方案均满足可行性，且每个最小可行子集恰好被统计一次。",
+            "properties": {},
+            "evidence_source": "new_proof_obligation"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium_hard"
+    },
+    "generated_problem": {
+      "title": "校园拦截计划",
+      "description": "校园活动中心由 n 个房间和 n-1 条走廊连接，形成一棵树。1 号房间是总控室，其他房间中，仅有一条走廊相连的房间称为“安全屋”。\n\n调皮的小明从 1 号房间出发，试图通过移动到达任意一个安全屋。如果他成功进入安全屋，则小明获胜。\n\n学校派出了 k 名志愿者，分别驻守在编号为 x_1, x_2, ..., x_k 的房间（这些房间互不相同，且都不是 1 号房间）。你可以选择让其中一部分志愿者参与拦截行动（其他人休息）。所有被选中的志愿者和小明同时移动：每步可以选择沿着一条走廊移动到相邻房间，或者停留在原地。\n\n如果在小明到达安全屋之前的任意时刻，小明的房间（或正在穿越的走廊）与某位参与行动的志愿者的房间（或走廊）重合（即两人在同一房间，或者在同一时间沿着同一走廊相向而行），则视为拦截成功，志愿者获胜。\n\n你的任务是选择一个参与行动的志愿者子集，使得他们能够确保拦截成功（即无论小明如何移动，志愿者都有策略抓住他）。这样的子集称为可行的。由于人力有限，你希望参与的人数尽可能少。请统计有多少种选择参与者的方案，使得人数达到全局最少，并保证拦截成功。\n\n两个方案不同当且仅当它们选择的志愿者编号集合不同。",
+      "input_format": "第一行包含一个整数 t (1 ≤ t ≤ 10^4)，表示测试用例的数量。\n每个测试用例之间可能包含空行，评测时会自动忽略空白，选手可直接按正常方式读取。\n每个测试用例的第一行包含两个整数 n 和 k (1 ≤ k < n ≤ 2·10^5)，分别表示房间数和志愿者人数。\n第二行包含 k 个互不相同的整数 x_1, x_2, ..., x_k (2 ≤ x_i ≤ n)，表示每个志愿者的初始房间。志愿者按照输入顺序编号为 1 到 k。\n接下来 n-1 行，每行包含两个整数 u, v (1 ≤ u, v ≤ n)，表示房间 u 和 v 之间有一条走廊。保证给出的图是一棵树。\n所有测试用例的 n 之和不超过 2·10^5。",
+      "output_format": "对于每个测试用例，输出一行一个整数，表示满足条件的方案数对 1,000,000,007 (10^9+7) 取模后的结果。",
+      "constraints": [
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "1 ≤ t ≤ 10^4",
+        "2 ≤ n ≤ 2·10^5，所有测试用例的 n 之和不超过 2·10^5",
+        "1 ≤ k < n",
+        "2 ≤ x_i ≤ n，且 x_i 互不相同",
+        "给定的边构成一棵树",
+        "输入数据保证至少存在一个可行的志愿者子集，且 k ≥ 1"
+      ],
+      "samples": [
+        {
+          "input": "1\n4 3\n2 3 4\n1 2\n2 3\n3 4",
+          "output": "3",
+          "explanation": "树是一条链 1-2-3-4，安全屋为 4。志愿者 1,2,3 分别位于房间 2,3,4。只有一条通往安全屋的路径，任何一位志愿者单独拦截即可：待在原地或在路径上移动，在小明到达安全屋之前一定能相遇。因此，最小需要人数为 1，选择任意一个志愿者均可行，共有 3 种方案。答案为 3。"
+        },
+        {
+          "input": "1\n5 3\n2 4 5\n1 2\n1 4\n2 3\n4 5",
+          "output": "2",
+          "explanation": "树的结构：1-2-3 和 1-4-5 两条分支，安全屋为 3 和 5。志愿者 1 在房间 2，志愿者 2 在房间 4，志愿者 3 在房间 5。要成功拦截，必须同时防守通往 3 和通往 5 的路径。防守通往 3 的路径需要至少一名在房间 2 的志愿者（也就是志愿者 1）；防守通往 5 的路径可以在房间 4（志愿者 2）或房间 5（志愿者 3）中选择。因此最小总人数为 2，可行的方案为 {1, 2} 和 {1, 3}，共 2 种。答案为 2。"
+        },
+        {
+          "input": "1\n7 3\n2 5 6\n1 2\n2 3\n3 4\n1 5\n5 6\n5 7",
+          "output": "2",
+          "explanation": "树的结构：根 1 下有两个分支，左分支 1-2-3-4（安全屋 4），右分支 1-5-6 和 1-5-7（安全屋 6 和 7）。志愿者 1 在房间 2，志愿者 2 在房间 5，志愿者 3 在房间 6。要成功拦截所有路径，左分支必须拦截，右分支也必须拦截。左分支唯一路径需要志愿者 1（房间 2）才能拦截，因为志愿者 1 位于从根到叶子 4 的必经之路上。右分支有两条路径，志愿者 2（房间 5）位于两条路径的分岔点前，可以拦截任意走向 6 或 7 的小明；志愿者 3（房间 6）只能拦截走向 6 的小明，无法拦截走向 7 的小明，单独使用志愿者 3 不可行。因此最小人数为 2，可行方案为：{1, 2}（选择志愿者 1 和 2）和 {1, 3}（选择志愿者 1 和 3），共 2 种方案。答案为 2。"
+        }
+      ],
+      "notes": "方案数可能很大，请输出对 1,000,000,007 取模的结果。两个方案相同当且仅当它们包含的志愿者编号集合完全相同。输入数据保证 k ≥ 1，且至少存在一个可行的志愿者子集，故无需考虑无解的情况。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "输出改为计数值，核心约束增加模数取余与方案区分规则，不变量重构为计数正确性保证。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3864,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.3953,
+          "O": 0.5835,
+          "V": 0.6095
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.3953,
+          "objective_type_distance": 0.6331,
+          "objective_text_distance": 0.509,
+          "invariant_match_distance": 0.6095
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确定义计数对象和等价规则，避免歧义。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints增加feasible_subset_definition约束，明确什么是可行子集、如何区分不同子集。",
+            "objective改为统计最小可行子集的数量。",
+            "invariant中强调DP状态覆盖所有最小可行子集且无重复。"
+          ],
+          "innovation_reason": "将原题的单一最优值输出提升为多方案计数，要求选手思考解空间的结构。",
+          "difficulty_reason": "增加方案去重和计数取模，需要更精细的状态设计，提高实现难度。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "必须将解空间拆分为可独立贡献的子树计数单元，才能用DP聚合。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints中通过DP树形结构隐式定义拆分方式，每个节点对应一个计数单元。",
+            "invariant引入dp_state_integrity，规定每个节点维护最小守卫与方案数，保证上下层结合时不重不漏。"
+          ],
+          "innovation_reason": "将原本的BFS全局模拟转化为基于树的结构化计数，需要原创DP设计。",
+          "difficulty_reason": "要求选手将问题分解为子树子问题并设计合适的聚合操作，思维难度高。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "计数必须成为主要求解目标，而非附带统计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective彻底替换为计数目标，不再保留原最小化目标。",
+            "core_constraints中的模数约束和方案定义都是为了服务计数目标。"
+          ],
+          "innovation_reason": "算法不能复用原判最小值的逻辑，必须重构为以计数为主轴的流程。",
+          "difficulty_reason": "要求选手同时保证最小化与计数的双重正确性，易错点增多。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "从朋友位置和根同时BFS，模拟追逃过程，贪心地标记必须留下的朋友，统计最小必要人数。",
+        "reusable_subroutines": "树的邻接表构建、BFS遍历、距离计算、叶节点判断。",
+        "new_solver_core": "采用树形DP，自底向上计算每个节点捕获所需的最小守卫数及对应方案数（取模）。对于每个节点，考虑儿子节点的最小守卫汇总、子树内是否存在朋友、是否被已有守卫覆盖等，设计状态转移方程并计数。",
+        "new_proof_obligation": "证明DP状态的定义能完整覆盖所有最小可行子集且不重不漏；证明取模下的计数等价于真实计数值；证明状态转移的正确性，尤其是在分支合并时方案数相乘/相加的合理性。",
+        "why_direct_reuse_fails": "原题解只关注最小人数本身，不记录方案数，且贪心BFS难以扩展为计数，必须重新设计为基于结构化DP的计数方法。"
+      },
+      "anti_shallow_rationale": "新题并非简单在输出端加模数，而是彻底改变求解目标。原题只需要输出一个整数大小，新题需要计算所有达到该大小的子集个数，这要求解法的核心从贪心/判定改为带计数的DP，并引入新的状态定义、转移方程和正确性证明，算法复杂度也由O(n)变为O(n)但常数更大，同时要求处理大数取模，难度显著提升，不是换皮。"
+    }
+  }
+}

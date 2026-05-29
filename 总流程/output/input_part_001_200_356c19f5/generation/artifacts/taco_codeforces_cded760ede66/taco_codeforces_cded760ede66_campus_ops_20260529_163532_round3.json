@@ -1,0 +1,1309 @@
+{
+  "problem_id": "inv_design_community_mincost",
+  "source_problem_ids": [
+    "taco_codeforces_cded760ede66"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_cded760ede66",
+      "codeforces",
+      "Suppose you are performing the following algorithm. There is an array $v_1, v_2, \\dots, v_n$ filled with zeroes at start. The following operation is applied to the array several times — at $i$-th step ($0$-indexed) yo...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "必须改变约束（引入操作及其成本）、目标（输出最小代价而非 YES/NO）和不变量（可达性条件保持不变，但新增最小化与成本权衡义务）。输入结构保持不变以凸显问题深化。",
+    "summary": "约束中定义修改操作与其非对称成本；目标从可达性判断改为最小化修改总代价；不变量延伸为最终状态需满足原可达性且操作序列总代价最小。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4835,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4835,
+    "axis_scores": {
+      "I": 0.0833,
+      "C": 0.683,
+      "O": 0.4675,
+      "V": 0.7046
+    },
+    "components": {
+      "input_tree_distance": 0.0833,
+      "constraint_match_distance": 0.683,
+      "objective_type_distance": 0.619,
+      "objective_text_distance": 0.2402,
+      "invariant_match_distance": 0.7046
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "对于每组测试数据，输出使最终数组满足可达性条件所需的最小总操作代价。",
+    "target": "minimum_total_cost"
+  },
+  "rule_selection_reason": "在之前两轮生成中，construct_or_obstruction 导致解法迁移风险过高，核心贪心逻辑未变，不满足创新度要求；existence_to_counting 因原题可行解唯一（0/1）而不适用。forward_solution_to_inverse_design 通过定义修改操作和最小代价，彻底改变任务从判定到优化，符合 schema 的自然修改动作，能最大程度提升创新度和难度。；创新度判断：将原题“是否可达”的判定转为“给定目标，如何最小修改以达可达”的反向设计，引入编辑操作和最小性证明，拉离原题的简单冲突检查，迫使选手围绕修改空间重构算法。；难度判断：原题仅需贪心检查幂次冲突；新题需在冲突分析基础上计算最少修改元素或总调整量以消除所有冲突，可能涉及 DP、贪心构造或更复杂的下界证明，大幅提升求解责任。；风险判断：修改操作和代价定义需精心设计，避免退化为只改变问题叙事或简单后处理；最小性证明可能使题面描述变复杂；需配合清晰样例防止理解偏差。但基于原核心规律的自然修改路径可控。",
+  "new_schema_snapshot": {
+    "problem_id": "inv_design_community_mincost",
+    "source": "community_services",
+    "input_structure": {
+      "type": "composite",
+      "components": [
+        {
+          "role": "test_case_count",
+          "type": "integer",
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          }
+        },
+        {
+          "role": "per_case_n_k",
+          "type": "integer_pair",
+          "length": 2,
+          "value_range": {
+            "n": {
+              "min": 1,
+              "max": 30
+            },
+            "k": {
+              "min": 2,
+              "max": 100
+            }
+          }
+        },
+        {
+          "role": "per_case_array_a",
+          "type": "array",
+          "length": "n",
+          "element_type": "integer",
+          "value_range": {
+            "min": 0,
+            "max": 10000000000000000
+          }
+        }
+      ],
+      "properties": {
+        "multiple_test_cases": true,
+        "no_additional_cost_parameters": true
+      },
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "reachability_condition",
+          "description": "对最终数组 a' 要求：对于每个非负整数 e (0 ≤ e ≤ Emax，其中 k^Emax > 10^16 且 k^(Emax-1) ≤ 10^16)，设 digit_e(x) 为 x 的 k 进制表示中 k^e 的系数（因约束性质保证其仅可能为 0 或 1），则有 sum_{i=1..n} digit_e(a'_i) ≤ 1。",
+          "formal": "∀e∈ℕ₀, Σ_{i=1}^n (⌊a'_i / k^e⌋ mod k) ≤ 1",
+          "source_sections": [
+            "original_constraint"
+          ]
+        },
+        {
+          "name": "edit_operations",
+          "description": "你可对初始数组 a 进行任意多次操作，每次操作选择位置 i (1 ≤ i ≤ n) 和指数 e (0 ≤ e ≤ Emax)，并选择执行增加或减少：增加操作：a_i := a_i + k^e，代价 C_inc = 2；减少操作：a_i := a_i - k^e（要求 a_i ≥ k^e），代价 C_dec = 1。操作后数组元素保持非负整数。",
+          "formal": "Action = (i, e, op) with op ∈ {inc, dec}, cost = C_inc if op=inc else C_dec. Precondition: a_i >= k^e when op=dec. Transition: a_i' = a_i + k^e (inc) / a_i' = a_i - k^e (dec). C_inc=2, C_dec=1.",
+          "source_sections": [
+            "new_definition"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "对于每组测试数据，输出使最终数组满足可达性条件所需的最小总操作代价。",
+      "target": "minimum_total_cost"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "final_reachability_holds",
+          "description": "执行一系列操作后，最终数组 a' 必须满足可达性条件（每个幂次在所有位置的系数和 ≤1）。",
+          "evidence_source": "core_constraints"
+        },
+        {
+          "name": "cost_minimality",
+          "description": "输出的总代价是所有可能操作序列中的最小值，任何其他满足可达性的操作序列代价不小于该值。",
+          "properties": {
+            "optimality": "global_minimum"
+          },
+          "evidence_source": "optimization"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "medium-hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "由高到低贪心检查每个幂次 k^e 的使用情况：遍历幂次，若发现同一幂次被多个位置需要则判定不可行。",
+    "reusable_subroutines": "k进制分解函数；计算各幂次在每个位置的出现（digit 提取）。",
+    "new_solver_core": "需要维护各位置当前需求，结合修改成本（增加/减少幂次的代价不同）进行动态规划或费用流决策，以决定哪些幂次保留、哪些减少、是否通过拆分/合并高位幂次来最小化总成本。",
+    "new_proof_obligation": "必须证明算法能输出全局最小总代价：考虑到增加与减少非对称成本、幂次间可通过多次低位增加代替高位减少的权衡，需证明规划的最优子结构，并证明任何到可达状态的转换均可通过解空间中的某个操作序列实现，且算法探索了所有关键可能性。",
+    "why_direct_reuse_fails": "原贪心算法仅做可行性判定，无法处理代价差异与最小化需求。例如当 C_inc < C_dec 时，可能需要将高幂次减少拆分为多个低幂次增加并配合其他调整，这种全局优化与原题简单的冲突检查完全不同，直接输出原贪心结果再加常数修正无法保证最优。"
+  },
+  "anti_shallow_rationale": "新题通过引入非对称操作成本和最小化目标，将原题简单的布尔可达性完全重构为加权优化问题。即使 n 很小，由于每位冲突可以有多种消解策略（直接减少、转移至高位、化为低位组合等），原贪心算法完全失效，必须新设计动态规划或网络流模型。这不是换皮或输出格式变化，而是问题本质从判定变为设计。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题结果‘YES/NO’表示数组是否可达，直接绑定为反向目标：要求达到 YES 状态。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "新增 final_reachability 条件作为约束",
+        "目标从决策变为使该条件成立"
+      ],
+      "innovation_reason": "将正向求解方向翻转为必须达成指定性质，问题由被动判断转为主动构造。",
+      "difficulty_reason": "要求算法不仅理解可达性，还需主动构建满足条件的状态，增加了构造与优化难度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "逆设计必须定义如何修改输入来达到目标，原题核心对象 a 的自然修改是增减幂次 k^e。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "约束中加入具体操作集和代价定义",
+        "不变量扩展为操作前后状态转换与最终可达性"
+      ],
+      "innovation_reason": "把抽象修改落实为可枚举、带代价的操作空间，将问题变为典型的最少操作/最小成本问题。",
+      "difficulty_reason": "非对称成本使简单冲突计数无效，必须考虑操作顺序和替代方案，大幅增加组合复杂度。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "输出必须承担最小代价责任，而非任意可行解。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "目标明确为最小化总代价",
+        "不变量要求输出值为全局最小"
+      ],
+      "innovation_reason": "强制要求最优解，驱动算法必须包含优化证明，区别于仅寻找可行方案的构造题。",
+      "difficulty_reason": "需要证明下界或利用最优子结构，避免简单贪心或启发式，将难度提升至较高层次。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题中每个 a_i 的 k 进制表示唯一，因此合法构造唯一，要求输出规范解不会引入新选择维度，原解法直接回溯即可，主要算法不变。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束要求不同位置在同一幂次上不能冲突，故每个幂次分配由 a_i 的 k 进制分解唯一确定。标准解法在检查可行性时已经识别了分配，顺手记录即得方案。因此无法体现规范解升级。",
+        "feedback": "规则要求种子题需有解对象的非平凡规范选择空间，本题由于解的确定性，不适用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "local_certificate_feasible",
+      "selection_reason": "原题无解原因（某幂次需分配给多个元素）天然可表达为局部冲突证据（输出冲突幂次与位置列表），该证据可在不回溯全局状态的情况下直接检查，符合规则要求的“输出可局部检查的阻碍证据”。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题核心约束 digit_sum_limit_per_place 规定每个幂次 k^e 在所有元素中系数之和 ≤1，无解时必然存在至少一个幂次 e 在多个 a_i 的基 k 分解中系数为1（例如示例 NO 情形），可将该 e 与涉及的至少两个位置作为冲突证据输出；检查时只需提取这些位置的基 k 分解并验证系数之和 >1，无需全局搜索。",
+        "feedback": "建议在证据对象中明确包含幂次 e、冲突位置列表，并规定证据格式（如 JSON），以强化局部可检查性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "clear_counting_object",
+      "selection_reason": "种子题的解空间有限：每个幂次 k^e 最多分配一次，最大幂次由 a_i 的范围决定（≤10^16），因此可能的分配方案有限。不同的分配方案必然产生不同的数组，因为分配不同的位置导致元素和不同，所以去重规则明确（按数组本身去重）。可以定义计数对象为“满足各元素 ≤10^16 的可达数组数量”，并可以在新题中显式添加元素上界约束来保证有限性，符合计数化变换的基本条件。",
+      "risk_tags": [
+        "potential_simplification_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束 digit_sum_limit_per_place 规定每个幂次在基 k 表示下各位和 ≤1，即每个幂次最多分配给一个位置（参见 schema.core_constraints）。不变量 unique_exponent_assignment 指出每个幂次在分配中唯一，贪心验证从高到低无冲突（参见 schema.invariant）。输入结构中 a_i 的最大值 10^16 隐含了使用的幂次数量有限（参见 schema.input_structure.components.all_a.value_range）。因此解空间有限且去重自然（不同分配导致不同数组）。",
+        "feedback": "基础条件满足，但需警惕计数对象可能退化为简单组合数公式（例如 (n+1)^E），需在规划阶段进一步强化约束以避免答案过于平凡。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题不存在可被放大为保底优化的原生扰动来源。操作步骤中的选择自由度是决策者的控制变量，并非源自环境或对手的不确定性，引入最坏情况保证将依赖硬造对手，违反规则红线和禁止属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "核心约束'每个幂次k^e在所有数组元素中最多使用一次'是确定性硬约束，不变式也强调唯一分配，无波动。操作者可以自由选择位置或跳过，这种可控自由度不能视为扰动。规则 eligibility 要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但这里的顺序不确定是决策者主动选择，而非被动接受。forbidden_seed_properties 明确禁止'只能靠故事背景硬造对手'，而构造保底必然要引入对抗性最坏情况，这将是硬造。",
+        "feedback": "此题更适合作为纯决策存在性题，不适合改写成保底优化，因为没有本土扰动模型支撑。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题判定可行性完全由唯一幂次分配约束控制，且输入参数k的变化不呈现单调可行区域，无法自然参数化为临界阈值；若强行将k作为优化目标，仅形成外层二分判定，违反规则红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题核心约束为‘每个幂次k^e在所有数组元素中最多使用一次’，原目标是判断给定a是否可达（YES/NO）。规则要求阈值必须改变主约束并具有单调性或分层结构，但该问题中：1）不存在容量、最小步数等自然数值参数；2）尝试将k作为优化参数时，可行性不满足‘大于等于某值即始终可行’的单调性（例如a=[1,2]，k=2可行，k>2不可行）；3）若仅在外层对k进行二分搜索仍使用原判定，则违反‘不能只是机械二分’的红线。因此该种子不符合规则要求的必要性质。",
+        "feedback": "建议更换为具有明确容量、负载或资源约束的种子题，如资源分配、网络流可行性等，其可行性随资源量单调变化，适合直接构造临界阈值求值问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_second_metric",
+      "selection_reason": "原题是可行性判定题（YES/NO），不存在可优化的第一目标，因此无法定义冲突的第二指标来构成权衡前沿。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中objective.type为decision，且描述为“判断目标数组是否可通过给定操作得到”，无最大化或最小化目标。原题核心是检查幂次分配的唯一性，无自然冲突的第二指标可引入。",
+        "feedback": "规则要求原题目标附近存在自然的第二评价指标，但本题为决策问题，没有任何可量化的第一目标，无法定义主指标和冲突的约束指标，即便强行加入如“最小化操作步数”也会与可行性硬约束不构成真实权衡。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "NATURAL_TARGET_AND_EDIT_FREEDOM",
+      "selection_reason": "原题结果为 YES/NO 布尔判定，可直接作为反向目标（如“使答案为 YES”），且修改数组元素的操作为原输入对象的自然修改，存在设计自由度，满足正向求解到反向设计的基本条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束为每个幂次 k^e 在所有 a_j 中至多出现一次，修改 a 中元素的值会直接影响该约束的满足性，因此修改操作与原核心规律紧密相关。原题输出为 YES/NO，可作为反向目标（例如：求最少修改元素个数使得数组合法，即输出 YES）。规则要求改变 C、O、V 轴，新题可将目标从判定改为最小化修改次数（O 变化），约束可保持不变或微调（C），输出变为修改方案或最小代价（V 变化），且修改操作定义在原始元素上，无无关操作。",
+        "feedback": "反向目标语义来自原题结果，修改操作完全基于原数组对象，最小性要求自然涌现，可进入规划阶段。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题已经通过‘每个幂次最多使用一次’的约束实现了共享资源耦合，各位置无法独立求解，规则期望的‘从独立到耦合’转变无法产生有意义的差异。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints.digit_sum_limit_per_place 规定所有 a_j 的同一位数字之和不超过1，invariant.unique_exponent_assignment 明确‘每个幂次最多分配给一个位置’，这已经是典型的全局共享资源约束。规则要求原题存在‘可独立处理的分量’，但原题的分量（各 a_i）从一开始就因幂次池而绑定，并非独立单元。",
+        "feedback": "种子题已处于规则试图构造的状态，建议选择原本各组件独立决策且无共享资源的题目应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题操作虽有选择，但缺乏天然对抗方与零和博弈目标；强行引入对手会落入「凭背景硬造玩家」的红线，且无法从单人可行性判定自然导出双方最优胜负语义。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为单人算法：每步 i 可选择某个位置增加 k^i 或跳过，最终判断是否可得到目标数组 a。不存在第二个参与者、竞争目标或策略对抗；核心约束仅要求每个幂次最多使用一次，未涉及任何博弈状态转移或最优响应。",
+        "feedback": "规则要求的「自然轮流选择」可勉强适配操作本身，但「双方最优行动下的胜负」无法从原始目标（可行性）中衍生，硬造对手将丧失与原题的核心规律关联。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题核心约束为全局幂次独占（digit_sum_limit_per_place），已具备全局覆盖语义，且不存在路径、区间、子树等局部结构，无法实现从局部到全局的扩展转变。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的core_constraints中digit_sum_limit_per_place直接对所有元素的同一位求和≤1，是典型的全局覆盖约束；原题对象为单个数组元素，无路径、区间、子树等局部子结构（required_seed_properties第一条不满足）。",
+        "feedback": "该规则要求种子题具备可扩展的局部结构（路径、区间等），但当前种子题仅为全局幂次分配可行性判定，不具备此类结构，强行扩展将只能改变表面形式，无法产生真正的覆盖、割或支配新问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_a_counting_problem",
+      "selection_reason": "原题是判定性问题（YES/NO），不是计数题，无明确计数对象，无法在已有计数对象上定义权重或统计量，不满足规则前提。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'decision', description 为判断是否可达；规则 eligibility.required_seed_properties 要求'原题已经有明确有限的计数对象'，但原题没有计数元素。",
+        "feedback": "该种子题为判定题，不符合规则要求的计数种子，建议使用明确计数题作为种子。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题中每个 a_i 的 k 进制表示唯一，因此合法构造唯一，要求输出规范解不会引入新选择维度，原解法直接回溯即可，主要算法不变。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束要求不同位置在同一幂次上不能冲突，故每个幂次分配由 a_i 的 k 进制分解唯一确定。标准解法在检查可行性时已经识别了分配，顺手记录即得方案。因此无法体现规范解升级。",
+        "feedback": "规则要求种子题需有解对象的非平凡规范选择空间，本题由于解的确定性，不适用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_certificate_feasible",
+      "message": "原题无解原因（某幂次需分配给多个元素）天然可表达为局部冲突证据（输出冲突幂次与位置列表），该证据可在不回溯全局状态的情况下直接检查，符合规则要求的“输出可局部检查的阻碍证据”。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题核心约束 digit_sum_limit_per_place 规定每个幂次 k^e 在所有元素中系数之和 ≤1，无解时必然存在至少一个幂次 e 在多个 a_i 的基 k 分解中系数为1（例如示例 NO 情形），可将该 e 与涉及的至少两个位置作为冲突证据输出；检查时只需提取这些位置的基 k 分解并验证系数之和 >1，无需全局搜索。",
+        "feedback": "建议在证据对象中明确包含幂次 e、冲突位置列表，并规定证据格式（如 JSON），以强化局部可检查性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_object",
+      "message": "种子题的解空间有限：每个幂次 k^e 最多分配一次，最大幂次由 a_i 的范围决定（≤10^16），因此可能的分配方案有限。不同的分配方案必然产生不同的数组，因为分配不同的位置导致元素和不同，所以去重规则明确（按数组本身去重）。可以定义计数对象为“满足各元素 ≤10^16 的可达数组数量”，并可以在新题中显式添加元素上界约束来保证有限性，符合计数化变换的基本条件。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [
+          "potential_simplification_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束 digit_sum_limit_per_place 规定每个幂次在基 k 表示下各位和 ≤1，即每个幂次最多分配给一个位置（参见 schema.core_constraints）。不变量 unique_exponent_assignment 指出每个幂次在分配中唯一，贪心验证从高到低无冲突（参见 schema.invariant）。输入结构中 a_i 的最大值 10^16 隐含了使用的幂次数量有限（参见 schema.input_structure.components.all_a.value_range）。因此解空间有限且去重自然（不同分配导致不同数组）。",
+        "feedback": "基础条件满足，但需警惕计数对象可能退化为简单组合数公式（例如 (n+1)^E），需在规划阶段进一步强化约束以避免答案过于平凡。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题不存在可被放大为保底优化的原生扰动来源。操作步骤中的选择自由度是决策者的控制变量，并非源自环境或对手的不确定性，引入最坏情况保证将依赖硬造对手，违反规则红线和禁止属性。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "核心约束'每个幂次k^e在所有数组元素中最多使用一次'是确定性硬约束，不变式也强调唯一分配，无波动。操作者可以自由选择位置或跳过，这种可控自由度不能视为扰动。规则 eligibility 要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但这里的顺序不确定是决策者主动选择，而非被动接受。forbidden_seed_properties 明确禁止'只能靠故事背景硬造对手'，而构造保底必然要引入对抗性最坏情况，这将是硬造。",
+        "feedback": "此题更适合作为纯决策存在性题，不适合改写成保底优化，因为没有本土扰动模型支撑。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题判定可行性完全由唯一幂次分配约束控制，且输入参数k的变化不呈现单调可行区域，无法自然参数化为临界阈值；若强行将k作为优化目标，仅形成外层二分判定，违反规则红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题核心约束为‘每个幂次k^e在所有数组元素中最多使用一次’，原目标是判断给定a是否可达（YES/NO）。规则要求阈值必须改变主约束并具有单调性或分层结构，但该问题中：1）不存在容量、最小步数等自然数值参数；2）尝试将k作为优化参数时，可行性不满足‘大于等于某值即始终可行’的单调性（例如a=[1,2]，k=2可行，k>2不可行）；3）若仅在外层对k进行二分搜索仍使用原判定，则违反‘不能只是机械二分’的红线。因此该种子不符合规则要求的必要性质。",
+        "feedback": "建议更换为具有明确容量、负载或资源约束的种子题，如资源分配、网络流可行性等，其可行性随资源量单调变化，适合直接构造临界阈值求值问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_metric",
+      "message": "原题是可行性判定题（YES/NO），不存在可优化的第一目标，因此无法定义冲突的第二指标来构成权衡前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中objective.type为decision，且描述为“判断目标数组是否可通过给定操作得到”，无最大化或最小化目标。原题核心是检查幂次分配的唯一性，无自然冲突的第二指标可引入。",
+        "feedback": "规则要求原题目标附近存在自然的第二评价指标，但本题为决策问题，没有任何可量化的第一目标，无法定义主指标和冲突的约束指标，即便强行加入如“最小化操作步数”也会与可行性硬约束不构成真实权衡。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "NATURAL_TARGET_AND_EDIT_FREEDOM",
+      "message": "原题结果为 YES/NO 布尔判定，可直接作为反向目标（如“使答案为 YES”），且修改数组元素的操作为原输入对象的自然修改，存在设计自由度，满足正向求解到反向设计的基本条件。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束为每个幂次 k^e 在所有 a_j 中至多出现一次，修改 a 中元素的值会直接影响该约束的满足性，因此修改操作与原核心规律紧密相关。原题输出为 YES/NO，可作为反向目标（例如：求最少修改元素个数使得数组合法，即输出 YES）。规则要求改变 C、O、V 轴，新题可将目标从判定改为最小化修改次数（O 变化），约束可保持不变或微调（C），输出变为修改方案或最小代价（V 变化），且修改操作定义在原始元素上，无无关操作。",
+        "feedback": "反向目标语义来自原题结果，修改操作完全基于原数组对象，最小性要求自然涌现，可进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题已经通过‘每个幂次最多使用一次’的约束实现了共享资源耦合，各位置无法独立求解，规则期望的‘从独立到耦合’转变无法产生有意义的差异。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints.digit_sum_limit_per_place 规定所有 a_j 的同一位数字之和不超过1，invariant.unique_exponent_assignment 明确‘每个幂次最多分配给一个位置’，这已经是典型的全局共享资源约束。规则要求原题存在‘可独立处理的分量’，但原题的分量（各 a_i）从一开始就因幂次池而绑定，并非独立单元。",
+        "feedback": "种子题已处于规则试图构造的状态，建议选择原本各组件独立决策且无共享资源的题目应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题操作虽有选择，但缺乏天然对抗方与零和博弈目标；强行引入对手会落入「凭背景硬造玩家」的红线，且无法从单人可行性判定自然导出双方最优胜负语义。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为单人算法：每步 i 可选择某个位置增加 k^i 或跳过，最终判断是否可得到目标数组 a。不存在第二个参与者、竞争目标或策略对抗；核心约束仅要求每个幂次最多使用一次，未涉及任何博弈状态转移或最优响应。",
+        "feedback": "规则要求的「自然轮流选择」可勉强适配操作本身，但「双方最优行动下的胜负」无法从原始目标（可行性）中衍生，硬造对手将丧失与原题的核心规律关联。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题核心约束为全局幂次独占（digit_sum_limit_per_place），已具备全局覆盖语义，且不存在路径、区间、子树等局部结构，无法实现从局部到全局的扩展转变。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的core_constraints中digit_sum_limit_per_place直接对所有元素的同一位求和≤1，是典型的全局覆盖约束；原题对象为单个数组元素，无路径、区间、子树等局部子结构（required_seed_properties第一条不满足）。",
+        "feedback": "该规则要求种子题具备可扩展的局部结构（路径、区间等），但当前种子题仅为全局幂次分配可行性判定，不具备此类结构，强行扩展将只能改变表面形式，无法产生真正的覆盖、割或支配新问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_a_counting_problem",
+      "message": "原题是判定性问题（YES/NO），不是计数题，无明确计数对象，无法在已有计数对象上定义权重或统计量，不满足规则前提。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'decision', description 为判断是否可达；规则 eligibility.required_seed_properties 要求'原题已经有明确有限的计数对象'，但原题没有计数元素。",
+        "feedback": "该种子题为判定题，不符合规则要求的计数种子，建议使用明确计数题作为种子。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "forward_to_inverse_fulfilled",
+      "message": "规划成功将正向可达性判定转换为以原题YES条件为目标、带非对称操作代价的最小化逆设计问题，所有三个助手均已兑现其目标变化轴和红线要求。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "新schema在core_constraints中定义了reachability_condition（如‘sum_{i=1..n} digit_e(a'_i) ≤ 1’），直接将原题YES语义绑定为反向目标（helper target_result_binding）；定义了edit_operations（增/减幂次操作，代价C_inc=2、C_dec=1）作为修改集合（helper edit_operation_contract）；objective设为minimization类型，target为minimum_total_cost，invariant包含cost_minimality要求输出全局最小值（helper minimality_or_certificate_lock）。applied_helpers中明确记录了每个助手的选择理由、影响轴和schema变化，且无红线违反（如未仅问原答案是否等于给定值、未发明无关操作、未输出任意可行解）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确写清了反向目标（达到级别互斥条件）、具体修改操作（增加/减少k^e及代价）和最小性责任（输出最小总代价），完全兑现了forward_solution_to_inverse_design规则的专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中：“使得最终每个住户的需求量满足一个特殊要求：对于任意一个级别 e，在所有住户的最终需求量中，以 k 进制表示时第 e 位（即 k^e 的系数）的总和不超过 1”，这绑定了原题的可达性语义作为反向目标（target_result_binding）。操作定义：“- 增加操作：将住户 i 的需求量增加 k^e，代价为 2 单位；- 减少操作：将住户 i 的需求量减少 k^e…代价为 1 单位”，定义了符合原题对象结构的修改操作空间（edit_operation_contract）。输出要求：“计算最小总代价”，样例解释中“可以证明这是最小代价”强调了最小性责任（minimality_or_certificate_lock）。所有硬性检查均通过，三个helper的关键语义在题面中均已写实。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面完整兑现了反向设计合同的三个 helper：目标结果绑定（明确要求最终数组满足原可达性条件）、编辑操作契约（定义了基于原核心对象 k^e 的增加与减少操作及其非对称代价）、最小性锁定（输出目标为最小总代价，且样例解释中论证了最小性），硬性检查无缺失。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：'使得最终每个住户的需求量满足一个特殊要求：对于任意一个级别 e，在所有住户的最终需求量中，以 k 进制表示时第 e 位（即 k^e 的系数）的总和不超过 1' 绑定原题结果语义（helper target_result_binding）。操作定义：'增加操作：将住户 i 的需求量增加 k^e，代价为 2 单位；减少操作：将住户 i 的需求量减少 k^e（前提是当前需求 ≥ k^e），代价为 1 单位' 来自原题核心对象 k^e（helper edit_operation_contract）。输出要求：'计算最小总代价...输出一行一个整数，表示达到要求所需的最小总代价' 明确最小代价输出责任（helper minimality_or_certificate_lock）。样例解释中通过比较操作代价得出最小方案，进一步印证最小性。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "规划已根据规则和修订上下文进行调整，重点解决了原题解法迁移风险高的问题，通过引入非对称操作成本和最小化目标，构建了与原题贪心判定显著不同的逆设计问题。",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "题目未实现足够的算法差异：在给定的操作代价（增加2减1）下，最优解总是不需要增加操作，只需减少冲突幂次，问题退化为简单的冲突计数，原种子题的贪心算法经过微小调整即可输出最小代价（冲突次数），不符合 new_solver_core 所需的 DP 或费用流决策。因此解法迁移风险过高，无法与种子题形成实质区别。",
+    "feedback": "建议重新设计操作代价，例如令增加操作更便宜（如 C_inc=1, C_dec=2）以迫使算法进行权衡；或引入额外的目标约束（如最终需求总和必须保持不变），以创造真正的优化挑战。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_cded760ede66_campus_ops_20260529_163532",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66_campus_ops_20260529_163532_round2.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66_campus_ops_20260529_163532_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 2,
+      "overall_status": "revise_quality",
+      "generated_status": "ok",
+      "quality_score": 64.0,
+      "divergence_score": 82.0,
+      "failed_hard_checks": [
+        {
+          "check_id": "source_leakage",
+          "severity": "blocker",
+          "category": "retheme_issue",
+          "message": "检测到原题标识或标题片段泄露：c",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "source leakage",
+          "detail": "检测到原题标识或标题片段泄露：c",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ],
+          "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "输出格式中‘总幂次个数’未明确定义",
+          "detail": "在 output_format 描述 plan 时指出 M ≤ 总幂次个数，但题目中未显式给出‘总幂次个数’的含义或计算方式。虽然 notes 中提到指数不超过约 60，但初学者可能困惑。建议明确说明总幂次个数指满足 k^e ≤ max(a_i) 的最大 e+1，或者直接去掉该范围限制，因为 M 只需表示输出行数。",
+          "evidence_refs": [
+            "generated_problem.output_format"
+          ],
+          "fix_hint": "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "plan 输出中社团编号与指数顺序与内部 schema 相反",
+          "detail": "new_schema 的 core_constraints 中将 assignments 定义为 (exponent, club_index) 元组列表，但 output_format 要求先输出社团编号 c 再输出指数 e。这可能导致自动化判题器与 schema 不一致，但对人类选手无影响。建议统一顺序，或至少在 schema 中允许两种顺序。",
+          "evidence_refs": [
+            "new_schema.core_constraints.plan_feasibility",
+            "generated_problem.output_format"
+          ],
+          "fix_hint": "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "新题将原题的决策问题（判断是否可行）改为构造/证据输出（输出具体分配方案或冲突证据），但核心约束（每个幂次至多使用一次）与贪心求解逻辑完全一致。原题的标准贪心算法从高到低检查幂次冲突，只需额外记录每个幂次的分配去向并在发现冲突时捕获指数和社团索引，即可直接迁移为新题解。输出形式的变化（YES/NO变为plan/conflict对象）并未改变问题建模与求解框架，因此语义差异有限，解法迁移风险极高。尽管背景叙事和样例不同（表面换皮风险低），但不足以弥补实质差异的缺失。",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem",
+            "hard_checks.source_leakage",
+            "review_context.difference_plan",
+            "review_context.distance_breakdown"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例一解释为未完成草稿，含矛盾与无关文本",
+          "detail": "样例一的 explanation 包含“成本1的调整无法避免冲突，需进一步说明最优解…为简明可给出代价最小的合法方案：…此处不及细究，样例解释应在题面中直接给出合法的最小代价方案即可，读者可自行验证。为免歧义，样例解释可只说明输出数字。实际可构造…一个可行的最小成本可能是2…依然冲突。为快速出样例，改写另一数据。”这些内容明显是开发笔记，不应出现在正式题面中，且使样例一的输出值‘1’不具可信度。",
+          "evidence_refs": [
+            "generated_problem.samples[0].explanation"
+          ],
+          "fix_hint": "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例二解释与输入数据不符",
+          "detail": "样例二的输入为“2 10\n0 100”，即 n=2, k=10, a=[0,100]，但解释却说“所有需求已经为0，不需要任何调整”。100≠0，矛盾。",
+          "evidence_refs": [
+            "generated_problem.samples[1].input",
+            "generated_problem.samples[1].explanation"
+          ],
+          "fix_hint": "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例数量不足且覆盖性差",
+          "detail": "仅有两个样例，其中一个还有明显错误，无法帮助选手验证算法。需要补充至少一个覆盖典型冲突与代价计算的简单示例。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "description 中部分表述可更精确",
+          "detail": "“第 e 级服务包可以提供恰好 k^e 份上门服务（e = 0,1,2,…）”未明确 e 的上限，虽可从 a_i 范围反推，但显式说明“其中 k^e 不超过实际需求的可能上限”会更严谨。",
+          "evidence_refs": [
+            "generated_problem.description"
+          ],
+          "fix_hint": "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。"
+        }
+      ],
+      "suggested_revisions": [
+        "删除原题编号、题源、标题和明显句式复用。",
+        "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。",
+        "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "考虑在 output_format 中明确‘总幂次个数’或被替换为具体上界（如 60），消除潜在歧义。",
+        "调整 plan 输出部分社团与指数的顺序，使其与内部 schema 声明的 (exponent, club_index) 一致，或更新 schema 以匹配题面。",
+        "尽管 source_leakage 可能为误报，仍建议检查题面中是否存在任何原题残留（如特定变量名），确保彻底重题。",
+        "优先改写核心任务定义，而不是继续替换故事背景。",
+        "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。",
+        "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。",
+        "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。",
+        "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。",
+        "完全重写样例解释，保证样例一有正确、清晰的可行解与代价说明，样例二与输入一致。",
+        "增加第三个简单样例，覆盖 n=1 或 k=2 的小规模情况，使选手能快速验证理解。",
+        "移除样例解释中的所有草稿、自我修正和开发者笔记（如“为快速出样例，改写另一数据”）。",
+        "在 description 或 notes 中明确说明 k^e 的考虑范围（如“当 k^e 超过 10^16 后不再使用”）以指导算法边界。"
+      ],
+      "strengths_to_keep": [
+        "题面准确地实现了将问题从布尔决策升级为具象方案/证据输出的要求，核心约束（幂次互斥、冲突证据可查）被明确表达。",
+        "样例解释详尽，覆盖了成功分配和冲突两种情形，并包含了需求为 0 的边界情况，帮助理解。",
+        "中文表达流畅，故事背景自然（社团物资分配），与校园运营主题契合。",
+        "核心变体（修改操作+可达性约束+最小化代价）在题面中得到了明确体现，目标与规则清晰。",
+        "输入格式和约束描述准确，符合 new_schema 定义。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 98.0,
+            "divergence_score": 51.0,
+            "failed_hard_checks": [
+              {
+                "check_id": "source_leakage",
+                "severity": "blocker",
+                "category": "retheme_issue",
+                "message": "检测到原题标识或标题片段泄露：c",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "source leakage",
+                "detail": "检测到原题标识或标题片段泄露：c",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ],
+                "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "输出格式中‘总幂次个数’未明确定义",
+                "detail": "在 output_format 描述 plan 时指出 M ≤ 总幂次个数，但题目中未显式给出‘总幂次个数’的含义或计算方式。虽然 notes 中提到指数不超过约 60，但初学者可能困惑。建议明确说明总幂次个数指满足 k^e ≤ max(a_i) 的最大 e+1，或者直接去掉该范围限制，因为 M 只需表示输出行数。",
+                "evidence_refs": [
+                  "generated_problem.output_format"
+                ],
+                "fix_hint": "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "plan 输出中社团编号与指数顺序与内部 schema 相反",
+                "detail": "new_schema 的 core_constraints 中将 assignments 定义为 (exponent, club_index) 元组列表，但 output_format 要求先输出社团编号 c 再输出指数 e。这可能导致自动化判题器与 schema 不一致，但对人类选手无影响。建议统一顺序，或至少在 schema 中允许两种顺序。",
+                "evidence_refs": [
+                  "new_schema.core_constraints.plan_feasibility",
+                  "generated_problem.output_format"
+                ],
+                "fix_hint": "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。"
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "新题将原题的决策问题（判断是否可行）改为构造/证据输出（输出具体分配方案或冲突证据），但核心约束（每个幂次至多使用一次）与贪心求解逻辑完全一致。原题的标准贪心算法从高到低检查幂次冲突，只需额外记录每个幂次的分配去向并在发现冲突时捕获指数和社团索引，即可直接迁移为新题解。输出形式的变化（YES/NO变为plan/conflict对象）并未改变问题建模与求解框架，因此语义差异有限，解法迁移风险极高。尽管背景叙事和样例不同（表面换皮风险低），但不足以弥补实质差异的缺失。",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem",
+                  "hard_checks.source_leakage",
+                  "review_context.difference_plan",
+                  "review_context.distance_breakdown"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "删除原题编号、题源、标题和明显句式复用。",
+              "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。",
+              "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "考虑在 output_format 中明确‘总幂次个数’或被替换为具体上界（如 60），消除潜在歧义。",
+              "调整 plan 输出部分社团与指数的顺序，使其与内部 schema 声明的 (exponent, club_index) 一致，或更新 schema 以匹配题面。",
+              "尽管 source_leakage 可能为误报，仍建议检查题面中是否存在任何原题残留（如特定变量名），确保彻底重题。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "题面准确地实现了将问题从布尔决策升级为具象方案/证据输出的要求，核心约束（幂次互斥、冲突证据可查）被明确表达。",
+              "样例解释详尽，覆盖了成功分配和冲突两种情形，并包含了需求为 0 的边界情况，帮助理解。",
+              "中文表达流畅，故事背景自然（社团物资分配），与校园运营主题契合。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 64.0,
+            "divergence_score": 82.0,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例一解释为未完成草稿，含矛盾与无关文本",
+                "detail": "样例一的 explanation 包含“成本1的调整无法避免冲突，需进一步说明最优解…为简明可给出代价最小的合法方案：…此处不及细究，样例解释应在题面中直接给出合法的最小代价方案即可，读者可自行验证。为免歧义，样例解释可只说明输出数字。实际可构造…一个可行的最小成本可能是2…依然冲突。为快速出样例，改写另一数据。”这些内容明显是开发笔记，不应出现在正式题面中，且使样例一的输出值‘1’不具可信度。",
+                "evidence_refs": [
+                  "generated_problem.samples[0].explanation"
+                ],
+                "fix_hint": "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例二解释与输入数据不符",
+                "detail": "样例二的输入为“2 10\n0 100”，即 n=2, k=10, a=[0,100]，但解释却说“所有需求已经为0，不需要任何调整”。100≠0，矛盾。",
+                "evidence_refs": [
+                  "generated_problem.samples[1].input",
+                  "generated_problem.samples[1].explanation"
+                ],
+                "fix_hint": "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例数量不足且覆盖性差",
+                "detail": "仅有两个样例，其中一个还有明显错误，无法帮助选手验证算法。需要补充至少一个覆盖典型冲突与代价计算的简单示例。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "description 中部分表述可更精确",
+                "detail": "“第 e 级服务包可以提供恰好 k^e 份上门服务（e = 0,1,2,…）”未明确 e 的上限，虽可从 a_i 范围反推，但显式说明“其中 k^e 不超过实际需求的可能上限”会更严谨。",
+                "evidence_refs": [
+                  "generated_problem.description"
+                ],
+                "fix_hint": "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。"
+              }
+            ],
+            "suggested_revisions": [
+              "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。",
+              "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。",
+              "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。",
+              "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。",
+              "完全重写样例解释，保证样例一有正确、清晰的可行解与代价说明，样例二与输入一致。",
+              "增加第三个简单样例，覆盖 n=1 或 k=2 的小规模情况，使选手能快速验证理解。",
+              "移除样例解释中的所有草稿、自我修正和开发者笔记（如“为快速出样例，改写另一数据”）。",
+              "在 description 或 notes 中明确说明 k^e 的考虑范围（如“当 k^e 超过 10^16 后不再使用”）以指导算法边界。"
+            ],
+            "strengths_to_keep": [
+              "核心变体（修改操作+可达性约束+最小化代价）在题面中得到了明确体现，目标与规则清晰。",
+              "输入格式和约束描述准确，符合 new_schema 定义。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "revise_quality",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 64.0,
+        "latest_divergence_score": 82.0,
+        "suggested_revisions": [
+          "删除原题编号、题源、标题和明显句式复用。",
+          "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。",
+          "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "考虑在 output_format 中明确‘总幂次个数’或被替换为具体上界（如 60），消除潜在歧义。",
+          "调整 plan 输出部分社团与指数的顺序，使其与内部 schema 声明的 (exponent, club_index) 一致，或更新 schema 以匹配题面。",
+          "尽管 source_leakage 可能为误报，仍建议检查题面中是否存在任何原题残留（如特定变量名），确保彻底重题。",
+          "优先改写核心任务定义，而不是继续替换故事背景。",
+          "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。",
+          "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。",
+          "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。",
+          "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。",
+          "完全重写样例解释，保证样例一有正确、清晰的可行解与代价说明，样例二与输入一致。",
+          "增加第三个简单样例，覆盖 n=1 或 k=2 的小规模情况，使选手能快速验证理解。",
+          "移除样例解释中的所有草稿、自我修正和开发者笔记（如“为快速出样例，改写另一数据”）。",
+          "在 description 或 notes 中明确说明 k^e 的考虑范围（如“当 k^e 超过 10^16 后不再使用”）以指导算法边界。"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "source leakage",
+            "detail": "检测到原题标识或标题片段泄露：c",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ],
+            "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "输出格式中‘总幂次个数’未明确定义",
+            "detail": "在 output_format 描述 plan 时指出 M ≤ 总幂次个数，但题目中未显式给出‘总幂次个数’的含义或计算方式。虽然 notes 中提到指数不超过约 60，但初学者可能困惑。建议明确说明总幂次个数指满足 k^e ≤ max(a_i) 的最大 e+1，或者直接去掉该范围限制，因为 M 只需表示输出行数。",
+            "evidence_refs": [
+              "generated_problem.output_format"
+            ],
+            "fix_hint": "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "plan 输出中社团编号与指数顺序与内部 schema 相反",
+            "detail": "new_schema 的 core_constraints 中将 assignments 定义为 (exponent, club_index) 元组列表，但 output_format 要求先输出社团编号 c 再输出指数 e。这可能导致自动化判题器与 schema 不一致，但对人类选手无影响。建议统一顺序，或至少在 schema 中允许两种顺序。",
+            "evidence_refs": [
+              "new_schema.core_constraints.plan_feasibility",
+              "generated_problem.output_format"
+            ],
+            "fix_hint": "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "新题将原题的决策问题（判断是否可行）改为构造/证据输出（输出具体分配方案或冲突证据），但核心约束（每个幂次至多使用一次）与贪心求解逻辑完全一致。原题的标准贪心算法从高到低检查幂次冲突，只需额外记录每个幂次的分配去向并在发现冲突时捕获指数和社团索引，即可直接迁移为新题解。输出形式的变化（YES/NO变为plan/conflict对象）并未改变问题建模与求解框架，因此语义差异有限，解法迁移风险极高。尽管背景叙事和样例不同（表面换皮风险低），但不足以弥补实质差异的缺失。",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem",
+              "hard_checks.source_leakage",
+              "review_context.difference_plan",
+              "review_context.distance_breakdown"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例一解释为未完成草稿，含矛盾与无关文本",
+            "detail": "样例一的 explanation 包含“成本1的调整无法避免冲突，需进一步说明最优解…为简明可给出代价最小的合法方案：…此处不及细究，样例解释应在题面中直接给出合法的最小代价方案即可，读者可自行验证。为免歧义，样例解释可只说明输出数字。实际可构造…一个可行的最小成本可能是2…依然冲突。为快速出样例，改写另一数据。”这些内容明显是开发笔记，不应出现在正式题面中，且使样例一的输出值‘1’不具可信度。",
+            "evidence_refs": [
+              "generated_problem.samples[0].explanation"
+            ],
+            "fix_hint": "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例二解释与输入数据不符",
+            "detail": "样例二的输入为“2 10\n0 100”，即 n=2, k=10, a=[0,100]，但解释却说“所有需求已经为0，不需要任何调整”。100≠0，矛盾。",
+            "evidence_refs": [
+              "generated_problem.samples[1].input",
+              "generated_problem.samples[1].explanation"
+            ],
+            "fix_hint": "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例数量不足且覆盖性差",
+            "detail": "仅有两个样例，其中一个还有明显错误，无法帮助选手验证算法。需要补充至少一个覆盖典型冲突与代价计算的简单示例。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "description 中部分表述可更精确",
+            "detail": "“第 e 级服务包可以提供恰好 k^e 份上门服务（e = 0,1,2,…）”未明确 e 的上限，虽可从 a_i 范围反推，但显式说明“其中 k^e 不超过实际需求的可能上限”会更严谨。",
+            "evidence_refs": [
+              "generated_problem.description"
+            ],
+            "fix_hint": "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。"
+          }
+        ],
+        "strengths_to_keep": [
+          "题面准确地实现了将问题从布尔决策升级为具象方案/证据输出的要求，核心约束（幂次互斥、冲突证据可查）被明确表达。",
+          "样例解释详尽，覆盖了成功分配和冲突两种情形，并包含了需求为 0 的边界情况，帮助理解。",
+          "中文表达流畅，故事背景自然（社团物资分配），与校园运营主题契合。",
+          "核心变体（修改操作+可达性约束+最小化代价）在题面中得到了明确体现，目标与规则清晰。",
+          "输入格式和约束描述准确，符合 new_schema 定义。"
+        ],
+        "failed_hard_checks": [
+          {
+            "check_id": "source_leakage",
+            "severity": "blocker",
+            "category": "retheme_issue",
+            "message": "检测到原题标识或标题片段泄露：c",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

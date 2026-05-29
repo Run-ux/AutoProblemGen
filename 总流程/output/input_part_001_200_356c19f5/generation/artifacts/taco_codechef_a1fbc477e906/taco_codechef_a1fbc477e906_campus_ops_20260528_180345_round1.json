@@ -1,0 +1,866 @@
+{
+  "problem_id": "taco_codechef_a1fbc477e906",
+  "source_problem_ids": [
+    "taco_codechef_a1fbc477e906"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_a1fbc477e906",
+      "KLXOR",
+      "codechef",
+      "You may have solved a lot of problems related to XOR and we are sure that you liked them, so here is one more problem for you. You are given a binary string S of length N. Let string T be the result of taking the XOR...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "value_computation",
+    "description": "计算所有长度为K的子串按位异或后结果中1的个数",
+    "target": "popcount",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "规则 forward_solution_to_inverse_design 通过了 eligibility 检查：原题输出（popcount）可直接作为反向目标，位翻转是自然的修改操作且与原核心规律（异或奇偶性）紧密相关。而规则 local_path_to_global_cover 缺乏自然的覆盖对象族，原题的区间结构仅是中间产物，并非问题核心，强行施加覆盖约束会引入无关限制，导致浅改或换皮。；创新度判断：反向设计将核心义务从‘计算给定字符串的 popcount’翻转为‘设计最小修改使目标 popcount 成立’，要求定义修改操作契约并承担最小性证明，使求解方向从判定式计算变为带约束的构造与优化，创新度显著。；难度判断：新题要求算法在保持区间奇偶性规律的同时，找到最小翻转次数或构造具体方案，需要分析修改对多个区间交互的影响，可能涉及贪心、DP 或组合优化，比原题的直接前缀和计算难度更高。；风险判断：主要风险是若 helper 应用不到位，修改操作可能退化为简单枚举或与原规律无关的改动。通过 target_result_binding 锁定目标为原题输出的 popcount，edit_operation_contract 限定修改为位翻转，minimality_or_certificate_lock 强制最小性证明，可将风险控制在可接受范围。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codechef_a1fbc477e906",
+    "source": "codechef",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 10
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true,
+        "ordered": true
+      },
+      "components": [
+        {
+          "role": "test_case",
+          "role_description": "A test case consisting of N, K, and binary string S",
+          "type": "tuple",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {},
+          "components": [
+            {
+              "role": "n",
+              "role_description": "length of the binary string",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 1,
+                "max": 200000
+              },
+              "properties": {}
+            },
+            {
+              "role": "k",
+              "role_description": "substring length K",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 1,
+                "max": 200000
+              },
+              "properties": {}
+            },
+            {
+              "role": "s",
+              "role_description": "binary string S of length N",
+              "type": "string",
+              "length": {
+                "min": 1,
+                "max": 200000
+              },
+              "value_range": null,
+              "properties": {}
+            }
+          ]
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "binary_string",
+          "description": "The input string S consists only of characters '0' and '1'.",
+          "formal": "S ⊆ {0,1}",
+          "source_sections": [
+            "constraints"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "value_computation",
+      "description": "计算所有长度为K的子串按位异或后结果中1的个数",
+      "target": "popcount",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "parity_equivalence_xor_sum",
+          "description": "The XOR of a sequence of binary bits is equivalent to the sum of those bits modulo 2, which transforms the bitwise XOR across substrings into a parity check of an integer sum.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "column_interval_structure",
+          "description": "For each position j in the result, the set of original string indices that contribute to that position forms a contiguous interval [j, j+N-K] of fixed length N-K+1, derived from the sliding window of substrings.",
+          "properties": {
+            "interval_length": "N - K + 1",
+            "start_index": "j",
+            "end_index": "j + N - K"
+          },
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "status": "ok",
+      "reason_code": "new_output_object_missing",
+      "reason": "规划结果没有形成新的输出对象或新的输出责任。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 2 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_canonical_choice",
+      "selection_reason": "原题答案是一个唯一确定的整数值（popcount），不存在多个可能的解构造，强行要求输出规范解只会退化为输出T字符串之类的表面修改，无法让规范要求影响核心算法或状态转移，违背helper的红线和validator的hard_checks。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 类型为 value_computation，输出只是1的个数，不涉及方案构造；core_constraints 仅有二进制字符串约束，不变量描述的是异或和区间结构，均不包含多解空间或选择自由。规则 positive example 为“把是否可行改成输出字典序最小的合法构造”，要求原题有合法/非法方案，而本例无此类性质。failure_template 明确“缺少适合做规范化的解对象”即不适用。",
+        "feedback": "该种子题的核心计算是确定的，不存在可规范化的解集合。强行应用 canonical_witness 只会产生格式替换（输出popcount → 输出完整字符串），违反“不能退化为输出后处理”红线，且无法满足 helpers 的深度要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是一个确定性的数值计算任务，不存在可行/不可行的二元结果，无法引入无解情形或冲突证据，强行改造会完全偏离原题意，不符合规则要求的“做不到的原因可用局部证据表示”。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type为value_computation，要求计算popcount，总是有解；core_constraints仅为binary_string，无可行性约束；invariant揭示的是区间结构，未提供任何无解语境；原题输入输出不涉及构造或证据。",
+        "feedback": "该种子题不具备规则所依赖的“无解可能”基础，若强行应用只会变成在新约束下要求构造方案与证据，导致问题与原题核心规律无关，属于无效变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_type_mismatch",
+      "selection_reason": "原题是确定性值计算（popcount），没有解空间、去重规则或存在性/最优解，不满足规则要求的种子题类型。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective.type 为 value_computation，目标为计算 XOR 结果中 1 的个数；不存在“解”的概念，没有解空间有限性、去重或拆分单元的定义基础。规则要求种子题具有“解空间有限”、“不同解之间的等价关系能说清楚”等属性，均不适用。",
+        "feedback": "规则仅适用于存在性或单一最优值问题，而当前种子题不是这种类型，无法进行计数化改造。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是确定性计算，没有顺序不确定、资源波动或局部选择差异等原生扰动来源，无法在不脱离原题语义的前提下定义扰动模型。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定固定二进制字符串S、长度N和子串长度K，计算所有K长度子串异或结果中1的个数。输入结构完全确定，约束中没有任何不确定性或可变参数（如顺序、资源等）。核心约束仅限binary_string，不涉及动态选择或外部干扰。不变量（parity_equivalence_xor_sum和column_interval_structure）均基于固定输入，无最坏情况语义。",
+        "feedback": "建议选择具有天然不确定性（如在线输入、顺序可变、资源竞争）的种子题进行此类变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_seed_property",
+      "selection_reason": "原题是计算题，目标是求popcount，不具有可行性判定结构，缺少自然可优化的临界参数，无法升级为阈值优化问题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中objective.type为'value_computation'，描述为'计算所有长度为K的子串按位异或后结果中1的个数'，未涉及任何可行性判定；规则required_seed_properties要求'原题可行性随某个参数具有清晰的单调性或分层结构'，原题不满足。",
+        "feedback": "种子题KLXOR是确定性计算，没有可行性或判定基架，强行引入阈值会变成机械二分包装，违反规则红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_natural_second_metric",
+      "selection_reason": "原题仅计算XOR子串结果中1的个数，不存在自然的第二评价指标，更无法形成真实冲突的权衡关系。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标描述为“计算所有长度为K的子串按位异或后结果中1的个数”，未给出其他可优化的量；规则要求“原题目标附近存在自然的第二评价指标”，种子题不满足。",
+        "feedback": "该种子题缺少自然冲突的第二指标，不适合扩成权衡前沿题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "suitable_inverse_target_and_natural_edits",
+      "selection_reason": "原题输出popcount可以直接作为反向目标；二进制位翻转是自然的修改操作，能够定义最小修改代价；目标驱动设计可改变核心约束、目标和变量，满足角色要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为计算所有K长子串XOR后1的个数（popcount）；核心对象为二进制字符串S，允许的自然修改为翻转位（0↔1），与原结构直接相关；invariant中parity equivalence和column interval structure支持从修改推断popcount变化；可定义反向目标为任意popcount值，并要求最小修改次数，符合eligible条件。",
+        "feedback": "规则可行，建议在规划阶段具体化最小性证明、修改操作语义以及目标绑定机制。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题目由多个独立测试用例组成，但没有可自然耦合的共享资源、总量或全局选择。强行添加全局耦合将引入与核心规律无关的额外约束，违反全局红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 中 input_structure 的 multiple_test_cases 为 true，但各测试用例仅独立求解，无任何跨测试用例的共享变量、预算或依赖关系。original_problem 的描述和约束均未暗示可耦合的全局属性。",
+        "feedback": "规则要求的可分解局部单元存在，但缺乏‘局部单元之间能通过共享资源自然耦合’的条件。若希望适用此规则，种子题需具备内在的全局资源或总量（如所有测试用例共享某个容量限制），而非仅靠外部环境硬加。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题KLXOR是确定性计算题，不存在任何可选择的操作或决策过程，无法自然转化为双方轮流选择的博弈。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作（required_seed_properties），但原题描述中仅涉及对给定二进制串S和参数K，计算所有K长度子串的XOR及其中1的个数，整个过程是固定的数学计算，没有任何选择自由度或状态转移。原操作的顺序也固定（从第一个子串到最后一个），无分支选择。因此不符合规则准入条件。",
+        "feedback": "该种子题的核心是异或与计数，不涉及对抗性或决策。试图强行添加玩家将违反红线“不能凭背景硬造玩家”，且无法产生真正的博弈结构。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.77,
+      "reason_code": "local_intervals_form_natural_cover_family",
+      "selection_reason": "原题的滑动窗口子串构成天然的局部对象族，列区间结构（invariant: column_interval_structure）显示每个结果位对应一个连续位置区间。通过引入子串子集选择，可将 XOR 聚合计算转化为选择支配全局结果 popcount 的优化问题，满足覆盖/支配语义，且核心 XOR 规律得以延续。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "Schema 中 invariant 'column_interval_structure' 明确每个结果位由原串的连续区间 [j, j+N-K] 决定，表明局部区间性质存在；core_constraints 仅限制二进制串，未阻止引入对象族选择；规则 helpers 的 'object_family_expansion' 要求目标涉及覆盖、割或多对象满足，而选择子串子集最小化/最大化 popcount 直接改变 O 和 C，符合必须修改的轴。",
+        "feedback": "新问题构造时需确保选择机制不退化为一维区间覆盖贪心，应保留异或连续区间的核心性质，例如将选择成本与二进制串的原始 0/1 分布关联，使原规律既贡献可解性又制造新难度。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题 KLXOR 的目标是计算 XOR 结果中 1 的个数，属于值计算问题，不存在明确有限的计数对象，无法应用带权计数扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 描述为“计算所有长度为K的子串按位异或后结果中1的个数”，核心操作是 popcount，未涉及方案数、组合计数等有限计数对象。",
+        "feedback": "规则要求种子题已有明确有限的计数对象，但此题仅有计算值，建议替换为有明确枚举对象的计数题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "no_canonical_choice",
+      "message": "原题答案是一个唯一确定的整数值（popcount），不存在多个可能的解构造，强行要求输出规范解只会退化为输出T字符串之类的表面修改，无法让规范要求影响核心算法或状态转移，违背helper的红线和validator的hard_checks。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 类型为 value_computation，输出只是1的个数，不涉及方案构造；core_constraints 仅有二进制字符串约束，不变量描述的是异或和区间结构，均不包含多解空间或选择自由。规则 positive example 为“把是否可行改成输出字典序最小的合法构造”，要求原题有合法/非法方案，而本例无此类性质。failure_template 明确“缺少适合做规范化的解对象”即不适用。",
+        "feedback": "该种子题的核心计算是确定的，不存在可规范化的解集合。强行应用 canonical_witness 只会产生格式替换（输出popcount → 输出完整字符串），违反“不能退化为输出后处理”红线，且无法满足 helpers 的深度要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是一个确定性的数值计算任务，不存在可行/不可行的二元结果，无法引入无解情形或冲突证据，强行改造会完全偏离原题意，不符合规则要求的“做不到的原因可用局部证据表示”。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type为value_computation，要求计算popcount，总是有解；core_constraints仅为binary_string，无可行性约束；invariant揭示的是区间结构，未提供任何无解语境；原题输入输出不涉及构造或证据。",
+        "feedback": "该种子题不具备规则所依赖的“无解可能”基础，若强行应用只会变成在新约束下要求构造方案与证据，导致问题与原题核心规律无关，属于无效变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "seed_type_mismatch",
+      "message": "原题是确定性值计算（popcount），没有解空间、去重规则或存在性/最优解，不满足规则要求的种子题类型。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective.type 为 value_computation，目标为计算 XOR 结果中 1 的个数；不存在“解”的概念，没有解空间有限性、去重或拆分单元的定义基础。规则要求种子题具有“解空间有限”、“不同解之间的等价关系能说清楚”等属性，均不适用。",
+        "feedback": "规则仅适用于存在性或单一最优值问题，而当前种子题不是这种类型，无法进行计数化改造。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是确定性计算，没有顺序不确定、资源波动或局部选择差异等原生扰动来源，无法在不脱离原题语义的前提下定义扰动模型。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定固定二进制字符串S、长度N和子串长度K，计算所有K长度子串异或结果中1的个数。输入结构完全确定，约束中没有任何不确定性或可变参数（如顺序、资源等）。核心约束仅限binary_string，不涉及动态选择或外部干扰。不变量（parity_equivalence_xor_sum和column_interval_structure）均基于固定输入，无最坏情况语义。",
+        "feedback": "建议选择具有天然不确定性（如在线输入、顺序可变、资源竞争）的种子题进行此类变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "missing_seed_property",
+      "message": "原题是计算题，目标是求popcount，不具有可行性判定结构，缺少自然可优化的临界参数，无法升级为阈值优化问题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中objective.type为'value_computation'，描述为'计算所有长度为K的子串按位异或后结果中1的个数'，未涉及任何可行性判定；规则required_seed_properties要求'原题可行性随某个参数具有清晰的单调性或分层结构'，原题不满足。",
+        "feedback": "种子题KLXOR是确定性计算，没有可行性或判定基架，强行引入阈值会变成机械二分包装，违反规则红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_natural_second_metric",
+      "message": "原题仅计算XOR子串结果中1的个数，不存在自然的第二评价指标，更无法形成真实冲突的权衡关系。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标描述为“计算所有长度为K的子串按位异或后结果中1的个数”，未给出其他可优化的量；规则要求“原题目标附近存在自然的第二评价指标”，种子题不满足。",
+        "feedback": "该种子题缺少自然冲突的第二指标，不适合扩成权衡前沿题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "suitable_inverse_target_and_natural_edits",
+      "message": "原题输出popcount可以直接作为反向目标；二进制位翻转是自然的修改操作，能够定义最小修改代价；目标驱动设计可改变核心约束、目标和变量，满足角色要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为计算所有K长子串XOR后1的个数（popcount）；核心对象为二进制字符串S，允许的自然修改为翻转位（0↔1），与原结构直接相关；invariant中parity equivalence和column interval structure支持从修改推断popcount变化；可定义反向目标为任意popcount值，并要求最小修改次数，符合eligible条件。",
+        "feedback": "规则可行，建议在规划阶段具体化最小性证明、修改操作语义以及目标绑定机制。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题目由多个独立测试用例组成，但没有可自然耦合的共享资源、总量或全局选择。强行添加全局耦合将引入与核心规律无关的额外约束，违反全局红线。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 中 input_structure 的 multiple_test_cases 为 true，但各测试用例仅独立求解，无任何跨测试用例的共享变量、预算或依赖关系。original_problem 的描述和约束均未暗示可耦合的全局属性。",
+        "feedback": "规则要求的可分解局部单元存在，但缺乏‘局部单元之间能通过共享资源自然耦合’的条件。若希望适用此规则，种子题需具备内在的全局资源或总量（如所有测试用例共享某个容量限制），而非仅靠外部环境硬加。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题KLXOR是确定性计算题，不存在任何可选择的操作或决策过程，无法自然转化为双方轮流选择的博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作（required_seed_properties），但原题描述中仅涉及对给定二进制串S和参数K，计算所有K长度子串的XOR及其中1的个数，整个过程是固定的数学计算，没有任何选择自由度或状态转移。原操作的顺序也固定（从第一个子串到最后一个），无分支选择。因此不符合规则准入条件。",
+        "feedback": "该种子题的核心是异或与计数，不涉及对抗性或决策。试图强行添加玩家将违反红线“不能凭背景硬造玩家”，且无法产生真正的博弈结构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "local_intervals_form_natural_cover_family",
+      "message": "原题的滑动窗口子串构成天然的局部对象族，列区间结构（invariant: column_interval_structure）显示每个结果位对应一个连续位置区间。通过引入子串子集选择，可将 XOR 聚合计算转化为选择支配全局结果 popcount 的优化问题，满足覆盖/支配语义，且核心 XOR 规律得以延续。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.77,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "Schema 中 invariant 'column_interval_structure' 明确每个结果位由原串的连续区间 [j, j+N-K] 决定，表明局部区间性质存在；core_constraints 仅限制二进制串，未阻止引入对象族选择；规则 helpers 的 'object_family_expansion' 要求目标涉及覆盖、割或多对象满足，而选择子串子集最小化/最大化 popcount 直接改变 O 和 C，符合必须修改的轴。",
+        "feedback": "新问题构造时需确保选择机制不退化为一维区间覆盖贪心，应保留异或连续区间的核心性质，例如将选择成本与二进制串的原始 0/1 分布关联，使原规律既贡献可解性又制造新难度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题 KLXOR 的目标是计算 XOR 结果中 1 的个数，属于值计算问题，不存在明确有限的计数对象，无法应用带权计数扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 描述为“计算所有长度为K的子串按位异或后结果中1的个数”，核心操作是 popcount，未涉及方案数、组合计数等有限计数对象。",
+        "feedback": "规则要求种子题已有明确有限的计数对象，但此题仅有计算值，建议替换为有明确枚举对象的计数题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "core_constraints",
+          "invariant",
+          "objective"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "new_output_object_missing",
+      "message": "规划结果没有形成新的输出对象或新的输出责任。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "main_goal_unchanged",
+      "message": "语义硬判据通过。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "main_state_unchanged",
+      "message": "语义硬判据通过。",
+      "details": {}
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "reuse_risk_high",
+      "message": "语义硬判据通过。",
+      "details": {}
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "score": 0.77,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "new_output_object_missing",
+      "reason": "规划结果没有形成新的输出对象或新的输出责任。",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 2 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codechef_a1fbc477e906_campus_ops_20260528_180345",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

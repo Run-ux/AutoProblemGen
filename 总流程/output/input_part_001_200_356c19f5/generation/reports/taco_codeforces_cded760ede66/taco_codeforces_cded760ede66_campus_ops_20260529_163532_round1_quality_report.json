@@ -1,0 +1,720 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 98.0,
+    "divergence_score": 51.0,
+    "schema_distance": 0.5463,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的双输出类型（plan/conflict）、约束（每个幂次最多分配一次、conflict 要求至少两个俱乐部冲突）以及输出结构均已在 generated_problem 的描述、输出格式、注释中落地。plan 输出中 (c, e) 的顺序与 schema 声明的 (exponent, club_index) 顺序相反，但题面明确说明了字段含义且样例对齐，不影响正确性和可读性，故视为轻微瑕疵不扣分。hard_checks 中 structural_option_alignment 和 objective_alignment 均通过，证实关键结构已实现。",
+        "evidence_refs": [
+          "new_schema.core_constraints",
+          "new_schema.invariant",
+          "generated_problem.output_format",
+          "generated_problem.notes",
+          "hard_checks.structural_option_alignment",
+          "hard_checks.objective_alignment"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含了任务描述、输入格式、输出格式、约束条件以及样例解释，并补充了重要说明（如方案不唯一、任意冲突社团即可、指数范围、多物资包限制）。无需额外猜测即可开始解题。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description 中的背景、input_format 的字段定义、output_format 的格式说明、constraints 的范围、samples 的输入输出及解释之间均无矛盾。样例的数值与解释完全对应，输出格式中使用的‘总幂次个数’虽未显式定义，但结合 notes 中指数范围的说明可自然理解，且不影响样例一致性。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "两个样例覆盖了 plan 和 conflict 两种输出情景，并包含了需求为 0 的边界情况。样例解释详细说明了分配逻辑，能够帮助理解题目要求。数量对于中等难度题目足够。",
+        "evidence_refs": [
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 4.0,
+        "rationale": "题面使用清晰的中文描述，结构符合常见 OJ 题面规范，分段合理，无冗余或模糊表述。唯一瑕疵是 hard_checks 中 source_leakage 失败，提示可能存在原题标识泄露（检测到字母‘c’），尽管实际阅读中未发现明显污染，但作为强证据需降分。此外输出格式中的‘总幂次个数’未定义，可能造成短暂困惑，但整体仍易于理解。",
+        "evidence_refs": [
+          "hard_checks.source_leakage",
+          "generated_problem.description",
+          "generated_problem.output_format"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面准确地实现了将问题从布尔决策升级为具象方案/证据输出的要求，核心约束（幂次互斥、冲突证据可查）被明确表达。",
+      "样例解释详尽，覆盖了成功分配和冲突两种情形，并包含了需求为 0 的边界情况，帮助理解。",
+      "中文表达流畅，故事背景自然（社团物资分配），与校园运营主题契合。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5463,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.846,
+        "O": 0.6204,
+        "V": 0.6872
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.846,
+        "objective_type_distance": 0.7484,
+        "objective_text_distance": 0.4284,
+        "invariant_match_distance": 0.6872
+      }
+    },
+    "schema_distance": 0.5463,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.25,
+    "solution_transfer_risk": 0.9,
+    "surface_retheme_risk": 0.3,
+    "verdict": "reject_as_retheme",
+    "rationale": "新题将原题的决策问题（判断是否可行）改为构造/证据输出（输出具体分配方案或冲突证据），但核心约束（每个幂次至多使用一次）与贪心求解逻辑完全一致。原题的标准贪心算法从高到低检查幂次冲突，只需额外记录每个幂次的分配去向并在发现冲突时捕获指数和社团索引，即可直接迁移为新题解。输出形式的变化（YES/NO变为plan/conflict对象）并未改变问题建模与求解框架，因此语义差异有限，解法迁移风险极高。尽管背景叙事和样例不同（表面换皮风险低），但不足以弥补实质差异的缺失。",
+    "evidence_refs": [
+      "snapshots.original_problem",
+      "snapshots.generated_problem",
+      "hard_checks.source_leakage",
+      "review_context.difference_plan",
+      "review_context.distance_breakdown"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.55，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：c",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：c",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "输出格式中‘总幂次个数’未明确定义",
+      "detail": "在 output_format 描述 plan 时指出 M ≤ 总幂次个数，但题目中未显式给出‘总幂次个数’的含义或计算方式。虽然 notes 中提到指数不超过约 60，但初学者可能困惑。建议明确说明总幂次个数指满足 k^e ≤ max(a_i) 的最大 e+1，或者直接去掉该范围限制，因为 M 只需表示输出行数。",
+      "evidence_refs": [
+        "generated_problem.output_format"
+      ],
+      "fix_hint": "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "plan 输出中社团编号与指数顺序与内部 schema 相反",
+      "detail": "new_schema 的 core_constraints 中将 assignments 定义为 (exponent, club_index) 元组列表，但 output_format 要求先输出社团编号 c 再输出指数 e。这可能导致自动化判题器与 schema 不一致，但对人类选手无影响。建议统一顺序，或至少在 schema 中允许两种顺序。",
+      "evidence_refs": [
+        "new_schema.core_constraints.plan_feasibility",
+        "generated_problem.output_format"
+      ],
+      "fix_hint": "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。"
+    },
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "新题将原题的决策问题（判断是否可行）改为构造/证据输出（输出具体分配方案或冲突证据），但核心约束（每个幂次至多使用一次）与贪心求解逻辑完全一致。原题的标准贪心算法从高到低检查幂次冲突，只需额外记录每个幂次的分配去向并在发现冲突时捕获指数和社团索引，即可直接迁移为新题解。输出形式的变化（YES/NO变为plan/conflict对象）并未改变问题建模与求解框架，因此语义差异有限，解法迁移风险极高。尽管背景叙事和样例不同（表面换皮风险低），但不足以弥补实质差异的缺失。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem",
+        "hard_checks.source_leakage",
+        "review_context.difference_plan",
+        "review_context.distance_breakdown"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。",
+    "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。",
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "考虑在 output_format 中明确‘总幂次个数’或被替换为具体上界（如 60），消除潜在歧义。",
+    "调整 plan 输出部分社团与指数的顺序，使其与内部 schema 声明的 (exponent, club_index) 一致，或更新 schema 以匹配题面。",
+    "尽管 source_leakage 可能为误报，仍建议检查题面中是否存在任何原题残留（如特定变量名），确保彻底重题。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 98.0,
+    "divergence_score": 51.0,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：c",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：c",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "输出格式中‘总幂次个数’未明确定义",
+        "detail": "在 output_format 描述 plan 时指出 M ≤ 总幂次个数，但题目中未显式给出‘总幂次个数’的含义或计算方式。虽然 notes 中提到指数不超过约 60，但初学者可能困惑。建议明确说明总幂次个数指满足 k^e ≤ max(a_i) 的最大 e+1，或者直接去掉该范围限制，因为 M 只需表示输出行数。",
+        "evidence_refs": [
+          "generated_problem.output_format"
+        ],
+        "fix_hint": "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "plan 输出中社团编号与指数顺序与内部 schema 相反",
+        "detail": "new_schema 的 core_constraints 中将 assignments 定义为 (exponent, club_index) 元组列表，但 output_format 要求先输出社团编号 c 再输出指数 e。这可能导致自动化判题器与 schema 不一致，但对人类选手无影响。建议统一顺序，或至少在 schema 中允许两种顺序。",
+        "evidence_refs": [
+          "new_schema.core_constraints.plan_feasibility",
+          "generated_problem.output_format"
+        ],
+        "fix_hint": "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。"
+      },
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "新题将原题的决策问题（判断是否可行）改为构造/证据输出（输出具体分配方案或冲突证据），但核心约束（每个幂次至多使用一次）与贪心求解逻辑完全一致。原题的标准贪心算法从高到低检查幂次冲突，只需额外记录每个幂次的分配去向并在发现冲突时捕获指数和社团索引，即可直接迁移为新题解。输出形式的变化（YES/NO变为plan/conflict对象）并未改变问题建模与求解框架，因此语义差异有限，解法迁移风险极高。尽管背景叙事和样例不同（表面换皮风险低），但不足以弥补实质差异的缺失。",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem",
+          "hard_checks.source_leakage",
+          "review_context.difference_plan",
+          "review_context.distance_breakdown"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "可将‘M (0 ≤ M ≤ 总幂次个数)’改为‘M (0 ≤ M ≤ 60)’并注释该上界由 a_i ≤ 10^16 和 k ≥ 2 得来，或直接省略范围。",
+      "可无需修改题面，但若未来有自动判题工具，需注意按 (c, e) 顺序解析。也可调整 new_schema 描述为 (club_index, exponent)。",
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "考虑在 output_format 中明确‘总幂次个数’或被替换为具体上界（如 60），消除潜在歧义。",
+      "调整 plan 输出部分社团与指数的顺序，使其与内部 schema 声明的 (exponent, club_index) 一致，或更新 schema 以匹配题面。",
+      "尽管 source_leakage 可能为误报，仍建议检查题面中是否存在任何原题残留（如特定变量名），确保彻底重题。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "题面准确地实现了将问题从布尔决策升级为具象方案/证据输出的要求，核心约束（幂次互斥、冲突证据可查）被明确表达。",
+      "样例解释详尽，覆盖了成功分配和冲突两种情形，并包含了需求为 0 的边界情况，帮助理解。",
+      "中文表达流畅，故事背景自然（社团物资分配），与校园运营主题契合。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66_campus_ops_20260529_163532_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66_campus_ops_20260529_163532_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_cded760ede66",
+      "title": "C",
+      "description": "Suppose you are performing the following algorithm. There is an array $v_1, v_2, \\dots, v_n$ filled with zeroes at start. The following operation is applied to the array several times — at $i$-th step ($0$-indexed) you can:   either choose position $pos$ ($1 \\le pos \\le n$) and increase $v_{pos}$ by $k^i$;  or not choose any position and skip this step. \n\nYou can choose how the algorithm would behave on each step and when to stop it. The question is: can you make array $v$ equal to the given array $a$ ($v_j = a_j$ for each $j$) after some step?\n\n\n-----Input-----\n\nThe first line contains one integer $T$ ($1 \\le T \\le 1000$) — the number of test cases. Next $2T$ lines contain test cases — two lines per test case.\n\nThe first line of each test case contains two integers $n$ and $k$ ($1 \\le n \\le 30$, $2 \\le k \\le 100$) — the size of arrays $v$ and $a$ and value $k$ used in the algorithm.\n\nThe second line contains $n$ integers $a_1, a_2, \\dots, a_n$ ($0 \\le a_i \\le 10^{16}$) — the array you'd like to achieve.\n\n\n-----Output-----\n\nFor each test case print YES (case insensitive) if you can achieve the array $a$ after some step or NO (case insensitive) otherwise.\n\n\n-----Example-----\nInput\n5\n4 100\n0 0 0 0\n1 2\n1\n3 4\n1 4 1\n3 2\n0 1 3\n3 9\n0 59049 810\n\nOutput\nYES\nYES\nNO\nNO\nYES\n\n\n\n-----Note-----\n\nIn the first test case, you can stop the algorithm before the $0$-th step, or don't choose any position several times and stop the algorithm.\n\nIn the second test case, you can add $k^0$ to $v_1$ and stop the algorithm.\n\nIn the third test case, you can't make two $1$ in the array $v$.\n\nIn the fifth test case, you can skip $9^0$ and $9^1$, then add $9^2$ and $9^3$ to $v_3$, skip $9^4$ and finally, add $9^5$ to $v_2$.",
+      "input": "5\n4 100\n0 0 0 0\n1 2\n1\n3 4\n1 4 1\n3 2\n0 1 3\n3 9\n0 59049 810",
+      "output": "YES\nYES\nNO\nNO\nYES\n\n\n\n-----Note-----\n\nIn the first test case, you can stop the algorithm before the $0$-th step, or don't choose any position several times and stop the algorithm.\n\nIn the second test case, you can add $k^0$ to $v_1$ and stop the algorithm.\n\nIn the third test case, you can't make two $1$ in the array $v$.\n\nIn the fifth test case, you can skip $9^0$ and $9^1$, then add $9^2$ and $9^3$ to $v_3$, skip $9^4$ and finally, add $9^5$ to $v_2$.",
+      "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "for t in range(int(input())):\n\t(n, k) = [*map(int, input().split())]\n\tp = 1\n\twhile p < 1e+16:\n\t\tp *= k\n\ta = [*map(int, input().split())]\n\tvalid = True\n\twhile valid:\n\t\tchk = False\n\t\tfor i in range(len(a)):\n\t\t\tif a[i] >= p:\n\t\t\t\tif chk:\n\t\t\t\t\tvalid = False\n\t\t\t\t\tbreak\n\t\t\t\telse:\n\t\t\t\t\tchk = True\n\t\t\t\t\ta[i] -= p\n\t\tif sum(a) == 0 or p == 1:\n\t\t\tvalid = False\n\t\tp //= k\n\tprint('NO' if sum(a) else 'YES')"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_cded760ede66",
+        "codeforces",
+        "Suppose you are performing the following algorithm. There is an array $v_1, v_2, \\dots, v_n$ filled with zeroes at start. The following operation is applied to the array several times — at $i$-th step ($0$-indexed) yo...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心变化是将输出从二元决策改为方案或冲突证据，需要重新定义输出内容和约束，同时不变式从隐含的“最多一次”变为明确要求证明该不变量是否满足。",
+      "summary": "输出不再是YES/NO，而是(plan)或(conflict)；约束增加了方案有效性和证据可检查性；不变式要求成功时方案满足不变量，失败时证据包含不变量违反。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "campus_ops_scheme_or_conflict",
+      "source": "codeforces (adapted)",
+      "input_structure": {
+        "type": "composite",
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "test_case_count",
+            "type": "integer",
+            "value_range": {
+              "min": 1,
+              "max": 1000
+            }
+          },
+          {
+            "role": "all_n",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 1000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 30
+            },
+            "description": "number of clubs per test case"
+          },
+          {
+            "role": "all_k",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 1000
+            },
+            "value_range": {
+              "min": 2,
+              "max": 100
+            },
+            "description": "base of token denomination per test case"
+          },
+          {
+            "role": "all_a",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 1000
+            },
+            "value_range": {
+              "min": 0,
+              "max": 10000000000000000
+            },
+            "description": "desired total amounts for each club"
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "output_type",
+            "description": "输出必须是一个对象，包含字段 type 以及对应的内容。type 为 'plan' 时附带 assignments 列表；type 为 'conflict' 时附带 exponent 和 clubs。"
+          },
+          {
+            "name": "plan_feasibility",
+            "description": "若输出类型为 'plan'：assignments 为 (exponent, club_index) 的列表，每个俱乐部最终得到的金额总和等于其需求 a_i，且每个幂次 k^exponent 最多被分配一次。允许跳过某些幂次。"
+          },
+          {
+            "name": "conflict_validity",
+            "description": "若输出类型为 'conflict'：提供的 exponent 必须确实在至少两个不同俱乐部的需求分解中出现（即 digit_exponent(a_c)=1 对至少两个不同的 c），且 clubs 列出其中两个索引。"
+          }
+        ]
+      },
+      "objective": {
+        "type": "certificate_output",
+        "description": "对于每个测试用例，输出一个合法分配方案，或输出一个冲突证据，证明无法满足需求。"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "power_uniqueness_in_plan",
+            "description": "在 plan 输出中，每个幂次 k^e 至多在一个俱乐部的分配中出现。",
+            "properties": {
+              "max_usage_per_power": 1
+            }
+          },
+          {
+            "name": "conflict_reliability",
+            "description": "在 conflict 输出中，提供的指数 e 确实出现在至少两个不同俱乐部的基k分解中，且 clubs 包含了这两个俱乐部。",
+            "properties": {}
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "社团物资分配",
+      "description": "学校仓库里存放着一些特殊的物资包，每个物资包的价值正好是某个幂次 k^e（其中 k 是大于 1 的整数，e 是非负整数），并且每种价值的物资包只有一个。\n\n现在有 n 个社团提出了物资申请，第 i 个社团希望得到总价值恰好为 a_i 的物资。你需要从仓库中挑选一些物资包分配给社团，每个物资包只能分配给一个社团。\n\n如果能够满足所有社团的需求，请输出一种分配方案；如果无论如何分配都无法同时满足所有社团，请指出具体是哪两个社团因为同一个价值的物资包而发生了冲突。",
+      "input_format": "第一行包含一个整数 T (1 ≤ T ≤ 1000)，表示测试用例的个数。接下来每两行描述一个测试用例。\n\n对于每个测试用例：\n第一行包含两个整数 n 和 k (1 ≤ n ≤ 30, 2 ≤ k ≤ 100)，分别表示社团的数量和物资包价值的底数。\n第二行包含 n 个整数 a_1, a_2, …, a_n (0 ≤ a_i ≤ 10^16)，依次表示每个社团的需求总额。",
+      "output_format": "对于每个测试用例，输出两或三部分内容，具体取决于是否可分配：\n\n如果存在分配方案，第一行输出 \"plan\"（不含引号）。\n接下来的第一行输出一个整数 M (0 ≤ M ≤ 总幂次个数)，表示实际发放的物资包数量。\n然后输出 M 行，每行包含两个整数 c 和 e，表示将价值为 k^e 的物资包分配给第 c 个社团（社团编号从 1 开始）。\n\n如果不存在分配方案，第一行输出 \"conflict\"（不含引号）。\n紧接着在一行内输出三个整数 e, c1, c2，表示价值为 k^e 的物资包同时被社团 c1 和社团 c2 需要（c1 ≠ c2）。",
+      "constraints": [
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "1 ≤ T ≤ 1000",
+        "1 ≤ n ≤ 30",
+        "2 ≤ k ≤ 100",
+        "0 ≤ a_i ≤ 10^16"
+      ],
+      "samples": [
+        {
+          "input": "2\n2 2\n1 2\n3 3\n1 1 1",
+          "output": "plan\n2\n1 0\n2 1\nconflict\n0 1 2",
+          "explanation": "第一组数据：仓库中有价值为 2^0=1 和 2^1=2 的物资包。将价值 1 的物资包分配给社团 1，价值 2 的物资包分配给社团 2，两者恰好满足需求。\n第二组数据：三个社团都需要价值 3^0=1 的物资包，而该价值的物资包只有一个，因此无法同时满足，任意两个社团就会冲突。这里输出社团 1 和 2 都需要指数 0。"
+        },
+        {
+          "input": "1\n3 4\n0 4 1",
+          "output": "plan\n2\n2 1\n3 0",
+          "explanation": "仓库中有价值 4^0=1 和 4^1=4 的物资包。社团 1 需求为 0，无需分配；社团 2 需求 4，获得价值 4 的物资包；社团 3 需求 1，获得价值 1 的物资包。分配成功。"
+        }
+      ],
+      "notes": "分配方案可能不唯一，输出任意一个合法方案即可。\n对于冲突情况，只需要给出一对冲突的社团即可，即使有更多社团也同时需要同一价值的物资包。\n指数不会太大，因为 a_i ≤ 10^16，保证所有涉及的指数不超过约 60（实际取决于 k）。\n一个社团可以接收多个不同价值的物资包，但同一个价值的物资包不能分给多个社团。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "输出不再是YES/NO，而是(plan)或(conflict)；约束增加了方案有效性和证据可检查性；不变式要求成功时方案满足不变量，失败时证据包含不变量违反。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5463,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.846,
+          "O": 0.6204,
+          "V": 0.6872
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.846,
+          "objective_type_distance": 0.7484,
+          "objective_text_distance": 0.4284,
+          "invariant_match_distance": 0.6872
+        }
+      },
+      "applied_rule": "construct_or_obstruction",
+      "applied_helpers": [
+        {
+          "id": "local_certificate_design",
+          "selection_reason": "将无解原因压成可局部检查的证据对象，符合规则要求。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 增加了 output_type 和 conflict_validity",
+            "objective 改为 certificate_output",
+            "invariant 增加了 conflict_reliability"
+          ],
+          "innovation_reason": "失败语义从抽象的是否判定变成具体证据对象。",
+          "difficulty_reason": "要求同时处理成功分支和失败证据分支，增加实现复杂度。"
+        },
+        {
+          "id": "failure_branch_symmetry",
+          "selection_reason": "让成功分支与失败分支都承担正式输出责任，符合规则要求。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 定义了 plan 和 conflict 两种输出类型",
+            "objective 要求输出两者之一"
+          ],
+          "innovation_reason": "将单目标输出改为双分支输出合同，实质改变了问题类型。",
+          "difficulty_reason": "算法必须统一处理两类输出语义，增加逻辑分支覆盖。"
+        },
+        {
+          "id": "obstruction_embedding",
+          "selection_reason": "让冲突证据直接来自主约束中的不可兼容关系，符合规则要求。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 中 conflict_validity 依赖基k分解数字",
+            "invariant 中 conflict_reliability 要求证据直接来自分解"
+          ],
+          "innovation_reason": "失败证据嵌入主约束内部，而非额外情形放大。",
+          "difficulty_reason": "要求在同一循环中同时解释成功构造与失败证据，增加正确性证明难度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "贪心从高到低检查幂次冲突，如果某个幂次被多于一个需求需要，则判定 NO。",
+        "reusable_subroutines": "基k分解函数、冲突检测部分、从高到低的循环结构。",
+        "new_solver_core": "如果检测到冲突，定位具体冲突幂次和涉及的社团，构造冲突证据；否则，通过记录每个幂次分配给的社团（从高到低时直接分配），构造分配方案。注意方案可能不唯一，输出任一合法方案。",
+        "new_proof_obligation": "需要证明：(1) 当贪心算法判定成功时，输出的方案确实使得每个社团的总和等于 a_i；(2) 当贪心算法检测到冲突时，输出的冲突证据确实涉及至少两个不同社团的相同幂次，并且该冲突导致不可解（即不存在任何分配方案满足约束）。",
+        "why_direct_reuse_fails": "原解法仅输出 YES/NO，没有记录分配信息，因此不能直接复用。需要添加记录每个幂次的去处的数据结构，并在检测冲突时及时捕获冲突指数和涉及的社团。"
+      },
+      "anti_shallow_rationale": "不是简单换故事背景，而是从决策问题升级为方案/证据输出问题，输出结构从布尔值变为对象，算法需要额外维护分配记录和冲突捕获。这是实质性变化。"
+    }
+  }
+}

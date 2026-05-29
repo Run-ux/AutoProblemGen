@@ -1,0 +1,794 @@
+{
+  "problem_id": "taco_codechef_c0ea04c63c73",
+  "source_problem_ids": [
+    "taco_codechef_c0ea04c63c73"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_c0ea04c63c73",
+      "MINSZ",
+      "codechef",
+      "Consider an array A = \\{a_{1}, a_{2},...,a_{n}\\} of size n ≥ 1. If a_{k} = 2^{x} -1 for all 1≤ k ≤ n, for some integer x (1 ≤ x ≤ 60), then A is called interesting array. You are given a number C. Find any interesting...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "求解满足异或条件的最小规模数组大小",
+    "target": "array_size",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（满足特定异或条件的梅森数数组）可直接作为反向目标，且存在自然的修改操作——改变元素的指数x（保持梅森数形式），该操作与核心异或约束直接耦合，可定义最小修改次数作为新目标，满足反向设计的所有关键要求。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codechef_c0ea04c63c73",
+    "source": "codechef",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 100000
+      },
+      "value_range": {
+        "min": 0,
+        "max": 1152921504606846975
+      },
+      "properties": {
+        "multiple_test_cases": true
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "interesting_element_definition",
+          "description": "数组的每个元素必须形如2^x - 1,其中x是整数且满足1 ≤ x ≤ 60。",
+          "formal": "a_k = 2^{x_k} - 1, x_k ∈ Z, 1 ≤ x_k ≤ 60",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "xor_sum_equality",
+          "description": "数组所有元素的按位异或和必须等于给定的整数C。",
+          "formal": "⨁_{k=1}^n a_k = C",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "minimum_size_requirement",
+          "description": "在所有满足条件的数组中,必须输出尺寸最小的数组；若存在多个,输出任意一个。",
+          "formal": "minimize n subject to a_k = 2^{x_k} - 1, 1 ≤ x_k ≤ 60, ⨁_{k=1}^n a_k = C",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "求解满足异或条件的最小规模数组大小",
+      "target": "array_size",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "mersenne_element_form",
+          "description": "Every element of the constructed array is of the form 2^k - 1, satisfying the definition of interesting array.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "minimal_size_corresponds_to_bit_transitions",
+          "description": "For C > 0, the number of elements in the output array equals the number of transitions between consecutive bits in the binary representation of C plus one. This yields the minimum possible size.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "prefix_xor_match",
+          "description": "During the scan of bits from most significant to least significant, the XOR of the elements generated so far matches the prefix of C up to the currently processed bit, ensuring correct accumulation towards the target.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 1 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题已经要求输出完整方案（数组），直接违反规则 eligibility 中的 forbidden_seed_properties \"原题本来就要求输出完整方案\"，且解法直接生成方案，不存在将答案恢复为方案的过程，无法升级为规范构造输出而不触及红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题 description 明确要求输出数组元素（Output Format: On the next line output the elements of array A in any order），核心任务即为构造最小规模数组，满足异或条件，这属于\"原题本来就要求输出完整方案\"的情形。规则 eligibility 中 forbidden_seed_properties 明确列出此项，故不适用。",
+        "feedback": "规则要求种子题不能已经要求输出完整方案，当前种子题的原要求即是输出方案，强行升级为规范解只会增加次要格式要求，无法实现轴变化（C, O, V 实质改变），不符合 handler 预期，建议直接拒绝。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_failure_case",
+      "selection_reason": "种子题对任意输入都存在解，不存在'做不到'的情形，无法生成局部冲突证据，无法满足规则要求的冲突证书输出义务。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 core_constraints 中 xor_sum_equality 约束要求异或和为 C，而 interesting element 形式为 2^x - 1，从标准解可知所有 C 均可构造，包括 C=0 输出 [1,1]。原题不存在无解情况，所以规则 eligibility.required_seed_properties 要求的'做不到的原因可以用局部证据表示'无法满足。",
+        "feedback": "建议更换种子题，选择存在无解情况的判定/构造问题，以便于设计可局部检查的冲突证据。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "ambiguous_dedup",
+      "selection_reason": "原题输出允许任意顺序，但未定义两个解何时相同，导致去重规则模糊，不满足计数题变换所需的对解空间等价关系的清晰定义。",
+      "risk_tags": [
+        "dedup_ambiguity"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "Seed schema中objective为最小化大小并输出任一解，输出格式描述为'output the elements of array A in any order'，但未规定顺序是否影响解的唯一性，因此不同排列的数组可能被视为不同解或相同解不明确。",
+        "feedback": "若想改为计数题，需在原题基础上明确定义计数对象（如有序序列）并建立去重原则，但原题种子当前状态不足以支持该变换的保守进入。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题语义中不存在可被放大的原生扰动来源。MINSZ 是确定性构造问题：输入 C 为单个确定整数，要求输出最小长度数组使得元素均为 2^x-1 且异或和为 C。题目未涉及顺序依赖、资源波动或局部选择差异，输出顺序任意仅影响排列形式，不构成算法需要应对的不确定性。硬引入扰动（如假设 C 未知或波动）属于凭背景硬造对手，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题 schema 的 core_constraints 中仅有 interesting_element_definition、xor_sum_equality 和 minimum_size_requirement，未定义任何扰动或不确定性参数。original_problem_references 的描述明确 C 为单个输入值，无范围、分布或变动说明。标准解法基于 C 的二进制位翻转直接确定最小大小，不包含处理扰动的逻辑。规则 required_seed_properties 要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，本题不满足。",
+        "feedback": "本题不适合应用 minimum_guarantee_under_perturbation 规则，因为没有原生不确定性可以形式化为扰动模型。建议选择具有内在不确定性的种子题（如在线决策、动态数据、不确定偏好序列等）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题已经是最小化数组大小的优化问题，不存在从可行性到阈值优化的升级空间。种子题的核心约束直接要求 minimize n，目标已经是最小临界参数，无法再次包装为阈值优化题。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.core_constraints.constraints[2] 明确写出 'minimize n'，objective.type 为 'minimize_value'，因此原题本身即为求最小阈值的优化问题，不满足规则声明中的 '从判断是否可行改成求临界阈值' 的变换前提。",
+        "feedback": "规则要求种子题需为可行性判定问题，但提供的原题已经是极值求解，无法进一步实施阈值化变换。建议更换种子题或调整规则条件。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_conflicting_secondary_metric",
+      "selection_reason": "种子题MINSZ的最小大小由C的二进制位模式唯一确定，不存在自然的、可与大小进行非平凡权衡的第二指标；最大元素、元素总位数等附加指标的最小值在最小大小解中已达到，无法通过放松大小约束获得改善，因此不满足“两个指标之间存在真实冲突”的条件。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为minimize array_size，约束为interesting element定义和XOR相等。根据invariant，最小大小等于C的二进制位转换数加一（C>0），且任何解中最大元素至少为2^{highest_bit+1}-1，该下界与大小无关。因此不存在第二指标能与大小形成帕累托前沿权衡。",
+        "feedback": "该种子题属离散构造，目标空间一维，无法抽象出自然的、冲突的第二指标，建议排除。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.93,
+      "reason_code": "eligible_with_confidence",
+      "selection_reason": "原题输出（满足特定异或条件的梅森数数组）可直接作为反向目标，且存在自然的修改操作——改变元素的指数x（保持梅森数形式），该操作与核心异或约束直接耦合，可定义最小修改次数作为新目标，满足反向设计的所有关键要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束定义了数组元素必须是梅森数（invariant 'mersenne_element_form'）且异或和等于C（invariant 'xor_sum_equality'），这为反向目标提供了可验证的绑定基础；修改操作直接映射为改变梅森数的指数x，是原题对象自然结构的派生，且通过要求最小修改次数（helper 'minimality_or_certificate_lock'）避免了浅层变换。",
+        "feedback": "规划阶段应注意避免反向设计退化为简单的比特翻转计数，需通过操作合约正式定义允许的修改并强制最小性证明，以保持与原题算法的实质性差异。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_independent_components",
+      "selection_reason": "原题是一个整体构造问题，其求解直接依赖C的全局位模式，不存在可分解的局部单元，无法应用‘将独立分量耦合为全局约束’的变换。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目MINSZ中，每个数组元素必须满足形式2^x-1，且所有元素的异或和必须等于C，目标是最小化数组大小。标准解法扫描C的二进制位变化，直接生成元素序列，整个过程是全局性的，没有可独立处理的子问题或局部单元。原题约束中不存在独立的、可分离的分量（如多个区间、多个查询等），而是单一的全局异或条件。因此不符合规则要求的‘原题存在可分解的局部单元’。",
+        "feedback": "该规则要求原题具有可独立求解的局部单元，但当前种子题的结构是全局确定的，强行应用会造成背景硬加，产生语义不匹配的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_operation",
+      "selection_reason": "原题是一个构造性问题，不包含任何可轮流选择、拿取或改变状态的自然操作，无法在保持核心规律的前提下转化为双方博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束仅为数组元素形如2^x-1且异或和为C，目标是最小化数组长度；标准解法通过扫描C的二进制位直接生成序列，没有决策分支或可选动作。规则要求存在可轮流选择的操作，但原题缺少这类操作，强行博弈化将沦为仅改背景的无效变换（见failure_templates.not_applicable和negative example）。",
+        "feedback": "原题‘MINSZ’没有博弈化的自然基础，建议选择含明确轮流取物、移动或选择步骤的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题MINSZ的核心对象是整数C和数组，没有显式的路径、区间或子树等局部结构。尽管解题思路可按二进制位区间理解，但题目定义层面不存在可自然扩展为覆盖/割的局部对象族，强行扩展会偏离原有结构。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求种子题核心对象具有路径、区间、子树等局部结构（required_seed_properties），但题目输入仅为一个整数，核心约束围绕梅森数形式和异或和相等，不存在局部结构定义。规则中的object_family_expansion helper要求对象族从原结构扩展，但这里对象族（如多个C）需额外引入，违反了forbidden_seed_properties中“覆盖关系只能靠无关附加限制产生”的红线。",
+        "feedback": "建议选取具有明确路径、区间或子树结构的种子题（如路径覆盖、区间选择、树链等），以便自然形成覆盖或割关系，避免语义脱节。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting_problem",
+      "selection_reason": "原题是构造最小数组的问题，不是计数问题，没有明确的有限计数对象，无法应用该计数扩展规则。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 类型为 minimize_value，求解最小数组大小并构造数组，而不是计数有多少个合法数组。规则要求的 '原题已经有明确有限的计数对象' 不成立。",
+        "feedback": "该规则仅适用于普通计数题，而此题是构造题，不符合种子属性。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题已经要求输出完整方案（数组），直接违反规则 eligibility 中的 forbidden_seed_properties \"原题本来就要求输出完整方案\"，且解法直接生成方案，不存在将答案恢复为方案的过程，无法升级为规范构造输出而不触及红线。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题 description 明确要求输出数组元素（Output Format: On the next line output the elements of array A in any order），核心任务即为构造最小规模数组，满足异或条件，这属于\"原题本来就要求输出完整方案\"的情形。规则 eligibility 中 forbidden_seed_properties 明确列出此项，故不适用。",
+        "feedback": "规则要求种子题不能已经要求输出完整方案，当前种子题的原要求即是输出方案，强行升级为规范解只会增加次要格式要求，无法实现轴变化（C, O, V 实质改变），不符合 handler 预期，建议直接拒绝。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_failure_case",
+      "message": "种子题对任意输入都存在解，不存在'做不到'的情形，无法生成局部冲突证据，无法满足规则要求的冲突证书输出义务。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 core_constraints 中 xor_sum_equality 约束要求异或和为 C，而 interesting element 形式为 2^x - 1，从标准解可知所有 C 均可构造，包括 C=0 输出 [1,1]。原题不存在无解情况，所以规则 eligibility.required_seed_properties 要求的'做不到的原因可以用局部证据表示'无法满足。",
+        "feedback": "建议更换种子题，选择存在无解情况的判定/构造问题，以便于设计可局部检查的冲突证据。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "ambiguous_dedup",
+      "message": "原题输出允许任意顺序，但未定义两个解何时相同，导致去重规则模糊，不满足计数题变换所需的对解空间等价关系的清晰定义。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.3,
+        "risk_tags": [
+          "dedup_ambiguity"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "Seed schema中objective为最小化大小并输出任一解，输出格式描述为'output the elements of array A in any order'，但未规定顺序是否影响解的唯一性，因此不同排列的数组可能被视为不同解或相同解不明确。",
+        "feedback": "若想改为计数题，需在原题基础上明确定义计数对象（如有序序列）并建立去重原则，但原题种子当前状态不足以支持该变换的保守进入。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题语义中不存在可被放大的原生扰动来源。MINSZ 是确定性构造问题：输入 C 为单个确定整数，要求输出最小长度数组使得元素均为 2^x-1 且异或和为 C。题目未涉及顺序依赖、资源波动或局部选择差异，输出顺序任意仅影响排列形式，不构成算法需要应对的不确定性。硬引入扰动（如假设 C 未知或波动）属于凭背景硬造对手，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题 schema 的 core_constraints 中仅有 interesting_element_definition、xor_sum_equality 和 minimum_size_requirement，未定义任何扰动或不确定性参数。original_problem_references 的描述明确 C 为单个输入值，无范围、分布或变动说明。标准解法基于 C 的二进制位翻转直接确定最小大小，不包含处理扰动的逻辑。规则 required_seed_properties 要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，本题不满足。",
+        "feedback": "本题不适合应用 minimum_guarantee_under_perturbation 规则，因为没有原生不确定性可以形式化为扰动模型。建议选择具有内在不确定性的种子题（如在线决策、动态数据、不确定偏好序列等）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题已经是最小化数组大小的优化问题，不存在从可行性到阈值优化的升级空间。种子题的核心约束直接要求 minimize n，目标已经是最小临界参数，无法再次包装为阈值优化题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.core_constraints.constraints[2] 明确写出 'minimize n'，objective.type 为 'minimize_value'，因此原题本身即为求最小阈值的优化问题，不满足规则声明中的 '从判断是否可行改成求临界阈值' 的变换前提。",
+        "feedback": "规则要求种子题需为可行性判定问题，但提供的原题已经是极值求解，无法进一步实施阈值化变换。建议更换种子题或调整规则条件。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_secondary_metric",
+      "message": "种子题MINSZ的最小大小由C的二进制位模式唯一确定，不存在自然的、可与大小进行非平凡权衡的第二指标；最大元素、元素总位数等附加指标的最小值在最小大小解中已达到，无法通过放松大小约束获得改善，因此不满足“两个指标之间存在真实冲突”的条件。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为minimize array_size，约束为interesting element定义和XOR相等。根据invariant，最小大小等于C的二进制位转换数加一（C>0），且任何解中最大元素至少为2^{highest_bit+1}-1，该下界与大小无关。因此不存在第二指标能与大小形成帕累托前沿权衡。",
+        "feedback": "该种子题属离散构造，目标空间一维，无法抽象出自然的、冲突的第二指标，建议排除。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible_with_confidence",
+      "message": "原题输出（满足特定异或条件的梅森数数组）可直接作为反向目标，且存在自然的修改操作——改变元素的指数x（保持梅森数形式），该操作与核心异或约束直接耦合，可定义最小修改次数作为新目标，满足反向设计的所有关键要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.93,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束定义了数组元素必须是梅森数（invariant 'mersenne_element_form'）且异或和等于C（invariant 'xor_sum_equality'），这为反向目标提供了可验证的绑定基础；修改操作直接映射为改变梅森数的指数x，是原题对象自然结构的派生，且通过要求最小修改次数（helper 'minimality_or_certificate_lock'）避免了浅层变换。",
+        "feedback": "规划阶段应注意避免反向设计退化为简单的比特翻转计数，需通过操作合约正式定义允许的修改并强制最小性证明，以保持与原题算法的实质性差异。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_independent_components",
+      "message": "原题是一个整体构造问题，其求解直接依赖C的全局位模式，不存在可分解的局部单元，无法应用‘将独立分量耦合为全局约束’的变换。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目MINSZ中，每个数组元素必须满足形式2^x-1，且所有元素的异或和必须等于C，目标是最小化数组大小。标准解法扫描C的二进制位变化，直接生成元素序列，整个过程是全局性的，没有可独立处理的子问题或局部单元。原题约束中不存在独立的、可分离的分量（如多个区间、多个查询等），而是单一的全局异或条件。因此不符合规则要求的‘原题存在可分解的局部单元’。",
+        "feedback": "该规则要求原题具有可独立求解的局部单元，但当前种子题的结构是全局确定的，强行应用会造成背景硬加，产生语义不匹配的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_operation",
+      "message": "原题是一个构造性问题，不包含任何可轮流选择、拿取或改变状态的自然操作，无法在保持核心规律的前提下转化为双方博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束仅为数组元素形如2^x-1且异或和为C，目标是最小化数组长度；标准解法通过扫描C的二进制位直接生成序列，没有决策分支或可选动作。规则要求存在可轮流选择的操作，但原题缺少这类操作，强行博弈化将沦为仅改背景的无效变换（见failure_templates.not_applicable和negative example）。",
+        "feedback": "原题‘MINSZ’没有博弈化的自然基础，建议选择含明确轮流取物、移动或选择步骤的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题MINSZ的核心对象是整数C和数组，没有显式的路径、区间或子树等局部结构。尽管解题思路可按二进制位区间理解，但题目定义层面不存在可自然扩展为覆盖/割的局部对象族，强行扩展会偏离原有结构。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求种子题核心对象具有路径、区间、子树等局部结构（required_seed_properties），但题目输入仅为一个整数，核心约束围绕梅森数形式和异或和相等，不存在局部结构定义。规则中的object_family_expansion helper要求对象族从原结构扩展，但这里对象族（如多个C）需额外引入，违反了forbidden_seed_properties中“覆盖关系只能靠无关附加限制产生”的红线。",
+        "feedback": "建议选取具有明确路径、区间或子树结构的种子题（如路径覆盖、区间选择、树链等），以便自然形成覆盖或割关系，避免语义脱节。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting_problem",
+      "message": "原题是构造最小数组的问题，不是计数问题，没有明确的有限计数对象，无法应用该计数扩展规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 类型为 minimize_value，求解最小数组大小并构造数组，而不是计数有多少个合法数组。规则要求的 '原题已经有明确有限的计数对象' 不成立。",
+        "feedback": "该规则仅适用于普通计数题，而此题是构造题，不符合种子属性。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.93,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 1 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codechef_c0ea04c63c73_home_organization_20260528_133548",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

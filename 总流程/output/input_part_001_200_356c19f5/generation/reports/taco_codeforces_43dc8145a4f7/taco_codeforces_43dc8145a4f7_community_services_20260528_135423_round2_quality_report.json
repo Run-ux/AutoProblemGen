@@ -1,0 +1,648 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 53.3,
+    "schema_distance": 0.3772,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的邻接关系、块使用规则、方案区分定义、计数目标等均已准确、完整地体现在 generated_problem 的描述、输入输出和约束中，无偏离或省略。",
+        "evidence_refs": [
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.constraints",
+          "generated_problem.output_format"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了任务背景、所有约束规则（包括相邻定义、块划分与使用规则、方案差异定义）、输入输出格式、参数范围与总和限制，以及模数说明，样例解释充分，读者可独立完整解题。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes",
+          "generated_problem.samples[0].explanation"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "描述、输入输出格式、约束和样例之间完全一致，样例的输出与解释中的计数方式完全匹配，没有矛盾。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.samples[0].input",
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[1]",
+          "generated_problem.samples[2]"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供了三个具有代表性的样例，从简单到中等规模，覆盖了不同家庭组合和块分配情况。每个样例都有详细的逐步解释，清晰展示了计数逻辑，有助于理解题目。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks[12].check_id=sample_count"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，使用 OJ 标准格式（标题、描述、输入、输出、样例、约束、注释），语言通顺，规则表述明确，无歧义。没有来源泄露或无关文本。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "完整落地 new_schema 中的所有结构选项与约束，忠实实现了从判定到计数的变体转换。",
+      "样例丰富且解释详尽，展示了不同场景下的计数方法，有效帮助理解。",
+      "题面各部分保持一致，表述清晰规范，符合 OJ 标准。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3772,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.6534,
+        "O": 0.3821,
+        "V": 0.4284
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.6534,
+        "objective_type_distance": 0.3236,
+        "objective_text_distance": 0.4699,
+        "invariant_match_distance": 0.4284
+      }
+    },
+    "schema_distance": 0.3772,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.5,
+    "solution_transfer_risk": 0.6,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "原题和目标新题共享相同的座舱‑储物格拓扑结构和不相邻约束，新题将隐含的4块/2单元使用规则显式化，实质约束集等价。主要变化为目标函数从可行性判定变为方案计数（O轴），并因此增加了不同方案的定义和计数模型（C轴新增 distinct_solution_definition 等）。输入格式完全一致（I轴距离0）。虽然目标变化要求从贪心判定切换到动态规划/组合计数，但原题中关于4座块隔离和2座单元独立的性质可以直接迁移到计数模型的设计中，核心求解框架仍然接近，因此语义差异中等，解法迁移风险适中。题目背景、叙事和样例均未复用原题，表层换皮风险低。",
+    "evidence_refs": [
+      "snapshots.original_problem.description",
+      "snapshots.generated_problem.description",
+      "divergence.schema_distance_breakdown",
+      "snapshots.new_schema.core_constraints",
+      "snapshots.new_schema.objective",
+      "snapshots.new_schema.invariant",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.38，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 53.3,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "完整落地 new_schema 中的所有结构选项与约束，忠实实现了从判定到计数的变体转换。",
+      "样例丰富且解释详尽，展示了不同场景下的计数方法，有效帮助理解。",
+      "题面各部分保持一致，表述清晰规范，符合 OJ 标准。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_43dc8145a4f7\\taco_codeforces_43dc8145a4f7.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_43dc8145a4f7\\taco_codeforces_43dc8145a4f7_community_services_20260528_135423_round2.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_43dc8145a4f7\\taco_codeforces_43dc8145a4f7_community_services_20260528_135423_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_43dc8145a4f7",
+      "title": "B",
+      "description": "Daenerys Targaryen has an army consisting of k groups of soldiers, the i-th group contains a_{i} soldiers. She wants to bring her army to the other side of the sea to get the Iron Throne. She has recently bought an airplane to carry her army through the sea. The airplane has n rows, each of them has 8 seats. We call two seats neighbor, if they are in the same row and in seats {1, 2}, {3, 4}, {4, 5}, {5, 6} or {7, 8}.\n\n [Image] A row in the airplane \n\nDaenerys Targaryen wants to place her army in the plane so that there are no two soldiers from different groups sitting on neighboring seats.\n\nYour task is to determine if there is a possible arranging of her army in the airplane such that the condition above is satisfied.\n\n\n-----Input-----\n\nThe first line contains two integers n and k (1 ≤ n ≤ 10000, 1 ≤ k ≤ 100) — the number of rows and the number of groups of soldiers, respectively.\n\nThe second line contains k integers a_1, a_2, a_3, ..., a_{k} (1 ≤ a_{i} ≤ 10000), where a_{i} denotes the number of soldiers in the i-th group.\n\nIt is guaranteed that a_1 + a_2 + ... + a_{k} ≤ 8·n.\n\n\n-----Output-----\n\nIf we can place the soldiers in the airplane print \"YES\" (without quotes). Otherwise print \"NO\" (without quotes).\n\nYou can choose the case (lower or upper) for each letter arbitrary.\n\n\n-----Examples-----\nInput\n2 2\n5 8\n\nOutput\nYES\n\nInput\n1 2\n7 1\n\nOutput\nNO\n\nInput\n1 2\n4 4\n\nOutput\nYES\n\nInput\n1 4\n2 2 1 2\n\nOutput\nYES\n\n\n\n-----Note-----\n\nIn the first sample, Daenerys can place the soldiers like in the figure below:\n\n [Image] \n\nIn the second sample, there is no way to place the soldiers in the plane since the second group soldier will always have a seat neighboring to someone from the first group.\n\nIn the third example Daenerys can place the first group on seats (1, 2, 7, 8), and the second group an all the remaining seats.\n\nIn the fourth example she can place the first two groups on seats (1, 2) and (7, 8), the third group on seats (3), and the fourth group on seats (5, 6).",
+      "input": "2 2\n5 8\n\n1 2\n7 1\n\n1 2\n4 4\n\n1 4\n2 2 1 2",
+      "output": "YES\n\nNO\n\nYES\n\nYES\n\n\n\n-----Note-----\n\nIn the first sample, Daenerys can place the soldiers like in the figure below:\n\n [Image] \n\nIn the second sample, there is no way to place the soldiers in the plane since the second group soldier will always have a seat neighboring to someone from the first group.\n\nIn the third example Daenerys can place the first group on seats (1, 2, 7, 8), and the second group an all the remaining seats.\n\nIn the fourth example she can place the first two groups on seats (1, 2) and (7, 8), the third group on seats (3), and the fourth group on seats (5, 6).",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "(n, k) = list(map(int, input().split()))\na = sorted(list(map(int, input().split())))[::-1]\nm = n\nfor j in range(len(a)):\n\twaste = min(a[j] // 4, m)\n\tm -= waste\n\ta[j] -= waste * 4\n\tif m == 0:\n\t\tbreak\n(m1, m2, m3, msukabljat) = (0, 0, 0, [])\nfor x in a:\n\tm1 += x == 1\n\tm2 += x == 2\n\tm3 += x == 3\n\tmsukabljat += [x] if x >= 4 else []\nwaste = min(m1, m2, m)\n(m, m1, m2) = (m - waste, m1 - waste, m2 - waste)\nwaste = min(m3 // 2, m // 2)\n(m, m3) = (m - waste * 2, m3 - waste * 2)\nwaste = min(m2 // 3, m // 2)\n(m, m2) = (m - waste * 2, m2 - waste * 3)\nwaste = min(m1, m2, m3, m // 2)\n(m, m1, m2, m3) = (m - waste * 2, m1 - waste, m2 - waste, m3 - waste)\nwaste = min(m3, m)\n(m, m3) = (m - waste, m3 - waste)\nwaste = min(m1 // 2, m)\n(m, m1) = (m - waste, m1 - 2 * waste)\nwaste = min(m1, m)\n(m, m1) = (m - waste, m1 - waste)\nwaste = min(m2, m)\n(m, m2) = (m - waste, m2 - waste)\nif m1 + m2 + m3 * 2 + sum([x // 2 + x % 2 for x in msukabljat]) <= 2 * n:\n\tprint('YES')\nelse:\n\tprint('NO')"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_43dc8145a4f7",
+        "codeforces",
+        "Daenerys Targaryen has an army consisting of k groups of soldiers, the i-th group contains a_{i} soldiers. She wants to bring her army to the other side of the sea to get the Iron Throne. She has recently bought an ai...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "目标由决策变为计数，要求加入方案区别定义；约束新增去重口径和模块化分解规则；不变量重构为基于块与单元的计数组合框架。",
+      "summary": "目标：从判定可行性到统计方案数；约束：加入解的定义、4块/2单元使用规则；不变量：替换为支持 DP 计数的分解公式。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "gen_counting_home_org_001",
+      "source": "derived_from_taco_codeforces_43dc8145a4f7",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "parameters",
+            "role_description": "number of halls and number of families",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          },
+          {
+            "role": "item_counts",
+            "role_description": "number of items per family",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100
+            },
+            "value_range": {
+              "min": 1,
+              "max": 10000
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "adjacency_definition",
+            "description": "每个大厅有8个格子，编号1-8。邻居关系：{1,2}，{3,4}，{4,5}，{5,6}，{7,8}。",
+            "formal": "For cell (r, c) with 1≤c≤8, neighbours are (r,1)-(r,2), (r,3)-(r,4), (r,4)-(r,5), (r,5)-(r,6), (r,7)-(r,8).",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "no_cross_family_adjacency",
+            "description": "不同家庭的物品不能放在相邻格子里。",
+            "formal": "If cell s is assigned family i and cell t is assigned family j (i≠j), then s and t cannot be neighbours.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "full_placement",
+            "description": "每个家庭 i 的所有 a_i 件物品必须放入格子（即恰好 a_i 个格子被家庭 i 占据）。",
+            "formal": "For each family i, the number of cells occupied by i equals a_i.",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "cell_capacity_one",
+            "description": "每个格子至多放一件物品，可以为空。",
+            "formal": "For each cell, at most one item is placed.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "distinct_solution_definition",
+            "description": "两个方案不同，当且仅当存在一个格子，被分配的家庭不同（包括空置，视为家庭0）。",
+            "formal": "Two arrangements are distinct if there exists a cell (r,c) such that the family assigned in the first differs from that in the second (empty counts as family 0).",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "block_decomposition",
+            "description": "每个大厅可划分为一个4座块（格子3-6）和两个2座单元（格子1-2，7-8）。",
+            "formal": "Each hall is partitioned into one 4-block {3,4,5,6} and two 2-units {1,2} and {7,8}.",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "block_usage_rule",
+            "description": "一个4座块要么全空，要么完全被同一家庭占据。",
+            "formal": "For any 4-block, either all its cells are empty, or all are occupied by the same family.",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "unit_usage_rule",
+            "description": "一个2座单元可以被同一家庭占据0、1或2个格子，且不能由不同家庭共享。",
+            "formal": "A 2-unit may contain up to 2 items of the same family; items from different families cannot appear in the same 2-unit.",
+            "source_sections": [
+              "constraints"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "counting",
+        "description": "计算满足所有约束的不同物品放置方案的总数，结果对 1,000,000,007 取模。",
+        "target": "count of valid arrangements modulo 1e9+7",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "four_block_isolation",
+            "description": "由于4座块内部完全被同一家庭占据或全空，它不会造成跨家庭相邻；同时，它与其他单元（同大厅的2座单元）之间也没有相邻边，因此每个4座块独立。",
+            "properties": {},
+            "evidence_source": "both"
+          },
+          {
+            "name": "two_unit_independence",
+            "description": "每个2座单元是独立的，只受本单元限制（同家庭），与其他单元无相邻关系。",
+            "properties": {},
+            "evidence_source": "both"
+          },
+          {
+            "name": "counting_decomposition",
+            "description": "总方案数可通过对完整4座块分配方式求和，再对剩余物品在2座单元上的分配进行计数得到。具体地，令 x_i 为家庭 i 占用的完整4座块数量（满足 4·x_i ≤ a_i），剩余 r_i = a_i - 4·x_i 的物品必须放入2座单元。对每种合法 {x_i} 组合，2座单元的填充方案数为：在 2n 个独立容量2的单元上，满足需求 r_i 且每个单元只放同一家庭的物品的方案数，可通过组合数或 DP 计算。",
+            "properties": {},
+            "evidence_source": "derived"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "medium-high"
+    },
+    "generated_problem": {
+      "title": "家庭收纳",
+      "description": "小明家新添了 n 个收纳柜，每个柜子有一排 8 个储物格，编号从左到右为 1 到 8。\n\n小明要给来自 k 个家庭的物品规划放置方案。第 i 个家庭有 a_i 件物品。所有物品外形相同，但标签不同，可以借助标签区分所属家庭。每个储物格最多能放一件物品。\n\n为了避免混淆，小明要求不同家庭的物品不能放在相邻的储物格里。两个储物格相邻当且仅当它们在同一个柜子中，且编号满足以下任一关系：\n\n• {1, 2}\n• {3, 4}\n• {4, 5}\n• {5, 6}\n• {7, 8}\n\n为了方便管理，小明把每个柜子划分为三个区域：\n- 一个大储物区，由编号 3～6 的格子组成（共 4 个格子），称为 4 格区；\n- 两个小储物区，分别是编号 1～2 和 7～8 的格子（各 2 个格子），称为 2 格区。\n\n放置物品时必须遵守以下规则：\n1. 一个 4 格区要么全部留空，要么全部被同一个家庭的物品占满。\n2. 一个 2 格区内只能放置同一个家庭的物品；可以放 0 件、1 件或 2 件，但不能放入不同家庭的物品。\n\n只要存在某个储物格放置的物品所属家庭不同（空置视为属于家庭 0），两个方案就视为不同。\n\n请你帮小明计算满足上述所有条件的不同放置方案总数。由于答案可能很大，请输出方案数对 1,000,000,007 取模的结果。",
+      "input_format": "第一行包含两个整数 n 和 k (1 ≤ n ≤ 10000, 1 ≤ k ≤ 100)，表示收纳柜的数量和家庭的数量。\n\n第二行包含 k 个整数 a_1, a_2, …, a_k (1 ≤ a_i ≤ 10000)，表示第 i 个家庭拥有的物品数量。\n\n保证所有物品总数 a_1 + a_2 + … + a_k ≤ 8·n。",
+      "output_format": "输出一个整数，表示方案数对 1,000,000,007 取模的结果。",
+      "constraints": [
+        "1 ≤ n ≤ 10000",
+        "1 ≤ k ≤ 100",
+        "1 ≤ a_i ≤ 10000",
+        "a_1 + a_2 + … + a_k ≤ 8·n",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "1 2\n2 1",
+          "output": "4",
+          "explanation": "只有一个柜子，包含 1 个 4 格区和 2 个 2 格区。\n\n家庭 1 有 2 件物品，不能占满 4 格区，只能使用 2 格区。家庭 2 的 1 件物品也只能使用 2 格区。\n\n于是我们只考虑两个 2 格区的分配。每个 2 格区内部必须放同一家庭。\n\n有两种基本分配方式：\n1. 左 2 格区放家庭 1 的 2 件物品（该区全满，1 种），右 2 格区放家庭 2 的 1 件物品（可放在左格或右格，2 种） → 2 种\n2. 左 2 格区放家庭 2 的 1 件物品（2 种），右 2 格区放家庭 1 的 2 件物品（1 种） → 2 种\n\n共计 2 + 2 = 4 种方案，输出 4。"
+        },
+        {
+          "input": "2 2\n4 2",
+          "output": "128",
+          "explanation": "有两个柜子，共 2 个 4 格区和 4 个 2 格区。\n\n家庭 1 有 4 件，家庭 2 有 2 件。我们分两种情况计数。\n\n情况一：家庭 1 占用一个 4 格区。\n- 选择哪个 4 格区：2 种。\n- 剩下的 4 个 2 格区分配给家庭 2。家庭 2 的 2 件物品必须放在这 4 个 2 格区中，每个 2 格区最多放 2 件且同家庭。\n  - 全占一个 2 格区：选哪个 2 格区 4 种，区内部放满 1 种 → 4。\n  - 分开放两个 2 格区各 1 件：选两个 2 格区 C(4,2)=6，每个区有 2 种具体位置，即 6 × 2 × 2 = 24。\n  小计 (4 + 24) = 28。\n该情况方案数 = 2 × 28 = 56。\n\n情况二：家庭 1 不占用任何 4 格区，两个 4 格区全空。\n现在 4 个 2 格区全部可用，家庭 1 需放 4 件，家庭 2 放 2 件。我们枚举分配给家庭 1 的 2 格区数量 a，剩下的给家庭 2。\n- a=2, 家庭 2 用 2 个 2 格区：家庭 1 在 2 个区放置 4 件，必须各放 2 件（1 种）。家庭 2 在 2 个区放 2 件，各放 1 件（2×2=4 种）。选择哪 2 个区给家庭 1：C(4,2)=6。贡献 6 × 1 × 4 = 24。\n- a=3, 家庭 2 用 1 个 2 格区：家庭 1 在 3 个区放 4 件，一个区放 2 件，两个区各放 1 件。选哪个区放 2 件有 3 种，放 1 件的区各 2 种选择位置 → 3×2×2=12。家庭 2 在选剩的 1 个区放 2 件（1 种）。选择哪 3 个区给家庭 1：C(4,3)=4。贡献 4 × 12 × 1 = 48。\n- a=4 不可能，因为家庭 2 需要至少 1 个区放 2 件。\n该情况方案数 = 24 + 48 = 72。\n\n总方案数 = 56 + 72 = 128，输出 128。"
+        },
+        {
+          "input": "2 3\n4 1 1",
+          "output": "144",
+          "explanation": "两个柜子，三个家庭，物品数 4,1,1。\n\n同样分两种情况。\n\n情况一：家庭 1 占用一个 4 格区。\n- 选择哪个 4 格区：2 种。\n- 剩余 4 个 2 格区，家庭 2 和家庭 3 各需放 1 件，且不能放在同一个 2 格区（一个区不能混合家庭）。从 4 个区选 2 个，分配给家庭 2 和家庭 3，有 P(4,2)=12 种分配方式。每个放 1 件的 2 格区有 2 种具体位置。即 12 × 2 × 2 = 48。\n该情况方案数 = 2 × 48 = 96。\n\n情况二：家庭 1 不占 4 格区，两个 4 格区全空。\n- 4 个 2 格区中，家庭 1 需要 4 件（必须用满 2 个区各 2 件，即 a=2）；剩余 2 个区分给家庭 2 和家庭 3，各放 1 件（不能同区）。\n- 选择哪 2 个区给家庭 1：C(4,2)=6。这 2 个区各放满 2 件，1 种。\n- 剩下 2 个区，分配给家庭 2 和家庭 3，有 2 种分配（谁去哪个区），每个区放 1 件有 2 种位置，共 2×2×2=8。\n该情况方案数 = 6 × 1 × 8 = 48。\n\n总方案数 = 96 + 48 = 144，输出 144。"
+        }
+      ],
+      "notes": "所有输出均需对 1,000,000,007 取模。\n\n物品是不可区分的，仅标签指示家庭；任何两个方案的差异必须体现在某个储物格被不同家庭所占据（包括空置）。\n\n通过将方案分解为 4 格区分配与 2 格区填充两个阶段，可以使用动态规划或组合计数得到正确答案。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "目标：从判定可行性到统计方案数；约束：加入解的定义、4块/2单元使用规则；不变量：替换为支持 DP 计数的分解公式。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3772,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.6534,
+          "O": 0.3821,
+          "V": 0.4284
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.6534,
+          "objective_type_distance": 0.3236,
+          "objective_text_distance": 0.4699,
+          "invariant_match_distance": 0.4284
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须定义计数对象与等价关系，符合规则强制要求。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 增加 distinct_solution_definition",
+            "objective 改为 counting 类型，明确目标为计数并取模",
+            "invariant 加入 counting_decomposition 体现计数逻辑"
+          ],
+          "innovation_reason": "将原题的存在性答案替换为明确定义的去重计数结果。",
+          "difficulty_reason": "要求解法严格处理等价类，确保计数无重复无遗漏。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "规则要求解空间按可汇总单元拆分，避免在原结构上直接计数。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 新增 block_decomposition、block_usage_rule、unit_usage_rule",
+            "invariant 增加 four_block_isolation、two_unit_independence 和 counting_decomposition"
+          ],
+          "innovation_reason": "使计数任务从分解后的独立单元组合中自然长出。",
+          "difficulty_reason": "解法需在分解后的状态空间上重建主过程，处理块与单元的组合爆炸。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "确保计数成为主目标，而非原判定目标的附属。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective 从 decision 变为 counting，主目标即计数",
+            "core_constraints 不再保留任何判定阶段性目标"
+          ],
+          "innovation_reason": "核心义务由可行性判断直接升级为方案计数。",
+          "difficulty_reason": "算法须同时承担计数正确性和去重正确性，复杂度显著提升。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "贪心：优先将人数以4为单位填入4座块，剩余人数通过复杂贪心规则分配到2座单元并判断可行性。",
+        "reusable_subroutines": "4座块和2座单元的隔离性质；单元需求下限公式（ceil(x/2)）等。",
+        "new_solver_core": "基于 DP 的组合计数：状态考虑已处理的家庭、已占用的4座块总数、当前各家庭剩余人数等，转移需枚举家庭分配多少个4座块，再对剩余部分使用背包 / 生成函数计数2座单元填充方式。",
+        "new_proof_obligation": "需证明：1. 所有合法方案被无重复、无遗漏地按4块分配划分；2. 剩余部分在2座单元上的计数正确（同家庭物品不可区分，单元互异）；3. 取模下结果正确。",
+        "why_direct_reuse_fails": "原贪心算法只维持可行性，不保存部分状态，无法生成方案数；必须记录各家庭对4块的占用数量并枚举，因此需要状态空间遍历。"
+      },
+      "anti_shallow_rationale": "不是只加一个模数，而是重构了状态空间，明确定义计数的对象和去重规则，并引入4块/2单元分解，强制使用组合计数或 DP，彻底改变了解法核心。"
+    }
+  }
+}

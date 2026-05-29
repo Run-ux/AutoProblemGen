@@ -1,0 +1,919 @@
+{
+  "problem_id": "inverse_flip_to_kbalanced",
+  "source_problem_ids": [
+    "taco_codeforces_cc4196f14da3"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_cc4196f14da3",
+      "codeforces",
+      "A bitstring is a string consisting only of the characters 0 and 1. A bitstring is called $k$-balanced if every substring of size $k$ of this bitstring has an equal amount of 0 and 1 characters ($\\frac{k}{2}$ of each)....",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "C: 核心约束从填充?变为允许翻转0/1，并强制最终满足k-balanced；O: 从可行性决策变为最小翻转次数优化；V: 不变量从模k类固定赋值冲突条件变为代价分解和选择下界。",
+    "summary": "原题是判定存在性，新题是求最小修改代价。操作空间从自由赋值变为有代价翻转，证明责任从简单计数变为最优化下界。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3535,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3535,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4553,
+      "O": 0.5899,
+      "V": 0.347
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4553,
+      "objective_type_distance": 0.6632,
+      "objective_text_distance": 0.48,
+      "invariant_match_distance": 0.347
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "optimization",
+    "description": "For each test case, output the minimum number of flip operations needed to make the string k-balanced. If already k-balanced, output 0.",
+    "target": "minimize number of flips",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design 彻底翻转了问题性质，从判定可行性变成求最小修改代价的优化问题。它引入了允许修改固定字符这一新自由度，与原题核心规律紧密相关但又不退化为简单扩展，相较 canonical_witness（只增加字典序构造）和 existence_to_counting（简易组合计数），创新度和难度最高，且完全可落地。；创新度判断：规则要求将原题输出（是否可行）绑定为反向目标（k‑balanced），并定义明确的修改操作（可更改任意字符）。这使得求解方向从正向检查变为目标驱动的逆向设计，强制解法处理冲突类的代价与全局分配，让状态转移脱离原题单纯的同余类一致性检验。；难度判断：新题不再只是 O(n) 的可行性判定。算法必须同时解决同余类冲突消除、全局 0/1 类数量分配以及最小总修改代价的优化问题，需要动态规划或组合优化策略，复杂度显著提升。；风险判断：主要风险在于当 k 较小时可能退化为暴力枚举所有类分配，因此出题时需约束 k 的范围或通过强制高效证明来避免。同时需确保最小代价的证明责任清晰，防止题解滑向贪心伪解。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_flip_to_kbalanced",
+    "source": "derived_from_codeforces_cc4196f14da3",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "t",
+          "role_description": "number of test cases",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 10000
+          },
+          "properties": {}
+        },
+        {
+          "role": "test_cases",
+          "role_description": "sequence of test cases; each test case consists of integers n and k followed by a string s of length n containing only '0' or '1'",
+          "type": "array",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "ordered": true,
+            "per_case_fields": {
+              "n": "integer",
+              "k": "even integer",
+              "s": "string of '0' and '1'"
+            }
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "k_even",
+          "description": "k is an even integer (2 ≤ k ≤ n).",
+          "formal": "k ≡ 0 (mod 2)"
+        },
+        {
+          "name": "string_binary",
+          "description": "The input string s consists only of characters '0' and '1'.",
+          "formal": "∀i, s[i] ∈ {'0','1'}"
+        },
+        {
+          "name": "allowed_flip_operation",
+          "description": "We are allowed to flip any character at position i, changing '0' to '1' or '1' to '0'. Each flip counts as one operation.",
+          "formal": "An operation on index i replaces s[i] with 1 - s[i]."
+        },
+        {
+          "name": "k_balanced_target",
+          "description": "After performing a sequence of flip operations, the resulting string must be k-balanced: every contiguous substring of length k contains exactly k/2 zeros and k/2 ones.",
+          "formal": "∃ sequence of indices; let s' be the resulting string; then ∀ 1 ≤ i ≤ n−k+1, |{j:s'[i+j−1]='0'}| = |{j:s'[i+j−1]='1'}| = k/2"
+        }
+      ]
+    },
+    "objective": {
+      "type": "optimization",
+      "description": "For each test case, output the minimum number of flip operations needed to make the string k-balanced. If already k-balanced, output 0.",
+      "target": "minimize number of flips",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "residue_uniformity_required",
+          "description": "In any k-balanced string, for any i, s[i] must equal s[i+k]. This forces each residue class modulo k to have all its characters identical in the final string.",
+          "properties": {
+            "relation": "∀i, if both defined, s'[i] = s'[i+k]"
+          }
+        },
+        {
+          "name": "class_cost_decomposition_lower_bound",
+          "description": "For each residue class r (0≤r<k), let z_r = count of '0's originally in that class, o_r = count of '1's. If we decide final class value is 0, cost is o_r (flip all 1s); if 1, cost is z_r. Because exactly k/2 classes must be 0 and k/2 must be 1, the minimum flips = Σ_r z_r + sum of smallest k/2 values of (o_r - z_r) (where we start with all-1 assignment). This provides a computable lower bound that is achievable.",
+          "properties": {
+            "lower_bound_formula": "min_flips = sum_{r} cost1_r + sum of smallest k/2 (cost0_r - cost1_r) with cost0_r = o_r, cost1_r = z_r"
+          }
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Check each residue class mod k for conflicts; count forced 0-classes and 1-classes; if either count > k/2, impossible, else possible. O(n).",
+    "reusable_subroutines": "Loop over i from 0 to k-1 with inner loop stepping by k to group characters. This traversal structure is directly reusable.",
+    "new_solver_core": "For each residue class, count occurrences of '0' and '1'. Compute cost0 = count1, cost1 = count0. Set base = sum(cost1). Compute for each class diff = cost0 - cost1. Select the k/2 smallest diffs (possibly negative) and add to base. Return base. Complexity O(n + k log k).",
+    "new_proof_obligation": "Must prove (1) in any valid k-balanced result, all positions in the same residue class are equal, hence the problem reduces to assigning 0/1 to classes; (2) the greedy selection of classes to assign 0 yields the minimum total flips, using exchange argument or sorting.",
+    "why_direct_reuse_fails": "The original solver only counts fixed classes and checks bounds, but has no concept of cost of flipping nor optimization over choices. The new problem requires computing a minimum over assignments, which demands a new algorithmic structure with cost aggregation and selection."
+  },
+  "anti_shallow_rationale": "The transformation is not a superficial relabeling. It fundamentally changes the core question from existence to minimization, introduces a cost model for modifications, and forces a lower-bound proof. The input structure drops '?', adds flip operations, and the objective shifts from YES/NO to an integer. The invariants change from simple counting to cost decomposition and optimal choice. The algorithm changes from O(n) feasibility check to O(n + k log k) combinatorial optimization.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "Required to invert the problem direction by making the original property (k-balanced) a target to be achieved.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Added core constraint 'k_balanced_target' that enforces the resulting string must be k-balanced after operations.",
+        "Changed objective from feasibility decision to minimization of flips to reach that target."
+      ],
+      "innovation_reason": "This flips the solver's task from verifying existence to designing a strategy to meet a goal, converting a decision problem into an optimization one.",
+      "difficulty_reason": "The algorithm must now navigate toward a specified outcome, requiring planning rather than just checking consistency."
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "Necessary to define the allowed modifications (flipping bits) that constitute the inverse design space.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Added core constraint 'allowed_flip_operation' formalizing the flip operation.",
+        "Added invariant 'residue_uniformity_required' which shows how flips affect feasibility and enforces class consistency, linking operations to the target."
+      ],
+      "innovation_reason": "Introduces a concrete operation set grounded in the original object's structure (bits), moving from abstract substitution to an explicit edit model.",
+      "difficulty_reason": "Requires reasoning about sequences of operations and their effect on the k-balanced property, and proving that any solution can be characterized by class-wise assignments."
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "Mandates that the output demonstrates minimal effort, not just any feasible modification.",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Objective explicitly requires the minimum number of flips.",
+        "Invariant 'class_cost_decomposition_lower_bound' provides the mathematical structure to prove optimality and serves as a certificate of minimality."
+      ],
+      "innovation_reason": "Elevates the problem from finding any solution to finding the best one, demanding a proof of optimality that was absent in the seed.",
+      "difficulty_reason": "The algorithm must compute a global optimum and the proof must show no better solution exists, typically via exchange argument or sorting-based lower bound."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "seed_has_constructible_solution_with_canonical_order",
+      "selection_reason": "原题为可行性判定题，输出YES/NO，存在明确的构造解空间（k-balanced字符串），且可定义自然规范顺序（如字典序最小），原解法仅检查可行性未构造，符合规则要求的“有明确解对象”且非“顺手回溯”，预期可深度升级为输出规范解的新题。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为decision类型，requires_solution为false；原标准解法仅检测可行性，不生成具体字符串；invariant中residue_class_consistency和forced_class_count_limit提供构造依据但不包含回溯；规则正例“把是否可行改成输出字典序最小的合法构造”与本种子题高度匹配。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "local_obstruction_natural",
+      "selection_reason": "原题无解情形基于模k剩余类的冲突或计数溢出，这些原因天然可表达为局部可检查的冲突证据，完全满足规则对证据对象的要求；将判定输出改为方案/证据输出，同时改变核心约束、目标与常量，差异充分。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题 invariant 中的 residue_class_consistency 和 forced_class_count_limit 直接提供可局部检查的阻碍证据：前者可输出具体冲突位置对，后者可输出超出 k/2 限制的类别与计数，均为结构化输出，而非自然语言解释。",
+        "feedback": "建议在规划时确保失败分支输出明确的证据结构（如冲突位置、超出计数的类），并验证其可局部检查性。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "eligible",
+      "selection_reason": "种子题的解空间有限（字符串长度有限），不同解等价关系明确（不同 bitstring 即为不同解），且可自然拆分为模 k 同余类的计数单元（每个类独立决定 0/1，汇总时组合计算）。去重规则和有限性均清晰，符合规则所需种子属性。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema 中 core_constraints 和 invariant 指出：所有下标模 k 同余的位置必须相同（s[i] = s[i+k]），且强制 0 和 1 的类数均不得超过 k/2。这使得解空间由前 k 个类独立选择决定，选择方案数可通过组合数 C(k - c0 - c1, k/2 - c0) 计算，有限且去重自然（不同字符串即不同）.",
+        "feedback": "规划阶段应明确在 objective 中定义计数目标，在 constraints 中说明模 k 类的等价关系作为去重依据，并加入取模约定以保证可数性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是一个存在性决策问题，判断是否能通过填充通配符'?'使得字符串满足k-balanced性质。整个问题中没有任何不确定性来源是外生的或对抗性的；通配符'?'是待填充的自由变量，而非扰动源。规则要求原题语义中存在顺序不确定、资源波动或局部选择差异等原生扰动，并在此基础上定义保底优化，但此题不具备此类结构。强行引入扰动（例如假设部分位置被对手固定）将违背“不能凭背景硬造对手”的红线。因此该规则不适用于此题。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题结构：输入固定字符串s，包含'0','1','?'，判断存在一种对'?'的赋值使k-balanced成立。唯一的不确定性来自'?'，但它是待优化的选择变量，并非扰动。核心约束是最终字符串平衡，不涉及对抗或最坏情况。解法的不变式基于周期性s[i]=s[i+k]和类别计数限制，均属于确定性约束，没有扰动维度。规则要求的扰动模型必须来自原题本身，而此题没有可提取的扰动模型。",
+        "feedback": "建议检查是否有变种：例如要求保证在部分'?'被恶意篡改下仍可完成填充，但该变种与原题语义距离较远，且需构造对抗方，风险高。可考虑其他规则，如参数化优化（求最小k）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_threshold_parameter",
+      "selection_reason": "原题是给定k的可行性判定，缺乏自然单调临界参数。将k变为优化目标只能通过二分外层调用原判定，违反规则‘不能只是把 Yes/No 改成 0/1’及‘不能只是机械二分’的红线，与负例吻合。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束中k为固定输入，可行性判定基于模类不变量；规则required_seed_properties要求‘可行性随某个参数具有清晰的单调性或分层结构’，但此题中可行性对k无明确单调性，且优化k将退化为二分搜索原判定器，直接匹配forbidden_seed_properties中的‘阈值只是在原判定外层做机械二分’及helpers的redlines。",
+        "feedback": "当前种子题不适合直接扩展为阈值优化题，考虑改为求最少修改次数使不含'?'的字符串满足k-balance等更自然的阈值问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_optimization_objective_in_seed",
+      "selection_reason": "原题是可行性判定题，不存在最优值或自然的一维优化目标，无法扩展为多目标权衡前沿。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'decision'，目标仅为 feasibility，无最大化或最小化指标，且约束均为硬性可行性条件。规则要求原题目标附近存在自然的第二评价指标，但原题无任何量化评价指标，且不存在最优解概念，因此不可能建立冲突的双指标权衡。",
+        "feedback": "该规则针对的是单目标最优题到多目标权衡的扩展，而本种子题是决策问题，缺少基础的优化结构。强行引入指标将变成非自然的合成目标，违反红线。建议拒绝此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "natural_inverse_mapping",
+      "selection_reason": "原题判定是否存在k-balanced替换，其目标性质（k-balanced）可直接作为反向目标；修改操作可自然扩展为允许改变任意位置的字符；要求最少修改次数引入最小性责任，完全符合规则期望。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints定义了k-balanced准确条件，seed_schema.invariant揭示了模k同余位置强制相等及计数限制，这些性质可直接作为反向目标的验证依据；规则helper.target_result_binding要求目标绑定原题结果语义，k-balanced正是原题判定的核心；edit_operation_contract要求修改操作来自原题对象自然结构，更改字符0/1是直接操作；minimality_or_certificate_lock要求最小代价，可定义为最少字符修改次数。",
+        "feedback": "种子题具备清晰且可验证的反向目标与自然编辑空间，规则适用性强。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "feasible_decomposition_and_natural_coupling",
+      "selection_reason": "原题将模k剩余类视为局部单元，它们原本通过一致性条件和计数限制松散耦合，可自然扩展为共享全局资源（如总替换次数、额外成本预算）的强耦合问题。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.invariant.residue_class_consistency 展示各剩余类内部必须一致，forced_class_count_limit 通过k/2上限将这些类在计数层面耦合；原题输入允许多个测试用例，可进一步引入跨测试用例共享资源。",
+        "feedback": "局部单元的分解性和可耦合性明确，规则要求的共享资源（如总代价值、全局最少/最多限制）能与原周期性约束良好兼容，建议进入规划阶段。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是一个约束满足判定问题，不存在可轮流选择的状态演化过程。替换‘？’是一次性全局赋值，没有顺序依赖或决策分支，无法转化为双方轮流操作的对抗博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“判断能否通过将每个'?'替换为'0'或'1'使得字符串k-balanced”，输入输出模式是单次决策判定。Schema中core_constraints为全局约束（placeholder_replacement_all、final_string_k_balanced），objective.type为decision，没有任何顺序操作或状态转移。Solution的invariant基于模k类的静态性质，不涉及序列决策。规则要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，该种子题完全不满足。",
+        "feedback": "该种子题缺乏博弈化所需的动态操作空间，强行对抗化只会变成硬造玩家交替替换'?'的无效叙事。建议选择具有明确序列决策过程的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题已是全局约束（每个长度为 k 的子串必须平衡），不存在从“单个局部对象求解”到“全局覆盖/割”的自然扩展空间。种子核心是全体子串的一致性判定，并非单路径或单区间性质，应用该规则只会产生语义不匹配或仅重复已有全局语义。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 要求“原题核心对象具有路径、区间、子树、集合等局部结构”且“多个局部对象之间可以自然形成覆盖或割关系”，但原题 core_constraints 直接对所有长度为 k 的子串施加平衡要求（final_string_k_balanced），解法利用模 k 一致性（invariant residue_class_consistency）处理全局可行性，并非单对象求解。规则 positive example 将求一条路径性质改为选择最少点覆盖所有给定路径，而原题无此类局部到全局的转变。",
+        "feedback": "当前种子题已经是全局覆盖问题（所有子串必须满足平衡），不符合规则要求的“从单局部对象求解改成全局覆盖或切断”前提。若强行应用，只会得到等价可行性问题或添加无关选择约束，缺乏实质变化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting_problem",
+      "selection_reason": "原题是决策问题（判断是否存在k-balanced bitstring），目标不是计数，种子题没有“明确有限的计数对象”，不符合规则要求。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective.type = 'decision', target = 'feasibility'；规则 eligibility.required_seed_properties 第一项为“原题已经有明确有限的计数对象”，种子题不满足。",
+        "feedback": "种子题不包含计数成分，无法进行带权计数扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_has_constructible_solution_with_canonical_order",
+      "message": "原题为可行性判定题，输出YES/NO，存在明确的构造解空间（k-balanced字符串），且可定义自然规范顺序（如字典序最小），原解法仅检查可行性未构造，符合规则要求的“有明确解对象”且非“顺手回溯”，预期可深度升级为输出规范解的新题。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为decision类型，requires_solution为false；原标准解法仅检测可行性，不生成具体字符串；invariant中residue_class_consistency和forced_class_count_limit提供构造依据但不包含回溯；规则正例“把是否可行改成输出字典序最小的合法构造”与本种子题高度匹配。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_obstruction_natural",
+      "message": "原题无解情形基于模k剩余类的冲突或计数溢出，这些原因天然可表达为局部可检查的冲突证据，完全满足规则对证据对象的要求；将判定输出改为方案/证据输出，同时改变核心约束、目标与常量，差异充分。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题 invariant 中的 residue_class_consistency 和 forced_class_count_limit 直接提供可局部检查的阻碍证据：前者可输出具体冲突位置对，后者可输出超出 k/2 限制的类别与计数，均为结构化输出，而非自然语言解释。",
+        "feedback": "建议在规划时确保失败分支输出明确的证据结构（如冲突位置、超出计数的类），并验证其可局部检查性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "eligible",
+      "message": "种子题的解空间有限（字符串长度有限），不同解等价关系明确（不同 bitstring 即为不同解），且可自然拆分为模 k 同余类的计数单元（每个类独立决定 0/1，汇总时组合计算）。去重规则和有限性均清晰，符合规则所需种子属性。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema 中 core_constraints 和 invariant 指出：所有下标模 k 同余的位置必须相同（s[i] = s[i+k]），且强制 0 和 1 的类数均不得超过 k/2。这使得解空间由前 k 个类独立选择决定，选择方案数可通过组合数 C(k - c0 - c1, k/2 - c0) 计算，有限且去重自然（不同字符串即不同）.",
+        "feedback": "规划阶段应明确在 objective 中定义计数目标，在 constraints 中说明模 k 类的等价关系作为去重依据，并加入取模约定以保证可数性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是一个存在性决策问题，判断是否能通过填充通配符'?'使得字符串满足k-balanced性质。整个问题中没有任何不确定性来源是外生的或对抗性的；通配符'?'是待填充的自由变量，而非扰动源。规则要求原题语义中存在顺序不确定、资源波动或局部选择差异等原生扰动，并在此基础上定义保底优化，但此题不具备此类结构。强行引入扰动（例如假设部分位置被对手固定）将违背“不能凭背景硬造对手”的红线。因此该规则不适用于此题。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题结构：输入固定字符串s，包含'0','1','?'，判断存在一种对'?'的赋值使k-balanced成立。唯一的不确定性来自'?'，但它是待优化的选择变量，并非扰动。核心约束是最终字符串平衡，不涉及对抗或最坏情况。解法的不变式基于周期性s[i]=s[i+k]和类别计数限制，均属于确定性约束，没有扰动维度。规则要求的扰动模型必须来自原题本身，而此题没有可提取的扰动模型。",
+        "feedback": "建议检查是否有变种：例如要求保证在部分'?'被恶意篡改下仍可完成填充，但该变种与原题语义距离较远，且需构造对抗方，风险高。可考虑其他规则，如参数化优化（求最小k）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold_parameter",
+      "message": "原题是给定k的可行性判定，缺乏自然单调临界参数。将k变为优化目标只能通过二分外层调用原判定，违反规则‘不能只是把 Yes/No 改成 0/1’及‘不能只是机械二分’的红线，与负例吻合。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束中k为固定输入，可行性判定基于模类不变量；规则required_seed_properties要求‘可行性随某个参数具有清晰的单调性或分层结构’，但此题中可行性对k无明确单调性，且优化k将退化为二分搜索原判定器，直接匹配forbidden_seed_properties中的‘阈值只是在原判定外层做机械二分’及helpers的redlines。",
+        "feedback": "当前种子题不适合直接扩展为阈值优化题，考虑改为求最少修改次数使不含'?'的字符串满足k-balance等更自然的阈值问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_optimization_objective_in_seed",
+      "message": "原题是可行性判定题，不存在最优值或自然的一维优化目标，无法扩展为多目标权衡前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'decision'，目标仅为 feasibility，无最大化或最小化指标，且约束均为硬性可行性条件。规则要求原题目标附近存在自然的第二评价指标，但原题无任何量化评价指标，且不存在最优解概念，因此不可能建立冲突的双指标权衡。",
+        "feedback": "该规则针对的是单目标最优题到多目标权衡的扩展，而本种子题是决策问题，缺少基础的优化结构。强行引入指标将变成非自然的合成目标，违反红线。建议拒绝此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "natural_inverse_mapping",
+      "message": "原题判定是否存在k-balanced替换，其目标性质（k-balanced）可直接作为反向目标；修改操作可自然扩展为允许改变任意位置的字符；要求最少修改次数引入最小性责任，完全符合规则期望。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints定义了k-balanced准确条件，seed_schema.invariant揭示了模k同余位置强制相等及计数限制，这些性质可直接作为反向目标的验证依据；规则helper.target_result_binding要求目标绑定原题结果语义，k-balanced正是原题判定的核心；edit_operation_contract要求修改操作来自原题对象自然结构，更改字符0/1是直接操作；minimality_or_certificate_lock要求最小代价，可定义为最少字符修改次数。",
+        "feedback": "种子题具备清晰且可验证的反向目标与自然编辑空间，规则适用性强。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "feasible_decomposition_and_natural_coupling",
+      "message": "原题将模k剩余类视为局部单元，它们原本通过一致性条件和计数限制松散耦合，可自然扩展为共享全局资源（如总替换次数、额外成本预算）的强耦合问题。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.invariant.residue_class_consistency 展示各剩余类内部必须一致，forced_class_count_limit 通过k/2上限将这些类在计数层面耦合；原题输入允许多个测试用例，可进一步引入跨测试用例共享资源。",
+        "feedback": "局部单元的分解性和可耦合性明确，规则要求的共享资源（如总代价值、全局最少/最多限制）能与原周期性约束良好兼容，建议进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是一个约束满足判定问题，不存在可轮流选择的状态演化过程。替换‘？’是一次性全局赋值，没有顺序依赖或决策分支，无法转化为双方轮流操作的对抗博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“判断能否通过将每个'?'替换为'0'或'1'使得字符串k-balanced”，输入输出模式是单次决策判定。Schema中core_constraints为全局约束（placeholder_replacement_all、final_string_k_balanced），objective.type为decision，没有任何顺序操作或状态转移。Solution的invariant基于模k类的静态性质，不涉及序列决策。规则要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，该种子题完全不满足。",
+        "feedback": "该种子题缺乏博弈化所需的动态操作空间，强行对抗化只会变成硬造玩家交替替换'?'的无效叙事。建议选择具有明确序列决策过程的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题已是全局约束（每个长度为 k 的子串必须平衡），不存在从“单个局部对象求解”到“全局覆盖/割”的自然扩展空间。种子核心是全体子串的一致性判定，并非单路径或单区间性质，应用该规则只会产生语义不匹配或仅重复已有全局语义。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 要求“原题核心对象具有路径、区间、子树、集合等局部结构”且“多个局部对象之间可以自然形成覆盖或割关系”，但原题 core_constraints 直接对所有长度为 k 的子串施加平衡要求（final_string_k_balanced），解法利用模 k 一致性（invariant residue_class_consistency）处理全局可行性，并非单对象求解。规则 positive example 将求一条路径性质改为选择最少点覆盖所有给定路径，而原题无此类局部到全局的转变。",
+        "feedback": "当前种子题已经是全局覆盖问题（所有子串必须满足平衡），不符合规则要求的“从单局部对象求解改成全局覆盖或切断”前提。若强行应用，只会得到等价可行性问题或添加无关选择约束，缺乏实质变化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting_problem",
+      "message": "原题是决策问题（判断是否存在k-balanced bitstring），目标不是计数，种子题没有“明确有限的计数对象”，不符合规则要求。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective.type = 'decision', target = 'feasibility'；规则 eligibility.required_seed_properties 第一项为“原题已经有明确有限的计数对象”，种子题不满足。",
+        "feedback": "种子题不包含计数成分，无法进行带权计数扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_satisfied",
+      "message": "规划成功将正向判定题翻转为目标驱动的最小修改优化题，三个helper全部兑现：反向目标k-balanced绑定为核心约束与优化目标；编辑操作定义为比特翻转且与k-balanced性质通过不变量关联；最小性要求落地为最小翻转次数目标及成本下界不变量，承担了正确性责任。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "candidate_schema.core_constraints 中新增 'k_balanced_target' 与 'allowed_flip_operation' 分别满足 target_result_binding 与 edit_operation_contract；objective 明确要求最小翻转次数；invariant 中 'class_cost_decomposition_lower_bound' 提供了最小性证明基础；applied_helpers 逐条列出并说明影响轴与schema变化；anti_shallow_rationale 指出问题从YES/NO变为整数优化，非表面重述。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_hard_checks_passed",
+      "message": "题面明确将原题结果绑定为反向目标（k-均衡），定义了来自原题对象的修改操作（翻转0/1），并承担最小修改代价责任（输出最少调整次数）。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述“任意连续的 k 个时段内，社团活动和课程教学的数量必须相等，即各有 k/2 个”将原题k-balanced语义绑定为目标；“他可以对任意时段的安排进行调整：如果原来安排的是社团活动，可以改为课程教学；如果原来是课程教学，可以改为社团活动”定义了直接基于0/1字符串的翻转操作；输出格式“最少需要多少次调整操作”和样例解释“可以证明不存在只需 1 次调整的方案”明确了最小性责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确写清了目标绑定、翻转操作和最小调整次数要求，完全兑现反向设计规则专属语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：'任意连续的 k 个时段内，社团活动和课程教学的数量必须相等'（目标绑定），'他可以对任意时段的安排进行调整：如果原来安排的是社团活动，可以改为课程教学；如果原来是课程教学，可以改为社团活动。每次调整算作一次操作'（操作定义），'最少需要多少次调整操作'（最小性要求），样例解释中'可以证明不存在只需 1 次调整的方案'（最小性证明责任）。所有 helper 语义均已写实。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized",
+      "message": "题面明确绑定了反向目标（k-均衡），定义了与原对象直接相关的修改操作（翻转计划），并要求最小操作次数，完全兑现了三个 helper 的语义合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：‘学校规定……任意连续的 k 个时段内，社团活动和课程教学的数量必须相等’（目标绑定）；‘他可以对任意时段的安排进行调整：如果原来安排的是社团活动，可以改为课程教学；如果原来是课程教学，可以改为社团活动。每次这样的调整算作一次操作’（编辑操作定义）；‘请你帮小码计算出，最少需要进行多少次调整操作’（最小性目标）；样例解释证明最优性并指出‘可以证明不存在只需 1 次调整的方案’；notes 补充‘最优方案中每个时段至多被调整一次’，强化了操作集合的自然性与最小性。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "Planning candidate generated.",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "活动均衡计划",
+    "description": "小码是学校社团管理部的干事，他需要为接下来 n 个时段安排教室使用计划。每个时段可以选择进行社团活动（用 0 表示）或课程教学（用 1 表示）。学校规定，为了保证校园活动丰富多彩也不耽误学习，任意连续的 k 个时段内，社团活动和课程教学的数量必须相等，即各有 k/2 个（k 保证为偶数）。\n\n小码已经拟定了一个初步计划，用一个长度为 n 的、仅包含 0 和 1 的字符串表示。但他发现这个计划可能不满足均衡条件。他可以对任意时段的安排进行调整：如果原来安排的是社团活动，可以改为课程教学；如果原来是课程教学，可以改为社团活动。每次这样的调整算作一次操作。\n\n请你帮小码计算出，最少需要进行多少次调整操作，才能让整个计划变成一个 k-均衡的计划。",
+    "input_format": "第一行包含一个整数 t (1 ≤ t ≤ 10000)，表示测试数据的组数。\n接下来每组测试数据包含两行：\n- 第一行包含两个整数 n 和 k (2 ≤ k ≤ n ≤ 3·10^5，k 为偶数)，分别表示时段的个数和均衡窗口的长度。\n- 第二行包含一个长度为 n 的字符串 s，仅由字符 '0' 和 '1' 组成，表示小码的初步计划。\n\n保证所有测试数据的 n 之和不超过 3·10^5。",
+    "output_format": "对于每组测试数据，输出一行一个整数，表示达到 k-均衡计划所需的最少调整次数。",
+    "constraints": [
+      "时间限制：2 秒",
+      "空间限制：256 MB",
+      "1 ≤ t ≤ 10000",
+      "2 ≤ k ≤ n ≤ 3·10^5，k 为偶数",
+      "字符串 s 仅包含 '0' 和 '1'",
+      "所有测试数据的 n 之和不超过 3·10^5"
+    ],
+    "samples": [
+      {
+        "input": "2\n6 4\n100110\n6 4\n111100",
+        "output": "0\n2",
+        "explanation": "对于第一组测试数据，初始计划已经是 4-均衡的：连续 4 个时段分别为 1001、0011、0110，都恰好包含两个社团活动和两个课程教学，无需任何调整。\n对于第二组测试数据，一种最优方案是将第 1 个和第 2 个时段从课程教学（1）调整为社团活动（0），得到 001100，这时每连续 4 个时段都满足均衡条件，共调整 2 次。可以证明不存在只需 1 次调整的方案。"
+      },
+      {
+        "input": "1\n8 4\n00001111",
+        "output": "4",
+        "explanation": "初始计划 00001111 不满足 4-均衡。一种最优方案是翻转第 2、3、6、7 个位置（将其从 0 变为 1 或从 1 变为 0），得到 00110011，这时所有连续 4 个时段均满足 4-均衡，共调整 4 次。"
+      }
+    ],
+    "notes": "题目保证对于任意满足输入条件的初始计划，总存在一种调整方案能使字符串变为 k-均衡，你只需计算最少操作次数。最优方案中每个时段至多被调整一次。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_cc4196f14da3_campus_ops_20260528_213202",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

@@ -1,0 +1,675 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 71.2,
+    "schema_distance": 0.3758,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的多组测试数据输入结构（T, K,N,L,R,B, K个N长数组）、目标函数（计数并取模）、核心约束（调整一次改一个元素，预算B，总和相等，配置相异性，值域）均准确落地到 generated_problem 的 description、input_format、output_format、constraints、samples 和 notes 中。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的所有关键信息：任务描述、输入输出格式、约束范围（含T、K、N、L、R、B及乘积上限、时空限制）、必要说明（去重规则、预算分配），样例及解释均清晰。对算法实现无歧义。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 各部分完全一致，无字段数量、目标定义、符号含义的冲突。样例与格式严格匹配，解释与题意一致。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供2个样例，数量基本充足。样例1覆盖多数组基本情境并展示预算限制；样例2覆盖单数组情境并展示去重计数。解释详细，有助于理解任务与边界。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks[? check_id=sample_count]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清楚（标题、描述、输入输出格式、约束、样例、注释），措辞明确，无来源污染或无关噪声，符合OJ题面表达习惯。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "描述清晰易懂，用社区需求调整的比喻贴合主题。",
+      "输入输出格式定义规范，与 schema 精确对应。",
+      "样例解释详尽，覆盖了不同 K、N 及预算使用的典型情况。",
+      "notes 明确了配置相等定义和预算分配规则，消除了歧义。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3758,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.4769,
+        "O": 0.5787,
+        "V": 0.4401
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.4769,
+        "objective_type_distance": 0.6796,
+        "objective_text_distance": 0.4273,
+        "invariant_match_distance": 0.4401
+      }
+    },
+    "schema_distance": 0.3758,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.3,
+    "surface_retheme_risk": 0.15,
+    "verdict": "pass",
+    "rationale": "核心目标从最小化操作次数变为给定预算下的配置计数，新增了操作上限、配置去重和模运算，迫使求解从区间交集判定转向组合枚举与DP合并。原题解法仅能计算可达和区间，无法计数，必须设计全新的状态表示与聚合逻辑。叙事背景、样例和数据格式均无复用痕迹，表层替换风险极低。",
+    "evidence_refs": [
+      "original_problem.description",
+      "original_schema.objective",
+      "new_schema.core_constraints.constraints[3]",
+      "new_schema.core_constraints.constraints[4]",
+      "new_schema.objective",
+      "generated_problem.description",
+      "generated_problem.samples",
+      "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+      "review_context.distance_breakdown.axis_scores"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.38，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "缺少关于最终值范围的显式约束",
+      "detail": "constraints 部分未显式声明操作后每个元素仍须为 [L, R] 内的整数，虽然在 description 中有隐含说明，但作为独立约束项列出会更明确。",
+      "evidence_refs": [
+        "new_schema.core_constraints.constraints[0]",
+        "generated_problem.description",
+        "generated_problem.constraints"
+      ],
+      "fix_hint": "在 constraints 中添加一条：'每次调整后，每户的需求值仍须为 [L, R] 内的整数。' 或类似表述。"
+    }
+  ],
+  "suggested_revisions": [
+    "在 constraints 中添加一条：'每次调整后，每户的需求值仍须为 [L, R] 内的整数。' 或类似表述。",
+    "在 constraints 中显式补充最终需求值必须保持在 [L, R] 范围内的约束，增强自足性。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 71.2,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "缺少关于最终值范围的显式约束",
+        "detail": "constraints 部分未显式声明操作后每个元素仍须为 [L, R] 内的整数，虽然在 description 中有隐含说明，但作为独立约束项列出会更明确。",
+        "evidence_refs": [
+          "new_schema.core_constraints.constraints[0]",
+          "generated_problem.description",
+          "generated_problem.constraints"
+        ],
+        "fix_hint": "在 constraints 中添加一条：'每次调整后，每户的需求值仍须为 [L, R] 内的整数。' 或类似表述。"
+      }
+    ],
+    "suggested_revisions": [
+      "在 constraints 中添加一条：'每次调整后，每户的需求值仍须为 [L, R] 内的整数。' 或类似表述。",
+      "在 constraints 中显式补充最终需求值必须保持在 [L, R] 范围内的约束，增强自足性。"
+    ],
+    "strengths_to_keep": [
+      "描述清晰易懂，用社区需求调整的比喻贴合主题。",
+      "输入输出格式定义规范，与 schema 精确对应。",
+      "样例解释详尽，覆盖了不同 K、N 及预算使用的典型情况。",
+      "notes 明确了配置相等定义和预算分配规则，消除了歧义。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_dadaf7f5b77f\\taco_codechef_dadaf7f5b77f.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_dadaf7f5b77f\\taco_codechef_dadaf7f5b77f_urban_commute_20260529_185210_round2.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_dadaf7f5b77f\\taco_codechef_dadaf7f5b77f_urban_commute_20260529_185210_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_dadaf7f5b77f",
+      "title": "OPERATE",
+      "description": "Given $K$ arrays of length $N$ where the elements are bounded in the range $[L, R]$.\n\nThe Function value of an array is defined as the sum of all elements present in it.\n\nIn one move you can change at most $1$ element from all the arrays and the changed value must lie within the range $[L, R]$. \n\nWhat is the minimum number of operations required to make the function value of all arrays equal?\n\n------ Input ------\nThe first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\nThe first line of each test case contains four space-separated integers $K$, $N$, $L$, $R$.\nNext $K$ lines contains an array of length $N$.\n\n------  Output  ------\nFor each test case, print the minimum number of operations needed to make the function value of all arrays equal in a new line.\n\n------  Constraints ------\n$1 ≤ T ≤ 5$\n$1 ≤ K ≤ 10^{5}$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ N*K ≤ 10^{5}$\n$1 ≤ L ≤ R ≤ 10^{9}$\n\n------  Example Input ------\n\n1\n4 3 1 9\n1 1 2\n1 2 3\n1 2 4\n1 2 2\n\n------  Example Output ------\n\n1\n\n------  Explanation  ------\nChange array $1$ to $[1, 3, 2]$\nNo change in array $2$ \nChange array $3$ to $[1, 2, 3]$\nChange array $4$ to $[1, 2, 3]$\nSum of all arrays is equal.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "t = int(input())\nfor i in range(t):\n\t(k, n, l, r) = map(int, input().split())\n\ta = [sorted(map(int, input().split())) for j in range(k)]\n\tx = [[sum(a[i])] * 2 for i in range(k)]\n\tfor j in range(n + 1):\n\t\tif min((x[z][1] for z in range(k))) >= max((x[z][0] for z in range(k))):\n\t\t\tprint(j)\n\t\t\tbreak\n\t\tfor y in range(k):\n\t\t\tx[y][1] += r - a[y][j]\n\t\t\tx[y][0] -= a[y][-1 - j] - l"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_dadaf7f5b77f",
+        "OPERATE",
+        "codechef",
+        "Given $K$ arrays of length $N$ where the elements are bounded in the range $[L, R]$. The Function value of an array is defined as the sum of all elements present in it. In one move you can change at most $1$ element f...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "O‑轴从最小化操作次数变为计数满足条件的配置数；C‑轴新增操作预算上限B并重新定义‘不同解’的去重规则，同时约束了解空间的可分解性；V‑轴将原先仅用于存在性判断的区间单调性替换为支撑计数分解的配置数生成与合并不变量。",
+      "summary": "引入操作预算B作为输入，将单一的最优值输出替换为模M的计数结果；核心约束中增加了操作次数上限和去重定义；不变量转为描述每个数组修改x次后能达到各和值的配置数目，从而支撑整体计数。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_community_count",
+      "source": "generated",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "test_case_count",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 5
+            },
+            "properties": {}
+          },
+          {
+            "role": "test_case_params",
+            "type": "tuple",
+            "length": {
+              "min": 5,
+              "max": 5
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {
+              "K": {
+                "min": 1,
+                "max": 100000
+              },
+              "N": {
+                "min": 1,
+                "max": 100000
+              },
+              "L": {
+                "min": 1,
+                "max": 1000000000
+              },
+              "R": {
+                "min": 1,
+                "max": 1000000000,
+                "gte": "L"
+              },
+              "B": {
+                "min": 1,
+                "max": "min(N*K, 1000)"
+              }
+            },
+            "description": "K: number of communities, N: number of residents per community, L,R: value bounds, B: operation budget upper bound"
+          },
+          {
+            "role": "arrays",
+            "type": "array",
+            "length": {
+              "min": "K",
+              "max": "K"
+            },
+            "value_range": {
+              "min": "L",
+              "max": "R"
+            },
+            "properties": {
+              "elements_per_array": "N",
+              "total_elements": "K*N <= 100000"
+            },
+            "description": "K arrays each of length N, containing initial resident demand values"
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "element_value_range",
+            "description": "Initial and final values must be integers in [L,R].",
+            "formal": "∀ array i, ∀ position j, a_{i,j} ∈ [L,R] before and after operations"
+          },
+          {
+            "name": "per_move_single_change",
+            "description": "In one operation, at most one element across all arrays can be changed to any integer in [L,R].",
+            "formal": "Each operation changes exactly one element's value; total count of changed elements across all arrays ≤ B."
+          },
+          {
+            "name": "final_sums_equal",
+            "description": "After operations, the sum of elements in each array must be equal.",
+            "formal": "∃ S such that ∀ array i, ∑_{j} final_{i,j} = S"
+          },
+          {
+            "name": "configuration_distinctness",
+            "description": "Two final configurations are considered distinct if there exists at least one element whose final value differs. The order of operations does not matter; only the resulting element values define a configuration.",
+            "formal": "Configuration ≠ Configuration' ⇔ ∃ i,j: final_{i,j} ≠ final'_{i,j}"
+          },
+          {
+            "name": "operation_budget_limit",
+            "description": "Total number of elements changed across all arrays must be ≤ B.",
+            "formal": "∑_{i} (#elements changed in array i) ≤ B"
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_configurations_with_budget",
+        "description": "Count the number of distinct final element value configurations that can be obtained after at most B operations such that all array sums are equal, modulo 1e9+7.",
+        "modulus": 1000000007,
+        "target": "number_of_configurations_mod_M",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "array_configuration_counts_per_operations",
+            "description": "For each array i, if we change exactly x elements (0 ≤ x ≤ min(N,B)), the resulting possible sum S belongs to the interval [low_i(x), high_i(x)], where low_i(x) = sum_i - (sum of largest x elements) + x*L and high_i(x) = sum_i - (sum of smallest x elements) + x*R. For each such S, the number of distinct configurations of array i with sum S after exactly x element changes is denoted CFG[i][x][S]. This can be computed via combinatorial enumeration or DP over elements, respecting value bounds. The overall answer is the sum over all x_i ≥0 with total ≤ B and equal S of ∏_i CFG[i][x_i][S].",
+            "formal": "∀ array i, define reachable interval [low_i(x), high_i(x)] for x changes; CFG[i][x][S] = |{config_i : after exactly x changes, sum = S}|. Total configurations = ∑_{x_1,...,x_K: ∑x_i ≤ B} ∑_{S} ∏_i CFG[i][x_i][S] where all S equal.",
+            "evidence_source": "derived"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "社区需求均衡调整",
+      "description": "某街道共有 K 个社区，每个社区内有 N 户家庭。社区服务中心每天会记录每户家庭的服务需求指数，这些指数都是介于 L 到 R 之间的整数。由于近期各社区的需求总和差异较大，管理员决定对部分家庭的指数进行调整，以使得资源分配更加均衡。\n\n每次调整时，管理员可以从所有社区的全部家庭中选择至多一户，将其需求指数修改为 [L, R] 内的任意整数值。管理员总共最多只能进行 B 次调整。\n\n我们只关心最终每户家庭被调整成什么需求值，而不关心中间的调整顺序。如果至少有一户家庭的最终需求值不同，就视为不同的最终分配方案。\n\n请你帮忙计算，在总共调整次数不超过 B 的前提下，有多少种可能的最终分配方案，能够使得所有社区的需求总和恰好相等。由于答案可能很大，请输出对 1,000,000,007 取模后的结果。",
+      "input_format": "第一行包含一个整数 T，表示测试数据的组数。\n\n接下来依次给出每组测试数据。每组数据的格式如下：\n\n第一行包含五个用空格隔开的整数 K, N, L, R, B，分别表示社区数量、每个社区的居民户数、需求值的下界、需求值的上界以及允许的最大调整次数。\n\n接下来 K 行，每行包含 N 个用空格隔开的整数，按照社区编号顺序给出每户家庭的当前需求指数。",
+      "output_format": "对于每组测试数据，输出一行一个整数，表示符合要求的最终分配方案数对 1,000,000,007 取模的结果。",
+      "constraints": [
+        "1 ≤ T ≤ 5",
+        "1 ≤ K ≤ 100,000",
+        "1 ≤ N ≤ 100,000",
+        "1 ≤ N × K ≤ 100,000",
+        "1 ≤ L ≤ R ≤ 1,000,000,000",
+        "1 ≤ B ≤ min(N × K, 1000)",
+        "所有测试数据的 N × K 总和不超过 100,000",
+        "时间限制：1 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n2 1 1 10 1\n5\n3",
+          "output": "2",
+          "explanation": "该测试数据包含 K=2 个社区，每个社区有 N=1 户家庭。需求值下界 L=1，上界 R=10。允许的最多调整次数 B=1。初始需求值分别为 5 和 3。\n\n由于每个社区只有一户家庭，总和即等于该户的需求值。要让两个社区总和相等，最终两个值必须相同。\n\n在最多 1 次调整的限制下，有两种可行的最终方案：\n- 将第一个社区的值从 5 改为 3，得到最终值 3 和 3；\n- 将第二个社区的值从 3 改为 5，得到最终值 5 和 5。\n注意不能同时修改两户，因为 B=1。此外，修改为其他值（例如 4）会使两个值不同，不满足要求。\n因此方案总数为 2。"
+        },
+        {
+          "input": "1\n1 2 1 3 1\n1 2",
+          "output": "5",
+          "explanation": "该测试数据包含 K=1 个社区，社区内有 N=2 户家庭，需求值范围为 [1,3]，当前需求值为 1 和 2。允许最多调整 1 次。\n\n因为只有一个社区，任何最终需求分配都能使“所有社区总和相等”自动成立。问题变为：在不超过 1 次调整的前提下，可以有多少种不同的最终需求值分配？\n\n初始方案 (1,2) 可以不调整获得。\n若调整第一户，可以将其改为 1, 2 或 3，得到方案 (1,2), (2,2), (3,2)。\n若调整第二户，可以将其改为 1, 2 或 3，得到方案 (1,1), (1,2), (1,3)。\n将这些方案去重后，最终不同的方案为 (1,1), (1,2), (1,3), (2,2), (3,2)，共 5 种。"
+        }
+      ],
+      "notes": "最终分配方案由所有家庭的最终需求值完全决定，只要存在一户的值不同即视为不同方案。答案需要对 1,000,000,007 取模。操作次数预算 B 可以在不同社区间自由分配，即总共修改的元素个数不超过 B 即可。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "引入操作预算B作为输入，将单一的最优值输出替换为模M的计数结果；核心约束中增加了操作次数上限和去重定义；不变量转为描述每个数组修改x次后能达到各和值的配置数目，从而支撑整体计数。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3758,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.4769,
+          "O": 0.5787,
+          "V": 0.4401
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.4769,
+          "objective_type_distance": 0.6796,
+          "objective_text_distance": 0.4273,
+          "invariant_match_distance": 0.4401
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确计数的原子单元及其等价关系，以及去重规则，以替换原来的单一最小值目标。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在core_constraints中加入configuration_distinctness约束，定义两个最终配置不同的条件。",
+            "在objective中规定计数对象为满足所有约束的最终元素值配置，而非操作序列。",
+            "在invariant中，将计数单元定义为每个数组在不同修改次数下的可能配置，并去重基于元素值。"
+          ],
+          "innovation_reason": "直接将原题的存在性/最小值目的改写为具有明确定义和去重口径的计数问题，是产生创新性的第一步。",
+          "difficulty_reason": "引入去重规则迫使解法必须保证不重复统计，增加了正确性严格证明的要求。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "为使计数可行，必须将解空间按数组和修改次数分解成可独立计算的单元。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "核心约束中加入operation_budget_limit，限制总修改次数，促使每个数组的变化量可以独立度量。",
+            "不变量中明确描述每个数组在特定修改次数下的可能和区间与对应配置数CFG[i][x][S]，从而分解解空间。",
+            "整体答案组合为乘积求和的形式写进不变量。"
+          ],
+          "innovation_reason": "将原题的整体一次判定改为先分解后聚合的计数框架，这本质上改变了状态的组织方式，使思路不再与种子题一致。",
+          "difficulty_reason": "状态因子化要求解法能够分别处理每个数组的内部配置，再通过背包/卷积组合，增加了算法设计和实现复杂度。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "确保新题的主目标就是计数本身，而不是在原有优化目标基础上附带统计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "目标类型从minimize_value变为count_configurations_with_budget，并指定模数。",
+            "操作预算B被纳入核心约束而非目标，使得计数完全主导解法方向。"
+          ],
+          "innovation_reason": "通过锁定计数为目标，彻底移除了原题最小操作数的优化责任，逼迫算法以计数正确性和去重正确性为首要义务。",
+          "difficulty_reason": "解法必须承担枚举和去重的全部复杂度，不能依靠原判定流程投机取巧。这显著提升了问题的算法和证明难度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Iterates over number of per-array allowed changes j; computes reachable sum intervals using extreme element replacements; checks if intervals intersect to find smallest feasible j.",
+        "reusable_subroutines": "Sorting each array, computing prefix sums for extreme element selection to calculate interval boundaries. These help compute low_i(x) and high_i(x) in O(K log N) preprocessing.",
+        "new_solver_core": "Compute for each array i and each operation count x (0..B) a representation of the distribution of possible sums and the number of configurations leading to each sum (CFG[i][x][S]). Then combine across arrays using DP over total operations and target sum S, aggregating products modulo M. Complexity O(K * B^2) or better if using convolution optimization.",
+        "new_proof_obligation": "Must prove that the per-array configuration counting (CFG) correctly enumerates all distinct final element value assignments without double counting, and that the combination DP over independent arrays with sum equality and total operation budget constraint correctly yields the total number of global configurations.",
+        "why_direct_reuse_fails": "The seed algorithm only detects the existence of a common sum S for given j, not the number of distinct configurations that achieve it. It does not track the internal element changes within each array, which are essential for counting distinct final states. Hence, it cannot be directly extended to output counts without a fundamentally different combinatorial enumeration approach."
+      },
+      "anti_shallow_rationale": "引入操作预算B作为额外输入，将原题的最小操作次数问题转变为给定预算下的配置计数问题。这不仅改变了输入结构和核心约束，也迫求解策略从简单的区间交集存在性判断转向组合计数与DP聚合。原题解法的核心（循环j检查区间交集）无法转换为计数结果，必须设计全新的配置数生成与合并算法，杜绝了直接换皮的可能。"
+    }
+  }
+}

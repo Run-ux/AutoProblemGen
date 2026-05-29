@@ -1,0 +1,116 @@
+{
+  "problem_id": "taco_codechef_dadaf7f5b77f",
+  "source": "codechef",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    },
+    "components": [
+      {
+        "role": "test_case_count",
+        "role_description": "Number of test cases",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 5
+        },
+        "properties": {}
+      },
+      {
+        "role": "test_case_params",
+        "role_description": "Parameters K, N, L, R for each test case",
+        "type": "tuple",
+        "length": {
+          "min": 4,
+          "max": 4
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      {
+        "role": "arrays",
+        "role_description": "K arrays of length N for each test case",
+        "type": "array",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "element_value_range",
+        "description": "Initial and modified array elements must lie within [L, R].",
+        "formal": "∀ array i, ∀ position j, a_{i,j} ∈ [L, R] before and after changes",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "per_move_single_change",
+        "description": "In one move, at most one element across all arrays can be changed.",
+        "formal": "In each operation, |{ (i,j) modified }| ≤ 1",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "final_sums_equal",
+        "description": "After operations, the sum of elements in each array must be equal.",
+        "formal": "∃ S such that ∀ array i, ∑_{j} a'_{i,j} = S",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimum number of operations to make all array sums equal",
+    "target": "operations",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity_of_reachable_intervals",
+        "description": "For each array, as the number of allowed element changes j increases, its reachable sum interval expands monotonically: the minimum possible sum is non-increasing, obtained by converting the j largest elements to L; the maximum possible sum is non-decreasing, obtained by converting the j smallest elements to R. This guarantees that if a common target sum exists for some j, it exists for all larger j.",
+        "properties": {},
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codechef_dadaf7f5b77f",
+    "title": "OPERATE",
+    "description": "Given $K$ arrays of length $N$ where the elements are bounded in the range $[L, R]$.\n\nThe Function value of an array is defined as the sum of all elements present in it.\n\nIn one move you can change at most $1$ element from all the arrays and the changed value must lie within the range $[L, R]$. \n\nWhat is the minimum number of operations required to make the function value of all arrays equal?\n\n------ Input ------\nThe first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\nThe first line of each test case contains four space-separated integers $K$, $N$, $L$, $R$.\nNext $K$ lines contains an array of length $N$.\n\n------  Output  ------\nFor each test case, print the minimum number of operations needed to make the function value of all arrays equal in a new line.\n\n------  Constraints ------\n$1 ≤ T ≤ 5$\n$1 ≤ K ≤ 10^{5}$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ N*K ≤ 10^{5}$\n$1 ≤ L ≤ R ≤ 10^{9}$\n\n------  Example Input ------\n\n1\n4 3 1 9\n1 1 2\n1 2 3\n1 2 4\n1 2 2\n\n------  Example Output ------\n\n1\n\n------  Explanation  ------\nChange array $1$ to $[1, 3, 2]$\nNo change in array $2$ \nChange array $3$ to $[1, 2, 3]$\nChange array $4$ to $[1, 2, 3]$\nSum of all arrays is equal.",
+    "input": "",
+    "output": "",
+    "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+    "source": "codechef",
+    "standard_solution_code": "t = int(input())\nfor i in range(t):\n\t(k, n, l, r) = map(int, input().split())\n\ta = [sorted(map(int, input().split())) for j in range(k)]\n\tx = [[sum(a[i])] * 2 for i in range(k)]\n\tfor j in range(n + 1):\n\t\tif min((x[z][1] for z in range(k))) >= max((x[z][0] for z in range(k))):\n\t\t\tprint(j)\n\t\t\tbreak\n\t\tfor y in range(k):\n\t\t\tx[y][1] += r - a[y][j]\n\t\t\tx[y][0] -= a[y][-1 - j] - l"
+  }
+}

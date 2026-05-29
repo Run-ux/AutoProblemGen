@@ -1,0 +1,130 @@
+{
+  "problem_id": "taco_codeforces_a58bc60f12df",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "n",
+        "role_description": "length of the array",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "a",
+        "role_description": "array of non-negative integers",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": 0,
+          "max": 1000000000
+        },
+        "properties": {}
+      },
+      {
+        "role": "p",
+        "role_description": "permutation of integers from 1 to n defining destruction order",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {
+          "permutation": true,
+          "distinct": true
+        }
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "element_non_negative",
+        "description": "数组元素均为非负整数",
+        "formal": "a_i >= 0 for all i",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "destroy_order_permutation",
+        "description": "销毁顺序是1到n的一个排列,每个位置恰好被销毁一次",
+        "formal": "the destruction order p is a permutation of {1, 2, ..., n}",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "description": "每次删除后求未删除元素的最大子段和",
+    "target": "sum",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "max_segment_sum_non_decreasing",
+        "description": "在逆向添加元素的过程中,全局已出现的连续段最大和单调非递减,因为每次操作只会通过合并产生更大的可能段和,并且算法显式保留历史最大值。",
+        "properties": {
+          "direction": "reverse",
+          "monotonicity": "non-decreasing"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "segment_sum_conservation_in_union",
+        "description": "并查集每个根节点维护其代表集合的元素总和；当两个相邻集合合并时,新的根节点总和为原两个集合总和之和,从而正确维护连续段的元素和。",
+        "properties": {
+          "union_operation": "sum_addition"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "component_contiguity_in_reverse",
+        "description": "逆向处理时,只在索引相邻且均已存在的元素之间执行并查集合并,保证每个集合对应的索引构成一个连续段,与正向过程中的未删除元素连续段一一对应。",
+        "properties": {
+          "merge_condition": "adjacent_indices_both_exist"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_a58bc60f12df",
+    "title": "C",
+    "description": "You are given an array consisting of n non-negative integers a_1, a_2, ..., a_{n}.\n\nYou are going to destroy integers in the array one by one. Thus, you are given the permutation of integers from 1 to n defining the order elements of the array are destroyed.\n\nAfter each element is destroyed you have to find out the segment of the array, such that it contains no destroyed elements and the sum of its elements is maximum possible. The sum of elements in the empty segment is considered to be 0.\n\n\n-----Input-----\n\nThe first line of the input contains a single integer n (1 ≤ n ≤ 100 000) — the length of the array.\n\nThe second line contains n integers a_1, a_2, ..., a_{n} (0 ≤ a_{i} ≤ 10^9). \n\nThe third line contains a permutation of integers from 1 to n — the order used to destroy elements.\n\n\n-----Output-----\n\nPrint n lines. The i-th line should contain a single integer — the maximum possible sum of elements on the segment containing no destroyed elements, after first i operations are performed.\n\n\n-----Examples-----\nInput\n4\n1 3 2 5\n3 4 1 2\n\nOutput\n5\n4\n3\n0\n\nInput\n5\n1 2 3 4 5\n4 2 3 5 1\n\nOutput\n6\n5\n5\n1\n0\n\nInput\n8\n5 5 4 4 6 6 5 5\n5 2 8 7 1 3 4 6\n\nOutput\n18\n16\n11\n8\n8\n6\n6\n0\n\n\n\n-----Note-----\n\nConsider the first sample:   Third element is destroyed. Array is now 1 3  *  5. Segment with maximum sum 5 consists of one integer 5.  Fourth element is destroyed. Array is now 1 3  *   * . Segment with maximum sum 4 consists of two integers 1 3.  First element is destroyed. Array is now  *  3  *   * . Segment with maximum sum 3 consists of one integer 3.  Last element is destroyed. At this moment there are no valid nonempty segments left in this array, so the answer is equal to 0.",
+    "input": "4\n1 3 2 5\n3 4 1 2\n\n5\n1 2 3 4 5\n4 2 3 5 1\n\n8\n5 5 4 4 6 6 5 5\n5 2 8 7 1 3 4 6",
+    "output": "5\n4\n3\n0\n\n6\n5\n5\n1\n0\n\n18\n16\n11\n8\n8\n6\n6\n0\n\n\n\n-----Note-----\n\nConsider the first sample:   Third element is destroyed. Array is now 1 3  *  5. Segment with maximum sum 5 consists of one integer 5.  Fourth element is destroyed. Array is now 1 3  *   * . Segment with maximum sum 4 consists of two integers 1 3.  First element is destroyed. Array is now  *  3  *   * . Segment with maximum sum 3 consists of one integer 3.  Last element is destroyed. At this moment there are no valid nonempty segments left in this array, so the answer is equal to 0.",
+    "constraints": "",
+    "source": "codeforces",
+    "standard_solution_code": "n = int(input())\narr = list(map(int, input().split()))\nind = list(map(int, input().split()))\nparent = {}\nrank = {}\nans = {}\ntotal = 0\ntemp = []\n\ndef make_set(v):\n\trank[v] = 1\n\tparent[v] = v\n\tans[v] = arr[v]\n\ndef find_set(u):\n\tif u == parent[u]:\n\t\treturn u\n\telse:\n\t\tparent[u] = find_set(parent[u])\n\treturn parent[u]\n\ndef union_set(u, v):\n\ta = find_set(u)\n\tb = find_set(v)\n\tif a != b:\n\t\tif rank[b] > rank[a]:\n\t\t\t(a, b) = (b, a)\n\t\tparent[b] = a\n\t\trank[a] += rank[b]\n\t\tans[a] += ans[b]\n\treturn ans[a]\nfor i in range(n - 1, -1, -1):\n\trem = ind[i] - 1\n\tmake_set(rem)\n\tfinal = ans[rem]\n\tif rem + 1 in parent:\n\t\tfinal = union_set(rem, rem + 1)\n\tif rem - 1 in parent:\n\t\tfinal = union_set(rem, rem - 1)\n\ttotal = max(total, final)\n\ttemp.append(total)\ntemp[-1] = 0\ntemp = temp[-1::-1]\ntemp = temp[1:]\nfor i in temp:\n\tprint(i)\nprint(0)"
+  }
+}

@@ -1,0 +1,592 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 83.1,
+    "schema_distance": 0.507,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema中定义的所有核心约束（有向树、操作规则、轮替、获胜条件、初始非根、目标输出）均已在题面描述、输入输出格式及约束中准确体现，并允许多组测试数据。题目变体完全落地，无偏离。",
+        "evidence_refs": [
+          "snapshots.new_schema.core_constraints",
+          "snapshots.new_schema.objective",
+          "snapshots.new_schema.input_structure.properties.multiple_test_cases",
+          "snapshots.generated_problem.description",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了完整的任务说明、输入格式、输出格式、约束（含范围、性质、总和限制、时空限制）及必要注释，读者无需猜测任何规则即可独立解题。",
+        "evidence_refs": [
+          "snapshots.generated_problem.description",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.constraints",
+          "snapshots.generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description中游戏规则、input_format的边表示、constraints中的有向树保证、output_format的输出格式、samples的输入输出及解释均互相一致，无矛盾。",
+        "evidence_refs": [
+          "snapshots.generated_problem.description",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.constraints[0]",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.samples[0].input",
+          "snapshots.generated_problem.samples[0].output",
+          "snapshots.generated_problem.samples[0].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供两个样例，分别展示先手胜与先手败的情况，并附有详细的解释帮助理解胜负判定逻辑，数量虽不多但已覆盖两种关键结果，解释清晰。",
+        "evidence_refs": [
+          "snapshots.generated_problem.samples[0].input",
+          "snapshots.generated_problem.samples[0].output",
+          "snapshots.generated_problem.samples[0].explanation",
+          "snapshots.generated_problem.samples[1].input",
+          "snapshots.generated_problem.samples[1].output",
+          "snapshots.generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构标准，分块清晰，语言日常易懂，无原题来源污染，符合常规OJ题面风格，便于快速理解。",
+        "evidence_refs": [
+          "snapshots.generated_problem.title",
+          "snapshots.generated_problem.description",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.constraints",
+          "snapshots.generated_problem.samples",
+          "snapshots.generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "规则描述清晰，将抽象博弈映射到现实校园场景，易于理解。",
+      "输入输出格式与约束范围完备，无歧义。",
+      "样例附有详细解释，直观展示了游戏机制和胜负逻辑。",
+      "严格实现了new_schema中所有任务变体要求，无信息泄漏。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.507,
+      "axis_scores": {
+        "I": 0.0798,
+        "C": 0.699,
+        "O": 0.6528,
+        "V": 0.5707
+      },
+      "components": {
+        "input_tree_distance": 0.0798,
+        "constraint_match_distance": 0.699,
+        "objective_type_distance": 0.6708,
+        "objective_text_distance": 0.6259,
+        "invariant_match_distance": 0.5707
+      }
+    },
+    "schema_distance": 0.507,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.82,
+    "solution_transfer_risk": 0.18,
+    "surface_retheme_risk": 0.28,
+    "verdict": "pass",
+    "rationale": "原题要求将任意有向树通过最少的「删边并加边（保持有向树）」操作变为有根有向树，解为入度零节点数减一。新题改为双人博弈：双方轮流执行相同操作，操作后若树以节点1为根则当前玩家立即获胜；目标变为判定先手有无必胜策略。核心不变量由入度零计数变为节点势能异或和（Nim 等价），证明与算法完全转变。原题的单人贪心/计数解法无法迁移到博弈必胜态分析，输入结构虽相似但求解维度差异显著。表面叙事从抽象‘有向树’变为‘社团指导权’，样例与输出类型不同，无原题文本泄露，操作表述有相似性但不构成实质换皮。",
+    "evidence_refs": [
+      "hard_checks[6].message",
+      "hard_checks[7].message",
+      "review_context.changed_axes_realized",
+      "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+      "review_context.anti_shallow_rationale",
+      "new_schema.objective",
+      "original_schema.objective"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.51，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 83.1,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "规则描述清晰，将抽象博弈映射到现实校园场景，易于理解。",
+      "输入输出格式与约束范围完备，无歧义。",
+      "样例附有详细解释，直观展示了游戏机制和胜负逻辑。",
+      "严格实现了new_schema中所有任务变体要求，无信息泄漏。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_3f827d011d2e\\taco_codechef_3f827d011d2e.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_3f827d011d2e\\taco_codechef_3f827d011d2e_campus_ops_20260529_114900_round2.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_3f827d011d2e\\taco_codechef_3f827d011d2e_campus_ops_20260529_114900_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_3f827d011d2e",
+      "title": "ROOTTREE",
+      "description": "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well.\n\nA *directed tree* is a directed graph such that if all edges were undirected, this graph would be a tree. A *rooted directed tree* is a directed tree in which there is one vertex (the *root*, let's denote it by $r$) such that it is possible to reach all vertices of the graph from $r$ by moving along the directed edges.\n\nYou are given a directed tree with $N$ vertices (numbered $1$ through $N$). You may perform the following operation on it any number of times (including zero):\nChoose some edge which currently exists in the graph.\nRemove this edge.\nAdd a new edge in such a way that the graph becomes a directed tree again.\n\nWhat is the smallest number of operations which need to be performed in order to make the directed tree rooted?\n\n------  Input ------\nThe first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\nThe first line of each test case contains a single integer $N$.\nEach of the next $N-1$ lines contains two space-separated integers $u$ and $v$ denoting that there is a directed edge from $u$ to $v$ in the tree.\n\n------  Output ------\nFor each test case, print a single line containing one integer ― the smallest number of operations we need to perform to create a rooted directed tree.\n\n------  Constraints ------\n$1 ≤ N ≤ 10^{4}$\n$1 ≤ u, v ≤ N$\nthe graph described on the input is a directed tree\nthe sum of $N$ over all test cases does not exceed $10^{5}$\n\n------  Subtasks ------\nSubtask #1 (20 points): for each edge, $u = 1$ or $v = 1$ (the graph is a directed star)\n\nSubtask #2 (80 points): original constraints\n\n----- Sample Input 1 ------ \n2\n\n3\n\n1 2\n\n3 2\n\n3\n\n1 2\n\n2 3\n----- Sample Output 1 ------ \n1\n\n0\n----- explanation 1 ------ \nExample case 1: We can delete the edge from vertex $3$ to vertex $2$ and insert an edge from $3$ to $1$. Then, the graph becomes a rooted directed tree with vertex $3$ as the root. However, there are many other possible solutions.\n\nExample case 2: The graph is already a rooted directed tree; the root is vertex $1$.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "for _ in range(int(input())):\n\tN = int(input())\n\tnoparent = [True] * (N + 1)\n\tz = N\n\tfor i in range(N - 1):\n\t\t(u, v) = list(map(int, input().split()))\n\t\tif noparent[v]:\n\t\t\tz -= 1\n\t\t\tnoparent[v] = False\n\tprint(z - 1)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_3f827d011d2e",
+        "ROOTTREE",
+        "codechef",
+        "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well. A *directed tree* is a directed graph such that if all edges were undirected, this graph would be a tree. A *root...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "必须修改核心约束以引入轮流操作和胜负判定（C 轴），目标从最小化操作次数变为判断先手是否有必胜策略（O 轴），不变量从计数入度零的节点个数变为博弈状态的势函数或 Nim 等价量（V 轴）。",
+      "summary": "操作定义基本保留，但加入玩家交替与获胜条件；目标改为判定最优博弈下的胜方；不变量改为基于树势函数的异或和。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_synthetic_game_rooted",
+      "source": "synthetic",
+      "input_structure": {
+        "type": "tree",
+        "length": {
+          "min": 2,
+          "max": 10000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 10000
+        },
+        "properties": {
+          "directed": true,
+          "connected": true,
+          "simple": true,
+          "acyclic_if_undirected": true,
+          "root_candidate_vertex_1": true,
+          "multiple_test_cases": true
+        },
+        "components": []
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "input_directed_tree",
+            "description": "The given graph is a directed tree (its underlying undirected graph is a tree) with vertices 1..N.",
+            "formal": "",
+            "source_sections": []
+          },
+          {
+            "name": "legal_operation",
+            "description": "On a turn, a player chooses an existing directed edge (u, v), removes it, and adds a new directed edge (x, y) such that the resulting graph remains a directed tree.",
+            "formal": "",
+            "source_sections": []
+          },
+          {
+            "name": "turn_alternation",
+            "description": "Two players, called First and Second, alternate turns, with First making the first move.",
+            "formal": "",
+            "source_sections": []
+          },
+          {
+            "name": "win_condition",
+            "description": "If after a player's operation the graph becomes a rooted directed tree with vertex 1 as the root (i.e., from 1 it is possible to reach every vertex), that player wins immediately and the game ends.",
+            "formal": "",
+            "source_sections": []
+          },
+          {
+            "name": "initial_non_terminal",
+            "description": "It is guaranteed that the initial graph is not already a rooted directed tree with root 1; otherwise First would win without playing.",
+            "formal": "",
+            "source_sections": []
+          }
+        ]
+      },
+      "objective": {
+        "type": "determine_winner",
+        "description": "Assuming both players play optimally, determine whether the first player can force a win.",
+        "target": "output 'First' or 'Second'",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "node_potential_nim_sum",
+            "description": "For each vertex v ≠ 1, define its potential as the number of edges on the unique undirected path from v to 1 that are directed away from 1. The game is equivalent to Nim with heaps given by these potentials. The Grundy value of a state is the XOR sum of all node potentials. A position is winning for the player to move if and only if the XOR sum is non-zero. Moreover, any legal operation changes exactly one node's potential by some amount, analogous to a Nim move.",
+            "properties": {
+              "initial_xor": "computed from tree",
+              "win_condition": "xor != 0 → First wins"
+            },
+            "evidence_source": "analysis"
+          },
+          {
+            "name": "irreversibility_in_optimal_play",
+            "description": "Under optimal play, players will never make moves that increase the total sum of potentials, ensuring the game terminates after O(N) moves.",
+            "properties": {},
+            "evidence_source": "analysis"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "社团指导权博弈",
+      "description": "某大学有 $N$ 个社团，编号 $1$ 到 $N$。社团之间存在单向的“指导”关系，例如社团 $A$ 指导社团 $B$ 意味着 $A$ 可以向 $B$ 提供支持。这些指导关系构成了一棵有向树：如果把所有指导关系看作无向边，得到的图是一棵无根树。\n\n如果存在一个社团 $r$，使得从 $r$ 出发遵循指导方向可以到达所有其他社团，就说这棵有向树以 $r$ 为根。学生会所在的社团 $1$ 希望未来能够直接或间接指导全校所有社团，也就是达到以社团 $1$ 为根的状态。\n\n现在，两位学生干部 A（先手）和 B（后手）轮流修改指导关系，每次操作规定如下：\n- 选择一条当前存在的有向边 $(u, v)$，将其删除；\n- 再添加一条新的有向边 $(x, y)$，使得整张图仍是一棵有向树（不允许出现重边或多条边指向同一结点导致非树结构）。\n\n一旦某位玩家操作后，有向树变成了以社团 $1$ 为根的状态，该玩家立即获胜，游戏结束。\n\n初始状态保证不是以社团 $1$ 为根（否则先手无需操作即已获胜）。\n\n假设双方都采取最优策略，并且都以获胜为目标。请判断先手是否有必胜策略。",
+      "input_format": "第一行包含一个整数 $T$，表示测试数据的组数。每组数据格式如下：\n第一行包含一个整数 $N$，表示社团数量。\n接下来 $N-1$ 行，每行包含两个整数 $u, v$，表示一条从 $u$ 指向 $v$ 的有向边。",
+      "output_format": "对于每组测试数据，输出一行一个字符串 \"First\" 或 \"Second\"，表示在双方均采取最优策略的条件下，先手是否有必胜策略。",
+      "constraints": [
+        "$1 \\le T \\le 10$",
+        "$2 \\le N \\le 10^4$",
+        "$1 \\le u, v \\le N$",
+        "输入保证给定的图构成一棵有向树",
+        "初始状态下，社团 $1$ 不是能够到达所有社团的根",
+        "所有测试数据的 $N$ 总和不超过 $10^5$",
+        "时间限制：$1$ 秒",
+        "空间限制：$256$ MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n3\n2 1\n3 2",
+          "output": "Second",
+          "explanation": "初始指导关系为 $2 \\to 1$, $3 \\to 2$。定义每个社团 $v \neq 1$ 的势能为从 $v$ 到 $1$ 的唯一无向路径上背离 $1$ 的方向的边数。社团 $2$ 的路径为 $2 \\to 1$，方向背离 $1$，势能为 $1$；社团 $3$ 的路径为 $3 \\to 2 \\to 1$，其中 $3 \\to 2$ 背离 $1$，势能为 $1$。势能异或和为 $1 \\oplus 1 = 0$。根据博弈论分析，该状态等价于 Nim 游戏中异或和为 $0$ 的必败态，因此先手必败。事实上，先手无论删除哪条边并重建一条边，都无法一步获胜，且必然会留出破绽让后手取胜。"
+        },
+        {
+          "input": "1\n3\n1 2\n3 1",
+          "output": "First",
+          "explanation": "初始指导关系为 $1 \\to 2$, $3 \\to 1$。社团 $2$ 的势能：路径 $2 \\leftarrow 1$ 方向朝向 $1$，背离边数为 $0$，势能为 $0$；社团 $3$ 的势能：路径 $3 \\to 1$ 背离 $1$，势能为 $1$。异或和为 $0 \\oplus 1 = 1 \neq 0$，属于必胜态。先手可以选择删除边 $3 \\to 1$，并添加边 $1 \\to 3$，得到 $1 \\to 2$ 和 $1 \\to 3$，此时社团 $2$ 和 $3$ 的势能均变为 $0$，异或和为 $0$，成为根系以 $1$ 为根的状态，先手一步获胜。"
+        }
+      ],
+      "notes": "双方均按照最优策略行动，游戏在有限步内必然结束，且不存在和局。输出应为 'First' 或 'Second'（首字母大写，其余小写）。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "操作定义基本保留，但加入玩家交替与获胜条件；目标改为判定最优博弈下的胜方；不变量改为基于树势函数的异或和。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.507,
+        "axis_scores": {
+          "I": 0.0798,
+          "C": 0.699,
+          "O": 0.6528,
+          "V": 0.5707
+        },
+        "components": {
+          "input_tree_distance": 0.0798,
+          "constraint_match_distance": 0.699,
+          "objective_type_distance": 0.6708,
+          "objective_text_distance": 0.6259,
+          "invariant_match_distance": 0.5707
+        }
+      },
+      "applied_rule": "deterministic_process_to_game_outcome",
+      "applied_helpers": [
+        {
+          "id": "turn_structure_binding",
+          "selection_reason": "必须将原单人过程转化为双方轮流操作的正式博弈规则，否则对抗语义无法落地。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 增加了 turn_alternation 和 win_condition 约束",
+            "objective 从 minimize_value 变为 determine_winner"
+          ],
+          "innovation_reason": "为原本单纯的操作序列注入对抗交互，使问题从优化变成策略对抗。",
+          "difficulty_reason": "迫使分析双方最优响应，而不是只寻找一条最短路径。"
+        },
+        {
+          "id": "adversarial_state_invariant",
+          "selection_reason": "必须建立刻画必胜与必败状态的博弈不变量，否则无法判定结果。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 维持操作定义作为状态转移规则",
+            "invariant 引入 node_potential_nim_sum 将状态映射到 Nim"
+          ],
+          "innovation_reason": "将状态空间从单人成本可达集扩展为对抗可达集，并通过 Nim 等价提供可计算的不变量。",
+          "difficulty_reason": "需要证明势函数的合理性以及操作对该函数的影响规律，并进行策略转移论证。"
+        },
+        {
+          "id": "optimal_play_contract",
+          "selection_reason": "必须锁定输出为双方均采取最优策略下的博弈结果，否则答案无唯一性。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确输出成立的前提是双方最优",
+            "invariant 中声明 XOR sum 决定胜负的条件是基于最优玩法"
+          ],
+          "innovation_reason": "答案从“给定策略下的最小操作数”变成“所有策略交互下的必然结果”，强化了策略语义。",
+          "difficulty_reason": "要求证明在最优策略下该结果唯一且可被高效计算，不能仅靠模拟某一固定策略。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Count vertices with in-degree zero; the answer is count - 1.",
+        "reusable_subroutines": "Reading the directed tree structure, computing in-degrees of all vertices.",
+        "new_solver_core": "Compute the XOR sum of node potentials (or equivalently, the Nim value of the game configuration) and determine the winner based on whether the sum is non-zero.",
+        "new_proof_obligation": "Prove that the game is equivalent to Nim with potentials as heap sizes: (1) any valid move only affects the potential of a single node and can decrease it by any positive amount; (2) the terminal state (rooted at 1) has XOR sum zero; (3) no move can increase the XOR sum in optimal play, so the game terminates. Additionally, prove that the parity of potential cannot be left unchanged by a move unless the player chooses a suboptimal move.",
+        "why_direct_reuse_fails": "The original solution formula c-1 does not account for alternating play, adversarial choice, or optimal strategies. The outcome is no longer determined by the mere count of zero-in-degree vertices but by a global Nim-sum over node potentials, requiring a fundamentally different analysis."
+      },
+      "anti_shallow_rationale": "虽然操作与种子题完全相同，但引入了对抗性轮替和博弈目标，致使状态空间必须用 Nim 等价类分析，而不是简单的入度零计数。从单人优化到双人零和博弈是一个本质性的复杂度提升；新题要求论证势函数的不变性和最优策略的性质，不可能通过只在原题上包装故事或修改输入格式实现。"
+    }
+  }
+}

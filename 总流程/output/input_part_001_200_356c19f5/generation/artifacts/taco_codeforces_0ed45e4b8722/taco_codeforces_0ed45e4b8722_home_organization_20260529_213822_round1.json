@@ -1,0 +1,848 @@
+{
+  "problem_id": "taco_codeforces_0ed45e4b8722",
+  "source_problem_ids": [
+    "taco_codeforces_0ed45e4b8722"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_0ed45e4b8722",
+      "codeforces",
+      "A tree is an undirected connected graph without cycles. Let's consider a rooted undirected tree with n vertices, numbered 1 through n. There are many ways to represent such a tree. One way is to create an array with n...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "规划结果未达到硬门槛，预测距离=0.3259，落地轴=C, O, V。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimize the number of elements changed to obtain a valid rooted tree parent array",
+    "target": "minimum_changes",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "existence_to_counting 将原题最小修改方案的目标从输出一个可行解变为统计所有合法方案数量，这从根本上改变了算法的核心责任，要求对解空间进行因子分解和去重，生成全新的主求解目标；而 forward_solution_to_inverse_design 在本题环境中容易退化成简单构造（如给定 k 构造恰好需要 k 次修改的输入），缺乏深度创新和难度提升，因此优先选择计数规则。；创新度判断：原题要求计算最小编辑距离并给出一个有效序列，核心义务是贪心遍历和断环；计数规则会强制将解空间按根选择、环断开位置等维度拆分为可汇总的计数单元，重新定义‘不同方案’的等价关系，并把统计全部最小修改方案的数量锁定为新的主目标，沿着 C（约束结构）、O（目标类型）和 V（不变量）全部三轴发生实质性变化。；难度判断：新题要求算法在原有 O(n) 贪心基础上，识别所有最小修改方案的分支来源（如自环选择、环内断开点的独立性），设计组合计数的 DAG/DP 状态，并证明计数完备性与去重正确性，从而将难度从简单的实现题提升至需要深刻分析解空间的计数难题。；风险判断：主要风险在于必须明确定义‘方案不同’的标准（如最终序列不同），且方案数可能指数级，需要引入模数运算并证明模运算下计数正确性；同时要避免计数部分与原始算法脱节导致无法高效实现，但原题结构清晰（仅与连通分量环有关），可通过典型组合计数技巧在 O(n) 内解决，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_0ed45e4b8722",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 2,
+        "max": 200000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 200000
+      },
+      "properties": {},
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "valid_rooted_tree_representation",
+          "description": "A sequence p_1..p_n is valid iff there exists exactly one index r such that p_r = r, and for all i ≠ r, following parent pointers eventually reaches r (no additional cycles). This ensures p encodes a rooted tree.",
+          "formal": "∃! r ∈ [1,n] : p_r = r ∧ ∀i ∈ [1,n], ∃k ≥ 0 such that p^k(i) = r",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "parent_label_domain",
+          "description": "Each p_i must be an integer between 1 and n inclusive, because vertices are numbered 1 through n.",
+          "formal": "∀i, 1 ≤ p_i ≤ n",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "optimal_edit_distance",
+          "description": "The output sequence must be a valid sequence that can be obtained from the input sequence a by changing the minimum possible number of elements.",
+          "formal": "output s is valid ∧ |{i | s_i ≠ a_i}| = min_{t valid} |{i | t_i ≠ a_i}|",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "minimize the number of elements changed to obtain a valid rooted tree parent array",
+      "target": "minimum_changes",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "acyclic_subgraph_single_root",
+          "description": "During the traversal and modification process, every visited connected component becomes acyclic and, once the root is established, all visited vertices form a single rooted tree directed toward that root.",
+          "properties": {
+            "acyclic_after_handling": "After processing a component, no cycle of length > 1 remains among visited vertices.",
+            "unique_root_once_set": "When root != -1, exactly one self-loop (the root) exists in the visited subgraph, and every other visited vertex has a directed path leading to this root."
+          },
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3259，落地轴=C, O, V。"
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "规划结果未达到硬门槛，预测距离=0.3259，落地轴=C, O, V。",
+  "planning_feedback": "已尝试 2 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "FORBIDDEN_SEED_PROPERTY",
+      "selection_reason": "原题已经要求输出一个完整方案（any valid sequence），这直接触及了规则的 forbidden_seed_properties：'原题本来就要求输出完整方案'。因此不具备应用此规则的空间。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints中的optimal_edit_distance说明输出包括valid sequence；原题描述中明确要求’Print the minimum number of changes and an example of a valid sequence‘，因此原题本就要求输出完整方案。",
+        "feedback": "该规则要求种子题原本只输出数值/答案，再升级为规范解，但此题已输出方案，无法实施输出升级; 若强行应用会导致浅层修改。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "always_feasible",
+      "selection_reason": "原题目标是最小化改动次数将任意序列变为合法树表示。对于任何给定序列，总存在平凡合法解（任选一个点作为根，其他点指向该点），因此不存在‘做不到’的无解情形。规则要求无解时输出局部冲突证据，但种子题无解情形为空，无法构造有意义的失败分支，不符合规则的核心前提。",
+      "risk_tags": [
+        "no_failure_case",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题core_constraints中optimal_edit_distance要求输出最小改动合法序列，但没有规定不可能情形。描述指出给定序列不一定有效，但总是可以通过修改变成有效。标准解法总是找到一个根并修复环，没有检查是否可能不可行的逻辑。因此，无解情形无法稳定地表示为局部证据。",
+        "feedback": "此题始终有解，无法满足规则对失败分支的需求，建议选择其他存在无解情形的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "FINITE_CLEAR_DEDUP",
+      "selection_reason": "种子题求最小修改数，有效序列总数有限（n^{n-1}），达到最小修改数的序列集合自然有限；序列等同性为逐元素比较，去重规则清晰；原解法按连通分量拆分（见invariant），便于转化为计数单元设计。满足规则对有限性、去重和汇总性的要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束 valid_rooted_tree_representation 定义了解空间为所有有效序列，总量有限；objective 明确最小修改目标；invariant 描述组件拆分，为计数单元提供基础。",
+        "feedback": "建议在计数变体中显式要求输出模数，并在 helper 中强化状态分解与去重对应关系，避免直接沿用原解法结构而缺少计数责任。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是确定性编辑距离问题，没有可放大的顺序不确定、资源波动或局部选择差异，无法满足规则所需原生扰动来源。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints中无任何不确定性；original_problem.description描述为给定固定序列求最小修改，无扰动因素。",
+        "feedback": "建议选择含有原生不确定性（如动态输入、对抗选择）的问题作为种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题已是求最小改动数的极值优化题，并非判定或可行性问题，且无其他自然临界参数可升级，硬扩只会成为对原答案的机械二分，违反规则的红线和禁止属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective.type为minimize_value，目标是最小化改动数，核心约束optimal_edit_distance直接要求输出达到最小改动的合法序列。规则forbidden_seed_properties明确禁止‘阈值只是在原判定外层做机械二分’，且required_seed_properties要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，而此题自身就是极值求解，再引入阈值参数只会把原答案作为阈值，核心约束不变，不符合阈值升级的本意。",
+        "feedback": "种子题已经是阈值优化题，无需再次应用‘可行性到阈值’的变换。建议考虑其他规则或寻找具有潜在单调参数但原题仅为判定的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_conflicting_secondary_metric",
+      "selection_reason": "种子题目标是最小化修改次数，在树表示问题中不存在自然且与之冲突的第二评价指标。任何附加指标（如修改后树的深度）均可通过分层优化独立求解，会退化成先求最小修改再优化第二指标，违反规则要求的核心冲突和耦合状态。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility 要求‘原题目标附近存在自然的第二评价指标’且‘两个指标之间存在真实冲突，不能同时独立最优’。种子题 schema 的 objective 仅为 minimize 修改次数，无其他量化属性；invariant 描述的是算法内部维护的无环性，并非第二优化指标。原题描述和标准解法均未暗示存在与之天然冲突的附加指标。",
+        "feedback": "该种子题属于单目标编辑距离优化类，缺少固有冲突的第二维度，不适合扩展为权衡前沿问题。若强行添加次要指标，将导致独立子任务或后处理筛选，不符合规则的核心耦合要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "TARGET_FROM_OUTPUT_AVAILABLE",
+      "selection_reason": "原题输出包含有效序列和根节点，可将根节点作为反向目标（如指定根节点r），存在自然的元素修改操作，且新题要求最小修改以满足目标，符合反向设计范式。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "schema中core_constraints定义了optimal_edit_distance，输出有效序列；original_problem描述输出最小改动数和有效序列；规则要求反向目标来自原题结果语义，根节点正是结果的一部分；种子题已包含元素修改操作，可直接沿用；因此满足required_seed_properties。",
+        "feedback": "建议规划时确保目标约束不仅限于根节点，可考虑更复杂的树结构目标，以避免简单变种导致新颖性不足。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "ALREADY_GLOBAL_COUPLED",
+      "selection_reason": "原题已要求输出序列有且仅有一个根，所有连通分量必须合并到同一根，解法通过全局根耦合各分量，实为跨组件依赖和全局可行最优。在此种子题上应用规则难以产生自然的新耦合，容易沦为无关约束或背景故事。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "参照 seed_schema 中 core_constraints: 'valid_rooted_tree_representation' 要求 ∃! r: p_r=r，且所有节点最终可达 r；目标 minimizing changes 是全局最优；解法遍历分量时维护单根并修改环边指向全局根。这满足规则 validation_contract 中的共享资源/跨组件依赖和全局可行责任，原题已经具备所要求的耦合特性。",
+        "feedback": "种子题的结构已经是全局耦合，应用 independent_components_to_global_coupling 会高度重叠现有核心，新颖性低。建议选择具备独立局部单元且无全局绑定的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_operation",
+      "selection_reason": "原题没有可轮流选择的自然操作；它是一个全局最小化修改的算法问题，不能自然转化为双方博弈。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 minimize changes to make valid rooted tree parent array，操作是算法内部的图遍历和修改，并非玩家可轮流进行的选择或移动。没有逐步改变状态并影响后续选择的机制。",
+        "feedback": "原题是静态优化，无交互过程，不适合博弈化转换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_local_object_family",
+      "selection_reason": "种子题的核心是整体数组到合法树的编辑距离，不存在可供扩展的局部路径、区间或子树族；其算法中的分量遍历是求解手段而非核心对象，无法自然形成覆盖或割语义。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述要求将给定父指针数组修改为恰好一棵有根树，目标为最小修改次数，约束中未出现多个局部对象之间的覆盖或割关系。规则eligibility.required_seed_properties明确要求‘原题核心对象具有路径、区间、子树、集合等局部结构’且‘多个局部对象之间可以自然形成覆盖或割关系’，原题均不满足。",
+        "feedback": "该规则要求从局部对象族扩展为全局覆盖问题，但原题是单数组全局合法性修正，局部对象（如连通分量、环）仅在算法内部出现，未作为问题的输入或目标对象。若强行构造多个对象族，将引入与原核心规律无关的额外约束，陷入反面例所示‘分别对每条路径运行原算法后输出结果列表’的浅层变化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting_problem",
+      "selection_reason": "原题是求最小修改次数并构造一个合法序列，属于优化问题，没有对合法方案进行计数，不符合规则要求的'已有明确有限计数对象'条件。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'minimize the number of elements changed to obtain a valid rooted tree parent array'，输出为最小改变数和对应的一个合法序列，从未涉及方案总数或分布统计。原题摘要中也只提到'change the minimum number of elements'，没有任何计数输出。",
+        "feedback": "该规则要求种子题必须已是普通计数题，而此题是优化构造题，强行引入计数需要完全改变问题核心，不符合单种变换的准入条件。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "FORBIDDEN_SEED_PROPERTY",
+      "message": "原题已经要求输出一个完整方案（any valid sequence），这直接触及了规则的 forbidden_seed_properties：'原题本来就要求输出完整方案'。因此不具备应用此规则的空间。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints中的optimal_edit_distance说明输出包括valid sequence；原题描述中明确要求’Print the minimum number of changes and an example of a valid sequence‘，因此原题本就要求输出完整方案。",
+        "feedback": "该规则要求种子题原本只输出数值/答案，再升级为规范解，但此题已输出方案，无法实施输出升级; 若强行应用会导致浅层修改。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "always_feasible",
+      "message": "原题目标是最小化改动次数将任意序列变为合法树表示。对于任何给定序列，总存在平凡合法解（任选一个点作为根，其他点指向该点），因此不存在‘做不到’的无解情形。规则要求无解时输出局部冲突证据，但种子题无解情形为空，无法构造有意义的失败分支，不符合规则的核心前提。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "no_failure_case",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题core_constraints中optimal_edit_distance要求输出最小改动合法序列，但没有规定不可能情形。描述指出给定序列不一定有效，但总是可以通过修改变成有效。标准解法总是找到一个根并修复环，没有检查是否可能不可行的逻辑。因此，无解情形无法稳定地表示为局部证据。",
+        "feedback": "此题始终有解，无法满足规则对失败分支的需求，建议选择其他存在无解情形的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "FINITE_CLEAR_DEDUP",
+      "message": "种子题求最小修改数，有效序列总数有限（n^{n-1}），达到最小修改数的序列集合自然有限；序列等同性为逐元素比较，去重规则清晰；原解法按连通分量拆分（见invariant），便于转化为计数单元设计。满足规则对有限性、去重和汇总性的要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束 valid_rooted_tree_representation 定义了解空间为所有有效序列，总量有限；objective 明确最小修改目标；invariant 描述组件拆分，为计数单元提供基础。",
+        "feedback": "建议在计数变体中显式要求输出模数，并在 helper 中强化状态分解与去重对应关系，避免直接沿用原解法结构而缺少计数责任。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是确定性编辑距离问题，没有可放大的顺序不确定、资源波动或局部选择差异，无法满足规则所需原生扰动来源。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints中无任何不确定性；original_problem.description描述为给定固定序列求最小修改，无扰动因素。",
+        "feedback": "建议选择含有原生不确定性（如动态输入、对抗选择）的问题作为种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题已是求最小改动数的极值优化题，并非判定或可行性问题，且无其他自然临界参数可升级，硬扩只会成为对原答案的机械二分，违反规则的红线和禁止属性。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective.type为minimize_value，目标是最小化改动数，核心约束optimal_edit_distance直接要求输出达到最小改动的合法序列。规则forbidden_seed_properties明确禁止‘阈值只是在原判定外层做机械二分’，且required_seed_properties要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，而此题自身就是极值求解，再引入阈值参数只会把原答案作为阈值，核心约束不变，不符合阈值升级的本意。",
+        "feedback": "种子题已经是阈值优化题，无需再次应用‘可行性到阈值’的变换。建议考虑其他规则或寻找具有潜在单调参数但原题仅为判定的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_conflicting_secondary_metric",
+      "message": "种子题目标是最小化修改次数，在树表示问题中不存在自然且与之冲突的第二评价指标。任何附加指标（如修改后树的深度）均可通过分层优化独立求解，会退化成先求最小修改再优化第二指标，违反规则要求的核心冲突和耦合状态。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility 要求‘原题目标附近存在自然的第二评价指标’且‘两个指标之间存在真实冲突，不能同时独立最优’。种子题 schema 的 objective 仅为 minimize 修改次数，无其他量化属性；invariant 描述的是算法内部维护的无环性，并非第二优化指标。原题描述和标准解法均未暗示存在与之天然冲突的附加指标。",
+        "feedback": "该种子题属于单目标编辑距离优化类，缺少固有冲突的第二维度，不适合扩展为权衡前沿问题。若强行添加次要指标，将导致独立子任务或后处理筛选，不符合规则的核心耦合要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "TARGET_FROM_OUTPUT_AVAILABLE",
+      "message": "原题输出包含有效序列和根节点，可将根节点作为反向目标（如指定根节点r），存在自然的元素修改操作，且新题要求最小修改以满足目标，符合反向设计范式。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "schema中core_constraints定义了optimal_edit_distance，输出有效序列；original_problem描述输出最小改动数和有效序列；规则要求反向目标来自原题结果语义，根节点正是结果的一部分；种子题已包含元素修改操作，可直接沿用；因此满足required_seed_properties。",
+        "feedback": "建议规划时确保目标约束不仅限于根节点，可考虑更复杂的树结构目标，以避免简单变种导致新颖性不足。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "ALREADY_GLOBAL_COUPLED",
+      "message": "原题已要求输出序列有且仅有一个根，所有连通分量必须合并到同一根，解法通过全局根耦合各分量，实为跨组件依赖和全局可行最优。在此种子题上应用规则难以产生自然的新耦合，容易沦为无关约束或背景故事。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "参照 seed_schema 中 core_constraints: 'valid_rooted_tree_representation' 要求 ∃! r: p_r=r，且所有节点最终可达 r；目标 minimizing changes 是全局最优；解法遍历分量时维护单根并修改环边指向全局根。这满足规则 validation_contract 中的共享资源/跨组件依赖和全局可行责任，原题已经具备所要求的耦合特性。",
+        "feedback": "种子题的结构已经是全局耦合，应用 independent_components_to_global_coupling 会高度重叠现有核心，新颖性低。建议选择具备独立局部单元且无全局绑定的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_operation",
+      "message": "原题没有可轮流选择的自然操作；它是一个全局最小化修改的算法问题，不能自然转化为双方博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 minimize changes to make valid rooted tree parent array，操作是算法内部的图遍历和修改，并非玩家可轮流进行的选择或移动。没有逐步改变状态并影响后续选择的机制。",
+        "feedback": "原题是静态优化，无交互过程，不适合博弈化转换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_local_object_family",
+      "message": "种子题的核心是整体数组到合法树的编辑距离，不存在可供扩展的局部路径、区间或子树族；其算法中的分量遍历是求解手段而非核心对象，无法自然形成覆盖或割语义。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述要求将给定父指针数组修改为恰好一棵有根树，目标为最小修改次数，约束中未出现多个局部对象之间的覆盖或割关系。规则eligibility.required_seed_properties明确要求‘原题核心对象具有路径、区间、子树、集合等局部结构’且‘多个局部对象之间可以自然形成覆盖或割关系’，原题均不满足。",
+        "feedback": "该规则要求从局部对象族扩展为全局覆盖问题，但原题是单数组全局合法性修正，局部对象（如连通分量、环）仅在算法内部出现，未作为问题的输入或目标对象。若强行构造多个对象族，将引入与原核心规律无关的额外约束，陷入反面例所示‘分别对每条路径运行原算法后输出结果列表’的浅层变化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting_problem",
+      "message": "原题是求最小修改次数并构造一个合法序列，属于优化问题，没有对合法方案进行计数，不符合规则要求的'已有明确有限计数对象'条件。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'minimize the number of elements changed to obtain a valid rooted tree parent array'，输出为最小改变数和对应的一个合法序列，从未涉及方案总数或分布统计。原题摘要中也只提到'change the minimum number of elements'，没有任何计数输出。",
+        "feedback": "该规则要求种子题必须已是普通计数题，而此题是优化构造题，强行引入计数需要完全改变问题核心，不符合单种变换的准入条件。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.3259,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.3352,
+            "O": 0.4873,
+            "V": 0.5177
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.3352,
+            "objective_type_distance": 0.5463,
+            "objective_text_distance": 0.3987,
+            "invariant_match_distance": 0.5177
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3259，落地轴=C, O, V。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "规划结果未达到硬门槛，预测距离=0.3259，落地轴=C, O, V。",
+    "feedback": "已尝试 2 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_0ed45e4b8722_home_organization_20260529_213822",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

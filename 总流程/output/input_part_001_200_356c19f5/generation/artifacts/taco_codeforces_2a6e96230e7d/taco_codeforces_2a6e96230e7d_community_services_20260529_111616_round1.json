@@ -1,0 +1,915 @@
+{
+  "problem_id": "inv_design_community_route_1",
+  "source_problem_ids": [
+    "taco_codeforces_2a6e96230e7d"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_2a6e96230e7d",
+      "codeforces",
+      "At a geometry lesson Gerald was given a task: to get vector B out of vector A. Besides, the teacher permitted him to perform the following operations with vector А: * Turn the vector by 90 degrees clockwise. * Add to...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "The core constraint (C) is expanded to allow editing C; the objective (O) shifts from a boolean decision to a minimal‑cost integer; the invariant (V) must now support a proof that the found cost is minimal and that the modified reachability condition is necessary and sufficient.",
+    "summary": "The problem morphs from 'can we reach B?' to 'how little must we tweak the bus route (C) to make a trip from A to B possible?', preserving the original operation semantics while adding an optimization layer.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.483,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.483,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.8067,
+      "O": 0.6036,
+      "V": 0.4505
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.8067,
+      "objective_type_distance": 0.619,
+      "objective_text_distance": 0.5804,
+      "invariant_match_distance": 0.4505
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "Output a single non‑negative integer: the minimum possible cost (Manhattan distance of the change to C) such that after the modification the resident can reach the service point. It can be proved that a feasible modification always exists.",
+    "target": "min(|dx|+|dy|)",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "反向设计将原判定问题彻底转变为输入修改优化问题，翻转求解方向，创新度最高；相比构造或障碍仅新增证据输出、规范见证仅升级输出形式，反向设计引起的责任变化更大，且不违背任何全局红线。；创新度判断：原题仅要求判断给定 A, B, C 下是否可达，新题要求通过最小修改输入参数（如 C）使可达成立，核心义务从“是否存在方案”变为“如何最小代价调整参数使方案存在”，完全脱离原题的单向判定模式。；难度判断：主求解责任从简单的格子包含判定升级为结合丢番图方程的优化问题，需要分析修改如何影响格子结构，并寻找最小代价的修改方案，可能涉及最近向量搜索或整数规划，复杂性显著提高。；风险判断：最小性定义和修改操作边界需细致设计，否则可能退化为非平凡但无最优解的开放问题；但通过限制代价函数为曼哈顿距离并约束修改范围，风险可控，仍可设计出确定的竞赛题目。",
+  "new_schema_snapshot": {
+    "problem_id": "inv_design_community_route_1",
+    "source": "generated_from_taco_codeforces_2a6e96230e7d",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "resident_position",
+          "role_description": "Coordinates of the resident's starting location (original vector A).",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": -100000000,
+            "max": 100000000
+          },
+          "properties": {}
+        },
+        {
+          "role": "service_point_position",
+          "role_description": "Coordinates of the target service point (original vector B).",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": -100000000,
+            "max": 100000000
+          },
+          "properties": {}
+        },
+        {
+          "role": "original_route_vector",
+          "role_description": "The existing fixed‑route bus vector C (each ride adds this displacement).",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": -100000000,
+            "max": 100000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "base_operations_preserved",
+          "description": "The allowed movements for the resident remain exactly: rotate direction by 90° clockwise, or add the current bus route vector C′ (where C′ is the modified route).",
+          "formal": "Operations = { Rot90, Add(C′) }",
+          "source_sections": [
+            "derived_from_seed"
+          ]
+        },
+        {
+          "name": "editing_contract",
+          "description": "Before any movement, the community may adjust the bus route by choosing an integer vector D = (dx, dy). The new route becomes C′ = C + D. The incurred cost is |dx| + |dy| (Manhattan distance). After this change, the resident can use the standard operations to try to reach the service point.",
+          "formal": "Allowed edit: choose D ∈ ℤ², set C′ = C + D, cost = |dx|+|dy|. Then the system proceeds with Rot90 and Add(C′).",
+          "source_sections": [
+            "edit_operation_contract"
+          ]
+        },
+        {
+          "name": "reachability_requirement",
+          "description": "There must exist a sequence of Rot90 and Add(C′) that, starting from the resident's position, ends exactly at the service point.",
+          "formal": "∃ sequence of ops from Resident Position to Service Point Position.",
+          "source_sections": [
+            "target_result_binding"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "Output a single non‑negative integer: the minimum possible cost (Manhattan distance of the change to C) such that after the modification the resident can reach the service point. It can be proved that a feasible modification always exists.",
+      "target": "min(|dx|+|dy|)",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "lattice_reachability_with_modified_C",
+          "description": "For a fixed modified route C′, the reachable points from the resident position correspond exactly to the union over the four rotation states i=0..3 of { Rⁱ(pos) + u·C′ | u ∈ ℤ }. Hence reachability of the service point is equivalent to ∃ i, ∃ u ∈ ℤ such that ServicePoint − Rⁱ(ResidentPos) = u·C′.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "minimum_cost_lower_bound",
+          "description": "If a modification C′ = C + D is feasible, then for some rotation state i and integer u we have Δ = ServicePoint − Rⁱ(ResidentPos) = u·C′. Therefore C′ = Δ/u (with u dividing both components of Δ and producing integer coordinates). The cost |D|₁ = |C′ − C|₁ must be at least min_{i,u} |(Δ/u) − C|₁, where the minimum is taken over all i and all positive integers u that evenly divide Δ. The algorithm that enumerates these candidates provably finds the global minimum.",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Check reachability by testing whether, for each of the four rotations of A, the difference B − R(A) lies in the integer lattice generated by C. This reduces to verifying divisibility conditions involving GCDs.",
+    "reusable_subroutines": "The rotation operation (90° clockwise) and the computation of the difference vectors are directly reusable. The number‑theoretic tools (GCD, checking divisibility) are reused in the new solver to identify valid integer factors u.",
+    "new_solver_core": "For each rotation state i, compute Δ = (dx, dy). Enumerate all positive integers u that divide both dx and dy (such that (dx/u, dy/u) are integers). For each such u, compute candidate C′ = Δ/u and the cost |C′ − C|₁. Return the minimum cost over all i and u. The enumeration of u must be done efficiently (e.g., via divisors of gcd(|dx|,|dy|) or bounding the number of candidates using the size of C).",
+    "new_proof_obligation": "Prove that (1) the set of all u dividing Δ (with integer‑coordinate quotient) is sufficient to capture every possible feasible C′; a feasible C′ must equal Δ/u for some such u; (2) the algorithm enumerates all such u, hence finds the true minimum; (3) the optimal cost cannot be achieved by a non‑integer C′ or a C′ not of the form Δ/u.",
+    "why_direct_reuse_fails": "The original solver only answers a boolean. It does not search for a nearby C′ nor does it minimize any distance. The new problem requires a search over possible divisors and a distance computation, which is an optimization layer absent in the seed."
+  },
+  "anti_shallow_rationale": "The change is not a mere reskin or simple boolean inversion. The core solving paradigm shifts from a reachability test (a four‑case divisibility check) to a combinatorial optimization over divisors of a vector, demanding a new algorithm and a non‑trivial correctness argument. The addition of the edit operation and the minimality requirement fundamentally alters the structure of the state space and the solution technique.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "The seed's output (reachability of B) is the natural target to enforce after editing. We bind it by making the new objective require a modification that makes the target reachable.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Added a reachability_requirement constraint that the modified C must enable a path from A to B.",
+        "Changed the objective from a Boolean decision to a cost that ensures the target is met."
+      ],
+      "innovation_reason": "Flips the solving direction from 'is it possible?' to 'make it possible with minimal change', introducing a design layer.",
+      "difficulty_reason": "Demands that the solver now works backward from the target to select an optimal parameter, not just verify a condition."
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "The natural editable object is the additive vector C, which directly controls the lattice of reachable points. Modifying C stays within the seed's original operation logic.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Defined a formal editing operation (pick D, C′= C + D) in core_constraints.",
+        "Updated the invariant to express reachability in terms of the edited C′ and to relate cost to the edit distance."
+      ],
+      "innovation_reason": "Concretizes the inverse task into a well‑defined action space, preventing vague or unrelated modifications.",
+      "difficulty_reason": "Forces the algorithm to respect the edit operation's structure and to correctly map edits to changes in the reachability condition."
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "The problem must output the minimum cost, not just any feasible edit. This locks the solution into a provably optimal answer and guards against trivial guarantees.",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Set the objective to minimize the Manhattan distance of the edit.",
+        "Added the minimum_cost_lower_bound invariant that provides the theoretical lower bound and the justification for the algorithm's optimality."
+      ],
+      "innovation_reason": "Transforms a feasibility problem into a proper optimization problem, substantially raising the intellectual demand.",
+      "difficulty_reason": "Requires the solver to devise a method that certifies no smaller cost exists, often needing a proof of completeness over all possible factorizations."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "seed_has_upgrade_potential",
+      "selection_reason": "种子题为决策型问题，存在明确的操作序列解对象；标准解法仅判断可行性，未构造路径，不属于顺手回溯；可从最少步数或字典序等定义规范，升级为构造规范解，核心算法将显著区别于原判定逻辑。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题 schema：output_summary 为 YES/NO，objective 为 decision；invariant 中 reachable_difference_lattice 揭示解的存在性条件但未给出构造；种子题属性满足规则 eligibility 中 required_seed_properties 且不违反 forbidden_seed_properties。",
+        "feedback": "规划时需确保规范定义（如最小步数）进入 main constraint，避免退化为后处理或任意方案排序。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "obstruction_provable",
+      "selection_reason": "原题无解条件基于格不包含关系，可表示为局部模检查证据。输出冲突证据可以设计为可验证的模条件或基表示，满足规则对局部证据的要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题 invariant 指出可达向量集为 A 加上由 C 及其旋转生成的格。因此无解等价于差向量 D 不在该格中。可以输出证据：格基 (C, Rot90(C)) 以及 D 的坐标，并附一个模数 m 检查不可达性（如 gcd 条件）。标准解已在 O(1) 内计算可达性，构造证据同样高效。",
+        "feedback": "规划阶段需设计具体的冲突证据结构，确保检查仅需简单算术运算，不依赖全局求解。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "unbounded_solution_space",
+      "selection_reason": "种子题的操作序列可以无限长，导致解空间无限，不满足计数题对‘解空间有限’的要求。去重规则也难以定义，无法清晰区分不同解，因此不适合改为计数题。",
+      "risk_tags": [
+        "unbounded_solution_space",
+        "ill_defined_deduplication"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题允许无限次执行旋转和加法操作，序列长度无上限，解空间无限。规则明确要求解空间有限且去重规则清晰，但该题无法满足。例如，可以不断加C形成无限长的序列都最终通过旋转到达B，计数对象无法有限化。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题的核心是固定的向量变换组合问题，操作顺序虽可任意，但本质是允许自由选择而非不可控的扰动。不存在原生资源波动、对抗性顺序或局部选择差异，无法自然构造出有意义的最坏情况保底优化。强行引入扰动模型将依赖外部故事背景，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中 “Operations could be performed in any order any number of times” 仅表示操作者可自由编排顺序，并非存在一个不可控的扰动源。seed schema 中的 invariant (reachable_difference_lattice) 表明问题的可解性完全由线性组合决定，与顺序无关，没有内生不确定性。规则要求的 ‘原生扰动来源’ (如顺序不确定导致最坏情况) 在此题中无法自然提取，强制改造会沦为 ‘凭背景硬造对手’ 的负面案例。",
+        "feedback": "该种子题的结构过于确定，缺乏可放大的扰动维度，不适合应用此规则。建议寻找原题本身就带有随机顺序、资源上下限或受限于局部信息的问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_parameter",
+      "selection_reason": "原题是纯判定问题，输入向量A、B、C均为固定给定，不存在随某个参数单调变化的可行性结构，无法自然引入临界阈值；强行参数化只能在外层机械二分，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目输入结构（schema_context.seed_schema.input_structure.components）明确A、B、C均为坐标元组，无待优化参数。核心约束（core_constraints.constraints）只允许旋转和加固定C，无阈值相关条件。可行性仅依赖坐标间整除性，不存在阈值变化改变可行区域的结构。规则要求‘阈值必须进入核心约束’，但原题无可参数化的约束成分。",
+        "feedback": "该规则不适用于此种子题，因缺少自然临界参数。若强行扩展只会产生机械二分包装，创新性不足且违反redline。建议寻找具有容量、时限、数量等单调性参数的判定题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "missing_second_objective",
+      "selection_reason": "种子题为二元决策问题，无天然优化指标，无法定义与原始目标冲突的第二评价指标。所有可达性判断不涉及任何代价或权衡。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective: type 'decision', description '判断是否可以通过旋转和向量加法操作将初始向量变换为目标向量'; core_constraints仅包含allowed_operations; invariant描述可达性基于格点和旋转陪集，无任何代价或冲突指标。全局约束和规则声明要求必须存在自然且冲突的第二指标，此种子题不具备。",
+        "feedback": "该规则不适用于此种子题，因为找不到任何可自然引入且与原目标冲突的第二指标。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "valid_inverse_target_with_natural_edit",
+      "selection_reason": "原题的可达性结果（YES/NO对应的布尔性质）可明确作为反向目标；固定操作向量C的坐标构成自然修改自由度；要求最小修改量能产生实质性优化复杂度，符合规则的正向求解逆设计要求。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题输出为判定可达性，其不变式‘reachable_difference_lattice’精确刻画了目标成立的条件，可直接转化为反向设计中的目标约束；输入结构中C为固定操作向量，将其坐标修改为设计变量与核心操作‘加C’直接相关，修改来自原始对象结构；通过helpers的‘minimality_or_certificate_lock’可施加最小修改证明责任，避免平凡解。",
+        "feedback": "规则应用性强，反向目标与修改操作均直连原题核心。但须警惕：若规划仅引入参数搜索而未改变算法本质，可能沦为低创新变体；建议在后续阶段强调最小性证明的算法深度，以降低‘shared_core_risk’。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_decomposable_components",
+      "selection_reason": "原题不存在可分解的局部单元，它是一个完全单一的向量可达性决策问题；所有操作作用于同一向量，无法自然提取出独立求解再耦合的子结构。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "missing_local_units"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "输入结构仅包含三个全局向量 A, B, C，无任何局部单元。核心约束由单一操作集构成，目标为整体可达性。不变量描述整体格点结构，无组件划分。因此，无法满足规则所需“原题存在可分解的局部单元”和“局部单元之间能通过共享资源、总量或全局选择自然耦合”的种子属性。",
+        "feedback": "该规则要求原题有多个可独立求解的组件，但本题本质是单一空间内的可达性检验，无法拆解为独立单元再进行全局耦合。规则不适用，建议更换种子题或选择其他规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_adversary",
+      "selection_reason": "原题操作为单人连续决策，无对手；引入对抗方需硬造背景与目标，违反‘不能凭背景硬造玩家’红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述‘Gerald was given a task: to get vector B out of vector A’，operations 由 Gerald 一人执行；目标仅判断可行性，无对抗成分；核心不变量为可达晶格，无博弈状态转移下的策略语义。",
+        "feedback": "该种子题不具有自然转化为双人博弈的操作基础。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "required_local_structure_absent",
+      "selection_reason": "种子题是关于向量旋转和加法的可达性判断，核心对象为单个向量，没有路径、区间或子树等局部结构，无法自然形成可组合的对象族，强行扩展只能得到对多个独立对象重复原判断，不符合全局覆盖、割或支配的变换意图。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要中操作仅涉及单个向量A到B的变换，输入为三个向量坐标；schema无任何路径或区间定义；invariant描述的是整数格点性质，未产生可覆盖的局部对象族；规则正例要求“把求一条路径的性质改成选择最少点覆盖所有给定路径”，种子题无对应结构。",
+        "feedback": "建议选择具有明显路径、区间或子树结构的问题作为种子，例如图论、序列或树上问题，方可应用局部到全局的覆盖扩展。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是判断性问题（YES/NO），不是计数题，不存在明确有限的计数对象，更谈不上自然权重或统计量，无法扩展为带权或分布计数。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'decision'，描述为判断是否可达；原题摘要及样例均只要求输出 YES/NO，没有计数总数或任何统计量。规则 eligibility.required_seed_properties 明确要求“原题已经有明确有限的计数对象”，但此题完全不满足。",
+        "feedback": "请选择一道基础为计数问题的种子题，例如计算方案总数、路径数等，才能应用本规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_has_upgrade_potential",
+      "message": "种子题为决策型问题，存在明确的操作序列解对象；标准解法仅判断可行性，未构造路径，不属于顺手回溯；可从最少步数或字典序等定义规范，升级为构造规范解，核心算法将显著区别于原判定逻辑。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题 schema：output_summary 为 YES/NO，objective 为 decision；invariant 中 reachable_difference_lattice 揭示解的存在性条件但未给出构造；种子题属性满足规则 eligibility 中 required_seed_properties 且不违反 forbidden_seed_properties。",
+        "feedback": "规划时需确保规范定义（如最小步数）进入 main constraint，避免退化为后处理或任意方案排序。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "obstruction_provable",
+      "message": "原题无解条件基于格不包含关系，可表示为局部模检查证据。输出冲突证据可以设计为可验证的模条件或基表示，满足规则对局部证据的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题 invariant 指出可达向量集为 A 加上由 C 及其旋转生成的格。因此无解等价于差向量 D 不在该格中。可以输出证据：格基 (C, Rot90(C)) 以及 D 的坐标，并附一个模数 m 检查不可达性（如 gcd 条件）。标准解已在 O(1) 内计算可达性，构造证据同样高效。",
+        "feedback": "规划阶段需设计具体的冲突证据结构，确保检查仅需简单算术运算，不依赖全局求解。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "unbounded_solution_space",
+      "message": "种子题的操作序列可以无限长，导致解空间无限，不满足计数题对‘解空间有限’的要求。去重规则也难以定义，无法清晰区分不同解，因此不适合改为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.0,
+        "risk_tags": [
+          "unbounded_solution_space",
+          "ill_defined_deduplication"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题允许无限次执行旋转和加法操作，序列长度无上限，解空间无限。规则明确要求解空间有限且去重规则清晰，但该题无法满足。例如，可以不断加C形成无限长的序列都最终通过旋转到达B，计数对象无法有限化。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题的核心是固定的向量变换组合问题，操作顺序虽可任意，但本质是允许自由选择而非不可控的扰动。不存在原生资源波动、对抗性顺序或局部选择差异，无法自然构造出有意义的最坏情况保底优化。强行引入扰动模型将依赖外部故事背景，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中 “Operations could be performed in any order any number of times” 仅表示操作者可自由编排顺序，并非存在一个不可控的扰动源。seed schema 中的 invariant (reachable_difference_lattice) 表明问题的可解性完全由线性组合决定，与顺序无关，没有内生不确定性。规则要求的 ‘原生扰动来源’ (如顺序不确定导致最坏情况) 在此题中无法自然提取，强制改造会沦为 ‘凭背景硬造对手’ 的负面案例。",
+        "feedback": "该种子题的结构过于确定，缺乏可放大的扰动维度，不适合应用此规则。建议寻找原题本身就带有随机顺序、资源上下限或受限于局部信息的问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_parameter",
+      "message": "原题是纯判定问题，输入向量A、B、C均为固定给定，不存在随某个参数单调变化的可行性结构，无法自然引入临界阈值；强行参数化只能在外层机械二分，违反规则红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目输入结构（schema_context.seed_schema.input_structure.components）明确A、B、C均为坐标元组，无待优化参数。核心约束（core_constraints.constraints）只允许旋转和加固定C，无阈值相关条件。可行性仅依赖坐标间整除性，不存在阈值变化改变可行区域的结构。规则要求‘阈值必须进入核心约束’，但原题无可参数化的约束成分。",
+        "feedback": "该规则不适用于此种子题，因缺少自然临界参数。若强行扩展只会产生机械二分包装，创新性不足且违反redline。建议寻找具有容量、时限、数量等单调性参数的判定题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_second_objective",
+      "message": "种子题为二元决策问题，无天然优化指标，无法定义与原始目标冲突的第二评价指标。所有可达性判断不涉及任何代价或权衡。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective: type 'decision', description '判断是否可以通过旋转和向量加法操作将初始向量变换为目标向量'; core_constraints仅包含allowed_operations; invariant描述可达性基于格点和旋转陪集，无任何代价或冲突指标。全局约束和规则声明要求必须存在自然且冲突的第二指标，此种子题不具备。",
+        "feedback": "该规则不适用于此种子题，因为找不到任何可自然引入且与原目标冲突的第二指标。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_inverse_target_with_natural_edit",
+      "message": "原题的可达性结果（YES/NO对应的布尔性质）可明确作为反向目标；固定操作向量C的坐标构成自然修改自由度；要求最小修改量能产生实质性优化复杂度，符合规则的正向求解逆设计要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题输出为判定可达性，其不变式‘reachable_difference_lattice’精确刻画了目标成立的条件，可直接转化为反向设计中的目标约束；输入结构中C为固定操作向量，将其坐标修改为设计变量与核心操作‘加C’直接相关，修改来自原始对象结构；通过helpers的‘minimality_or_certificate_lock’可施加最小修改证明责任，避免平凡解。",
+        "feedback": "规则应用性强，反向目标与修改操作均直连原题核心。但须警惕：若规划仅引入参数搜索而未改变算法本质，可能沦为低创新变体；建议在后续阶段强调最小性证明的算法深度，以降低‘shared_core_risk’。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_components",
+      "message": "原题不存在可分解的局部单元，它是一个完全单一的向量可达性决策问题；所有操作作用于同一向量，无法自然提取出独立求解再耦合的子结构。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "missing_local_units"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "输入结构仅包含三个全局向量 A, B, C，无任何局部单元。核心约束由单一操作集构成，目标为整体可达性。不变量描述整体格点结构，无组件划分。因此，无法满足规则所需“原题存在可分解的局部单元”和“局部单元之间能通过共享资源、总量或全局选择自然耦合”的种子属性。",
+        "feedback": "该规则要求原题有多个可独立求解的组件，但本题本质是单一空间内的可达性检验，无法拆解为独立单元再进行全局耦合。规则不适用，建议更换种子题或选择其他规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversary",
+      "message": "原题操作为单人连续决策，无对手；引入对抗方需硬造背景与目标，违反‘不能凭背景硬造玩家’红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述‘Gerald was given a task: to get vector B out of vector A’，operations 由 Gerald 一人执行；目标仅判断可行性，无对抗成分；核心不变量为可达晶格，无博弈状态转移下的策略语义。",
+        "feedback": "该种子题不具有自然转化为双人博弈的操作基础。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "required_local_structure_absent",
+      "message": "种子题是关于向量旋转和加法的可达性判断，核心对象为单个向量，没有路径、区间或子树等局部结构，无法自然形成可组合的对象族，强行扩展只能得到对多个独立对象重复原判断，不符合全局覆盖、割或支配的变换意图。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要中操作仅涉及单个向量A到B的变换，输入为三个向量坐标；schema无任何路径或区间定义；invariant描述的是整数格点性质，未产生可覆盖的局部对象族；规则正例要求“把求一条路径的性质改成选择最少点覆盖所有给定路径”，种子题无对应结构。",
+        "feedback": "建议选择具有明显路径、区间或子树结构的问题作为种子，例如图论、序列或树上问题，方可应用局部到全局的覆盖扩展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是判断性问题（YES/NO），不是计数题，不存在明确有限的计数对象，更谈不上自然权重或统计量，无法扩展为带权或分布计数。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'decision'，描述为判断是否可达；原题摘要及样例均只要求输出 YES/NO，没有计数总数或任何统计量。规则 eligibility.required_seed_properties 明确要求“原题已经有明确有限的计数对象”，但此题完全不满足。",
+        "feedback": "请选择一道基础为计数问题的种子题，例如计算方案总数、路径数等，才能应用本规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将正向判定题转换为反向最小修改设计题，三个 helper 均在 schema 中落实，且目标轴 C、O、V 均发生实质性变化。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "1. target_result_binding: candidate_schema 的 core_constraints 添加 reachability_requirement 约束，objective 改为最小化成本确保可达，将原题结果（可达性）绑定为新题目标。2. edit_operation_contract: core_constraints 定义 editing_contract（选择 D，C′=C+D，成本曼哈顿距离），invariant 的 lattice_reachability_with_modified_C 解释编辑如何影响可达性。3. minimality_or_certificate_lock: objective 要求最小化修改成本，invariant 的 minimum_cost_lower_bound 提供最优性证明。applied_helpers 中每个 helper 均列出具体 schema 改动。changed_axes 标明 C、O、V 均被修改。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确要求最小修改成本，修改操作限定为调整原题中的核心向量 C，反向目标绑定于原题可达性结果，三个 helper 的语义均在题面中得到体现。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：“调整方式为选择一个整数向量 D=(dx,dy)，将原路线 C 改为 C'= C + D”（edit_operation_contract），“目标是通过多次旋转和乘坐调整后的巴士，从 A 到达 B”（target_result_binding），“请计算满足要求的最小调整成本”（minimality_or_certificate_lock）。这些内容分别对应 helper 要求的可编辑操作定义、目标绑定和最小性输出。修改操作源自原题对象 C，反向目标来自原题可达性判断，且输出明确要求最小值，符合规则 hard_checks。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "The seed problem has a clear reachability goal and natural operation parameters (C) that can be modified, making it a strong candidate for inverse design under the theme.",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "最优巴士路线调整",
+    "description": "社区为方便住户出行，开通了一条巴士接驳线路，该线路用一个二维向量 $C$ 表示，每次乘坐巴士会使住户的当前位置增加 $C$。同时，住户可以在任何时刻原地顺时针旋转 90 度（即 $(x,y)$ 变为 $(y,-x)$）。\n\n现在，社区计划对巴士路线进行微调，以更好地服务住户。调整方式为选择一个整数向量 $D=(dx,dy)$，将原路线 $C$ 改为 $C' = C + D$。调整所需的成本定义为曼哈顿距离 $|dx| + |dy|$。\n\n已知住户的初始位置 $A$ 和目标位置 $B$（社区服务中心），目标是通过多次旋转和乘坐调整后的巴士，从 $A$ 到达 $B$。可以证明，总存在一种调整方案使得住户能够到达目标。\n\n请计算满足要求的最小调整成本（非负整数）。",
+    "input_format": "输入包含三行，每行两个整数，用空格分隔：\n第一行是住户初始位置的坐标 $x_A, y_A$。\n第二行是服务中心位置的坐标 $x_B, y_B$。\n第三行是原巴士路线向量的坐标 $x_C, y_C$。",
+    "output_format": "输出一个非负整数，表示使得住户能够到达服务中心所需的最小调整成本。",
+    "constraints": [
+      "所有坐标均为整数，绝对值不超过 $10^8$。",
+      "时间限制：1.0 秒",
+      "空间限制：256.0 MB"
+    ],
+    "samples": [
+      {
+        "input": "2 2\n3 3\n1 0",
+        "output": "1",
+        "explanation": "将原路线从 $(1,0)$ 调整为 $(1,1)$，成本为 $|1-1|+|1-0|=1$。住户从 $(2,2)$ 出发，直接乘坐一次巴士（无需旋转）即可到达 $(3,3)$。"
+      },
+      {
+        "input": "0 0\n1 1\n0 1",
+        "output": "1",
+        "explanation": "将原路线从 $(0,1)$ 调整为 $(1,1)$，成本为 $|1-0|+|1-1|=1$。住户从 $(0,0)$ 出发，乘坐一次巴士即可到达 $(1,1)$。"
+      },
+      {
+        "input": "0 0\n0 0\n5 5",
+        "output": "0",
+        "explanation": "起点与终点重合，无需调整路线即可到达（只需不移动），成本为 $0$。"
+      }
+    ],
+    "notes": "曼哈顿距离定义为 $|dx|+|dy|$。若某个旋转状态下住户位置已等于服务中心，则无需调整即可到达，此时答案为 $0$。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_2a6e96230e7d_community_services_20260529_111616",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

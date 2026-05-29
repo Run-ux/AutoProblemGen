@@ -1,0 +1,1222 @@
+{
+  "problem_id": "campoo_wardrobe_counting_v1",
+  "source_problem_ids": [
+    "taco_codeforces_65e2144e4f0c"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_65e2144e4f0c",
+      "E2",
+      "codeforces",
+      "The only difference with E1 is the question of the problem. Vlad built a maze out of $n$ rooms and $n-1$ bidirectional corridors. From any room $u$ any other room $v$ can be reached through a sequence of corridors. Th...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "O轴从最小化目标变为计数；C轴新增模数约束、方案等价明确定义，并调整状态转移约束以支持计数；V轴由原来的同步步进不变性转变为DP状态划分完整性、无重复计数的计数不变性。",
+    "summary": "输出改为计数值，核心约束增加模数取余与方案区分规则，不变量重构为计数正确性保证。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3864,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3864,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.3953,
+      "O": 0.5835,
+      "V": 0.6095
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.3953,
+      "objective_type_distance": 0.6331,
+      "objective_text_distance": 0.509,
+      "invariant_match_distance": 0.6095
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_mod",
+    "description": "统计有多少种不同的选择守卫子集的方式，使得子集大小为全局最小可行大小，并保证抓住小明。输出该数量对 10^9+7 取模。",
+    "target": "smallest_feasible_subset_count_mod",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "基于种子题的单目标最小子集结构，引入天然冲突的第二指标（如部署成本）并输出非支配前沿，能够彻底重塑题目轴线，避免退化为浅改或串联任务。修订历史表明该规则已成功落地并产生高发散度，当前仅需修复样例质量问题，风险可控且创新度最高。；创新度判断：将输出从单整数（最小朋友数）改为一系列 (朋友数, 成本) 非支配对；额外引入成本约束与支配关系，迫使解法同时考虑两个维度，根本改变了目标、核心约束与状态结构。；难度判断：算法必须在朋友选择过程中同时追踪两个冲突指标，维护非支配前沿，避免独立优化后拼接，大幅提高动态规划或贪心剪枝的设计与证明难度。；风险判断：主要风险在于第二指标是否与原有目标形成真实冲突以及样例是否可靠；通过仔细设计每个叶子/节点的部署成本，并辅以充分、自洽的样例可有效控制，当前修订已明确样例修正方向。",
+  "new_schema_snapshot": {
+    "problem_id": "campoo_wardrobe_counting_v1",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "parameters",
+          "role_description": "number of rooms n and number of friends k",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "friend_positions",
+          "role_description": "distinct rooms where friends start (2..n)",
+          "type": "array",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 2,
+            "max": null
+          },
+          "properties": {
+            "distinct": true
+          }
+        },
+        {
+          "role": "tree_edges",
+          "role_description": "n-1 edges forming a tree",
+          "type": "tree",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": null
+          },
+          "properties": {
+            "connected": true,
+            "acyclic": true,
+            "simple": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "tree_structure",
+          "description": "房间和走廊构成树：n个节点，n-1条边，连通，无环。",
+          "formal": "G=(V,E) is a tree, |V|=n, |E|=n-1, connected.",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "game_rules",
+          "description": "小明从1号房间出发，朋友从给定位置出发；同时移动，每步可沿一条边移动或不动；小明到达除1外的叶节点则获胜；若朋友在任何房间或走廊与小明相遇（包括同时交换边），则朋友获胜。",
+          "formal": "Adversarial pursuit-evasion on tree with simultaneous moves; capture if occupied same node or traversed same edge in opposite directions at same step before Vlad reaches a leaf ≠1.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "friend_positions",
+          "description": "k个朋友初始位于2到n之间互不相同的房间。",
+          "formal": "Positions {x_i} ⊂ {2,3,...,n}, x_i distinct.",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "feasible_subset_definition",
+          "description": "一个守卫子集S可行当且仅当S中的朋友能够通过移动确保抓住小明（小明必败）。计数对象为所有可行子集中大小最小的那些子集。两个子集不同当且仅当包含的守卫索引集合不同。",
+          "formal": "A subset S of friends is feasible if those friends can guarantee capture. We count the number of smallest feasible subsets. Two subsets are distinct if their element sets differ.",
+          "source_sections": [
+            "objective",
+            "new"
+          ]
+        },
+        {
+          "name": "modulo_constraint",
+          "description": "由于答案可能很大，输出方案数对 1,000,000,007 (10^9+7) 取模的结果。",
+          "formal": "Answer = (number_of_smallest_feasible_subsets) mod 1000000007.",
+          "source_sections": [
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_mod",
+      "description": "统计有多少种不同的选择守卫子集的方式，使得子集大小为全局最小可行大小，并保证抓住小明。输出该数量对 10^9+7 取模。",
+      "target": "smallest_feasible_subset_count_mod",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "dp_state_integrity",
+          "description": "树形DP过程中，每个节点维护的状态 (min_guards, ways_mod) 严格刻画以该节点为根的子树内，覆盖所有叶子路径所需的最小守卫数及达到该数的方案数（模MOD），状态转移保证无重复、无遗漏。",
+          "properties": {},
+          "evidence_source": "new_solver_core"
+        },
+        {
+          "name": "counting_correctness",
+          "description": "最终答案由根节点的DP状态导出，并考虑全局约束；不存在未计入的可行方案，所有方案均满足可行性，且每个最小可行子集恰好被统计一次。",
+          "properties": {},
+          "evidence_source": "new_proof_obligation"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium_hard"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3312，落地轴=C, O, V。"
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "从朋友位置和根同时BFS，模拟追逃过程，贪心地标记必须留下的朋友，统计最小必要人数。",
+    "reusable_subroutines": "树的邻接表构建、BFS遍历、距离计算、叶节点判断。",
+    "new_solver_core": "采用树形DP，自底向上计算每个节点捕获所需的最小守卫数及对应方案数（取模）。对于每个节点，考虑儿子节点的最小守卫汇总、子树内是否存在朋友、是否被已有守卫覆盖等，设计状态转移方程并计数。",
+    "new_proof_obligation": "证明DP状态的定义能完整覆盖所有最小可行子集且不重不漏；证明取模下的计数等价于真实计数值；证明状态转移的正确性，尤其是在分支合并时方案数相乘/相加的合理性。",
+    "why_direct_reuse_fails": "原题解只关注最小人数本身，不记录方案数，且贪心BFS难以扩展为计数，必须重新设计为基于结构化DP的计数方法。"
+  },
+  "anti_shallow_rationale": "新题并非简单在输出端加模数，而是彻底改变求解目标。原题只需要输出一个整数大小，新题需要计算所有达到该大小的子集个数，这要求解法的核心从贪心/判定改为带计数的DP，并引入新的状态定义、转移方程和正确性证明，算法复杂度也由O(n)变为O(n)但常数更大，同时要求处理大数取模，难度显著提升，不是换皮。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "必须明确定义计数对象和等价规则，避免歧义。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints增加feasible_subset_definition约束，明确什么是可行子集、如何区分不同子集。",
+        "objective改为统计最小可行子集的数量。",
+        "invariant中强调DP状态覆盖所有最小可行子集且无重复。"
+      ],
+      "innovation_reason": "将原题的单一最优值输出提升为多方案计数，要求选手思考解空间的结构。",
+      "difficulty_reason": "增加方案去重和计数取模，需要更精细的状态设计，提高实现难度。"
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "必须将解空间拆分为可独立贡献的子树计数单元，才能用DP聚合。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints中通过DP树形结构隐式定义拆分方式，每个节点对应一个计数单元。",
+        "invariant引入dp_state_integrity，规定每个节点维护最小守卫与方案数，保证上下层结合时不重不漏。"
+      ],
+      "innovation_reason": "将原本的BFS全局模拟转化为基于树的结构化计数，需要原创DP设计。",
+      "difficulty_reason": "要求选手将问题分解为子树子问题并设计合适的聚合操作，思维难度高。"
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "计数必须成为主要求解目标，而非附带统计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "objective彻底替换为计数目标，不再保留原最小化目标。",
+        "core_constraints中的模数约束和方案定义都是为了服务计数目标。"
+      ],
+      "innovation_reason": "算法不能复用原判最小值的逻辑，必须重构为以计数为主轴的流程。",
+      "difficulty_reason": "要求选手同时保证最小化与计数的双重正确性，易错点增多。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_forbidden_or_low_differential",
+      "selection_reason": "原题标准解法本身已经维护了满足条件的子集（needed集合），将答案从子集大小改为要求输出该子集属于'顺手回溯'，违反规则的forbidden_seed_properties；且从'输出大小'升级为'输出规范解'难以迫使核心状态转移发生实质性变化，规范顺序要求容易退化为表面修改。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "标准解法中，needed字典记录了必须保留的朋友索引，最终答案即为len(needed)。将此集合作为方案输出无需改变任何核心搜索逻辑或约束优先级，仅需在返回前打印集合。规则明确禁止'原解只要顺手回溯就能拿到方案'。且原题目标为最小化值，不是构造解，改动到输出解但验证仍依赖原有解法结构，差异不足。",
+        "feedback": "该种子题不适合canonical_witness变化。若强行要求字典序最小等规范，可能仍需依赖原有的needed集合，且规范施加于输出格式而非主约束，容易掉入helper红线的'只加字典序描述'。建议寻找天然需要显式构造方案且原解未保留中间方案的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "certifiable_obstruction_potential",
+      "selection_reason": "原题无解情形（输出-1）实质对应Vlad能到达某个未被朋友及时封锁的叶子，该叶子及其路径上的距离不等式可构造成可局部检查的冲突证据，满足规则对失败证据的要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题例中存在-1输出（第一组数据），本质是所有朋友都无法阻止Vlad到达某叶子；标准解法通过BFS同步展开判断，可通过输出具体叶子索引与路径上每步朋友到达时间大于Vlad到达时间的条件，形成可逐点验证的证据对象，正例符合'输出一个最小冲突集合作为做不到的证据'。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "finite_clean_dedup",
+      "selection_reason": "原题朋友集合的子集是有限的，且不同子集天然去重，可计数最小大小子集个数。解空间和去重规则清晰，满足计数化要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema_defines_friends_as_distinct_indices; objective_min_subset_size; tree_structure_finite_vertices; invariant_synchronized_step ensures game determinism; subproblem optimal size can be counted.",
+        "feedback": "规则应用基本可行，但需在规划阶段明确计数对象为‘大小等于最小必要值的朋友子集总数’，并设计取模与单元拆分逻辑。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题已经是保底优化问题，目标是求最小朋友子集以保证捕获，不存在可从存在性转化为保底优化的空间；树上的同步移动没有顺序不确定、资源波动或局部选择差异，无法提炼出合规的扰动模型；强行引入扰动将违反“不能只凭背景硬造对手”和“扰动必须来自原题本身”的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 minimize_value，描述为 “minimum size of a subset of friends that guarantees capturing the opponent”；核心约束中移动为 simultaneous_movement 且无不确定性；规则 eligibility 要求 “原题里本来就有顺序不确定、资源波动或局部选择差异”，该题不具备。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.4,
+      "reason_code": "seed_not_detection",
+      "selection_reason": "种子题已经是优化问题（求最小朋友数），而非判定或可行性问题；规则要求从判定/可行性扩展，种子类型不匹配，强行应用只会产生微调而非真正的阈值升级。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为 minimize_value（schema.objective.type），描述为“minimum size of a subset of friends”，原题明确指出是求最小子集大小，不是二元判定。规则 eligibility.required_seed_properties 要求原题具有“可行性”随参数的单调性，但种子题本身即是优化，缺乏从判定到优化的自然升级空间。",
+        "feedback": "建议选择一道纯粹的判定题（如原 E1）作为种子，再应用本规则生成阈值优化题，以避免语义错配和新颖性不足。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "NATURAL_TRADEOFF_FOUND",
+      "selection_reason": "原题明确指定每单位时间参与者移动一步，捕获时间作为自然的第二评价指标；更少的朋友通常需要更远距离拦截，导致捕获时间增加，两指标存在真实冲突，无法同时独立最优。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题描述：'For one unit of time, each participant of the game can go through one corridor.' 这提供了时间维度的基础。约束集中定义了同步移动（simultaneous_movement），目标为最小化朋友子集大小（minimize_value）。引入捕获时间可直接从该时间机制导出，属于游戏对象的自然属性。规则声明要求'第二指标必须来自原题对象的自然属性'且'两个指标之间存在真实冲突'，捕获时间符合此条件。",
+        "feedback": "建议将捕获时间明确定义为从游戏开始到朋友首次捕获 Vlad 的最小步数（最坏情况），并确保支配关系定义为(朋友数更少，捕获时间更短)支配另一个解，从而生成帕累托前沿。需在状态扩展中将时间维度耦合进距离计算，避免退化为独立最优。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "forward_to_inverse_applicable",
+      "selection_reason": "原题输出为确定的最小朋友子集大小（或-1），可作为反向目标指定；树结构（顶点与边）和初始朋友位置均可自由构造，设计空间充分；可利用原题解法验证任意构造是否满足目标值，具备可验证性；可通过最小化朋友总数等约束自然引入最小性责任。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 的 target 为 subset_size，输出为整数或 -1；core_constraints 中 tree_structure 定义了图的类型，friends_initial_positions 定义了朋友位置约束，两者均可自由选择，满足设计自由度；standard_solution_code 提供了高效的验证手段；input_structure 的 components 包含朋友位置数组和树边，均可由设计者决定。",
+        "feedback": "符合反向设计资格：原题结果可作为反向目标，且存在自然的设计自由度，不违反任何红线。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "rule_not_applicable",
+      "selection_reason": "种子题为树上的单局追逃游戏，全局约束天然结合，不存在可独立处理的局部单元，无法分解后通过共享资源耦合。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述中游戏规则为整体同时移动，覆盖条件基于全局距离，算法需整体BFS判断，无局部独立求解步骤。规则要求原题存在可分解局部单元，如positive示例‘若干区间原可独立选点’，但本题无此结构。",
+        "feedback": "建议更换种子题，选择具有明显独立组件的题目，如多阶段决策、多物体独立问题等。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题已经是双方博弈（Vlad与朋友们同时移动追逃），并非单人确定性过程，不符合规则 'deterministic_process_to_game_outcome' 要求的种子属性“单人确定性选择或操作过程”。将同时移动改为轮流移动无法形成从单人到双方的自然转化，容易落为对原博弈的非本质改动。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中明确提到 'Vlad starts... and wins if... Friends win if... All participants move at the same time.' 且目标是最小化保证捕获的朋友子集，这意味着原题已经是一个双方博弈优化问题，并非单人过程。规则summary要求“把单人确定性选择或操作过程扩展为双方最优行动”，helpers要求行动必须来自原题已有操作，但原题操作已是双方同时选择，转化为轮流将改变博弈本质。",
+        "feedback": "该种子题不适合此规则，建议选择具备明显单人决策过程（如最短路径、最优分配）且操作可拆分为轮流的其他种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_already_global",
+      "selection_reason": "种子题本身就是全局覆盖问题（选择最小朋友子集覆盖所有根到叶子的路径），不具备从单一局部对象扩展到全局覆盖的起点，强行应用规则只会产生同义反复或表面变化。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标（objective）描述为‘minimum size of a subset of friends that guarantees capturing the opponent’，这已经是定义在对象族（所有可能的逃逸路径）上的全局覆盖/拦截问题；约束中并没有分离出单一路径或子树作为独立求解单元，所有朋友的位置和移动都服务于整体拦截任务。因此规则要求的‘从单路径、单区间或单子树性质扩展为覆盖、割、支配’的前置条件不成立。",
+        "feedback": "建议寻找真正以单一路径、区间或子树为核心求解对象的种子题（例如求到叶子的最长路径、子树权值和等），再套用本规则生成全局覆盖变体。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是组合优化问题（求最小朋友子集大小），而非计数题，不存在明确有限的计数对象，更无自然权重、等级或统计量。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 objective 类型为 minimize_value，目标是最小子集大小；全题描述围绕“最小数量”而非计数；原题 E2 要求输出最小朋友数或 -1，与计数无关；schema 中无任何计数对象定义。",
+        "feedback": "规则要求原题已有明确有限的计数对象且对象上存在自然权重，但当前种子题是优化问题，无法扩展为带权计数或分布计数。请重新选择计数类种子题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "seed_forbidden_or_low_differential",
+      "message": "原题标准解法本身已经维护了满足条件的子集（needed集合），将答案从子集大小改为要求输出该子集属于'顺手回溯'，违反规则的forbidden_seed_properties；且从'输出大小'升级为'输出规范解'难以迫使核心状态转移发生实质性变化，规范顺序要求容易退化为表面修改。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "标准解法中，needed字典记录了必须保留的朋友索引，最终答案即为len(needed)。将此集合作为方案输出无需改变任何核心搜索逻辑或约束优先级，仅需在返回前打印集合。规则明确禁止'原解只要顺手回溯就能拿到方案'。且原题目标为最小化值，不是构造解，改动到输出解但验证仍依赖原有解法结构，差异不足。",
+        "feedback": "该种子题不适合canonical_witness变化。若强行要求字典序最小等规范，可能仍需依赖原有的needed集合，且规范施加于输出格式而非主约束，容易掉入helper红线的'只加字典序描述'。建议寻找天然需要显式构造方案且原解未保留中间方案的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "certifiable_obstruction_potential",
+      "message": "原题无解情形（输出-1）实质对应Vlad能到达某个未被朋友及时封锁的叶子，该叶子及其路径上的距离不等式可构造成可局部检查的冲突证据，满足规则对失败证据的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题例中存在-1输出（第一组数据），本质是所有朋友都无法阻止Vlad到达某叶子；标准解法通过BFS同步展开判断，可通过输出具体叶子索引与路径上每步朋友到达时间大于Vlad到达时间的条件，形成可逐点验证的证据对象，正例符合'输出一个最小冲突集合作为做不到的证据'。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "finite_clean_dedup",
+      "message": "原题朋友集合的子集是有限的，且不同子集天然去重，可计数最小大小子集个数。解空间和去重规则清晰，满足计数化要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema_defines_friends_as_distinct_indices; objective_min_subset_size; tree_structure_finite_vertices; invariant_synchronized_step ensures game determinism; subproblem optimal size can be counted.",
+        "feedback": "规则应用基本可行，但需在规划阶段明确计数对象为‘大小等于最小必要值的朋友子集总数’，并设计取模与单元拆分逻辑。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题已经是保底优化问题，目标是求最小朋友子集以保证捕获，不存在可从存在性转化为保底优化的空间；树上的同步移动没有顺序不确定、资源波动或局部选择差异，无法提炼出合规的扰动模型；强行引入扰动将违反“不能只凭背景硬造对手”和“扰动必须来自原题本身”的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 minimize_value，描述为 “minimum size of a subset of friends that guarantees capturing the opponent”；核心约束中移动为 simultaneous_movement 且无不确定性；规则 eligibility 要求 “原题里本来就有顺序不确定、资源波动或局部选择差异”，该题不具备。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "seed_not_detection",
+      "message": "种子题已经是优化问题（求最小朋友数），而非判定或可行性问题；规则要求从判定/可行性扩展，种子类型不匹配，强行应用只会产生微调而非真正的阈值升级。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.4,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为 minimize_value（schema.objective.type），描述为“minimum size of a subset of friends”，原题明确指出是求最小子集大小，不是二元判定。规则 eligibility.required_seed_properties 要求原题具有“可行性”随参数的单调性，但种子题本身即是优化，缺乏从判定到优化的自然升级空间。",
+        "feedback": "建议选择一道纯粹的判定题（如原 E1）作为种子，再应用本规则生成阈值优化题，以避免语义错配和新颖性不足。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "NATURAL_TRADEOFF_FOUND",
+      "message": "原题明确指定每单位时间参与者移动一步，捕获时间作为自然的第二评价指标；更少的朋友通常需要更远距离拦截，导致捕获时间增加，两指标存在真实冲突，无法同时独立最优。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题描述：'For one unit of time, each participant of the game can go through one corridor.' 这提供了时间维度的基础。约束集中定义了同步移动（simultaneous_movement），目标为最小化朋友子集大小（minimize_value）。引入捕获时间可直接从该时间机制导出，属于游戏对象的自然属性。规则声明要求'第二指标必须来自原题对象的自然属性'且'两个指标之间存在真实冲突'，捕获时间符合此条件。",
+        "feedback": "建议将捕获时间明确定义为从游戏开始到朋友首次捕获 Vlad 的最小步数（最坏情况），并确保支配关系定义为(朋友数更少，捕获时间更短)支配另一个解，从而生成帕累托前沿。需在状态扩展中将时间维度耦合进距离计算，避免退化为独立最优。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "forward_to_inverse_applicable",
+      "message": "原题输出为确定的最小朋友子集大小（或-1），可作为反向目标指定；树结构（顶点与边）和初始朋友位置均可自由构造，设计空间充分；可利用原题解法验证任意构造是否满足目标值，具备可验证性；可通过最小化朋友总数等约束自然引入最小性责任。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 的 target 为 subset_size，输出为整数或 -1；core_constraints 中 tree_structure 定义了图的类型，friends_initial_positions 定义了朋友位置约束，两者均可自由选择，满足设计自由度；standard_solution_code 提供了高效的验证手段；input_structure 的 components 包含朋友位置数组和树边，均可由设计者决定。",
+        "feedback": "符合反向设计资格：原题结果可作为反向目标，且存在自然的设计自由度，不违反任何红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "rule_not_applicable",
+      "message": "种子题为树上的单局追逃游戏，全局约束天然结合，不存在可独立处理的局部单元，无法分解后通过共享资源耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述中游戏规则为整体同时移动，覆盖条件基于全局距离，算法需整体BFS判断，无局部独立求解步骤。规则要求原题存在可分解局部单元，如positive示例‘若干区间原可独立选点’，但本题无此结构。",
+        "feedback": "建议更换种子题，选择具有明显独立组件的题目，如多阶段决策、多物体独立问题等。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题已经是双方博弈（Vlad与朋友们同时移动追逃），并非单人确定性过程，不符合规则 'deterministic_process_to_game_outcome' 要求的种子属性“单人确定性选择或操作过程”。将同时移动改为轮流移动无法形成从单人到双方的自然转化，容易落为对原博弈的非本质改动。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中明确提到 'Vlad starts... and wins if... Friends win if... All participants move at the same time.' 且目标是最小化保证捕获的朋友子集，这意味着原题已经是一个双方博弈优化问题，并非单人过程。规则summary要求“把单人确定性选择或操作过程扩展为双方最优行动”，helpers要求行动必须来自原题已有操作，但原题操作已是双方同时选择，转化为轮流将改变博弈本质。",
+        "feedback": "该种子题不适合此规则，建议选择具备明显单人决策过程（如最短路径、最优分配）且操作可拆分为轮流的其他种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_already_global",
+      "message": "种子题本身就是全局覆盖问题（选择最小朋友子集覆盖所有根到叶子的路径），不具备从单一局部对象扩展到全局覆盖的起点，强行应用规则只会产生同义反复或表面变化。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标（objective）描述为‘minimum size of a subset of friends that guarantees capturing the opponent’，这已经是定义在对象族（所有可能的逃逸路径）上的全局覆盖/拦截问题；约束中并没有分离出单一路径或子树作为独立求解单元，所有朋友的位置和移动都服务于整体拦截任务。因此规则要求的‘从单路径、单区间或单子树性质扩展为覆盖、割、支配’的前置条件不成立。",
+        "feedback": "建议寻找真正以单一路径、区间或子树为核心求解对象的种子题（例如求到叶子的最长路径、子树权值和等），再套用本规则生成全局覆盖变体。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是组合优化问题（求最小朋友子集大小），而非计数题，不存在明确有限的计数对象，更无自然权重、等级或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 objective 类型为 minimize_value，目标是最小子集大小；全题描述围绕“最小数量”而非计数；原题 E2 要求输出最小朋友数或 -1，与计数无关；schema 中无任何计数对象定义。",
+        "feedback": "规则要求原题已有明确有限的计数对象且对象上存在自然权重，但当前种子题是优化问题，无法扩展为带权计数或分布计数。请重新选择计数类种子题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.3312,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.2535,
+            "O": 0.5448,
+            "V": 0.5949
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.2535,
+            "objective_type_distance": 0.6118,
+            "objective_text_distance": 0.4444,
+            "invariant_match_distance": 0.5949
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将原题的最优值求解转换为明确的计数任务，定义了计数对象、去重规则、有限性来源（取模），并通过树形DP将解空间拆分为汇总的计数单元，三个helpers均被应用且未触犯redlines。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "planner_payload中applied_helpers列出了三个helper并描述了其schema变化；candidate_schema中objective变为count_mod，core_constraints新增feasible_subset_definition明确等价关系和模数，invariant引入dp_state_integrity定义拆分方式；algorithmic_delta_claim指明新求解器采用树形DP，核心状态自底向上汇总计数，与原题BFS判定截然不同。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "MISSING_UNIT_SPLITTING_DESCRIPTION",
+      "message": "题面定义了计数对象和方案区别，并给出了取模，但未说明如何将解空间拆分为可汇总的计数单元，不符合规则对 state_factorization 的要求。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述中定义了方案不同标准，输出格式有取模，但完全未涉及计数单元的拆分。规则 validation_contract 的 hard_checks 要求“必须说明按什么单元拆分和汇总”。helper state_factorization 的 prompt_guidance 也要求“让核心约束说明如何拆成计数单元”，但题面的 core_constraints 部分（如 feasible_subset_definition）只停留在集合层面，未提供拆分机制。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "missing_state_factorization",
+      "message": "题面未按规定将解空间拆分为可汇总的计数单元，缺少对拆分方式和避免重复的明确说明，不满足state_factorization helper的实现要求。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述末尾写道：‘由于走廊构成一棵树，你可以分别考虑通往不同安全屋的路径，并在每个分支上安排合适的志愿者以确保拦截成功。’这仅给出一种直观的思考方向，但没有像规划摘要中invariant所描述的那样，在题面中阐明DP状态如何划分、如何保证不重不漏。而规则要求state_factorization必须通过core_constraints或invariant明确解空间的拆分方式，题面未兑现此承诺。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "counting_contract_fulfilled",
+      "message": "题面完整定义了计数对象（全局最小可行子集）、去重规则（志愿者编号集合不同）和模数约定，并给出了子树拆分与汇总的单元化计数思路，满足existence_to_counting规则的全部硬检查与helper语义。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述中明确“统计有多少种选择参与者的方案，使得人数达到全局最少，并保证拦截成功。两个方案不同当且仅当它们选择的志愿者编号集合不同。”，输出格式与约束中写明方案数对1e9+7取模，描述中还直接说明了“把问题分解为在各个子树中完成拦截的子任务……自底向上地计算……合并得到全局答案”，落实了counting_unit_definition、state_factorization和counting_obligation_lock的承诺。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3312，落地轴=C, O, V。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "校园拦截计划",
+    "description": "校园活动中心由 n 个房间和 n-1 条走廊连接，形成一棵树。1 号房间是总控室，其他房间中，仅有一条走廊相连的房间称为“安全屋”。\n\n调皮的小明从 1 号房间出发，试图通过移动到达任意一个安全屋。如果他成功进入安全屋，则小明获胜。\n\n学校派出了 k 名志愿者，分别驻守在编号为 x_1, x_2, ..., x_k 的房间（这些房间互不相同，且都不是 1 号房间）。你可以选择让其中一部分志愿者参与拦截行动（其他人休息）。所有被选中的志愿者和小明同时移动：每步可以选择沿着一条走廊移动到相邻房间，或者停留在原地。\n\n如果在小明到达安全屋之前的任意时刻，小明的房间（或正在穿越的走廊）与某位参与行动的志愿者的房间（或走廊）重合（即两人在同一房间，或者在同一时间沿着同一走廊相向而行），则视为拦截成功，志愿者获胜。\n\n你的任务是选择一个参与行动的志愿者子集，使得他们能够确保拦截成功（即无论小明如何移动，志愿者都有策略抓住他）。这样的子集称为可行的。由于人力有限，你希望参与的人数尽可能少。请统计有多少种选择参与者的方案，使得人数达到全局最少，并保证拦截成功。\n\n两个方案不同当且仅当它们选择的志愿者编号集合不同。\n\n由于校园的树形结构，通往不同安全屋的路径可能分叉。我们可以把问题分解为在各个子树中完成拦截的子任务：对于以某个节点为根的子树，我们需要覆盖所有经过该节点到达叶子的路径。这些子树之间是独立的，我们可以在树上自底向上地计算每个节点所需的最小拦截人数及达到该人数的选择方案数，最终在根节点合并得到全局答案。",
+    "input_format": "第一行包含一个整数 t (1 ≤ t ≤ 10^4)，表示测试用例的数量。\n每个测试用例前可能有一个空行。\n每个测试用例的第一行包含两个整数 n 和 k (1 ≤ k < n ≤ 2·10^5)，分别表示房间数和志愿者人数。\n第二行包含 k 个互不相同的整数 x_1, x_2, ..., x_k (2 ≤ x_i ≤ n)，表示每个志愿者的初始房间。志愿者按照输入顺序编号为 1 到 k。\n接下来 n-1 行，每行包含两个整数 u, v (1 ≤ u, v ≤ n)，表示房间 u 和 v 之间有一条走廊。保证给出的图是一棵树。\n所有测试用例的 n 之和不超过 2·10^5。",
+    "output_format": "对于每个测试用例，输出一行一个整数，表示满足条件的方案数对 1,000,000,007 (10^9+7) 取模后的结果。",
+    "constraints": [
+      "时间限制：2 秒",
+      "空间限制：256 MB",
+      "1 ≤ t ≤ 10^4",
+      "2 ≤ n ≤ 2·10^5，所有测试用例的 n 之和不超过 2·10^5",
+      "1 ≤ k < n",
+      "2 ≤ x_i ≤ n，且 x_i 互不相同",
+      "给定的边构成一棵树",
+      "输入数据保证至少存在一个可行的志愿者子集，且 k ≥ 1"
+    ],
+    "samples": [
+      {
+        "input": "1\n4 3\n2 3 4\n1 2\n2 3\n3 4",
+        "output": "3",
+        "explanation": "树是一条链 1-2-3-4，安全屋为 4。志愿者 1,2,3 分别位于房间 2,3,4。只有一条通往安全屋的路径，任何一位志愿者单独拦截即可：待在原地或在路径上移动，在小明到达安全屋之前一定能相遇。因此，最小需要人数为 1，选择任意一个志愿者均可行，共有 3 种方案。答案为 3。"
+      },
+      {
+        "input": "1\n5 3\n2 4 5\n1 2\n1 4\n2 3\n4 5",
+        "output": "2",
+        "explanation": "树的结构：1-2-3 和 1-4-5 两条分支，安全屋为 3 和 5。志愿者 1 在房间 2，志愿者 2 在房间 4，志愿者 3 在房间 5。要成功拦截，必须同时防守通往 3 和通往 5 的路径。防守通往 3 的路径需要至少一名在房间 2 的志愿者（也就是志愿者 1）；防守通往 5 的路径可以在房间 4（志愿者 2）或房间 5（志愿者 3）中选择。因此最小总人数为 2，可行的方案为 {1, 2} 和 {1, 3}，共 2 种。答案为 2。"
+      }
+    ],
+    "notes": "方案数可能很大，请输出对 1,000,000,007 取模的结果。两个方案相同当且仅当它们包含的志愿者编号集合完全相同。输入数据保证 k ≥ 1，且至少存在一个可行的志愿者子集，故无需考虑无解的情况。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_65e2144e4f0c_home_organization_20260528_145624",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_home_organization_20260528_145624_round2.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_65e2144e4f0c\\taco_codeforces_65e2144e4f0c_home_organization_20260528_145624_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 2,
+      "overall_status": "revise_quality",
+      "generated_status": "ok",
+      "quality_score": 45.0,
+      "divergence_score": 81.8,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "K=0的可能性说明略显模糊",
+          "detail": "在约束中注明“K=0在实际中不可能达到”，但未说明若输入给出K=0应如何处理，可能引发参赛者疑惑。建议明确：若K=0，则永远无法满足，应输出-1。",
+          "evidence_refs": [
+            "generated_problem.constraints",
+            "generated_problem.notes"
+          ],
+          "fix_hint": "在说明中添加一句：当K=0时，由于至少需要一个标签才能保证抓住小明，因此不可能达到目标，应输出-1。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例2 输出与题面定义严重矛盾",
+          "detail": "样例2 输入的树为 1-2,1-3（两个叶子），成本分别为 c2=2,c3=3。输出的第一个方案为 (1,3) ，即仅在节点3放置一个守卫，但小明可选择走向叶子2获胜，因此该方案不可行；第二个方案 (2,2) 对应两个守卫的总成本应为 2+3=5，输出 C=2 明显错误。该样例未体现非支配前沿的正确含义，且解释中虽尝试修正但未更新样例内容。",
+          "evidence_refs": [
+            "generated_problem.samples[1].input",
+            "generated_problem.samples[1].output",
+            "generated_problem.samples[1].explanation"
+          ],
+          "fix_hint": "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。"
+        }
+      ],
+      "suggested_revisions": [
+        "在说明中添加一句：当K=0时，由于至少需要一个标签才能保证抓住小明，因此不可能达到目标，应输出-1。",
+        "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。",
+        "修正样例2：采用新的树结构与成本数组，确保输出方案均为可行且非支配，并给出清晰解释。",
+        "在输出格式中明确说明‘如果无可行方案输出 -1’虽然保留但实际数据保证至少有一解，可加备注避免选手困惑。",
+        "考虑在约束或注释中补充叶子节点的正式定义（度为1的节点，根除外），进一步降低歧义。"
+      ],
+      "strengths_to_keep": [
+        "游戏规则描述详细，覆盖所有核心机制（出发格、胜利条件、捕获条件、同时移动）。",
+        "整理操作定义明确，且强调保持树结构，为求解提供清晰框架。",
+        "输入格式和约束完整，多测试用例说明清楚。",
+        "样例种类丰富且解释透彻，有效帮助选手理解题意。",
+        "主题映射自然，无原题痕迹泄露。",
+        "主题映射自然，衣柜收纳的故事场景与守卫放置逻辑高度契合，降低了抽象理解成本。",
+        "输入输出格式规范，多测试用例、n 之和约束、时间空间限制等均符合 OJ 常见标准，对选手友好。",
+        "第一个样例的输入输出与解释完整自洽，有效展示了非支配前沿的生成逻辑。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 69.1,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "K=0的可能性说明略显模糊",
+                "detail": "在约束中注明“K=0在实际中不可能达到”，但未说明若输入给出K=0应如何处理，可能引发参赛者疑惑。建议明确：若K=0，则永远无法满足，应输出-1。",
+                "evidence_refs": [
+                  "generated_problem.constraints",
+                  "generated_problem.notes"
+                ],
+                "fix_hint": "在说明中添加一句：当K=0时，由于至少需要一个标签才能保证抓住小明，因此不可能达到目标，应输出-1。"
+              }
+            ],
+            "suggested_revisions": [
+              "在说明中添加一句：当K=0时，由于至少需要一个标签才能保证抓住小明，因此不可能达到目标，应输出-1。"
+            ],
+            "strengths_to_keep": [
+              "游戏规则描述详细，覆盖所有核心机制（出发格、胜利条件、捕获条件、同时移动）。",
+              "整理操作定义明确，且强调保持树结构，为求解提供清晰框架。",
+              "输入格式和约束完整，多测试用例说明清楚。",
+              "样例种类丰富且解释透彻，有效帮助选手理解题意。",
+              "主题映射自然，无原题痕迹泄露。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 45.0,
+            "divergence_score": 81.8,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例2 输出与题面定义严重矛盾",
+                "detail": "样例2 输入的树为 1-2,1-3（两个叶子），成本分别为 c2=2,c3=3。输出的第一个方案为 (1,3) ，即仅在节点3放置一个守卫，但小明可选择走向叶子2获胜，因此该方案不可行；第二个方案 (2,2) 对应两个守卫的总成本应为 2+3=5，输出 C=2 明显错误。该样例未体现非支配前沿的正确含义，且解释中虽尝试修正但未更新样例内容。",
+                "evidence_refs": [
+                  "generated_problem.samples[1].input",
+                  "generated_problem.samples[1].output",
+                  "generated_problem.samples[1].explanation"
+                ],
+                "fix_hint": "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。"
+              }
+            ],
+            "suggested_revisions": [
+              "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。",
+              "修正样例2：采用新的树结构与成本数组，确保输出方案均为可行且非支配，并给出清晰解释。",
+              "在输出格式中明确说明‘如果无可行方案输出 -1’虽然保留但实际数据保证至少有一解，可加备注避免选手困惑。",
+              "考虑在约束或注释中补充叶子节点的正式定义（度为1的节点，根除外），进一步降低歧义。"
+            ],
+            "strengths_to_keep": [
+              "主题映射自然，衣柜收纳的故事场景与守卫放置逻辑高度契合，降低了抽象理解成本。",
+              "输入输出格式规范，多测试用例、n 之和约束、时间空间限制等均符合 OJ 常见标准，对选手友好。",
+              "第一个样例的输入输出与解释完整自洽，有效展示了非支配前沿的生成逻辑。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "revise_quality",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 45.0,
+        "latest_divergence_score": 81.8,
+        "suggested_revisions": [
+          "在说明中添加一句：当K=0时，由于至少需要一个标签才能保证抓住小明，因此不可能达到目标，应输出-1。",
+          "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。",
+          "修正样例2：采用新的树结构与成本数组，确保输出方案均为可行且非支配，并给出清晰解释。",
+          "在输出格式中明确说明‘如果无可行方案输出 -1’虽然保留但实际数据保证至少有一解，可加备注避免选手困惑。",
+          "考虑在约束或注释中补充叶子节点的正式定义（度为1的节点，根除外），进一步降低歧义。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "K=0的可能性说明略显模糊",
+            "detail": "在约束中注明“K=0在实际中不可能达到”，但未说明若输入给出K=0应如何处理，可能引发参赛者疑惑。建议明确：若K=0，则永远无法满足，应输出-1。",
+            "evidence_refs": [
+              "generated_problem.constraints",
+              "generated_problem.notes"
+            ],
+            "fix_hint": "在说明中添加一句：当K=0时，由于至少需要一个标签才能保证抓住小明，因此不可能达到目标，应输出-1。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例2 输出与题面定义严重矛盾",
+            "detail": "样例2 输入的树为 1-2,1-3（两个叶子），成本分别为 c2=2,c3=3。输出的第一个方案为 (1,3) ，即仅在节点3放置一个守卫，但小明可选择走向叶子2获胜，因此该方案不可行；第二个方案 (2,2) 对应两个守卫的总成本应为 2+3=5，输出 C=2 明显错误。该样例未体现非支配前沿的正确含义，且解释中虽尝试修正但未更新样例内容。",
+            "evidence_refs": [
+              "generated_problem.samples[1].input",
+              "generated_problem.samples[1].output",
+              "generated_problem.samples[1].explanation"
+            ],
+            "fix_hint": "替换或修正样例2，使其符合可行方案定义。例如采用根1-2-3/4 的链形树，叶子3和4，成本 c2=100,c3=1,c4=1，输出两个非支配方案 (1,100) 和 (2,2)；或直接删除该样例，仅保留第一个正确样例并补充一个更复杂的多解例子。"
+          }
+        ],
+        "strengths_to_keep": [
+          "游戏规则描述详细，覆盖所有核心机制（出发格、胜利条件、捕获条件、同时移动）。",
+          "整理操作定义明确，且强调保持树结构，为求解提供清晰框架。",
+          "输入格式和约束完整，多测试用例说明清楚。",
+          "样例种类丰富且解释透彻，有效帮助选手理解题意。",
+          "主题映射自然，无原题痕迹泄露。",
+          "主题映射自然，衣柜收纳的故事场景与守卫放置逻辑高度契合，降低了抽象理解成本。",
+          "输入输出格式规范，多测试用例、n 之和约束、时间空间限制等均符合 OJ 常见标准，对选手友好。",
+          "第一个样例的输入输出与解释完整自洽，有效展示了非支配前沿的生成逻辑。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

@@ -1,0 +1,882 @@
+{
+  "problem_id": "taco_codeforces_717b530a21a4",
+  "source_problem_ids": [
+    "taco_codeforces_717b530a21a4"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_717b530a21a4",
+      "codeforces",
+      "A subway scheme, classic for all Berland cities is represented by a set of n stations connected by n passages, each of which connects exactly two stations and does not pass through any others. Besides, in the classic...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "value_computation",
+    "description": "计算每个节点到环的最短距离",
+    "target": "distance",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "种子题的核心对象——每个节点到环的唯一路径——天然构成路径族，且这些路径共享环和树上的节点，可以自然定义覆盖关系（如选择最少节点覆盖所有路径），完美匹配该规则的 eligibility。相比 inverse_design 可能引入过高的难度和 NP 风险，cover 规则在结构上更直接，不易退化为浅改，同时创新和难度提升扎实。canonical_witness 因原解顺手回溯路径，且缺乏明确的规范解优势，容易被判定为差异不足，故不推荐。；创新度判断：将核心义务从计算距离转化为寻找一个全局覆盖集，要求算法处理多个路径的交叠与选择，输出对象从简单的距离数组变为可验证的最小覆盖方案，彻底改变了求解目标。；难度判断：主求解责任从最短距离计算变为覆盖集的组合优化，往往需要设计树上的 DP 或证明贪心选择，并要求算法证明所选集合的最小性或覆盖完备性，显著抬高了算法设计和正确性证明的门槛。；风险判断：主要风险在于覆盖定义可能过于经典（如树上最小点覆盖路径），从而减少题目新鲜感；可通过在不变式中强调基环树特有的环-树交错结构，以及要求输出方案而非单纯计数值来缓解，整体风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_717b530a21a4",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "directed": false,
+        "simple": true,
+        "connected": true,
+        "acyclic": false
+      },
+      "components": [
+        {
+          "role": "n",
+          "role_description": "number of vertices and edges",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 3,
+            "max": 3000
+          },
+          "properties": {}
+        },
+        {
+          "role": "edges",
+          "role_description": "list of undirected edges, each given as a pair of vertex indices",
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 3000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "directed": false,
+            "simple": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "graph_unicyclic",
+          "description": "The graph is an undirected, connected simple graph with n vertices and n edges, containing no self-loops and no multiple edges, which guarantees exactly one simple cycle (a ringroad).",
+          "formal": "",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "value_computation",
+      "description": "计算每个节点到环的最短距离",
+      "target": "distance",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "unique_cycle_existence",
+          "description": "The input graph is connected with n vertices and n edges, which guarantees exactly one simple cycle. The algorithm uses this property to locate the cycle via DFS back-edge detection.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "distance_from_cycle_traversal",
+          "description": "After marking the unique cycle nodes, a traversal starting from all cycle nodes simultaneously assigns distances to every non-cycle node. Because removing all cycle edges leaves a forest of trees each attached to a cycle node, the assigned distance equals the shortest path length to the cycle, and it is correctly computed by incrementing depth along tree edges.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "local_path_to_global_cover",
+  "rejected_candidates": [
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 3 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.94,
+      "reason_code": "canonical_witness_feasible",
+      "selection_reason": "种子题包含唯一环，可将‘输出距离’升级为‘输出规范环序列’。距离数组能恢复环节点集，进而定义规范顺序（如字典序最小环），需新增算法过程，与简单回溯拉开差距。目标从值计算改为构造输出，核心约束和验证轴均被迫重构，符合规则对C、O、V轴的改变要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "schema.objective.type 为 value_computation，原题输出距离数组，并非完整方案；规则 eligibility 允许‘答案可以恢复成方案’。图恰好一个环，环节点集可从距离为0的节点获取，构成潜在方案对象。规则 forbidden ‘原解顺手回溯拿到方案’可通过施加规范顺序（如字典序最小）规避。helpers 的红线‘不能只加字典序描述’会在规划阶段由 canonical_order_pressure 等保证差距。原解法（找环+BFS）保留核心图论部分，但需大幅修改以输出并证明规范解，产生足够差异。",
+        "feedback": "进入规划阶段时需明确定义‘规范环序列’的确定性规则（如最小起始节点、固定遍历方向），并确保新算法状态设计体现该规范压力，避免沦为输出后处理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_always_soluble",
+      "selection_reason": "种子题输入保证图是单环连通图，对任意合法输入始终存在唯一环且距离有唯一确定解，不存在'做不到'的情形，无法生成无解情形下的局部冲突证据。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context中core_constraints描述'graph_unicyclic'保证恰好一个简单环；objective为计算距离，always feasible；invariant中unique_cycle_existence和distance_from_cycle_traversal证明解总是存在且可计算。原始问题描述也强调任何经典方案都有环。没有提供无解情形的入口。",
+        "feedback": "规则要求输出方案或冲突证据，但种子题没有无解情形，不满足required_seed_properties，且规则本身not_applicable模板指出'做不到的原因没法稳定地写成局部证据'与此场景吻合。建议改用其他可能无解的种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_type_mismatch",
+      "selection_reason": "该规则要求种子题为‘存在性或单一最优值问题’，但原题是计算每个节点到环的最短距离的值计算问题，不符合规则前提。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "规则声明中摘要明确‘把存在性或单一最优值问题改成……’，且 positive 示例为 ‘统计所有满足约束的最优构造数’。原题 schema 中 objective.type 为 value_computation，description 为‘计算每个节点到环的最短距离’，并非存在性或优化问题。",
+        "feedback": "建议：若要对值计算问题进行计数升级，需先将其重新定义为求满足某些条件的方案存在性或最优值问题，否则无法应用该规则。当前种子不具备转换为计数题的基础多解空间。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题为静态单环图上的确定性问题，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，不满足规则所需种子属性。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "根据seed_schema，原题input_structure为固定图结构，core_constraints要求图是连通、n点n边，objective为计算每个节点到唯一环的最短距离，没有涉及任何扰动或不确定性；规则eligibility.required_seed_properties明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但原题语义中无此元素。",
+        "feedback": "该规则要求种子题自带可被形式化的原生扰动，建议选择包含在线决策、动态输入或损失不确定性的题目作为种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_feasibility_structure",
+      "selection_reason": "原题是计算距离的数值计算问题，并非判定或可行性问题，不存在可通过阈值单调变化的可行性区域，无法自然扩展为临界优化题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的目标类型为 value_computation（计算每个节点到环的最短距离），约束中没有可参数化的可行性判定，缺少规则要求的‘可行性随某个参数具有清晰的单调性或分层结构’属性。",
+        "feedback": "该规则要求原题具有可参数化的可行性结构，而本题为直接的距离计算，不具备引入临界阈值的自然入口，强行改造会脱离核心规律。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "missing_secondary_metric",
+      "selection_reason": "种子题是计算每个节点到环的最短距离的单目标问题，没有自然存在的、可与距离构成真实冲突的第二评价指标，不满足规则要求的“原题目标附近存在自然的第二评价指标”和“两个指标之间存在真实冲突”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“计算每个节点到环的最短距离”，输出仅要求距离值；schema中objective.type为value_computation，目标单一；约束仅为图结构（单环），无任何第二维度指标引用。",
+        "feedback": "该规则适用于原题本身具有多目标权衡潜力（如成本 vs 收益）的场景，本题核心是距离计算，强行植入第二指标会导致指标脱离原题语义，或只是原答案的简单函数，无法形成真实冲突。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "natural_inverse_possible",
+      "selection_reason": "原题输出为节点距离数组，可以自然地作为反向目标；原题输入为边列表，允许通过编辑边进行最小修改，修改操作与原核心结构（单圈连通图）直接相关。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出描述：'Print n numbers. Separate the numbers by spaces, the i-th one should be equal to the distance of the i-th station from the ringroad.' 该距离数组可作为反向目标。原题输入结构包含n条边，描述为'Each line contains a pair of integers xi, yi ... representing the presence of a passage'，存在自然的编辑操作（修改边端点），且编辑操作符合原题图结构的核心约束（单圈连通图）。规则要求的最小修改与反推可基于此操作定义。",
+        "feedback": "规则适用于该种子题，但反向目标的有效性可能受限于距离分布的可行条件，新题应明确是否要求构造或最小编辑，并确保编辑操作保持图的基本性质（n个点n条边连通）。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题已天然具备环耦合的树结构，各个子树距离计算虽可视为局部单元，但它们通过环上节点共享结构而非共享资源或全局守恒量耦合，且原算法直接从环出发整体BFS，不存在独立求解的局部组件。因此原题缺少“可自然耦合的局部单元”，不符合规则要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：n顶点n边连通简单图，保证恰好一个简单环，目标计算每个顶点到环的最短距离。schema中invariant指明“removing all cycle edges leaves a forest of trees each attached to a cycle node”，这些树确实相互独立，但耦合方式是共享环上根节点，并非共享资源（如预算）或全局约束。算法实现：先DFS找环，再以环上所有点为起点的一次BFS/DFS计算所有距离，没有独立处理各个树再拼接。因此规则声明的“required_seed_properties: 局部单元之间能通过共享资源、总量或全局选择自然耦合”不满足。",
+        "feedback": "种子题结构上已经是全局耦合的（单圈图），不存在原本独立处理的分量可以去扩展。规则更适合具有多个独立任务、子问题或决策单元且可通过引入共享预算、总量限制等实现跨单元依赖的题目。此题尝试应用该规则会变成冗余约束或背景硬加，导致shallow variation。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "NO_NATURAL_CHOICE_OPERATION",
+      "selection_reason": "原题是纯粹的距离计算问题，无任何可供选择的动作或状态转移，无法自然扩展为双方轮流选择的过程，强行转化将违反‘对抗方只能靠故事背景硬造’的红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要描述为‘确定每个站到环的距离’，输入是图和整数n，输出是距离数组。schema中核心约束是图有唯一环，目标为距离计算，不变式是DFS找环和BFS计算距离。无任何选择、移动、取物等操作语义。",
+        "feedback": "建议寻找具有明确决策过程（如路径选择、资源分配）的种子题，或考虑其他变换家族。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "local_paths_naturally_form_cover",
+      "selection_reason": "原题中每个节点到唯一环的最短路径构成一族局部路径对象，这些路径在基环树的树结构上自然重叠，从而可定义全局覆盖问题（例如选择最少的节点使得每条到环的路径都被覆盖），符合规则从局部路径扩展到全局覆盖的核心要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "原题输入为n顶点n边的连通图（基环树），目标为计算每个节点到环的距离，不变式'距离由从环同时遍历计算'表明每个节点有唯一最短路径到环的树结构；该族路径之间存在共享节点的自然重叠关系，可据此定义覆盖约束，无需无关附加限制。",
+        "feedback": "规则可应用于此种子题，但需注意覆盖问题在树上的常见性可能导致新颖度不足，建议在下一阶段强化约束以提升区分度。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题计算每个节点到环的最短距离，是距离计算题，没有定义任何计数对象，无法进行带权或分布计数的扩展。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 '计算每个节点到环的最短距离'，输出为每个节点的距离值；规则 eligibility.required_seed_properties 明确要求 '原题已经有明确有限的计数对象'，但本题不存在任何计数元素。",
+        "feedback": "规则要求种子题存在明确的计数对象，本题为图论距离计算，与计数无关，无法应用本规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_feasible",
+      "message": "种子题包含唯一环，可将‘输出距离’升级为‘输出规范环序列’。距离数组能恢复环节点集，进而定义规范顺序（如字典序最小环），需新增算法过程，与简单回溯拉开差距。目标从值计算改为构造输出，核心约束和验证轴均被迫重构，符合规则对C、O、V轴的改变要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.94,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "schema.objective.type 为 value_computation，原题输出距离数组，并非完整方案；规则 eligibility 允许‘答案可以恢复成方案’。图恰好一个环，环节点集可从距离为0的节点获取，构成潜在方案对象。规则 forbidden ‘原解顺手回溯拿到方案’可通过施加规范顺序（如字典序最小）规避。helpers 的红线‘不能只加字典序描述’会在规划阶段由 canonical_order_pressure 等保证差距。原解法（找环+BFS）保留核心图论部分，但需大幅修改以输出并证明规范解，产生足够差异。",
+        "feedback": "进入规划阶段时需明确定义‘规范环序列’的确定性规则（如最小起始节点、固定遍历方向），并确保新算法状态设计体现该规范压力，避免沦为输出后处理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_always_soluble",
+      "message": "种子题输入保证图是单环连通图，对任意合法输入始终存在唯一环且距离有唯一确定解，不存在'做不到'的情形，无法生成无解情形下的局部冲突证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context中core_constraints描述'graph_unicyclic'保证恰好一个简单环；objective为计算距离，always feasible；invariant中unique_cycle_existence和distance_from_cycle_traversal证明解总是存在且可计算。原始问题描述也强调任何经典方案都有环。没有提供无解情形的入口。",
+        "feedback": "规则要求输出方案或冲突证据，但种子题没有无解情形，不满足required_seed_properties，且规则本身not_applicable模板指出'做不到的原因没法稳定地写成局部证据'与此场景吻合。建议改用其他可能无解的种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "seed_type_mismatch",
+      "message": "该规则要求种子题为‘存在性或单一最优值问题’，但原题是计算每个节点到环的最短距离的值计算问题，不符合规则前提。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "规则声明中摘要明确‘把存在性或单一最优值问题改成……’，且 positive 示例为 ‘统计所有满足约束的最优构造数’。原题 schema 中 objective.type 为 value_computation，description 为‘计算每个节点到环的最短距离’，并非存在性或优化问题。",
+        "feedback": "建议：若要对值计算问题进行计数升级，需先将其重新定义为求满足某些条件的方案存在性或最优值问题，否则无法应用该规则。当前种子不具备转换为计数题的基础多解空间。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题为静态单环图上的确定性问题，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，不满足规则所需种子属性。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "根据seed_schema，原题input_structure为固定图结构，core_constraints要求图是连通、n点n边，objective为计算每个节点到唯一环的最短距离，没有涉及任何扰动或不确定性；规则eligibility.required_seed_properties明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但原题语义中无此元素。",
+        "feedback": "该规则要求种子题自带可被形式化的原生扰动，建议选择包含在线决策、动态输入或损失不确定性的题目作为种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "missing_feasibility_structure",
+      "message": "原题是计算距离的数值计算问题，并非判定或可行性问题，不存在可通过阈值单调变化的可行性区域，无法自然扩展为临界优化题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的目标类型为 value_computation（计算每个节点到环的最短距离），约束中没有可参数化的可行性判定，缺少规则要求的‘可行性随某个参数具有清晰的单调性或分层结构’属性。",
+        "feedback": "该规则要求原题具有可参数化的可行性结构，而本题为直接的距离计算，不具备引入临界阈值的自然入口，强行改造会脱离核心规律。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_secondary_metric",
+      "message": "种子题是计算每个节点到环的最短距离的单目标问题，没有自然存在的、可与距离构成真实冲突的第二评价指标，不满足规则要求的“原题目标附近存在自然的第二评价指标”和“两个指标之间存在真实冲突”。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“计算每个节点到环的最短距离”，输出仅要求距离值；schema中objective.type为value_computation，目标单一；约束仅为图结构（单环），无任何第二维度指标引用。",
+        "feedback": "该规则适用于原题本身具有多目标权衡潜力（如成本 vs 收益）的场景，本题核心是距离计算，强行植入第二指标会导致指标脱离原题语义，或只是原答案的简单函数，无法形成真实冲突。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "natural_inverse_possible",
+      "message": "原题输出为节点距离数组，可以自然地作为反向目标；原题输入为边列表，允许通过编辑边进行最小修改，修改操作与原核心结构（单圈连通图）直接相关。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.87,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出描述：'Print n numbers. Separate the numbers by spaces, the i-th one should be equal to the distance of the i-th station from the ringroad.' 该距离数组可作为反向目标。原题输入结构包含n条边，描述为'Each line contains a pair of integers xi, yi ... representing the presence of a passage'，存在自然的编辑操作（修改边端点），且编辑操作符合原题图结构的核心约束（单圈连通图）。规则要求的最小修改与反推可基于此操作定义。",
+        "feedback": "规则适用于该种子题，但反向目标的有效性可能受限于距离分布的可行条件，新题应明确是否要求构造或最小编辑，并确保编辑操作保持图的基本性质（n个点n条边连通）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题已天然具备环耦合的树结构，各个子树距离计算虽可视为局部单元，但它们通过环上节点共享结构而非共享资源或全局守恒量耦合，且原算法直接从环出发整体BFS，不存在独立求解的局部组件。因此原题缺少“可自然耦合的局部单元”，不符合规则要求的种子属性。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：n顶点n边连通简单图，保证恰好一个简单环，目标计算每个顶点到环的最短距离。schema中invariant指明“removing all cycle edges leaves a forest of trees each attached to a cycle node”，这些树确实相互独立，但耦合方式是共享环上根节点，并非共享资源（如预算）或全局约束。算法实现：先DFS找环，再以环上所有点为起点的一次BFS/DFS计算所有距离，没有独立处理各个树再拼接。因此规则声明的“required_seed_properties: 局部单元之间能通过共享资源、总量或全局选择自然耦合”不满足。",
+        "feedback": "种子题结构上已经是全局耦合的（单圈图），不存在原本独立处理的分量可以去扩展。规则更适合具有多个独立任务、子问题或决策单元且可通过引入共享预算、总量限制等实现跨单元依赖的题目。此题尝试应用该规则会变成冗余约束或背景硬加，导致shallow variation。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "NO_NATURAL_CHOICE_OPERATION",
+      "message": "原题是纯粹的距离计算问题，无任何可供选择的动作或状态转移，无法自然扩展为双方轮流选择的过程，强行转化将违反‘对抗方只能靠故事背景硬造’的红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要描述为‘确定每个站到环的距离’，输入是图和整数n，输出是距离数组。schema中核心约束是图有唯一环，目标为距离计算，不变式是DFS找环和BFS计算距离。无任何选择、移动、取物等操作语义。",
+        "feedback": "建议寻找具有明确决策过程（如路径选择、资源分配）的种子题，或考虑其他变换家族。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "local_paths_naturally_form_cover",
+      "message": "原题中每个节点到唯一环的最短路径构成一族局部路径对象，这些路径在基环树的树结构上自然重叠，从而可定义全局覆盖问题（例如选择最少的节点使得每条到环的路径都被覆盖），符合规则从局部路径扩展到全局覆盖的核心要求。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "原题输入为n顶点n边的连通图（基环树），目标为计算每个节点到环的距离，不变式'距离由从环同时遍历计算'表明每个节点有唯一最短路径到环的树结构；该族路径之间存在共享节点的自然重叠关系，可据此定义覆盖约束，无需无关附加限制。",
+        "feedback": "规则可应用于此种子题，但需注意覆盖问题在树上的常见性可能导致新颖度不足，建议在下一阶段强化约束以提升区分度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题计算每个节点到环的最短距离，是距离计算题，没有定义任何计数对象，无法进行带权或分布计数的扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 '计算每个节点到环的最短距离'，输出为每个节点的距离值；规则 eligibility.required_seed_properties 明确要求 '原题已经有明确有限的计数对象'，但本题不存在任何计数元素。",
+        "feedback": "规则要求种子题存在明确的计数对象，本题为图论距离计算，与计数无关，无法应用本规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.87,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.94,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 3 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_717b530a21a4_community_services_20260528_182058",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

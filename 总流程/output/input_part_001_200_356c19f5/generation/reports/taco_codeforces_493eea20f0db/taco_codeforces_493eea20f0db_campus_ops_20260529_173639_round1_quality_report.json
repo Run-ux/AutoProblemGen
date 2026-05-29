@@ -1,0 +1,660 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 88.0,
+    "divergence_score": 47.7,
+    "schema_distance": 0.4289,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "题面准确实现了 new_schema 中的操作规则（臂的定义与合并条件）、计数目标（按教室集合去重、模 1e9+7）、输入结构（n 个节点的树，连通无环）等核心要求，无遗漏或误改。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "new_schema.core_constraints",
+          "new_schema.objective"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 3.0,
+        "rationale": "题面提供了操作定义、计数目标、输入输出格式、约束和样例，能独立做题的大部分信息都已齐全。但 description 中声称“任何最终形成的简单路径，都可以唯一地表示成某个教室作为中心点向外连接若干条臂拼合而成”是不准确的（例如一条链可以有不同的中心点和臂组合表示），该错误可能误导选手对去重规则的理解，属于明确可修复的信息瑕疵。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.samples[2].explanation"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 各部分间没有矛盾，操作规则在样例解释中得到一致体现，计数目标与输出格式一致，约束与输入结构匹配。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "样例数量 3 个，分别覆盖了无可行操作、原树即路径、存在操作产生多方案三种典型情景，解释详细且与题意吻合，能有效帮助选手理解问题。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks[12].message"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 4.0,
+        "rationale": "题面结构规范（分节合理、有粗体强调），语言通俗易懂，但 description 中错误的唯一性断言会在一定程度上干扰选手的快速理解，略微降低整体清晰度。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "样例设计合理且解释详尽，覆盖多种情形。",
+      "校园走廊的比喻生动且贴合题意，未泄露原题。",
+      "题面结构清晰，规范地给出了输入输出格式和约束。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4289,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.7519,
+        "O": 0.5329,
+        "V": 0.3503
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.7519,
+        "objective_type_distance": 0.6331,
+        "objective_text_distance": 0.3826,
+        "invariant_match_distance": 0.3503
+      }
+    },
+    "schema_distance": 0.4289,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.35,
+    "solution_transfer_risk": 0.8,
+    "surface_retheme_risk": 0.3,
+    "verdict": "reject_as_retheme",
+    "rationale": "虽然目标从判定与最小化变为计数，但操作规则（选择等长臂进行合并）与原题完全一致，输入均为同一棵树，所有可达路径的生成机制未变。原题的核心解法——自底向上计算子树臂长贡献并合并相等值——在新题中只需将状态从‘存在/最优’扩展为‘计数’，树形DP的遍历、合并等值、约束最多两个不同值的框架可直接复用。选手几乎只需修改状态表示和合并算子即可完成，解法迁移风险很高（0.8）。表层叙事、样例、题目背景已完全重写，未复用原题文本，表面换皮风险较低（0.3），但任务语义差异有限（0.35），主要是因为操作实质相同，数学本质未变。因此判定为换皮题。",
+    "evidence_refs": [
+      "original_problem.description",
+      "generated_problem.description",
+      "new_schema.core_constraints",
+      "new_schema.invariant",
+      "original_schema.invariant",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.43，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "错误的唯一性断言",
+      "detail": "描述中“任何最终形成的简单路径，都可以唯一地表示成某个教室作为中心点向外连接若干条臂拼合而成”不准确：例如一条链可选取不同中心点得到多种臂组合表示，与“唯一地”矛盾。选手若据此理解可能错误推导计数规则。",
+      "evidence_refs": [
+        "generated_problem.description"
+      ],
+      "fix_hint": "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "“中间教室”措辞模糊",
+      "detail": "操作描述中“被并入臂上的所有中间教室将被拆除”的“中间教室”意思不够明确，可能被误解为只拆除非端点的教室，而实际应拆除被并入臂上除中心点外的全部教室（包括端点）。",
+      "evidence_refs": [
+        "generated_problem.description"
+      ],
+      "fix_hint": "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。"
+    },
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "虽然目标从判定与最小化变为计数，但操作规则（选择等长臂进行合并）与原题完全一致，输入均为同一棵树，所有可达路径的生成机制未变。原题的核心解法——自底向上计算子树臂长贡献并合并相等值——在新题中只需将状态从‘存在/最优’扩展为‘计数’，树形DP的遍历、合并等值、约束最多两个不同值的框架可直接复用。选手几乎只需修改状态表示和合并算子即可完成，解法迁移风险很高（0.8）。表层叙事、样例、题目背景已完全重写，未复用原题文本，表面换皮风险较低（0.3），但任务语义差异有限（0.35），主要是因为操作实质相同，数学本质未变。因此判定为换皮题。",
+      "evidence_refs": [
+        "original_problem.description",
+        "generated_problem.description",
+        "new_schema.core_constraints",
+        "new_schema.invariant",
+        "original_schema.invariant",
+        "review_context.algorithmic_delta_claim"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。",
+    "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。",
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "修正唯一性断言，避免误导选手。",
+    "优化操作描述的措辞，明确拆除整条被并入臂。",
+    "可在 notes 中补充提示：选手应基于教室集合去重计数，不必拘泥于中心点表示的唯一性。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 88.0,
+    "divergence_score": 47.7,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "错误的唯一性断言",
+        "detail": "描述中“任何最终形成的简单路径，都可以唯一地表示成某个教室作为中心点向外连接若干条臂拼合而成”不准确：例如一条链可选取不同中心点得到多种臂组合表示，与“唯一地”矛盾。选手若据此理解可能错误推导计数规则。",
+        "evidence_refs": [
+          "generated_problem.description"
+        ],
+        "fix_hint": "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "“中间教室”措辞模糊",
+        "detail": "操作描述中“被并入臂上的所有中间教室将被拆除”的“中间教室”意思不够明确，可能被误解为只拆除非端点的教室，而实际应拆除被并入臂上除中心点外的全部教室（包括端点）。",
+        "evidence_refs": [
+          "generated_problem.description"
+        ],
+        "fix_hint": "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。"
+      },
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "虽然目标从判定与最小化变为计数，但操作规则（选择等长臂进行合并）与原题完全一致，输入均为同一棵树，所有可达路径的生成机制未变。原题的核心解法——自底向上计算子树臂长贡献并合并相等值——在新题中只需将状态从‘存在/最优’扩展为‘计数’，树形DP的遍历、合并等值、约束最多两个不同值的框架可直接复用。选手几乎只需修改状态表示和合并算子即可完成，解法迁移风险很高（0.8）。表层叙事、样例、题目背景已完全重写，未复用原题文本，表面换皮风险较低（0.3），但任务语义差异有限（0.35），主要是因为操作实质相同，数学本质未变。因此判定为换皮题。",
+        "evidence_refs": [
+          "original_problem.description",
+          "generated_problem.description",
+          "new_schema.core_constraints",
+          "new_schema.invariant",
+          "original_schema.invariant",
+          "review_context.algorithmic_delta_claim"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。",
+      "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。",
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "修正唯一性断言，避免误导选手。",
+      "优化操作描述的措辞，明确拆除整条被并入臂。",
+      "可在 notes 中补充提示：选手应基于教室集合去重计数，不必拘泥于中心点表示的唯一性。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "样例设计合理且解释详尽，覆盖多种情形。",
+      "校园走廊的比喻生动且贴合题意，未泄露原题。",
+      "题面结构清晰，规范地给出了输入输出格式和约束。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_493eea20f0db\\taco_codeforces_493eea20f0db.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_493eea20f0db\\taco_codeforces_493eea20f0db_campus_ops_20260529_173639_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_493eea20f0db\\taco_codeforces_493eea20f0db_campus_ops_20260529_173639_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_493eea20f0db",
+      "title": "E",
+      "description": "Vanya wants to minimize a tree. He can perform the following operation multiple times: choose a vertex v, and two disjoint (except for v) paths of equal length a_0 = v, a_1, ..., a_{k}, and b_0 = v, b_1, ..., b_{k}. Additionally, vertices a_1, ..., a_{k}, b_1, ..., b_{k} must not have any neighbours in the tree other than adjacent vertices of corresponding paths. After that, one of the paths may be merged into the other, that is, the vertices b_1, ..., b_{k} can be effectively erased: [Image] \n\nHelp Vanya determine if it possible to make the tree into a path via a sequence of described operations, and if the answer is positive, also determine the shortest length of such path.\n\n\n-----Input-----\n\nThe first line of input contains the number of vertices n (2 ≤ n ≤ 2·10^5).\n\nNext n - 1 lines describe edges of the tree. Each of these lines contains two space-separated integers u and v (1 ≤ u, v ≤ n, u ≠ v) — indices of endpoints of the corresponding edge. It is guaranteed that the given graph is a tree.\n\n\n-----Output-----\n\nIf it is impossible to obtain a path, print -1. Otherwise, print the minimum number of edges in a possible path.\n\n\n-----Examples-----\nInput\n6\n1 2\n2 3\n2 4\n4 5\n1 6\n\nOutput\n3\n\nInput\n7\n1 2\n1 3\n3 4\n1 5\n5 6\n6 7\n\nOutput\n-1\n\n\n\n-----Note-----\n\nIn the first sample case, a path of three edges is obtained after merging paths 2 - 1 - 6 and 2 - 4 - 5.\n\nIt is impossible to perform any operation in the second sample case. For example, it is impossible to merge paths 1 - 3 - 4 and 1 - 5 - 6, since vertex 6 additionally has a neighbour 7 that is not present in the corresponding path.",
+      "input": "6\n1 2\n2 3\n2 4\n4 5\n1 6\n\n7\n1 2\n1 3\n3 4\n1 5\n5 6\n6 7",
+      "output": "3\n\n-1\n\n\n\n-----Note-----\n\nIn the first sample case, a path of three edges is obtained after merging paths 2 - 1 - 6 and 2 - 4 - 5.\n\nIt is impossible to perform any operation in the second sample case. For example, it is impossible to merge paths 1 - 3 - 4 and 1 - 5 - 6, since vertex 6 additionally has a neighbour 7 that is not present in the corresponding path.",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "import math, string, itertools, fractions, heapq, collections, re, array, bisect, sys, random, time\nsys.setrecursionlimit(10 ** 7)\ninf = 10 ** 20\nmod = 10 ** 9 + 7\n\ndef LI():\n\treturn list(map(int, input().split()))\n\ndef II():\n\treturn int(input())\n\ndef LS():\n\treturn input().split()\n\ndef S():\n\treturn input()\n\ndef main():\n\tn = II()\n\td = collections.defaultdict(set)\n\tfor _ in range(n - 1):\n\t\t(a, b) = LI()\n\t\td[a].add(b)\n\t\td[b].add(a)\n\tmemo = {}\n\n\tdef path(t, s):\n\t\tps = set()\n\t\tdt = list(d[t])\n\t\tfor k in dt:\n\t\t\tif k not in memo:\n\t\t\t\tcontinue\n\t\t\tif memo[k] in ps:\n\t\t\t\td[k] -= set([t])\n\t\t\t\td[t] -= set([k])\n\t\t\tps.add(memo[k])\n\t\tif s == -1 and len(ps) == 2:\n\t\t\tmemo[t] = sum(ps) + 2\n\t\t\treturn memo[t]\n\t\tif len(ps) > 1:\n\t\t\treturn -t\n\t\tif len(ps) == 0:\n\t\t\tmemo[t] = 0\n\t\t\treturn 0\n\t\tmemo[t] = list(ps)[0] + 1\n\t\treturn memo[t]\n\n\tdef _path(tt, ss):\n\t\tq = [(tt, ss)]\n\t\ttq = []\n\t\tqi = 0\n\t\twhile len(q) > qi:\n\t\t\t(t, s) = q[qi]\n\t\t\tfor k in d[t]:\n\t\t\t\tif k == s:\n\t\t\t\t\tcontinue\n\t\t\t\tq.append((k, t))\n\t\t\tqi += 1\n\t\tfor (t, s) in q[::-1]:\n\t\t\tr = path(t, s)\n\t\t\tif r < 0:\n\t\t\t\treturn r\n\t\treturn memo[tt]\n\n\tdef _path2(tt, ss):\n\t\tq = [(tt, ss)]\n\t\ttq = []\n\t\tqi = 0\n\t\twhile len(q) > qi:\n\t\t\t(t, s) = q[qi]\n\t\t\tfor k in d[t]:\n\t\t\t\tif k == s or k in memo:\n\t\t\t\t\tcontinue\n\t\t\t\tq.append((k, t))\n\t\t\tqi += 1\n\t\tfor (t, s) in q[::-1]:\n\t\t\tr = path(t, s)\n\t\t\tif r < 0:\n\t\t\t\treturn r\n\t\treturn memo[tt]\n\tt = _path(1, -1)\n\tif t < 0:\n\t\tt = _path2(-t, -1)\n\tif t > 0:\n\t\twhile t % 2 == 0:\n\t\t\tt //= 2\n\t\treturn t\n\treturn -1\nprint(main())"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_493eea20f0db",
+        "codeforces",
+        "Vanya wants to minimize a tree. He can perform the following operation multiple times: choose a vertex v, and two disjoint (except for v) paths of equal length a_0 = v, a_1, ..., a_{k}, and b_0 = v, b_1, ..., b_{k}. A...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "目标从 min_path_length 变为 count_mod，迫使重新定义输出；约束中显式加入计数对象与去重规则；不变量从判定/优化导向转为计数组合导向，引入了子树贡献计数的动态规划性质。",
+      "summary": "目标类型变为计数，新增去重与取模约束，不变量全面重构以支持计数DP。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_campus_ops_tree_path_count",
+      "source": "generated_from_codeforces_493e",
+      "input_structure": {
+        "type": "tree",
+        "length": {
+          "min": 2,
+          "max": 200000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 200000
+        },
+        "properties": {
+          "connected": true,
+          "acyclic": true,
+          "simple": true
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "operation_rule",
+            "description": "允许操作：选择一个教室v，以及两条长度均为k且起点在v的走廊路径，两条路径除v外无交集；且路径上的每个教室（除v外）在路径外没有相邻教室（即无多余的走廊）。之后，将其中一条路径上的教室（走廊）合并进另一条，使其中一条路径的教室被擦除。",
+            "formal": "∃ v ∈ V, k ≥ 1, paths a_0=v,…,a_k and b_0=v,…,b_k with {a_1,…,a_k} ∩ {b_1,…,b_k} = ∅, and for each i=1..k, N(a_i) ⊆ {a_{i-1}, a_{i+1}} (a_{k+1}=∅), similarly for b_i.",
+            "source_sections": [
+              "operation"
+            ]
+          },
+          {
+            "name": "counting_target_definition",
+            "description": "最终状态是校园中一条连续的走廊（简单路径）。目标是通过任意次操作能够达到的不同最终走廊的数量。两个最终走廊视为不同当且仅当它们包含的教室集合不同。结果对10^9+7取模。",
+            "formal": "Count distinct sets V' ⊆ V that can become the vertex set of a simple path after a sequence of operations, modulo 10^9+7.",
+            "source_sections": [
+              "objective"
+            ]
+          },
+          {
+            "name": "finite_solution_space",
+            "description": "因为操作只会减少教室数量，最终可能的路径数量有限，取模合理。",
+            "formal": "|{reachable final paths}| < ∞",
+            "source_sections": [
+              "constraints"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_mod",
+        "description": "计算能够将校园走廊网变成一条简单路径的不同最终路径数量（按教室集合去重），模10^9+7。",
+        "target": "number_of_possible_final_paths",
+        "modulus": 1000000007
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "subtree_arm_counting_decomposition",
+            "description": "每个子树可以独立计算可能产生的臂长值与对应计数。叶节点贡献臂长0且计数1。内部节点：收集所有孩子的贡献值分布（臂长→计数），合并规则为：如果两个孩子提供相同臂长值v，它们可合并，合并后视为一个臂长v，计数为两计数的乘积；最终孩子贡献值集合去重后大小至多为2。非根节点若只有单一值s，则父节点臂长为s+1，计数为所有能产生s的孩子组合的计数和；若大小为2且为根节点，则最终路径由两个不同值a,b决定，总计数为这两个值的计数的乘积（去重保证每个路径只计一次）；否则无效。所有计数取模。",
+            "properties": {
+              "leaf_arm_value": 0,
+              "leaf_count": 1,
+              "merge_equal_values_rule": "相同臂长合并，计数相乘取模",
+              "internal_node_arm_formation": "单值s → 父臂长s+1，计数为各来源计数和；根两值a,b → 总计数为计数乘积；其他情况无效"
+            },
+            "evidence_source": "designed"
+          },
+          {
+            "name": "final_path_uniqueness",
+            "description": "每个最终路径对应于唯一的子树贡献分解，因此通过上述计数方案每个路径被计数恰好一次。",
+            "properties": {},
+            "evidence_source": "proof_required"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "校园走廊整合计划",
+      "description": "某大学拥有 n 间教室，教室之间由 n−1 条走廊连接，形成一棵树状结构。社团希望重新规划这些教室，经过一系列“走廊合并”操作后，最终只保留一条连续的走廊路径（即一条简单路径）。\n\n在执行操作前，先介绍一种重要的结构：对于教室 v，若其某个邻居方向上的子树中，所有教室的度数都不超过 2（即该方向上没有分叉），则从 v 出发沿该方向走到尽头所形成的极长路径，称为 v 的一条**臂**。一条臂至少包含一个邻居教室（如果存在），并且除了起点 v 外，臂上的每个教室最多有两个邻居：一个是上一级教室，另一个是下一级教室（端点则只有一个）。\n\n一次操作的规则如下：\n- 选择一个中心教室 v。\n- 选择 v 的两条臂，要求这两条臂长度相等（长度 k≥1），且除了起点 v 外没有其他公共教室。\n- 然后，将其中一条臂“并入”另一条。被并入臂上的所有中间教室将被拆除，保留下来的臂结构不变。\n\n形象地说，社团可以把两条从同一中心伸出、等长的直走廊合并成一条，而另一条被废弃。\n\n经过若干次操作后，校园里剩下的教室应当恰好构成一条简单路径。这条路径对应的教室集合即为一个“最终方案”。两个最终方案被视为不同，当且仅当它们包含的教室集合不同（与路径的方向、顺序无关）。\n\n可以证明（选手也可以通过定义自行推导）：任何最终形成的简单路径，都可以唯一地表示成某个教室作为“中心点”向外连接若干条臂（至多两条）拼合而成。具体地，若路径为一条链，则中心点可以是链的一端（此时只有一条臂），也可以是链的内部点（此时两侧各有一条臂）。\n\n你的任务是：计算在所有可能的操作序列下，能够得到的**不同**最终方案的数量。由于答案可能很大，请输出其对 1 000 000 007 取模的结果。\n\n注意：如果一开始的教室结构本身就是一条简单路径，那么这也是一种合法的最终方案（无需任何操作）。",
+      "input_format": "第一行包含一个整数 n（2 ≤ n ≤ 200 000），表示教室的数量。\n\n接下来 n−1 行，每行两个整数 u 和 v（1 ≤ u, v ≤ n，u ≠ v），表示教室 u 与教室 v 之间有一条走廊。输入保证给出的图是一棵树，没有重边。",
+      "output_format": "输出一个整数，表示不同最终方案的数量对 1 000 000 007 取模的结果。如果无论如何操作都无法得到一条简单路径，请输出 0。",
+      "constraints": [
+        "2 ≤ n ≤ 200 000",
+        "1 ≤ u, v ≤ n，且 u ≠ v",
+        "输入保证构成的图是一棵树（连通且无环）",
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "答案需对 1 000 000 007 取模"
+      ],
+      "samples": [
+        {
+          "input": "7\n1 2\n1 3\n3 4\n1 5\n5 6\n6 7",
+          "output": "0",
+          "explanation": "在这棵树中，不存在任何一次可行的操作。例如，考虑中心教室 1，它的臂有：经过 2 的臂（长度 1），经过 3-4 的臂（长度 2），经过 5-6-7 的臂（长度 3）。没有两条长度相等的臂，因此无法进行任何合并操作。并且该树本身不是一条简单路径，所以最终方案数为 0。"
+        },
+        {
+          "input": "4\n1 2\n2 3\n3 4",
+          "output": "1",
+          "explanation": "输入本身就是一条简单路径（1‑2‑3‑4）。无论以哪个教室为中心，都无法找到两条等长的臂（例如以 2 为中心，臂长度分别为 1 和 2；以 3 为中心，臂长度分别为 2 和 1）。因此没有可行的合并操作。但由于原结构已是一条路径，所以只有这一种方案，答案为 1。"
+        },
+        {
+          "input": "5\n1 2\n2 3\n1 4\n4 5",
+          "output": "2",
+          "explanation": "以教室 1 为中心，可找到两条长度均为 2 的臂：1‑2‑3 和 1‑4‑5。两条臂除 1 外无交集，且臂上各点度数均不超过 2，满足操作条件。合并后可选择保留 1‑2‑3，方案集合为 {1,2,3}；或保留 1‑4‑5，方案集合为 {1,4,5}。这两种集合不同，因此共有 2 种方案。其他点均无法构造等长臂，故无法产生更多方案。答案为 2。"
+        }
+      ],
+      "notes": "模数为 1 000 000 007。\n\n教室编号从 1 到 n。\n\n两个最终方案视为相同当且仅当它们包含的教室集合完全一致，与路径的具体形状、方向无关。\n\n若无法得到任何简单路径，输出 0。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "目标类型变为计数，新增去重与取模约束，不变量全面重构以支持计数DP。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4289,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.7519,
+          "O": 0.5329,
+          "V": 0.3503
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.7519,
+          "objective_type_distance": 0.6331,
+          "objective_text_distance": 0.3826,
+          "invariant_match_distance": 0.3503
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确计数对象、去重规则和取模，否则题目定义不清",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 中新增 counting_target_definition 定义计数对象和去重",
+            "objective 改为 count_mod 类型",
+            "invariant 中加入 final_path_uniqueness 保证去重唯一性"
+          ],
+          "innovation_reason": "将存在/最优问题变为对象明确的计数题，组合爆炸提升了问题深度",
+          "difficulty_reason": "解法必须处理去重和模运算下的正确计数，增加了实现和证明难度"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "需要将解空间拆分为子树臂长计数单元，使计数DP自然生长",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "invariant 中详细描述 subtree_arm_counting_decomposition，提供计数 DP 的分解规则",
+            "core_constraints 隐含计数分解的合理性"
+          ],
+          "innovation_reason": "通过状态因子化，使计数问题从树的结构中直接产生，而非后处理",
+          "difficulty_reason": "要求解法在分解与汇总层面重建主状态，合并复杂度大幅提高"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "必须让计数成为主导求解目标，而不能保留原最小化判定后顺手计数",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective 完全替换为计数义务，无最小化残留",
+            "core_constraints 明确计数主导操作目标"
+          ],
+          "innovation_reason": "主求解义务变为计数，原判定过程不再主导算法设计",
+          "difficulty_reason": "算法必须同时承担计数正确性与去重正确性，不能沿用原判定核心"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "自底向上树形DP，每个节点维护可能的贡献值集合（最多两个不同值），通过奇偶约简计算最短路径长度。",
+        "reusable_subroutines": "树的DFS遍历、子树概念、贡献值相等的合并规则（如重复值压缩）。",
+        "new_solver_core": "树形计数DP，每个节点维护一个映射（臂长→计数），合并孩子时需进行组合计算（可能类似多项式乘法），处理去重并保证模运算。根节点可能需要多源DP（如两次DFS）以覆盖不同最终路径形态。",
+        "new_proof_obligation": "证明计数DP的合并组合公式不会重复或遗漏任何最终路径（按顶点集去重），每一个可达路径被计数恰好一次；证明模运算下结果正确。",
+        "why_direct_reuse_fails": "原DP只记录贡献值的存在性和选出最优值，状态不含计数信息，无法直接统计不同合并方式的数量，必须重新设计状态表示和合并算子。"
+      },
+      "anti_shallow_rationale": "转换后不仅输出类型改变，而且引入了组合计数与去重义务，状态空间从少数离散值扩展为带权分布，核心求解逻辑必须重新设计，不是仅仅修改输出格式或增加取模。"
+    }
+  }
+}

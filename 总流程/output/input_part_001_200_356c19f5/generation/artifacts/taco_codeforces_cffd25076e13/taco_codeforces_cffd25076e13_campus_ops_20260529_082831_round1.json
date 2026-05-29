@@ -1,0 +1,1018 @@
+{
+  "problem_id": "campus_tree_target_design",
+  "source_problem_ids": [
+    "taco_codeforces_cffd25076e13"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_cffd25076e13",
+      "codeforces",
+      "Evlampiy was gifted a rooted tree. The vertices of the tree are numbered from 1 to n. Each of its vertices also has an integer a_i written on it. For each vertex i, Evlampiy calculated c_i — the number of vertices j i...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "Core constraints (C) now include a target condition, a definition of allowed modifications, and range restrictions for modified c'_i. The objective (O) shifts from existence to a minimisation of L1‑cost. The invariant (V) must now capture properties that enable an optimality proof (e.g., non‑ancestor nodes keep original c_i).",
+    "summary": "The problem is transformed from a pure construction to a parameter‑tuning design task with a minimisation objective, thereby altering all three required axes.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3798,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3798,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5367,
+      "O": 0.4782,
+      "V": 0.4963
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5367,
+      "objective_type_distance": 0.5084,
+      "objective_text_distance": 0.4329,
+      "invariant_match_distance": 0.4963
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "optimization",
+    "description": "minimize the total modification cost, defined as the sum of absolute differences between original c_i and modified c'_i",
+    "target": "minimum_total_cost = Σ_i |c_i - c'_i|",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "existence_to_counting 将构造改造成计数，改变输出类型和目标核心义务，相比 construct_or_obstruction 仅增强失败证据，能产生更实质的创新，且可行性高；forward_solution_to_inverse_design 缺少自然修改操作，不易落地。；创新度判断：将原题‘构造一个合法赋值’的主目标替换为‘计算所有合法赋值的数量（取模）’，强制定义计数对象、去重规则和有限性证明，迫使解题者从存在性思维转向组合计数思维。；难度判断：额外要求证明解空间有限、推导计数公式（如组合数取模），并处理大范围值域下的模算术，提升数学推导和实现细节，原题简单构造算法不足以直接回答。；风险判断：风险是计数可能简化为公式计算（如 C(1e9, n) mod M），难度未必显著高于构造；但可通过 helper 强制要求拆分计数单元和等价关系说明，并在数据范围上保留挑战，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "campus_tree_target_design",
+    "source": "derived_from_codeforces_cffd25076e13",
+    "input_structure": {
+      "type": "tree",
+      "length": {
+        "min": 1,
+        "max": 2000
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "rooted": true,
+        "acyclic": true,
+        "connected": true
+      },
+      "components": [
+        {
+          "name": "parent_array",
+          "type": "int[]",
+          "description": "p_i for i=1..n, 0 for root"
+        },
+        {
+          "name": "c_array",
+          "type": "int[]",
+          "description": "initial c_i values, 0 ≤ c_i ≤ size(subtree(i))-1"
+        },
+        {
+          "name": "target_node",
+          "type": "int",
+          "description": "node u whose assigned value a_u must equal v"
+        },
+        {
+          "name": "target_value",
+          "type": "int",
+          "description": "required value for a_u, 1 ≤ v ≤ 10^9"
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "subtree_less_count_modified",
+          "description": "For each vertex i, let c'_i be the (possibly modified) c_i. Then the number of vertices j in the subtree of i with a_j < a_i must equal c'_i.",
+          "formal": "∀i, |{j ∈ subtree(i) : a_j < a_i}| = c'_i",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "modification_range",
+          "description": "Each modified value c'_i must be an integer within [0, size(subtree(i))-1].",
+          "formal": "0 ≤ c'_i ≤ size(subtree(i))-1",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "target_condition",
+          "description": "The assigned value for node u must equal the given target value v.",
+          "formal": "a_u = v",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "value_range_bound",
+          "description": "All assigned integers a_i must be between 1 and 10^9 inclusive.",
+          "formal": "1 ≤ a_i ≤ 10^9",
+          "source_sections": [
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "optimization",
+      "description": "minimize the total modification cost, defined as the sum of absolute differences between original c_i and modified c'_i",
+      "target": "minimum_total_cost = Σ_i |c_i - c'_i|",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "non_ancestor_invariance",
+          "description": "In an optimal solution, for any node that is not an ancestor of u, we can keep c'_i = c_i without increasing the total cost.",
+          "properties": {},
+          "evidence_source": "claimed_in_proof"
+        },
+        {
+          "name": "optimal_path_cost_lower_bound",
+          "description": "The minimal cost is achieved by modifying only ancestors of u, and the required adjustments satisfy a monotonicity condition that can be expressed via the subtree sizes and the target rank of u.",
+          "properties": {},
+          "evidence_source": "claimed_in_proof"
+        },
+        {
+          "name": "valid_modified_c_range",
+          "description": "For any node v, the modified value c'_v must be in [0, size(subtree(v))-1]; the algorithm must enforce this and report infeasibility if it cannot be satisfied.",
+          "properties": {},
+          "evidence_source": "claimed_in_proof"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium-hard (optimisation on tree, new proof obligations for minimal cost and optimal structure)"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.2328，落地轴=C, O, V。"
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3172，落地轴=C, O, V。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Recursively insert each node into the order of its subtree according to its original c_i, then assign strictly increasing values.",
+    "reusable_subroutines": "Subtree size calculation, legality checks for c_i range.",
+    "new_solver_core": "A tree DP or directed analysis that determines the minimal adjustments to c_i along the path from root to u (and possibly some siblings) so that u can be placed at the exact rank corresponding to v, while respecting all c'_i constraints.",
+    "new_proof_obligation": "Prove that the optimal strategy never needs to modify nodes outside the ancestor path; establish the exact relationship between the target value v, the target node u's position in the global order, and the required modifications on ancestor c_i; provide a constructive algorithm achieving the minimum L1 cost.",
+    "why_direct_reuse_fails": "The original solver works only for fixed c_i and any feasible assignment; here we must search over a weighted modification space to hit a precise target value while minimising cost – a fundamentally different exploration that cannot be reduced to one call of the seed algorithm."
+  },
+  "anti_shallow_rationale": "The transformation is not superficial: it changes the core question from existence (construct any a_i) to an optimisation (minimal parameter edits to enforce a specific a_u = v). The algorithmic structure shifts from a linear‑time insertion procedure to a cost‑minimization procedure that must reason about trade‑offs across ancestor nodes. A simple reskin of the original solution would fail to handle the optimisation, and merely asking 'is there a solution with a_u=v?' would be a trivial shallow variant; this problem explicitly demands a minimality proof, which deepens the difficulty.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "The constructor’s output (a_i) is bound to a specific target (node u must have a_u = v), inverting the solution direction.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Added target_condition constraint in core_constraints",
+        "Objective now requires satisfying this target with minimal modification cost"
+      ],
+      "innovation_reason": "Flips the problem from existence to goal‑driven design, forcing the algorithm to work backwards from the desired output.",
+      "difficulty_reason": "The inserted target constraint narrows the solution space; the algorithm must now consider whether the constraint can be met and at what cost, not just whether any assignment exists."
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "The natural operation is to modify the c_i values, which directly affect the subtree inequality constraints.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Core constraints now include modification_range for c'_i",
+        "Invariant includes non_ancestor_invariance and optimal_path_cost_lower_bound to describe the edit space properties"
+      ],
+      "innovation_reason": "Concretises the inverse design as an explicit optimisation over a well‑defined edit space, moving beyond abstract goal‑reaching.",
+      "difficulty_reason": "Requires the algorithm to explore a combinatorial edit space while proving that certain edits are never needed, adding a layer of structural analysis."
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "The problem demands a minimal total modification cost, not just any feasible edit sequence.",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Objective changed to minimise Σ|c_i - c'_i|",
+        "Invariant now includes claims about optimal strategy (e.g., only ancestors need modification) and a lower‑bound argument"
+      ],
+      "innovation_reason": "Elevates the problem from feasibility to certified optimality, requiring the solver to provide a provably minimal solution.",
+      "difficulty_reason": "Proving minimality is typically non‑trivial; the solver must establish an optimal substructure (e.g., that non‑ancestor c_i retain their original values) and derive a tight lower bound on the cost."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题已要求输出完整方案，触犯规则 eligibility.forbidden_seed_properties 中的“原题本来就要求输出完整方案”，因此不适合进入规范解升级规划。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题 output 描述：'If a solution exists, in the first line print \"YES\", and in the second line output n integers a_i (1 ≤ a_i ≤ 10^9). If there are several solutions, output any of them.' 表明原题要求输出完整方案。规则 eligibility.forbidden_seed_properties 明确禁止'原题本来就要求输出完整方案'。",
+        "feedback": "种子题是构造题，已经输出完整方案，升级为规范解可能只增加顺序约束，差异不足，违反规则准入条件，建议寻找其他更适合的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "local_obstruction_feasible",
+      "selection_reason": "原题的无解情形（节点c_i不满足0≤c_i≤子树大小-1）可以局部检查，输出违规节点和相关信息即可作为证据，不是抽象解释，满足规则要求的局部冲突证据输出。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "schema中invariant valid_c_range：c_v must satisfy 0 <= c_v <= size(subtree(v))-1；标准解法在递归过程中检查此条件，并在违反时输出NO；该检查仅涉及节点v和其子树大小，是局部信息，可构造为输出证据。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "solvable_and_well_defined_counting_space",
+      "selection_reason": "原题解空间有限且去重规则自然（不同序列即为不同解），子树约束提供了自然的排序分解单元，可通过DP计数，满足有限性、可拆分和去重清晰要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束为子树小于计数匹配（subtree_less_count_match），目标为构造赋值（objective.type=construction），不变量中包含递归排序保持c_v个后代在前（predecessor_count_invariant），这些结构可转化为DP计数状态。值域1~10^9保证有限组合空间。",
+        "feedback": "建议在计数定义中明确模数并规定数值相等为唯一去重标准，同时将排序不变量改造为计数转移方程，避免仅添加模数后处理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题为确定性构造，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则要求的最小保底优化前提。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中core_constraints仅包含子树计数匹配约束和值域限制，invariant为递归构造中的前驱计数不变式，整个问题结构和解法均无任何不确定性或扰动因素。规则明确要求原题具备可被写作明确扰动模型的原生扰动，但本题完全不具备。",
+        "feedback": "规则要求的原生扰动来源在本题中缺失，强行应用将导致扰动模型脱离原题语义，落入硬造对手的红线，建议寻找具有天然不确定性的种子（如博弈、在线决策、随机过程等）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题可行性由离散的子树计数条件精确决定，不存在可以连续调整并导致可行区域单调变化的自然参数，强行引入阈值会破坏原题核心约束。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束(subtree_less_count_match)要求每个顶点i的子树中严格小于a_i的节点数恰好等于给定的c_i。c_i是输入值，而非可优化参数。标准解通过递归插入构造一个1..n的排列完成赋值，可行性仅依赖于每个c_i是否不超过subtree_size-1，没有展示任何单调阈值结构。规则要求的'可行性随某个参数具有清晰的单调性或分层结构'在本题中不成立。",
+        "feedback": "该种子题不适合阈值优化扩展。建议选择天然带有资源上界、容量或连续可调参数的问题，例如最小化完成时间、最大化装载量等，以确保阈值能自然融入核心约束并改变可行区域。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_not_optimization_problem",
+      "selection_reason": "种子题是一个可行性构造题，没有显式的单一优化目标，因此不存在自然的第二评价指标，无法形成双指标权衡前沿。规则要求原题为单目标最优题，但本种子题不符合该条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema中'objective'字段明确为{'type': 'construction', 'description': 'construct an integer assignment satisfying subtree inequality count constraints', 'target': 'assignment', 'requires_solution': true}，原题描述为'Help him to restore initial integers!'，未提及任何最优化指标。规则required_seed_properties要求'原题目标附近存在自然的第二评价指标'，但原题无目标，无法满足。",
+        "feedback": "该规则不适用于构造题，除非先引入一个优化指标，但那将变成增加原题没有的目标，可能违反红线。建议寻找本身具有优化目标（如最大化、最小化）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "inverse_design_feasible",
+      "selection_reason": "原题输出 a_i 可绑定为反向目标；树结构（p_i）和 c_i 构成自然的修改操作空间；修改树边与子树计数约束强相关，能定义最小修改问题，主求解方向从构造符合 c_i 的分配翻转为依据目标分配反推或修改结构。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子问题 core_constraints 明确定义了 c_i 与 a_i 的子树计数关系，objective 输出构造好的 a_i 分配，因此原题结果语义清晰可转作目标。invariant 中的 predecessor_count_invariant 展示了构造方法与顺序，反向设计时可用于验证目标。规则 helper ‘target_result_binding’ 要求目标来自原题结果，seed 的 a_i 满足此条件。规则 positive 示例‘给定目标答案，求最少修改几个元素使原性质成立’直接对应修改 p_i 或 c_i 的场景，说明该类变体会法。",
+        "feedback": "规则在该种子上可行，但需注意防止修改操作沦为简单不一致计数；建议规划阶段使用目标性质而非具体赋值，并强制要求最小性证明或复杂度保证。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "missing_required_seed_property",
+      "selection_reason": "种子题的核心约束（subtree_less_count_match）是全局嵌套的，每个节点的计数要求直接依赖其整个子树，不存在可独立求解的局部单元；标准解法通过全局排序分配值，无法拆分为独立组件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "schema中的core_constraints定义了subtree_less_count_match，其形式为∀i, |{j ∈ subtree(i) : a_j < a_i}| = c_i，该约束使得任意节点的赋值与其所有后代相关，无法将节点或子树视为独立处理的分量；标准解法通过递归构造全局有序列表并分配递增整数，进一步证实求解过程高度耦合。",
+        "feedback": "规则要求种子题具备可分解的局部单元，但当前种子题的约束天然跨节点耦合，无法找到可独立处理的组件，强行引入共享资源反而画蛇添足。建议选择其他具有真正独立子问题的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "missing_natural_operations",
+      "selection_reason": "原题是构造赋值题，求解过程为确定性的递归排序与插入，不存在可供两人轮流选择或改变状态的自然操作。强行引入博弈对手只能依赖非自然的故事背景，违反规则禁忌。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "no_choice_process"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求 '原题存在可轮流选择、拿取、移动或改变状态的自然操作'，但原题 objective 为 construction，核心约束 subtree_less_count_match 通过递归排序一次性满足，标准解法顺序固定无选择性；输入/输出描述中无任何交互操作语义，schema 中无状态转移操作组件。",
+        "feedback": "建议更换种子题为天然具有轮流操作过程的问题（如取石子游戏变种），而非纯构造题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_cover_relation",
+      "selection_reason": "原题是子树内顺序约束的构造问题，各子树的计数条件独立且不构成覆盖或割关系，强行扩展将添加无关限制，违反规则的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为每个节点i需满足子树中比a_i小的节点数等于c_i（subtree_less_count_match），这是局部计数条件，不是路径或区间性质，且各子树约束之间没有自然的覆盖或割关系。规则要求“多个局部对象之间可以自然形成覆盖或割关系”，原题无法自然形成。",
+        "feedback": "原题已经处理了所有节点（对象族），但不涉及覆盖或割。尝试应用此规则会变成选择最少节点满足所有子树条件等变体，这与原题核心算法（基于顺序插入）无关，且只是额外附加限制，属于规则明确禁止的“覆盖关系只能靠无关附加限制产生”。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是构造题（要求输出一个合法赋值），不是计数题，不具备明确的有限计数对象，无法扩展为带权计数或分布计数。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'construction'，描述为 'construct an integer assignment'，核心约束 subtree_less_count_match 是构造条件，不涉及方案计数。原题描述要求输出 YES/NO 和一个具体赋值，而非方案总数。因此不符合规则要求的'原题已经有明确有限的计数对象'。",
+        "feedback": "规则要求种子必须是普通计数题，且计数对象上存在自然权重或统计量。本题为构造题，无计数对象，不符合资格。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题已要求输出完整方案，触犯规则 eligibility.forbidden_seed_properties 中的“原题本来就要求输出完整方案”，因此不适合进入规范解升级规划。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题 output 描述：'If a solution exists, in the first line print \"YES\", and in the second line output n integers a_i (1 ≤ a_i ≤ 10^9). If there are several solutions, output any of them.' 表明原题要求输出完整方案。规则 eligibility.forbidden_seed_properties 明确禁止'原题本来就要求输出完整方案'。",
+        "feedback": "种子题是构造题，已经输出完整方案，升级为规范解可能只增加顺序约束，差异不足，违反规则准入条件，建议寻找其他更适合的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_obstruction_feasible",
+      "message": "原题的无解情形（节点c_i不满足0≤c_i≤子树大小-1）可以局部检查，输出违规节点和相关信息即可作为证据，不是抽象解释，满足规则要求的局部冲突证据输出。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "schema中invariant valid_c_range：c_v must satisfy 0 <= c_v <= size(subtree(v))-1；标准解法在递归过程中检查此条件，并在违反时输出NO；该检查仅涉及节点v和其子树大小，是局部信息，可构造为输出证据。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "solvable_and_well_defined_counting_space",
+      "message": "原题解空间有限且去重规则自然（不同序列即为不同解），子树约束提供了自然的排序分解单元，可通过DP计数，满足有限性、可拆分和去重清晰要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束为子树小于计数匹配（subtree_less_count_match），目标为构造赋值（objective.type=construction），不变量中包含递归排序保持c_v个后代在前（predecessor_count_invariant），这些结构可转化为DP计数状态。值域1~10^9保证有限组合空间。",
+        "feedback": "建议在计数定义中明确模数并规定数值相等为唯一去重标准，同时将排序不变量改造为计数转移方程，避免仅添加模数后处理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题为确定性构造，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则要求的最小保底优化前提。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中core_constraints仅包含子树计数匹配约束和值域限制，invariant为递归构造中的前驱计数不变式，整个问题结构和解法均无任何不确定性或扰动因素。规则明确要求原题具备可被写作明确扰动模型的原生扰动，但本题完全不具备。",
+        "feedback": "规则要求的原生扰动来源在本题中缺失，强行应用将导致扰动模型脱离原题语义，落入硬造对手的红线，建议寻找具有天然不确定性的种子（如博弈、在线决策、随机过程等）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题可行性由离散的子树计数条件精确决定，不存在可以连续调整并导致可行区域单调变化的自然参数，强行引入阈值会破坏原题核心约束。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束(subtree_less_count_match)要求每个顶点i的子树中严格小于a_i的节点数恰好等于给定的c_i。c_i是输入值，而非可优化参数。标准解通过递归插入构造一个1..n的排列完成赋值，可行性仅依赖于每个c_i是否不超过subtree_size-1，没有展示任何单调阈值结构。规则要求的'可行性随某个参数具有清晰的单调性或分层结构'在本题中不成立。",
+        "feedback": "该种子题不适合阈值优化扩展。建议选择天然带有资源上界、容量或连续可调参数的问题，例如最小化完成时间、最大化装载量等，以确保阈值能自然融入核心约束并改变可行区域。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "seed_not_optimization_problem",
+      "message": "种子题是一个可行性构造题，没有显式的单一优化目标，因此不存在自然的第二评价指标，无法形成双指标权衡前沿。规则要求原题为单目标最优题，但本种子题不符合该条件。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema中'objective'字段明确为{'type': 'construction', 'description': 'construct an integer assignment satisfying subtree inequality count constraints', 'target': 'assignment', 'requires_solution': true}，原题描述为'Help him to restore initial integers!'，未提及任何最优化指标。规则required_seed_properties要求'原题目标附近存在自然的第二评价指标'，但原题无目标，无法满足。",
+        "feedback": "该规则不适用于构造题，除非先引入一个优化指标，但那将变成增加原题没有的目标，可能违反红线。建议寻找本身具有优化目标（如最大化、最小化）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_design_feasible",
+      "message": "原题输出 a_i 可绑定为反向目标；树结构（p_i）和 c_i 构成自然的修改操作空间；修改树边与子树计数约束强相关，能定义最小修改问题，主求解方向从构造符合 c_i 的分配翻转为依据目标分配反推或修改结构。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子问题 core_constraints 明确定义了 c_i 与 a_i 的子树计数关系，objective 输出构造好的 a_i 分配，因此原题结果语义清晰可转作目标。invariant 中的 predecessor_count_invariant 展示了构造方法与顺序，反向设计时可用于验证目标。规则 helper ‘target_result_binding’ 要求目标来自原题结果，seed 的 a_i 满足此条件。规则 positive 示例‘给定目标答案，求最少修改几个元素使原性质成立’直接对应修改 p_i 或 c_i 的场景，说明该类变体会法。",
+        "feedback": "规则在该种子上可行，但需注意防止修改操作沦为简单不一致计数；建议规划阶段使用目标性质而非具体赋值，并强制要求最小性证明或复杂度保证。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "missing_required_seed_property",
+      "message": "种子题的核心约束（subtree_less_count_match）是全局嵌套的，每个节点的计数要求直接依赖其整个子树，不存在可独立求解的局部单元；标准解法通过全局排序分配值，无法拆分为独立组件。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "schema中的core_constraints定义了subtree_less_count_match，其形式为∀i, |{j ∈ subtree(i) : a_j < a_i}| = c_i，该约束使得任意节点的赋值与其所有后代相关，无法将节点或子树视为独立处理的分量；标准解法通过递归构造全局有序列表并分配递增整数，进一步证实求解过程高度耦合。",
+        "feedback": "规则要求种子题具备可分解的局部单元，但当前种子题的约束天然跨节点耦合，无法找到可独立处理的组件，强行引入共享资源反而画蛇添足。建议选择其他具有真正独立子问题的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "missing_natural_operations",
+      "message": "原题是构造赋值题，求解过程为确定性的递归排序与插入，不存在可供两人轮流选择或改变状态的自然操作。强行引入博弈对手只能依赖非自然的故事背景，违反规则禁忌。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch",
+          "no_choice_process"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求 '原题存在可轮流选择、拿取、移动或改变状态的自然操作'，但原题 objective 为 construction，核心约束 subtree_less_count_match 通过递归排序一次性满足，标准解法顺序固定无选择性；输入/输出描述中无任何交互操作语义，schema 中无状态转移操作组件。",
+        "feedback": "建议更换种子题为天然具有轮流操作过程的问题（如取石子游戏变种），而非纯构造题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_natural_cover_relation",
+      "message": "原题是子树内顺序约束的构造问题，各子树的计数条件独立且不构成覆盖或割关系，强行扩展将添加无关限制，违反规则的红线。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为每个节点i需满足子树中比a_i小的节点数等于c_i（subtree_less_count_match），这是局部计数条件，不是路径或区间性质，且各子树约束之间没有自然的覆盖或割关系。规则要求“多个局部对象之间可以自然形成覆盖或割关系”，原题无法自然形成。",
+        "feedback": "原题已经处理了所有节点（对象族），但不涉及覆盖或割。尝试应用此规则会变成选择最少节点满足所有子树条件等变体，这与原题核心算法（基于顺序插入）无关，且只是额外附加限制，属于规则明确禁止的“覆盖关系只能靠无关附加限制产生”。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是构造题（要求输出一个合法赋值），不是计数题，不具备明确的有限计数对象，无法扩展为带权计数或分布计数。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'construction'，描述为 'construct an integer assignment'，核心约束 subtree_less_count_match 是构造条件，不涉及方案计数。原题描述要求输出 YES/NO 和一个具体赋值，而非方案总数。因此不符合规则要求的'原题已经有明确有限的计数对象'。",
+        "feedback": "规则要求种子必须是普通计数题，且计数对象上存在自然权重或统计量。本题为构造题，无计数对象，不符合资格。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.2328,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.2732,
+            "O": 0.3765,
+            "V": 0.2837
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.2732,
+            "objective_type_distance": 0.3264,
+            "objective_text_distance": 0.4517,
+            "invariant_match_distance": 0.2837
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.3172,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.4024,
+            "O": 0.4727,
+            "V": 0.3915
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.4024,
+            "objective_type_distance": 0.5741,
+            "objective_text_distance": 0.3207,
+            "invariant_match_distance": 0.3915
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划成功构建了反向设计题，定义了目标结果、允许的最小修改操作集和必须的最小性证明责任，所有三个辅助项均已在核心约束、目标和不变量中实现。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "规划payload中applied_helpers详细说明了target_result_binding（通过target_condition约束将原输出a_i绑定为具体目标值a_u=v）、edit_operation_contract（定义c_i修改范围及non_ancestor_invariance等不变量）和minimality_or_certificate_lock（最小化目标∑|c_i-c'_i|并要求证明最优策略和下界）的落实位置；changed_axes包含C、O、V，与规则要求一致；new_schema中的core_constraints包含了modification_range和target_condition，objective为minimize total cost，invariant声明了最优结构性质；anti_shallow_rationale强调题目要求最小性证明而非简单可行解。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确定义了目标结果（a_u = v）、修改操作（调整c_i）和最小化代价（min Σ|c_i - c'_i|），完全兑现了反向设计规则的三个helper语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中写明了“你希望指定的社团 u 最终分配到的教室编号严格等于 v”、“将 c_i 修改为一个新的整数 c'_i ... 每次调整需要付出 |c_i - c'_i| 的沟通成本”、“找到最小的总沟通成本”，输入格式包含u和v，输出格式要求第一行输出最小总成本。这些直接对应new_schema中的target_condition、modification_range和objective。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面将原题结果 a_u=v 设为反向目标，定义修改操作为调整 c_i 并限定范围，要求最小总修改成本，完全兑现了目标绑定、编辑合约和最小性责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "description 中“希望指定的社团 u 最终分配到的教室编号恰好等于 v”实现了 target_result_binding；“可以适当调整某些社团的顺位要求：把社团 i 的要求 c_i 修改为一个新的整数 c'_i… |c_i - c'_i| 的沟通成本”定义了 edit_operation_contract；“你的任务是找到最小的总沟通成本”锁定了 minimality_or_certificate_lock。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.2328，落地轴=C, O, V。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "distance_gate_failed",
+      "reason": "规划结果未达到硬门槛，预测距离=0.3172，落地轴=C, O, V。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.82,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "Rule is applicable: the original construction problem provides a natural output (a_i) that can be designated as a target, and the c_i parameters offer a logical edit space. The reverse design introduces a minimal modification objective, satisfying all required axis changes.",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "社团教室分配难题",
+    "description": "校园里的 n 个社团按照树形管理结构组织在一起，社团 1 是根社团，每个社团 i 有一个直接上级社团 p_i（p_i = 0 表示 i 是根社团）。每个社团 i 有一个初始的“顺位要求” c_i，它表示在最终分配教室编号时，社团 i 希望在自己管辖的子树（包括它自己）中，恰好有 c_i 个社团的教室编号比它更小。\n\n现在学校需要为每个社团分配一个互不相同的正整数作为教室编号（所有编号均在 1 到 10^9 之间），以满足所有社团的顺位要求。但是，由于一些特殊原因，你希望指定的社团 u 最终分配到的教室编号恰好等于 v。\n\n为了达成这个目标，你可以适当调整某些社团的顺位要求：把社团 i 的要求 c_i 修改为一个新的整数 c'_i，修改后仍需满足 0 ≤ c'_i ≤ size(subtree(i)) - 1（这里 size(subtree(i)) 表示以 i 为根的子树中的社团总数）。每修改一个单位，会产生 |c_i - c'_i| 的沟通成本。你的任务是找到最小的总沟通成本，并给出一组最终教室编号的分配方案，使得：\n • 对于每个社团 i，其子树中编号严格小于 a_i 的社团个数恰好等于修改后的 c'_i；\n • 社团 u 的教室编号恰好等于 v。\n\n如果无论如何修改顺位要求，都无法满足上述两条（即使在允许范围内任意调整每个 c_i），则只需要输出一行 “NO”。",
+    "input_format": "第一行包含一个整数 n (1 ≤ n ≤ 2000)，表示社团的个数。\n\n接下来的 n 行，第 i 行包含两个整数 p_i 和 c_i (0 ≤ p_i ≤ n，0 ≤ c_i ≤ n - 1)，分别表示社团 i 的上级社团编号（0 表示该社团为根社团）和它的初始顺位要求。输入保证描述了一棵包含 n 个社团的树，并且对每个社团 i 有 0 ≤ c_i ≤ size(subtree(i)) - 1。\n\n最后一行包含两个整数 u 和 v (1 ≤ u ≤ n，1 ≤ v ≤ 10^9)，表示希望社团 u 最终分配到的教室编号等于 v。",
+    "output_format": "如果存在满足条件的方案，则在第一行输出一个整数，表示最小的总沟通成本（即 Σ|c_i - c'_i|）。然后在第二行输出 n 个整数 a_1, a_2, …, a_n，表示最终分配给每个社团的教室编号。这些编号必须互不相同，均在 [1, 10^9] 内，且满足所有修改后的顺位要求以及 a_u = v。\n\n如果有多组最优方案，输出任意一组即可。\n\n如果不存在任何合法的修改方案，则仅输出一行 “NO”（不含引号，大写）。",
+    "constraints": [
+      "时间限制：1.0 秒",
+      "空间限制：256 MB",
+      "1 ≤ n ≤ 2000",
+      "0 ≤ p_i ≤ n，且输入保证构成一棵以某个 p_i = 0 的节点为根的树",
+      "0 ≤ c_i ≤ size(subtree(i)) - 1",
+      "1 ≤ u ≤ n",
+      "1 ≤ v ≤ 10^9",
+      "所有输入的 c_i 均为整数"
+    ],
+    "samples": [
+      {
+        "input": "3\n0 0\n1 0\n1 0\n3 1",
+        "output": "2\n2 3 1",
+        "explanation": "初始要求全部为 0。希望社团 3 获得编号 1。如果完全不修改，为了满足所有要求，教室编号必须满足 a_3 是子树 3 中最小的（c_3=0），同时 a_1 是整棵树中最小的（c_1=0），这会导致 a_1 < a_3，矛盾。因此必须修改要求。\n\n最优方案是：将 c_1 从 0 改为 1（成本 1），将 c_2 从 0 改为 1（成本 1），c_3 保持 0。此时总成本为 2。对应的教室编号分配为 a = [2, 3, 1]：对社团 1，子树中比它小的只有社团 3，恰有 1 个；对社团 2，子树中比它小的只有社团 3，恰有 1 个；对社团 3，子树中无更小编号，恰有 0 个。且 a_3 = 1 满足要求。可以验证不存在总成本小于 2 的方案。"
+      },
+      {
+        "input": "4\n0 0\n1 0\n1 0\n3 0\n4 1",
+        "output": "2\n2 4 3 1",
+        "explanation": "树结构：社团 1 是根，社团 2 和 3 直接受其管理，社团 4 受社团 3 管理。所有初始要求为 0。希望社团 4 获得编号 1。\n\n最优调整：将 c_1 从 0 改为 1（成本 1），将 c_3 从 0 改为 1（成本 1），其余保持 0。此时教室编号可分配为 [2, 4, 3, 1]：对于社团 1，子树中比 2 小的只有社团 4（编号 1），c'_1 = 1；对于社团 3，子树中比 3 小的也只有社团 4，c'_3 = 1；社团 2 和 4 的子树中均无更小编号，满足 c'_2 = 0, c'_4 = 0。总成本为 2，且 a_4 = 1。"
+      }
+    ],
+    "notes": "数据保证至少存在一种合法的修改方案，因此一定可以输出最小成本和分配方案；实际测试数据中不会出现必须输出 “NO” 的情况。总成本在 n ≤ 2000 时不会超过 10^7，可直接使用 32 位有符号整数计算和输出，无需取模。教室编号必须互不相同，且均在 [1, 10^9] 范围内。如果存在多组最优方案，输出任意一组即可。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_cffd25076e13_campus_ops_20260529_082831",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

@@ -1,0 +1,953 @@
+{
+  "problem_id": "community_service_count_001",
+  "source_problem_ids": [
+    "taco_codechef_13e5c69e5656"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_13e5c69e5656",
+      "DQUERY",
+      "codechef",
+      "Chef has prepared a menu for his new restaurant. The menu consists of N dishes whose flavour is given by M_{1}, M_{2}, \\dots, M_{N}, where M_{i} denotes the flavour of the i^{th} dish. Chef has some rules in his resta...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "改为计数题必须修改目标定义（从最大值到方案数）、添加去重和计数相关约束、修改不变量以反映最优序列的分解性质。",
+    "summary": "从单值最优化变更为多解计数，核心求解义务从计算最大总和变为计算组合方案数。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4383,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4383,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5732,
+      "O": 0.6042,
+      "V": 0.5763
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5732,
+      "objective_type_distance": 0.7253,
+      "objective_text_distance": 0.4225,
+      "invariant_match_distance": 0.5763
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_sequences",
+    "description": "For each query, compute the number of distinct final service point sequences (under the allowed reordering) that achieve the maximum possible total duration of the first k points. Output the count modulo 1,000,000,007.",
+    "target": "count",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "existence_to_counting can transform the maximization problem into a counting problem with well-defined equivalence classes, while minimum_guarantee_under_perturbation is not applicable because the seed problem lacks an inherent perturbation model—any disturbance would be artificial.；创新度判断：Shifts the core obligation from finding the maximum sum to counting all distinct rearrangements achieving that maximum, introducing new responsibilities like defining counting objects, handling duplicates, and setting deduplication rules.；难度判断：Requires combinatorial counting, including managing permutations of identical values, precomputing factorials and modular inverses, and efficiently answering per-query counts without exceeding time limits.；风险判断：The risk is that counting reduces to a simple combinatorial formula without changing the solution structure, but explicit deduplication requirements and invariant changes can prevent this.",
+  "new_schema_snapshot": {
+    "problem_id": "community_service_count_001",
+    "source": "codechef",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": 1,
+        "max": 100
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "N",
+          "role_description": "Number of service points",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "M",
+          "role_description": "Service durations of the points",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {
+            "ordered": true
+          }
+        },
+        {
+          "role": "Q",
+          "role_description": "Number of queries",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "queries",
+          "role_description": "Queries, each with service type code p and number of points k",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {},
+          "properties": {
+            "ordered": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "reorderable_set_condition",
+          "description": "Only service points whose duration is divisible by the type code p can be reordered; the relative positions of all other points remain fixed.",
+          "formal": "For a given query (p, k), let S = {i | p divides M_i}. Any valid rearrangement M' must satisfy M'_i = M_i for i ∉ S, and {M'_i : i ∈ S} = {M_i : i ∈ S} as a multiset.",
+          "source_sections": []
+        },
+        {
+          "name": "prefix_selection",
+          "description": "The resident experiences the first k points in order; the total service duration is the sum of the first k elements of the rearranged list.",
+          "formal": "Total duration = sum_{i=1..k} M'_i",
+          "source_sections": []
+        },
+        {
+          "name": "prime_ingredient",
+          "description": "The service type code p in each query is a prime number.",
+          "formal": "p is prime",
+          "source_sections": []
+        },
+        {
+          "name": "independent_queries",
+          "description": "Each query is independent; any rearrangement performed for one query does not affect the original list for other queries.",
+          "formal": "For each query, the rearrangement starts from the original list M.",
+          "source_sections": []
+        },
+        {
+          "name": "counting_unit",
+          "description": "Two rearranged lists M' and M'' are considered the same if they are identical as arrays. The answer counts distinct final arrays.",
+          "formal": "M'_i = M''_i for all i implies they are the same. Only distinct arrays contribute to the count.",
+          "source_sections": []
+        },
+        {
+          "name": "finite_solution_space",
+          "description": "Because there are only finitely many points and permutations of the movable ones are finite, the number of distinct valid rearrangements is finite, and the answer is computed modulo a large prime.",
+          "formal": "|valid rearrangements| < ∞, output answer mod 10^9+7",
+          "source_sections": []
+        },
+        {
+          "name": "threshold_property",
+          "description": "For an optimal rearrangement (maximizing sum of first k), there exists a threshold value t such that all movable elements with value > t must appear in the first k movable slots, all with value < t must appear after, and exactly r of those with value = t are in the first k, where r = (number of movable slots in first k) - count of movable elements with value > t.",
+          "formal": "Let c_k = |S ∩ {1..k}|, let sorted values of S be d_1 ≥ ... ≥ d_m. Set t = d_{c_k}, and let r = c_k - #{i: d_i > t}. Then in any optimal M', the multiset of values in S∩{1..k} consists of all d_i > t and exactly r copies of t.",
+          "source_sections": []
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_sequences",
+      "description": "For each query, compute the number of distinct final service point sequences (under the allowed reordering) that achieve the maximum possible total duration of the first k points. Output the count modulo 1,000,000,007.",
+      "target": "count",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "prefix_movable_count_invariance",
+          "description": "The number of movable elements in any prefix of length k is invariant under valid reorderings, because only movable elements can change position but their set remains the same. This quantity determines how many movable slots must be filled with the largest elements to maximize the prefix sum.",
+          "properties": {},
+          "evidence_source": "from constraint"
+        },
+        {
+          "name": "optimal_front_multiset",
+          "description": "In any rearrangement achieving the maximum prefix sum, the multiset of values assigned to the first k movable slots is uniquely determined (up to permutation of identical values). It consists of all movable elements strictly greater than the threshold value t, plus a specific number r of elements equal to t, where t is the c_k-th largest movable element. This invariant ensures that all optimal rearrangements share the same front multiset, enabling combinatorial counting of distinct sequences.",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "Medium-Hard"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "For each prime p appearing in values, collect all indices and values of elements divisible by p. Sort these values in descending order and compute prefix sums. Also maintain an array of fixed prefix sums of the original menu. For a query (p,k), count how many of the first k elements are movable (using binary search on index list). Let this count be c. The maximum sum = fixed_prefix_sum[k] - sum of original movable values in first k + sum of largest c movable values globally.",
+    "reusable_subroutines": "Preprocessing: prime factorisation per element, building lists per p of (value, index), sorting values descending, building index arrays, computing prefix sums of these sorted values and of the original menu. Binary search to find number of movable elements in first k. All these are directly reused.",
+    "new_solver_core": "Extend preprocessing: for each prime p, build a frequency map of values and precompute the product of inverse factorials of these counts, P_p. Precompute factorials and inverse factorials up to N. For each query, after finding c and the sorted movable list, identify the threshold value t (the c-th largest) and r = c - count of values > t. Then compute answer = factorial(c) * factorial(m - c) * P_p * factorial(count[t]) * inv_factorial(r) * inv_factorial(count[t] - r) mod MOD. This counts distinct optimal sequences.",
+    "new_proof_obligation": "Show that the front multiset is uniquely determined in any optimal sequence, and that the formula correctly counts distinct final arrays (i.e., identical arrays induced by different permutations of same-valued elements are not double-counted). Also prove that no additional optimal sequences exist beyond those described.",
+    "why_direct_reuse_fails": "The original solver produces a single numeric value (the maximum sum). It has no mechanism for counting multiple achieving sequences or handling deduplication. Direct reuse would only give the maximum, not the count, and cannot account for the combinatorial structure of the solution space."
+  },
+  "anti_shallow_rationale": "题目目标从优化改为计数，引入了去重等价类和组合计数义务，核心求解逻辑从贪心求和变为组合计数，需要新的预处理和分析。不是仅改变故事或输出形式。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "必须明确定义计数对象和去重规则，否则计数题没有规范。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在core_constraints中添加counting_unit约束和finite_solution_space约束",
+        "objective改为count_sequences",
+        "在invariant中通过optimal_front_multiset支持去重"
+      ],
+      "innovation_reason": "将原题的存在性答案转变为对象明确的计数，重新定义了问题核心。",
+      "difficulty_reason": "引入去重和模运算，要求解法正确处理等价类和组合数计算。"
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "需要将解空间拆分为前部和后部才能进行组合计数。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在core_constraints中添加threshold_property约束，描述最优序列的分解",
+        "在invariant中添加optimal_front_multiset，固化分解结构"
+      ],
+      "innovation_reason": "从状态组织上强制分解，使计数不是单纯附加，而是算法内在义务。",
+      "difficulty_reason": "要求解法理解阈值分割和多重集分配，增加了证明和实现的复杂度。"
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "计数目标必须成为主求解对象，不能作为副产品。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "objective完全替换为count_sequences，不再输出最大值",
+        "core_constraints中通过threshold_property等使计数义务贯穿"
+      ],
+      "innovation_reason": "完全移除原优化目标，围绕计数重建问题，确保求解过程的每一部分都服务于计数。",
+      "difficulty_reason": "算法需兼顾计数正确性和去重正确性，无法简单在原算法上修补。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "insufficient_upgrade_space",
+      "selection_reason": "原题算法核心为计数与选择最大元素，构造规范排列只需将选中元素升序填入可移动位置，未引入新的算法挑战，属于输出后处理，无法实现真正的规范性输出升级。",
+      "risk_tags": [
+        "low_novelty",
+        "surface_change"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题taco_codechef_13e5c69e5656的原始解法对每个质数p将可移动元素降序排序并计算前缀和，查询时二分得到可移动位置数量并用最大元素替换。要求输出字典序最小排列只需额外将选中的元素升序放置，核心决策过程不变，违反规则helper 'proof_bearing_output' 红线“不能退化为输出后处理”及“不能只要求输出任意方案”。",
+        "feedback": "该种子题的目标是最大化前k项和，输出为单个数值，构造规范排列的附加约束未改变主要状态转移逻辑，无法满足规则要求的C、O、V轴实质性变化，不建议进入后续规划。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_failure_mode_in_seed",
+      "selection_reason": "原题是最大化问题，任何查询均有可行解，不存在“做不到”的情形，无法满足规则要求的输出冲突证据的前提。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最大化前缀和，约束仅允许重排可移动元素，任何查询下至少存在不重排的初始序列作为可行解，因此永远不存在无解情形；规则要求的“做不到的原因可以用局部证据表示”与原题语义根本不一致。",
+        "feedback": "当前种子题缺乏失败语义，引入障碍证书将需要过度扭曲核心约束，可能违反“只换故事背景”等红线，建议选取具有固有不可行性的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "clear_dedup_finite",
+      "selection_reason": "原题求最大美味值，其最优构造不唯一，解空间因N有限而有限，去重规则可按整序列逐位置区分，各查询独立可作为计数单元，具备改为计数题的充分条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述和约束保证了重排仅在可被p整除的元素上进行，因此所有可能的重排是有限个；invariant指出可移动元素的前缀计数不变，可据此定义排列差异；原题查询独立，自然拆分为计数单元。",
+        "feedback": "种子题满足所需属性，解空间有限、去重明确、单元拆分清晰，适合下阶段规划。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "native_perturbation_present",
+      "selection_reason": "原题中“可重排元素”的约束天生包含排列不确定性，可直接建模为最小保底优化中的扰动源，且最大最小目标仍锚定原题前缀和语义。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "core_constraints.reorderable_set_condition 明确定义了只能移动被 p 整除的元素，这提供了原生不确定性；objective 为最大化前 k 项和，可自然转化为寻求最坏排列下的最大保底值，符合规则正例“求最小资源阈值，使任意合法顺序下都能保证完成”。",
+        "feedback": "建议在后续助手调用时强调扰动模型需显式来自原题可重排约束，并给出强化后的不变量（如固定位置上不可重排元素和的上界）。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_feasibility_problem",
+      "selection_reason": "种子题直接要求最大化前缀和，属于优化问题而非可行性判定，规则要求原题是‘判定或可行性问题’，本原题缺乏该类核心属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则声明 required_seed_properties 第一条：’原题可行性随某个参数具有清晰的单调性或分层结构‘；种子题核心约束无任何可行性判定，目标为 maximize_value。",
+        "feedback": "该规则不适用此种子题，若强行转化只会将原优化问题包装成等价的阈值判定二分形式，无实质性创新。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_natural_second_objective",
+      "selection_reason": "原题目标单纯最大化前缀和，题目中不存在自然冲突的第二评价指标；规则要求存在真实冲突指标，而本题只能强行引入无关指标，且原语义不支撑。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 仅描述为最大化 sum；core_constraints 仅涉及固定元素和可重排元素，无其他度量；原题描述中没有任何提及第二指标如风险、代价或其他偏好。因此无法满足规则要求的第二评价指标。",
+        "feedback": "该题不适合扩展为多目标权衡题，因为缺少自然的冲突指标。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题DQUERY的核心操作是重排可整除的菜以最大化前缀和，不存在自然的修改或设计自由度。引入修改菜风味等操作会脱离原题核心规律，单纯的反向判定则违反“不能只问原答案是否等于给定值”的规则，因此不适合扩展为反向设计题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在自然的修改操作或设计自由度。种子题schema中，core_constraints定义的唯一操作是仅重排被p整除的菜（reorderable_set_condition），objective为最大化前缀和，没有任何修改输入值或参数反推的机制。原题输出可以绑定为目标，但修改操作无法从原题对象(菜单/查询)自然派生，引入风味修改会违反规则中‘修改操作必须与原核心对象相关’和‘不能发明无关操作’的限制。",
+        "feedback": "该种子题更适合直接求解或判定变体，反向设计所需的操作空间与原题核心规律不匹配。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_coupling",
+      "selection_reason": "原题查询独立，无共享资源或跨查询依赖，无法自然绑定为全局耦合题；强行添加共享约束会违反全局红线和规则禁令。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 'independent_queries' 规定每个查询独立，重新排列从原始菜单开始；各查询仅共享菜单数组 M，但没有需要全局优化的共享变量；规则要求局部单元通过共享资源自然耦合，但原题不存在跨查询的共享预算、总量或选择依赖。",
+        "feedback": "种子题缺乏可耦合的局部单元共享变量，建议寻找包含多阶段决策或共享预算的原题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是厨师通过一次性重排可移动菜品来最大化前k个菜品总和的单人优化问题，不存在任何轮流选择、拿取或移动的自然操作，也没有固有的对抗方；强行引入第二个玩家只能生硬编造对抗动机，违反规则中“对抗方只能靠故事背景硬造”的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题描述中，厨师“reorder his menu”是一次性全局重排，没有逐步操作或轮流选择的语义。原题 objective 是“maximize the total flavour ... by reordering”，是纯粹的 max 问题，没有对抗方。规则 validation_contract.hard_checks 要求“博弈行动必须来自原题自然操作”，但原题没有可供拆分的原子行动。",
+        "feedback": "该道种子题不具备可自然对抗化的操作空间，建议选择具有序列决策过程或轮流选择潜力的题目应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是独立的在线查询问题，每个查询仅涉及单个前缀的局部重排最大化，不存在自然的多对象覆盖或割关系，强行扩展会违反全局红线（添加无关约束）。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束 'independent_queries' 明确指出每个查询独立，重排不互相影响。输入结构是多个独立查询，没有需要共同覆盖的对象族。虽然存在前缀区间[1..k]，但它们是孤立的，无法形成覆盖或割的联动。",
+        "feedback": "规则要求原题具有可组合的局部对象族，该种子题不合适。建议寻找具有路径、子树等结构且目标涉及多对象协调的问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题是优化问题，要求最大化前缀和，不是计数问题，没有计数对象，无法应用带权计数扩展规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要描述为最大化总风味，目标类型为maximize_value，不涉及任何计数对象。规则要求‘原题已经有明确有限的计数对象’，但种子题无计数对象。",
+        "feedback": "规则仅适用于计数类问题，但种子题是组合优化求最大值，没有计数结构。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "insufficient_upgrade_space",
+      "message": "原题算法核心为计数与选择最大元素，构造规范排列只需将选中元素升序填入可移动位置，未引入新的算法挑战，属于输出后处理，无法实现真正的规范性输出升级。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "surface_change"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题taco_codechef_13e5c69e5656的原始解法对每个质数p将可移动元素降序排序并计算前缀和，查询时二分得到可移动位置数量并用最大元素替换。要求输出字典序最小排列只需额外将选中的元素升序放置，核心决策过程不变，违反规则helper 'proof_bearing_output' 红线“不能退化为输出后处理”及“不能只要求输出任意方案”。",
+        "feedback": "该种子题的目标是最大化前k项和，输出为单个数值，构造规范排列的附加约束未改变主要状态转移逻辑，无法满足规则要求的C、O、V轴实质性变化，不建议进入后续规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_failure_mode_in_seed",
+      "message": "原题是最大化问题，任何查询均有可行解，不存在“做不到”的情形，无法满足规则要求的输出冲突证据的前提。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最大化前缀和，约束仅允许重排可移动元素，任何查询下至少存在不重排的初始序列作为可行解，因此永远不存在无解情形；规则要求的“做不到的原因可以用局部证据表示”与原题语义根本不一致。",
+        "feedback": "当前种子题缺乏失败语义，引入障碍证书将需要过度扭曲核心约束，可能违反“只换故事背景”等红线，建议选取具有固有不可行性的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_dedup_finite",
+      "message": "原题求最大美味值，其最优构造不唯一，解空间因N有限而有限，去重规则可按整序列逐位置区分，各查询独立可作为计数单元，具备改为计数题的充分条件。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述和约束保证了重排仅在可被p整除的元素上进行，因此所有可能的重排是有限个；invariant指出可移动元素的前缀计数不变，可据此定义排列差异；原题查询独立，自然拆分为计数单元。",
+        "feedback": "种子题满足所需属性，解空间有限、去重明确、单元拆分清晰，适合下阶段规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "pass",
+      "reason_code": "native_perturbation_present",
+      "message": "原题中“可重排元素”的约束天生包含排列不确定性，可直接建模为最小保底优化中的扰动源，且最大最小目标仍锚定原题前缀和语义。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "core_constraints.reorderable_set_condition 明确定义了只能移动被 p 整除的元素，这提供了原生不确定性；objective 为最大化前 k 项和，可自然转化为寻求最坏排列下的最大保底值，符合规则正例“求最小资源阈值，使任意合法顺序下都能保证完成”。",
+        "feedback": "建议在后续助手调用时强调扰动模型需显式来自原题可重排约束，并给出强化后的不变量（如固定位置上不可重排元素和的上界）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "not_feasibility_problem",
+      "message": "种子题直接要求最大化前缀和，属于优化问题而非可行性判定，规则要求原题是‘判定或可行性问题’，本原题缺乏该类核心属性。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则声明 required_seed_properties 第一条：’原题可行性随某个参数具有清晰的单调性或分层结构‘；种子题核心约束无任何可行性判定，目标为 maximize_value。",
+        "feedback": "该规则不适用此种子题，若强行转化只会将原优化问题包装成等价的阈值判定二分形式，无实质性创新。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_natural_second_objective",
+      "message": "原题目标单纯最大化前缀和，题目中不存在自然冲突的第二评价指标；规则要求存在真实冲突指标，而本题只能强行引入无关指标，且原语义不支撑。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 仅描述为最大化 sum；core_constraints 仅涉及固定元素和可重排元素，无其他度量；原题描述中没有任何提及第二指标如风险、代价或其他偏好。因此无法满足规则要求的第二评价指标。",
+        "feedback": "该题不适合扩展为多目标权衡题，因为缺少自然的冲突指标。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题DQUERY的核心操作是重排可整除的菜以最大化前缀和，不存在自然的修改或设计自由度。引入修改菜风味等操作会脱离原题核心规律，单纯的反向判定则违反“不能只问原答案是否等于给定值”的规则，因此不适合扩展为反向设计题。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在自然的修改操作或设计自由度。种子题schema中，core_constraints定义的唯一操作是仅重排被p整除的菜（reorderable_set_condition），objective为最大化前缀和，没有任何修改输入值或参数反推的机制。原题输出可以绑定为目标，但修改操作无法从原题对象(菜单/查询)自然派生，引入风味修改会违反规则中‘修改操作必须与原核心对象相关’和‘不能发明无关操作’的限制。",
+        "feedback": "该种子题更适合直接求解或判定变体，反向设计所需的操作空间与原题核心规律不匹配。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_natural_coupling",
+      "message": "原题查询独立，无共享资源或跨查询依赖，无法自然绑定为全局耦合题；强行添加共享约束会违反全局红线和规则禁令。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 'independent_queries' 规定每个查询独立，重新排列从原始菜单开始；各查询仅共享菜单数组 M，但没有需要全局优化的共享变量；规则要求局部单元通过共享资源自然耦合，但原题不存在跨查询的共享预算、总量或选择依赖。",
+        "feedback": "种子题缺乏可耦合的局部单元共享变量，建议寻找包含多阶段决策或共享预算的原题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是厨师通过一次性重排可移动菜品来最大化前k个菜品总和的单人优化问题，不存在任何轮流选择、拿取或移动的自然操作，也没有固有的对抗方；强行引入第二个玩家只能生硬编造对抗动机，违反规则中“对抗方只能靠故事背景硬造”的红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题描述中，厨师“reorder his menu”是一次性全局重排，没有逐步操作或轮流选择的语义。原题 objective 是“maximize the total flavour ... by reordering”，是纯粹的 max 问题，没有对抗方。规则 validation_contract.hard_checks 要求“博弈行动必须来自原题自然操作”，但原题没有可供拆分的原子行动。",
+        "feedback": "该道种子题不具备可自然对抗化的操作空间，建议选择具有序列决策过程或轮流选择潜力的题目应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是独立的在线查询问题，每个查询仅涉及单个前缀的局部重排最大化，不存在自然的多对象覆盖或割关系，强行扩展会违反全局红线（添加无关约束）。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束 'independent_queries' 明确指出每个查询独立，重排不互相影响。输入结构是多个独立查询，没有需要共同覆盖的对象族。虽然存在前缀区间[1..k]，但它们是孤立的，无法形成覆盖或割的联动。",
+        "feedback": "规则要求原题具有可组合的局部对象族，该种子题不合适。建议寻找具有路径、子树等结构且目标涉及多对象协调的问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题是优化问题，要求最大化前缀和，不是计数问题，没有计数对象，无法应用带权计数扩展规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要描述为最大化总风味，目标类型为maximize_value，不涉及任何计数对象。规则要求‘原题已经有明确有限的计数对象’，但种子题无计数对象。",
+        "feedback": "规则仅适用于计数类问题，但种子题是组合优化求最大值，没有计数结构。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "HELPER_CHECKS_PASS",
+      "message": "规划已将原问题目标从最大总和完全替换为计数达到该总和的序列数，明确定义了计数对象（完整序列）和去重规则（数组完全相同），论证了有限性并约定了取模，通过阈值性质约束实现了状态分解，所有helper均已兑现且无红线违规。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "candidate_schema中objective为count_sequences，描述为‘compute the number of distinct final service point sequences… that achieve the maximum possible total duration’，并指定取模10^9+7；core_constraints添加counting_unit定义‘Two rearranged lists M' and M'' are considered the same if they are identical as arrays’，finite_solution_space说明‘|valid rearrangements| < ∞, output answer mod 10^9+7’；threshold_property定义最优重组的前部多重集唯一确定，invariant中optimal_front_multiset进一步固化分解；applied_helpers记录了三个helper的具体实施，schema_changes与must_realize_in一致，redlines未触发。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面完整兑现了计数目标与去重规则：明确将计数对象定义为不同的最终序列，写出等价判定方式，并给出了模数约定。约束通过灵活/固定划分自然地拆分了计数单元，求解义务已锁定为计数本身。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述：‘对于每个查询 (p, k)，你需要计算：在所有能使前 k 个服务点的服务时长之和达到最大的重排方案中，有多少种不同的最终服务点序列？如果两个序列在某个位置上的服务时长不同，则认为它们不同。’ 同时明确取模：‘答案可能很大，请将其对 1,000,000,007 取模后输出。’ 约束说明‘只能调整那些服务时长能被质数 p 整除的服务点（称为灵活服务点），其余服务点的相对顺序保持不变’，隐含将序列拆分为灵活/固定单元。样例解释进一步演示了基于灵活点排列的计数方式，计数目标处于解题核心而非附加。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "题面明确定义了计数对象、去重规则与取模方式，并通过约束与样例说明了解空间的拆分与汇总方式，完全兑现了existence_to_counting规则的专属合同。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述：'如果两个序列在某个位置上的服务时长不同，则认为它们不同'，定义了不同解；'答案可能很大，请将其对1,000,000,007取模后输出'，说明了取模方式；样例解释展示了将前k个灵活位置作为计数单元进行汇总的逻辑。new_schema中的core_constraints包含counting_unit、finite_solution_space和threshold_property，这些在题面中均通过自然语言和样例实现。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "社区服务的排班方案",
+    "description": "幸福社区有 N 个服务点，编号 1 到 N。每个服务点 i 有一个固定的服务时长 M_i。住户会按顺序依次访问前 k 个服务点。社区管理员可以为每位住户调整部分服务点的顺序，但只能调整那些服务时长能被质数 p 整除的服务点（称为灵活服务点），其余服务点的相对顺序保持不变。每次调整从原始顺序开始，各个查询相互独立。\n对于每个查询 (p, k)，你需要计算：在所有能使前 k 个服务点的服务时长之和达到最大的重排方案中，有多少种不同的最终服务点序列？如果两个序列在某个位置上的服务时长不同，则认为它们不同。答案可能很大，请将其对 1,000,000,007 取模后输出。",
+    "input_format": "第一行一个整数 T，表示测试用例数量。\n接下来每个测试用例：\n  第一行一个整数 N，表示服务点的数量。\n  第二行 N 个由空格分隔的整数 M_1, M_2, ..., M_N，分别表示每个服务点的服务时长。\n  第三行一个整数 Q，表示查询的数量。\n  接下来 Q 行，每行两个整数 p 和 k，表示一个查询：p 是一个质数，表示住户关注的类型；k 是该住户将访问的前 k 个服务点。",
+    "output_format": "对于每个测试用例，依次输出每个查询的答案，每个答案占一行，表示达到最大总服务时长的不同最终序列的数目，结果对 1,000,000,007 取模。",
+    "constraints": [
+      "1 ≤ T ≤ 100",
+      "1 ≤ N ≤ 10^5",
+      "1 ≤ Q ≤ 10^5",
+      "1 ≤ M_i ≤ 10^5",
+      "2 ≤ p ≤ 10^5，p 是质数",
+      "1 ≤ k ≤ N",
+      "所有测试用例的 N 总和不超过 2×10^5",
+      "所有测试用例的 Q 总和不超过 2×10^5",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n4\n2 4 4 6\n2\n2 3\n2 2",
+        "output": "3\n4",
+        "explanation": "原始序列 [2,4,4,6]。\n对于第一个查询 p=2, k=3：所有服务点均可被 2 整除，灵活服务点为索引 1,2,3,4。前 3 个位置中有 3 个灵活位置。为使前 3 项之和最大，必须将最大的 3 个灵活时长 6,4,4 放到前三个位置。它们的不同排列数为 3! / 2! = 3，对应的最终序列为 [6,4,4,2]、[4,6,4,2]、[4,4,6,2]。\n对于第二个查询 p=2, k=2：灵活服务点同上，前 2 个位置中有 2 个灵活位置。最优前缀必须包含 6 和一个 4。前两个位置可以是 (6,4) 或 (4,6)，后两个位置剩余一个 4 和 2，可以任意排列。但由于存在两个相同的 4，最终不同的完整序列有 4 种：[6,4,4,2]、[6,4,2,4]、[4,6,4,2]、[4,6,2,4]。"
+      },
+      {
+        "input": "1\n5\n3 3 3 6 9\n1\n3 5",
+        "output": "20",
+        "explanation": "原始序列 [3,3,3,6,9]，质数 p=3，k=5。所有服务时长都能被 3 整除，因此所有服务点都是灵活服务点。为使前 5 项之和最大，可以将所有点按任意顺序重排，不同序列数即为 5 个元素的全排列去除重复值：5! / 3! = 20。因此答案为 20。"
+      }
+    ],
+    "notes": "每个查询中的 p 均为质数。答案需要对 1,000,000,007 取模。达到最大总时长的方案总是存在，并且可以通过题目描述的贪心构造得到。计数时需考虑重复值导致的去重，即仅当数组完全一致时才视为同一个序列。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_13e5c69e5656_community_services_20260529_030835",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

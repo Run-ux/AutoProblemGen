@@ -1,0 +1,1088 @@
+{
+  "problem_id": "campus_med_count",
+  "source_problem_ids": [
+    "taco_codechef_fa0a3447dc85"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_fa0a3447dc85",
+      "MEDMAX",
+      "codechef",
+      "Read problem statements in [Mandarin], [Russian], and [Vietnamese] as well. You have an n \\times n matrix a. You can rearrange the elements of the matrix in any way. Let m_{1}, m_{2}, \\dots, m_{n} be the medians of ea...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "通过将目标从最大化改为计数（O 变），新增好度下限 L 作为显式输入约束（C 变），并将核化解法从贪心可行性判定变为 DP 计数（V 变），彻底改变核心求解责任，使原题贪心算法无法直接复用。",
+    "summary": "O: 输出计数（对 MOD 取模）而非最大 goodness；C: 引入输入 L 作为每行中位数下限，成本上限保留，但判定条件变为计数条件；V: 引入排序后 DP 状态转移的不变量，取代原贪心最小总成本构造的不变量。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4328,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4328,
+    "axis_scores": {
+      "I": 0.0139,
+      "C": 0.6707,
+      "O": 0.5868,
+      "V": 0.4072
+    },
+    "components": {
+      "input_tree_distance": 0.0139,
+      "constraint_match_distance": 0.6707,
+      "objective_type_distance": 0.6746,
+      "objective_text_distance": 0.455,
+      "invariant_match_distance": 0.4072
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_modulo",
+    "description": "Count the number of distinct partitions (as defined in constraints) such that every row median is at least L and the sum of the row medians is at most K. Output the result modulo 1 000 000 007.",
+    "target": "count",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "在前次迭代中，single_objective_to_tradeoff_frontier 因解法迁移风险过高被拒。existence_to_counting 将任务从最大化极值改为计数满足条件的不同重排矩阵个数，彻底改变了核心目标与算法逻辑，贪心子程序无法复用，能有效降低解法迁移风险，且创新度在所有候选中最高。；创新度判断：将原题的目标（最大化最小中位数）替换为统计所有达到某一好度且成本不超过 k 的不同重排矩阵数量，并明确定义矩阵值恒等为去重规则，要求输出计数值（模某个大数）。这使核心义务从极值决策变为组合计数，输出对象和验证逻辑完全重构。；难度判断：新题要求设计算法计算多重集到网格的合法分配数，需处理中位数约束和成本上限，并避免重复计数。这迫使选手从简单的贪心+二分升级到动态规划、组合计数或生成函数，时间复杂度优化成为新难点，且需要严格的去重证明。；风险判断：主要风险是计数题可能过于偏向组合数学，若约束设计不当可能沦为难解的竞赛组合题，或需要超出算法竞赛范围的数学工具。但通过限制 n 较小（如 n≤30）并采用典型 DP 模型（如逐行放置）可保持算法性，去重规则清晰，落地风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "campus_med_count",
+    "source": "derived_from_codechef_MEDMAX",
+    "input_structure": {
+      "type": "matrix_and_limits",
+      "length": {
+        "min": 1,
+        "max": 1000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 1000000000
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "dimension",
+          "role_description": "Size of the square matrix, number of rows and columns.",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000
+          },
+          "properties": {}
+        },
+        {
+          "role": "cost_limit",
+          "role_description": "Maximum allowed total rearrangement cost (sum of row medians).",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000000000000
+          },
+          "properties": {}
+        },
+        {
+          "role": "goodness_lower_bound",
+          "role_description": "Required minimum value for any row median.",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "median_lower_bound",
+          "description": "After rearrangement, for every row, its median (the ⌈(n+1)/2⌉-th smallest element) must be at least the given L.",
+          "formal": "∀ row i, median(row_i) ≥ L",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "cost_upper_bound",
+          "description": "The total cost, defined as the sum of the medians of each row after rearrangement, must not exceed the given K.",
+          "formal": "∑_{i=1}^{n} median(row_i) ≤ K",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "counting_unit_definition",
+          "description": "The object to be counted is a partition of the n×n distinct input elements into n unordered sets of size n (rows). Each partition yields a unique arrangement up to row permutations, and each row’s median is determined by ordering within the set. Two partitions are considered different if the composition of any row differs.",
+          "source_sections": [
+            "problem_statement"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_modulo",
+      "description": "Count the number of distinct partitions (as defined in constraints) such that every row median is at least L and the sum of the row medians is at most K. Output the result modulo 1 000 000 007.",
+      "target": "count",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "sorted_element_order",
+          "description": "Input elements are sorted in non-decreasing order for sequential processing, providing a canonical order that avoids double-counting.",
+          "properties": {},
+          "evidence_source": "solution_logic"
+        },
+        {
+          "name": "dp_state_uniqueness",
+          "description": "The DP state is defined by the number of elements processed and, for each row, how many elements have been assigned to the left side (i.e., strictly smaller than the median) and whether the median has been fixed. This ensures each valid partition corresponds to exactly one DP path because elements are assigned in sorted order and rows are indistinguishable until a median is fixed.",
+          "properties": {},
+          "evidence_source": "solution_logic"
+        },
+        {
+          "name": "modulo_invariant",
+          "description": "All counting operations are performed modulo 1 000 000 007 to keep numbers within feasible bounds.",
+          "properties": {},
+          "evidence_source": "problem_statement"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "Medium-Hard"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Binary search on the largest possible minimum median value G. For each candidate G, use a greedy algorithm that, after sorting all elements, builds a configuration minimizing the sum of medians while ensuring every median ≥ G. If the minimal sum ≤ K, the candidate is feasible.",
+    "reusable_subroutines": "Sorting the n×n elements, computing the number of elements that must be placed to the left/right of the median in a row, and the monotonicity property that if a given G is feasible, all smaller values are also feasible.",
+    "new_solver_core": "A dynamic programming algorithm that processes sorted elements one by one, maintaining state about how many rows still need left-side elements or have had their median fixed, and accumulates the number of valid partitions meeting the median ≥ L and total median sum ≤ K constraints. The state size depends on the number of rows and left/median counts.",
+    "new_proof_obligation": "Prove that the DP correctly counts all distinct partitions without overcounting (by ordering elements and rows) and that the state compression (e.g., using combinations and order of rows) is sound. Also prove that the algorithm correctly handles the edge cases where n is small or where no configuration exists.",
+    "why_direct_reuse_fails": "The greedy algorithm from the seed problem outputs a single extremal configuration (minimum total median sum for a given threshold) and cannot enumerate all admissible partitions, nor can it count them. The counting requirement demands a completely different combinatorial enumeration approach, rendering direct reuse impossible."
+  },
+  "anti_shallow_rationale": "The core objective has been changed from maximization to counting under given thresholds (L and K). The input now explicitly includes L, altering the problem’s exploration space. The solution is no longer a greedy check within binary search but a DP-based enumeration of combinations, which is fundamentally different in both algorithmic structure and proof obligations. This is not a mere retheme, parameter tweak, or direct adaptation; the new problem demands invention of a counting DP that did not exist in the seed.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "Required by rule to clearly define what is being counted and the equivalence (deduplication) rule.",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Added explicit constraint defining a counted partition and when two partitions are considered different.",
+        "Objective now states counting of these partitions.",
+        "Invariant references the partition definition to enforce canonical counting."
+      ],
+      "innovation_reason": "Transforms the ambiguous notion of 'arrangement' into a precise combinatorial object (partition of distinct items into unordered groups), forcing a new modeling layer.",
+      "difficulty_reason": "Requires the solver to internalize the partition equivalence and design DP that respects it, increasing conceptual overhead."
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "Required to break down the solution space into countable units suitable for DP.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Invariant introduces DP state based on rows’ left-side counts and median fixation.",
+        "Constraint implies that rows are filled from sorted elements sequentially, enabling a natural factorization."
+      ],
+      "innovation_reason": "Forces a state representation that decomposes the assignment problem into a phase of choosing left-side elements and then fixing medians, which is absent in the seed’s greedy allocation.",
+      "difficulty_reason": "The DP state design and transition become the core challenge, especially handling row indistinguishability before median fixation, raising the problem to medium-hard."
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "Essential to ensure the main solver’s goal is counting, not a disguised optimality check.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Objective unequivocally demands a count modulo 1e9+7.",
+        "Constraints define the target count in terms of threshold L and cost K, not as an incidental statistic."
+      ],
+      "innovation_reason": "Locking the counting obligation into the primary goal eliminates any reliance on the seed’s feasibility function as a black box; the solver must integrate counting into the core logic.",
+      "difficulty_reason": "Elevates the algorithm from a polynomial check to an exact enumeration, dramatically increasing both implementation and correctness proof difficulty."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "canonical_upgrade_feasible",
+      "selection_reason": "种子题MEDMAX要求重排矩阵以最大化最小行中位数，本质是一个构造问题，原解法通过贪心构造计算最小可行成本，存在潜在的输出方案。规则正向示例“把是否可行改成输出字典序最小的合法构造”直接匹配此题。引入规范顺序（如字典序最小）会使新题要求输出一个规范矩阵，而不仅仅是任意可行方案，这需要解法为规范性付出额外代价，可能改变贪心策略或引入新的状态转移，满足规则要求。原题不要求输出方案，符合required_seed_properties，且可定义自然规范顺序，因此适合升级。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "schema中标准解法使用二分搜索和贪心构造计算最小中位数和，从而判断可行性。该贪心构造可生成一个可行排列，但未要求输出。规则正向示例“把是否可行改成输出字典序最小的合法构造”与本例高度相似。规则禁止“原解只要顺手回溯就能拿到方案”，但规范方案（如字典序最小）并非简单回溯可得，需要额外优化。helper 'canonical_order_pressure' 要求让规范顺序进入合法性或最优性定义，种子题的目标和约束可以容纳此升级。",
+        "feedback": "规划时需确保规范顺序（如字典序）与成本约束和goodness目标的交互产生新的算法挑战，避免退化为后处理。考虑要求在所有goodness最大且成本可行的方案中输出字典序最小的矩阵，迫使解法在保证可行性的同时优化字典序，可能需要修改贪心或采用DP。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "obstruction_evidence_feasible",
+      "selection_reason": "种子题的无解原因（最小可能代价超过k）可以用贪心下界构造为可局部检查的证据（例如，输出排序后的下界计算及其证明），满足规则对冲突证据的要求。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题 core_constraints.cost_upper_bound 和 invariant.greedy_minimal_median_sum 表明，无解情形可归结为：对于所有候选 goodness 值，贪心构造的最小中位数和均大于 k。该构造本身（即每个 mid 对应的最小和）可被结构化输出为证据，且检查者只需重算下界并验证其 > k，是局部可检查的。",
+        "feedback": "建议在后续规划中明确证据的具体结构，确保其输出对象不是超代价的合法方案，而是一个不可达性证书（如最小代价的下界及推导过程）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "clear_counting_potential",
+      "selection_reason": "解空间有限（n^2元素的排列空间有限），去重规则可自然定义为矩阵值分布相同，原题的贪心构造和单调性提供了拆分汇总的基础（如按中位数阈值分类），适合改造为计数题。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题MEDMAX是最大化最小值优化，有解空间为所有排列（有限）。原题已有sorted_global_order和greedy_minimal_median_sum不变量，可为计数拆分提供结构。去重规则可明确定义为不同矩阵值分布。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题中元素可以任意重排，没有顺序不确定、资源波动或局部选择差异等原生扰动来源。规则要求存在可被放大的原生扰动，但此题所有选择完全由解题者控制，不存在需要保底对抗的不确定性。任何扰动模型只能通过硬造对手引入，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'You can rearrange the elements of the matrix in any way.' 表明完全可控。规则eligibility要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但此题不存在。",
+        "feedback": "建议为种子题寻找具有天然不确定性（如对手行为、随机输入、资源波动）的原题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_already_extremal",
+      "selection_reason": "种子题 MEDMAX 已经是临界阈值优化问题，目标为最大化 goodness，解法利用单调可行性二分查找极值。规则要求种子为判定/可行性问题，而此题本身就是优化，应用规则只会原地重造原题，没有实质变化。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 'maximize the minimum row median subject to cost constraint'，invariant 包含 'monotonic_feasibility'，标准解法使用二分答案，已经是典型的极值阈值问题。规则声明要求种子为可行性判定，但此题为优化。",
+        "feedback": "建议选择纯判定性题目作为种子（如存在性问题），再通过该规则扩展为求临界阈值。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "natural_tradeoff_present",
+      "selection_reason": "种子题中goodness（最大化最小行中位数）与cost（总成本）天然冲突：提高goodness需要选取更大的中位数，导致cost增加。cost作为原题中的约束，可自然转化为第二优化目标，构成双指标权衡。原题解法已具备计算任意goodness对应的最小cost的能力，可扩展输出非支配前沿，符合规则要求。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题定义：goodness = min(m_i)，cost = sum(m_i)，且要求cost ≤ k。目标为最大化goodness。不变量中monotonic_feasibility表明goodness阈值与cost下限单调相关，且greedy_minimal_median_sum可精确计算每个候选goodness所需的最小cost。以此可生成多个(goodness, cost)点，并通过支配关系得到前沿。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "eligible",
+      "selection_reason": "原题输出goodness可作为反向目标；修改矩阵元素是原输入空间的自然操作；可要求最小修改次数形成新的优化任务，符合反向设计核心。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题MEDMAX的目标是最大化最小行中位数，该值可直接作为反向设计的目标（target_result_binding）。原题输入为n×n矩阵，其元素可被修改（edit_operation_contract），且修改操作与核心约束（cost_upper_bound、重排后中位数）紧密相关。原题已有代价约束，反向设计可要求达到给定goodness的最小元素修改数，满足minimality_or_certificate_lock对最小性证明的要求。",
+        "feedback": "建议在后续规划中明确定义允许的修改类型（如替换元素值），并保持原核心的重排逻辑不变，避免泛化为任意操作。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "already_globally_coupled",
+      "selection_reason": "The seed problem already forces global coupling through a shared element pool and a global budget constraint, making local independent solving impossible. The rule targets cases with decomposable independent components, which this seed lacks.",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "From seed schema: 'You can rearrange the elements of the matrix in any way' and 'The total cost, defined as the sum of the medians of each row after rearrangement, must not exceed k.' This enforces global shared resources (all matrix elements) and a global cost constraint, inherently coupling all rows. The core invariants confirm a global greedy construction over the entire sorted element pool.",
+        "feedback": "Rule not applicable because the seed already exhibits the target coupling; applying this rule would risk creating a problem with the same core dynamic."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_turns",
+      "selection_reason": "原题是一次性全局重排决策，不存在可轮流选择、拿取或改变状态的自然操作，无法在不硬造玩家的情况下转化为双方交替行动博弈。",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述摘要为 'You have an n×n matrix a. You can rearrange the elements of the matrix in any way.' 操作空间是任意排列，没有步骤化互动。",
+        "feedback": "建议选择本身包含轮流操作或状态逐步变化的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题 MEDMAX 的核心是平方矩阵重排，以行中位数最大最小化为目标，总和中位数为约束，不存在路径、区间或子树等局部结构，行之间没有覆盖或割关系，因此无法将单路径/区间/子树性质扩展为覆盖/割问题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题摘要显示输入为矩阵元素和成本限制，核心约束为 ∑ row_median ≤ k，目标为最大化 min(row_median)；解决方案基于全局排序后的分配，无路径/区间/子树对象。题目描述中未定义任何覆盖或割关系。规则 eligibility.required_seed_properties 要求“原题核心对象具有路径、区间、子树、集合等局部结构”和“多个局部对象之间可以自然形成覆盖或割关系”，而 MEDMAX 不满足这些条件。",
+        "feedback": "该种子题没有可扩展为覆盖或割的局部对象族，规则不适用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题 MEDMAX 是一个最大化最小行中位数的优化问题，不涉及任何计数对象，不满足规则要求的“原题已经有明确有限的计数对象”以及“计数对象上存在自然权重、等级或统计量”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：“Find the maximum goodness you can achieve after rearranging a matrix ... such that the cost ... doesn't exceed k”，目标为最大化最小值，属于优化，无计数对象；required_seed_properties 明确要求“原题已经有明确有限的计数对象”。",
+        "feedback": "该规则需要种子题为计数问题，此题不适用。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_upgrade_feasible",
+      "message": "种子题MEDMAX要求重排矩阵以最大化最小行中位数，本质是一个构造问题，原解法通过贪心构造计算最小可行成本，存在潜在的输出方案。规则正向示例“把是否可行改成输出字典序最小的合法构造”直接匹配此题。引入规范顺序（如字典序最小）会使新题要求输出一个规范矩阵，而不仅仅是任意可行方案，这需要解法为规范性付出额外代价，可能改变贪心策略或引入新的状态转移，满足规则要求。原题不要求输出方案，符合required_seed_properties，且可定义自然规范顺序，因此适合升级。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.87,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "schema中标准解法使用二分搜索和贪心构造计算最小中位数和，从而判断可行性。该贪心构造可生成一个可行排列，但未要求输出。规则正向示例“把是否可行改成输出字典序最小的合法构造”与本例高度相似。规则禁止“原解只要顺手回溯就能拿到方案”，但规范方案（如字典序最小）并非简单回溯可得，需要额外优化。helper 'canonical_order_pressure' 要求让规范顺序进入合法性或最优性定义，种子题的目标和约束可以容纳此升级。",
+        "feedback": "规划时需确保规范顺序（如字典序）与成本约束和goodness目标的交互产生新的算法挑战，避免退化为后处理。考虑要求在所有goodness最大且成本可行的方案中输出字典序最小的矩阵，迫使解法在保证可行性的同时优化字典序，可能需要修改贪心或采用DP。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "obstruction_evidence_feasible",
+      "message": "种子题的无解原因（最小可能代价超过k）可以用贪心下界构造为可局部检查的证据（例如，输出排序后的下界计算及其证明），满足规则对冲突证据的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题 core_constraints.cost_upper_bound 和 invariant.greedy_minimal_median_sum 表明，无解情形可归结为：对于所有候选 goodness 值，贪心构造的最小中位数和均大于 k。该构造本身（即每个 mid 对应的最小和）可被结构化输出为证据，且检查者只需重算下界并验证其 > k，是局部可检查的。",
+        "feedback": "建议在后续规划中明确证据的具体结构，确保其输出对象不是超代价的合法方案，而是一个不可达性证书（如最小代价的下界及推导过程）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_potential",
+      "message": "解空间有限（n^2元素的排列空间有限），去重规则可自然定义为矩阵值分布相同，原题的贪心构造和单调性提供了拆分汇总的基础（如按中位数阈值分类），适合改造为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题MEDMAX是最大化最小值优化，有解空间为所有排列（有限）。原题已有sorted_global_order和greedy_minimal_median_sum不变量，可为计数拆分提供结构。去重规则可明确定义为不同矩阵值分布。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题中元素可以任意重排，没有顺序不确定、资源波动或局部选择差异等原生扰动来源。规则要求存在可被放大的原生扰动，但此题所有选择完全由解题者控制，不存在需要保底对抗的不确定性。任何扰动模型只能通过硬造对手引入，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.3,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'You can rearrange the elements of the matrix in any way.' 表明完全可控。规则eligibility要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但此题不存在。",
+        "feedback": "建议为种子题寻找具有天然不确定性（如对手行为、随机输入、资源波动）的原题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "seed_already_extremal",
+      "message": "种子题 MEDMAX 已经是临界阈值优化问题，目标为最大化 goodness，解法利用单调可行性二分查找极值。规则要求种子为判定/可行性问题，而此题本身就是优化，应用规则只会原地重造原题，没有实质变化。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 'maximize the minimum row median subject to cost constraint'，invariant 包含 'monotonic_feasibility'，标准解法使用二分答案，已经是典型的极值阈值问题。规则声明要求种子为可行性判定，但此题为优化。",
+        "feedback": "建议选择纯判定性题目作为种子（如存在性问题），再通过该规则扩展为求临界阈值。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_tradeoff_present",
+      "message": "种子题中goodness（最大化最小行中位数）与cost（总成本）天然冲突：提高goodness需要选取更大的中位数，导致cost增加。cost作为原题中的约束，可自然转化为第二优化目标，构成双指标权衡。原题解法已具备计算任意goodness对应的最小cost的能力，可扩展输出非支配前沿，符合规则要求。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题定义：goodness = min(m_i)，cost = sum(m_i)，且要求cost ≤ k。目标为最大化goodness。不变量中monotonic_feasibility表明goodness阈值与cost下限单调相关，且greedy_minimal_median_sum可精确计算每个候选goodness所需的最小cost。以此可生成多个(goodness, cost)点，并通过支配关系得到前沿。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible",
+      "message": "原题输出goodness可作为反向目标；修改矩阵元素是原输入空间的自然操作；可要求最小修改次数形成新的优化任务，符合反向设计核心。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题MEDMAX的目标是最大化最小行中位数，该值可直接作为反向设计的目标（target_result_binding）。原题输入为n×n矩阵，其元素可被修改（edit_operation_contract），且修改操作与核心约束（cost_upper_bound、重排后中位数）紧密相关。原题已有代价约束，反向设计可要求达到给定goodness的最小元素修改数，满足minimality_or_certificate_lock对最小性证明的要求。",
+        "feedback": "建议在后续规划中明确定义允许的修改类型（如替换元素值），并保持原核心的重排逻辑不变，避免泛化为任意操作。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "already_globally_coupled",
+      "message": "The seed problem already forces global coupling through a shared element pool and a global budget constraint, making local independent solving impossible. The rule targets cases with decomposable independent components, which this seed lacks.",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "From seed schema: 'You can rearrange the elements of the matrix in any way' and 'The total cost, defined as the sum of the medians of each row after rearrangement, must not exceed k.' This enforces global shared resources (all matrix elements) and a global cost constraint, inherently coupling all rows. The core invariants confirm a global greedy construction over the entire sorted element pool.",
+        "feedback": "Rule not applicable because the seed already exhibits the target coupling; applying this rule would risk creating a problem with the same core dynamic."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_turns",
+      "message": "原题是一次性全局重排决策，不存在可轮流选择、拿取或改变状态的自然操作，无法在不硬造玩家的情况下转化为双方交替行动博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述摘要为 'You have an n×n matrix a. You can rearrange the elements of the matrix in any way.' 操作空间是任意排列，没有步骤化互动。",
+        "feedback": "建议选择本身包含轮流操作或状态逐步变化的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题 MEDMAX 的核心是平方矩阵重排，以行中位数最大最小化为目标，总和中位数为约束，不存在路径、区间或子树等局部结构，行之间没有覆盖或割关系，因此无法将单路径/区间/子树性质扩展为覆盖/割问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题摘要显示输入为矩阵元素和成本限制，核心约束为 ∑ row_median ≤ k，目标为最大化 min(row_median)；解决方案基于全局排序后的分配，无路径/区间/子树对象。题目描述中未定义任何覆盖或割关系。规则 eligibility.required_seed_properties 要求“原题核心对象具有路径、区间、子树、集合等局部结构”和“多个局部对象之间可以自然形成覆盖或割关系”，而 MEDMAX 不满足这些条件。",
+        "feedback": "该种子题没有可扩展为覆盖或割的局部对象族，规则不适用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题 MEDMAX 是一个最大化最小行中位数的优化问题，不涉及任何计数对象，不满足规则要求的“原题已经有明确有限的计数对象”以及“计数对象上存在自然权重、等级或统计量”。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：“Find the maximum goodness you can achieve after rearranging a matrix ... such that the cost ... doesn't exceed k”，目标为最大化最小值，属于优化，无计数对象；required_seed_properties 明确要求“原题已经有明确有限的计数对象”。",
+        "feedback": "该规则需要种子题为计数问题，此题不适用。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划兑现了existence_to_counting规则专属合同：计数对象（输入元素视为不同，按划分计数）、去重规则（行组成不同即不同）、有限性（元素有限）及取模约定（1e9+7）均已明确定义；三个helper（counting_unit_definition, state_factorization, counting_obligation_lock）全部应用并落在core_constraints、objective和invariant的更新中，schema已从存在性/最优值问题改造为对象明确的计数题。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "在candidate schema中，core_constraints新增counting_unit_definition约束明确定义计数对象为‘将n×n个不同元素分成n个大小为n的无序集合（行）的分割，行组成不同即视为不同’（满足hard_check‘什么样的解算不同’）；objective改为count_modulo并输出模1e9+7（满足‘可数/取模说明’）；invariant中dp_state_uniqueness描述DP状态按行左侧元素和median固定实现唯一计数路径（满足‘按什么单元拆分和汇总’）。plan payload的applied_helpers中，counting_unit_definition影响了C/O/V轴，在约束、目标和不变量中落实（如目标描述‘计数前述定义的分割’）；state_factorization影响了C/V轴，通过不变量引入DP状态分解；counting_obligation_lock影响了C/O轴，将计数锁定为主目标。所有这些变化使原题贪心可行性算法无法复用，必须设计全新DP计数算法，避免了仅换答案形式的肤浅改造。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "counting_contract_fulfilled",
+      "message": "题面完整定义了计数对象（分配方案）、去重规则（社团无序、个体区分）和取模约定，明确兑现了规则要求的计数语义合同。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述中明确“两个分配方案被认为是不同的当且仅当存在某个社团其包含的报名者集合不同”，并强调“社团之间视为相同”“报名者被视为不同的个体”，定义了等价关系与去重口径；目标为“计算有多少种不同的分配方案…输出方案数对 1,000,000,007 取模”，直接锁定计数责任并给出取模约束。这些内容覆盖了 helper 计数单元定义（counting_unit_definition）的去重与对象定义要求，state_factorization 的单元拆分隐含在按社团分组的自然计数中，counting_obligation_lock 通过将计数设为主目标实现。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "PASS_ALL_HELPERS_REALIZED",
+      "message": "题面明确定义了计数对象（分配方案）、等价关系（社团无序）与不同答案口径（成员集合不同），通过模数约定说明了有限可数性，并以社团为自然计数单元隐含了状态因子分解，完全兑现规则专属 helper 契约。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面描述：‘两个分配方案被认为是不同的当且仅当存在某个社团其包含的报名者集合不同（报名者来自矩阵中的不同位置，即使能力值相同也被视为不同的人）。’ 定义清晰；‘输出方案数对 1,000,000,007 取模的结果’ 明确模数；全文以‘社团’为分配单位，满足 state_factorization 的拆分要求；目标为计数而非判定，实现了 counting_obligation_lock。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "社团能力分配方案数",
+    "description": "某大学有 n 个社团，每个社团计划招募恰好 n 名新生，共有 n × n 名报名者。每个报名者有一个能力值，能力值为正整数。现在要将所有报名者分配给这 n 个社团，每个社团恰好得到 n 人。社团之间没有区别（即交换两个社团的所有成员不会产生新的分配方案）。\n\n每个社团得到 n 名成员后，会按能力值从小到大排序，然后取第 ⌈(n+1)/2⌉ 小的能力值作为该社团的代表水平（即中位数）。例如，若 n=3，第 2 小的能力值为代表水平；若 n=4，也是第 2 小的能力值为代表水平。\n\n你的任务是：计算有多少种不同的分配方案，同时满足以下两个条件：\n1. 每个社团的代表水平至少为 L。\n2. 所有社团的代表水平之和不大于 K。\n\n两个分配方案被认为是不同的当且仅当存在某个社团其包含的报名者集合不同（报名者来自矩阵中的不同位置，即使能力值相同也被视为不同的人）。\n\n由于答案可能很大，请输出方案数对 1,000,000,007 取模的结果。",
+    "input_format": "第一行包含一个整数 t，表示测试用例的数量。\n接下来是 t 个测试用例，每个测试用例的格式如下：\n第一行包含三个整数 n, L, K，分别表示社团个数（即每行人数）、中位数下限以及总和中位数上限。\n接下来的 n 行，每行包含 n 个整数，表示所有报名者的能力值。能力值之间用空格分隔。",
+    "output_format": "对于每个测试用例，输出一行一个整数，表示满足条件的分配方案数对 1,000,000,007 取模的结果。如果不存在任何方案，则输出 0。",
+    "constraints": [
+      "时间限制：2 秒",
+      "空间限制：256 MB",
+      "1 ≤ t ≤ 100",
+      "1 ≤ n ≤ 1000",
+      "所有测试用例的 n 之和不超过 1000",
+      "1 ≤ L ≤ 1,000,000,000",
+      "1 ≤ K ≤ 100,000,000,000,000",
+      "1 ≤ 每个能力值 ≤ 1,000,000,000",
+      "输入中的所有能力值均为整数"
+    ],
+    "samples": [
+      {
+        "input": "1\n2 3 10\n1 2\n3 4",
+        "output": "2",
+        "explanation": "n=2，L=3，K=10，报名者能力值为 {1,2,3,4}。中位数定义为第 2 小的数。满足条件的分配方案有两种：\n- 社团1：{1,3} → 中位数 3；社团2：{2,4} → 中位数 4。中位和 7 ≤ K=10，且每个中位数 ≥ 3。\n- 社团1：{1,4} → 中位数 4；社团2：{2,3} → 中位数 3。同样满足条件。\n注意，{1,3}和{2,4}交换社团标签视为同一种方案，不重复计数。"
+      },
+      {
+        "input": "1\n2 4 10\n1 2\n3 4",
+        "output": "0",
+        "explanation": "仅将 L 提高到 4。此时两种合格方案中都有一个社团的中位数是 3（<4），因此没有方案满足条件，输出 0。"
+      }
+    ],
+    "notes": "- 模数为 1,000,000,007。\n- 报名者被视为不同的个体：即使能力值相同，来自矩阵中的不同位置也视为不同的人。\n- 中位数定义：将社团内成员按能力值从小到大排序后，第 ⌈(n+1)/2⌉ 个即为该社团代表水平。\n- 社团之间没有顺序（即视为相同），交换两个社团的所有成员不算新方案。\n- 输入数据较大，请使用 64 位整数类型（如 C++ 中的 long long）来存储能力值和总和。\n- 若不存在任何方案，请输出 0。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_fa0a3447dc85_urban_commute_20260528_183613",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_fa0a3447dc85\\taco_codechef_fa0a3447dc85_urban_commute_20260528_183613_round2.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codechef_fa0a3447dc85\\taco_codechef_fa0a3447dc85_urban_commute_20260528_183613_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 2,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 100.0,
+      "divergence_score": 57.8,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "虽然目标函数从单值最大化变为输出帕累托前沿（axis O 的变化），且约束结构中移除了成本上限 k（axis C 的变化），但核心建模完全一致：给定全局排序的元素，通过贪心分配每行左侧元素和选择中位数，使得最小中位数不低于阈值的同时总成本最小。原题的判定子程序（计算给定 goodnes 的最小成本）可以直接复用于新题计算 f(G)，外层逻辑从二分搜索变为扫描候选值并筛选非支配点，调整量很小。熟悉原题的选手几乎可以原样迁移贪心算法和单调性分析，新题没有实质性的算法创新，仅增加了效率优化的要求。叙事和样例完全重写，表面换皮风险低，但语义差异不足以支撑新题的独立性，解法迁移风险仍高。",
+          "evidence_refs": [
+            "snapshots.original_schema.objective",
+            "snapshots.new_schema.objective",
+            "snapshots.original_schema.core_constraints",
+            "snapshots.new_schema.core_constraints",
+            "snapshots.original_schema.invariant.invariants[2]",
+            "snapshots.new_schema.invariant.invariants[2]",
+            "divergence.schema_distance_breakdown",
+            "snapshots.difference_plan.changed_axes",
+            "snapshots.generated_problem.notes"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "suggested_revisions": [
+        "可考虑增加一个包含多测试用例（t≥2）的样例，以明确展示多组输出之间不需要额外分隔的格式。",
+        "在样例1的解释中，可补充一个简要的字典序比较步骤（例如逐元素比较展示为什么给定排列最小），进一步强化选手对字典序约束的理解。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "可考虑增加一个 n=1 的测试样例，以验证边界情况（如只有一行一列时的行为），进一步丰富样例覆盖度。",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "strengths_to_keep": [
+        "约束落地准确：成本上限和字典序最小性在题面中均有明确、一致的表述。",
+        "定义完备：中位数和字典序比较在正文和 notes 中详细解释，消除了歧义。",
+        "样例有代表性：覆盖可行解和不可行解，解释帮助理解核心难点（好度的二分性质与字典序构造）。",
+        "题面定义清晰，完整包含了中位数、好度、成本、支配关系以及非支配前沿的所有必要定义。",
+        "样例解释详细，逐步说明了非支配点的选择过程，有助于理解题目。",
+        "输入输出格式描述准确，特别注意了多测试用例输出无空行的细节。",
+        "约束和数据类型提醒（使用64位整数）对选手友好。",
+        "题面结构与标准OJ题面完全一致，无噪声或干扰信息。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 58.3,
+            "failed_hard_checks": [],
+            "issues": [],
+            "suggested_revisions": [
+              "可考虑增加一个包含多测试用例（t≥2）的样例，以明确展示多组输出之间不需要额外分隔的格式。",
+              "在样例1的解释中，可补充一个简要的字典序比较步骤（例如逐元素比较展示为什么给定排列最小），进一步强化选手对字典序约束的理解。"
+            ],
+            "strengths_to_keep": [
+              "约束落地准确：成本上限和字典序最小性在题面中均有明确、一致的表述。",
+              "定义完备：中位数和字典序比较在正文和 notes 中详细解释，消除了歧义。",
+              "样例有代表性：覆盖可行解和不可行解，解释帮助理解核心难点（好度的二分性质与字典序构造）。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 57.8,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "虽然目标函数从单值最大化变为输出帕累托前沿（axis O 的变化），且约束结构中移除了成本上限 k（axis C 的变化），但核心建模完全一致：给定全局排序的元素，通过贪心分配每行左侧元素和选择中位数，使得最小中位数不低于阈值的同时总成本最小。原题的判定子程序（计算给定 goodnes 的最小成本）可以直接复用于新题计算 f(G)，外层逻辑从二分搜索变为扫描候选值并筛选非支配点，调整量很小。熟悉原题的选手几乎可以原样迁移贪心算法和单调性分析，新题没有实质性的算法创新，仅增加了效率优化的要求。叙事和样例完全重写，表面换皮风险低，但语义差异不足以支撑新题的独立性，解法迁移风险仍高。",
+                "evidence_refs": [
+                  "snapshots.original_schema.objective",
+                  "snapshots.new_schema.objective",
+                  "snapshots.original_schema.core_constraints",
+                  "snapshots.new_schema.core_constraints",
+                  "snapshots.original_schema.invariant.invariants[2]",
+                  "snapshots.new_schema.invariant.invariants[2]",
+                  "divergence.schema_distance_breakdown",
+                  "snapshots.difference_plan.changed_axes",
+                  "snapshots.generated_problem.notes"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "可考虑增加一个 n=1 的测试样例，以验证边界情况（如只有一行一列时的行为），进一步丰富样例覆盖度。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "题面定义清晰，完整包含了中位数、好度、成本、支配关系以及非支配前沿的所有必要定义。",
+              "样例解释详细，逐步说明了非支配点的选择过程，有助于理解题目。",
+              "输入输出格式描述准确，特别注意了多测试用例输出无空行的细节。",
+              "约束和数据类型提醒（使用64位整数）对选手友好。",
+              "题面结构与标准OJ题面完全一致，无噪声或干扰信息。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 100.0,
+        "latest_divergence_score": 57.8,
+        "suggested_revisions": [
+          "可考虑增加一个包含多测试用例（t≥2）的样例，以明确展示多组输出之间不需要额外分隔的格式。",
+          "在样例1的解释中，可补充一个简要的字典序比较步骤（例如逐元素比较展示为什么给定排列最小），进一步强化选手对字典序约束的理解。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "可考虑增加一个 n=1 的测试样例，以验证边界情况（如只有一行一列时的行为），进一步丰富样例覆盖度。",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "虽然目标函数从单值最大化变为输出帕累托前沿（axis O 的变化），且约束结构中移除了成本上限 k（axis C 的变化），但核心建模完全一致：给定全局排序的元素，通过贪心分配每行左侧元素和选择中位数，使得最小中位数不低于阈值的同时总成本最小。原题的判定子程序（计算给定 goodnes 的最小成本）可以直接复用于新题计算 f(G)，外层逻辑从二分搜索变为扫描候选值并筛选非支配点，调整量很小。熟悉原题的选手几乎可以原样迁移贪心算法和单调性分析，新题没有实质性的算法创新，仅增加了效率优化的要求。叙事和样例完全重写，表面换皮风险低，但语义差异不足以支撑新题的独立性，解法迁移风险仍高。",
+            "evidence_refs": [
+              "snapshots.original_schema.objective",
+              "snapshots.new_schema.objective",
+              "snapshots.original_schema.core_constraints",
+              "snapshots.new_schema.core_constraints",
+              "snapshots.original_schema.invariant.invariants[2]",
+              "snapshots.new_schema.invariant.invariants[2]",
+              "divergence.schema_distance_breakdown",
+              "snapshots.difference_plan.changed_axes",
+              "snapshots.generated_problem.notes"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "约束落地准确：成本上限和字典序最小性在题面中均有明确、一致的表述。",
+          "定义完备：中位数和字典序比较在正文和 notes 中详细解释，消除了歧义。",
+          "样例有代表性：覆盖可行解和不可行解，解释帮助理解核心难点（好度的二分性质与字典序构造）。",
+          "题面定义清晰，完整包含了中位数、好度、成本、支配关系以及非支配前沿的所有必要定义。",
+          "样例解释详细，逐步说明了非支配点的选择过程，有助于理解题目。",
+          "输入输出格式描述准确，特别注意了多测试用例输出无空行的细节。",
+          "约束和数据类型提醒（使用64位整数）对选手友好。",
+          "题面结构与标准OJ题面完全一致，无噪声或干扰信息。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

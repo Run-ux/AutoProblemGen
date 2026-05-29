@@ -1,0 +1,1026 @@
+{
+  "problem_id": "taco_codeforces_493eea20f0db",
+  "source_problem_ids": [
+    "taco_codeforces_493eea20f0db"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_493eea20f0db",
+      "codeforces",
+      "Vanya wants to minimize a tree. He can perform the following operation multiple times: choose a vertex v, and two disjoint (except for v) paths of equal length a_0 = v, a_1, ..., a_{k}, and b_0 = v, b_1, ..., b_{k}. A...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimum number of edges in the resulting path after a sequence of merging operations, or report impossibility",
+    "target": "path length",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "该规则能将原题的正向求解（判定+最小化）彻底翻转为反向设计题，迫使任务从“给定树求最小路径”变为“给定目标路径长度，设计修改操作（如带代价的合并）使其成立，并证明最小性”。这直接改变了输入结构、核心约束和目标形态，使原树形DP无法直接迁移，从根源上避免了上一次 counting 扩展的换皮问题。其他规则如 canonical_witness 和 construct_or_obstruction 虽改变输出，但操作规则与输入基本不变，解法迁移风险仍然很高；independent_components_to_global_coupling 可能引入全局约束，但核心操作可能保留，创新幅度相对不足。；创新度判断：新题将原核心合并操作推广为带代价的柔性合并（如允许不等长合并，代价基于长度差），把原题对某种特定操作可达性的判定升级为在一个扩展操作空间中寻找最小代价方案。这需要定义新的状态与代价模型，并使求解责任从树形DP的可行性计算转向优化搜索与可设计性证明，大幅偏离原题路径。；难度判断：以往只需判断是否可行并求最小长度，现在要求解空间覆盖所有可能的修改策略，并证明所给方案具有最小代价。算法可能需要设计全新的动态规划或网络流模型，同时处理目标长度约束与代价最小化，难度显著高于原题，且必须保证最优性验证的严密性。；风险判断：主要风险在于修改操作的定义可能脱离原核心规律（如简单删除边），但通过将修改操作直接融入原合并逻辑（如允许不等长合并并明确定价），可以保持强关联。同时需注意避免过度设计导致可解性崩溃，需确保存在有效算法。规划时将重点关注 edit_operation_contract 和 minimality_or_certificate_lock 的落地，保证输出验证可行。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_493eea20f0db",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "tree",
+      "length": {
+        "min": 2,
+        "max": 200000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 200000
+      },
+      "properties": {
+        "connected": true,
+        "acyclic": true,
+        "simple": true
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "operation_rule",
+          "description": "The allowed operation: choose a vertex v and two disjoint (except at v) paths of equal length starting at v, such that every vertex on these paths except v has no neighbours in the tree other than the adjacent vertices on its own path. After this, one of the paths can be merged into the other, effectively erasing the internal vertices of that path.",
+          "formal": "∃ v ∈ V, k ≥ 1, paths a_0=v, a_1, …, a_k and b_0=v, b_1, …, b_k with {a_1,…,a_k} ∩ {b_1,…,b_k} = ∅, and for each i=1..k, N(a_i) ⊆ {a_{i-1}, a_{i+1}} (let a_{k+1}=∅), similarly for b_i.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "minimum number of edges in the resulting path after a sequence of merging operations, or report impossibility",
+      "target": "path length",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "subtree_contribution_mergeability",
+          "description": "Each node's subtree can be reduced to a contribution value representing an arm length. Leaves contribute 0; for an internal node, child contributions are collected, equal values can be merged but the value persists once in the set of distinct child values. The set must have size at most 2, and size 2 is allowed only at the root. The node's own contribution is 0 if the set is empty, s+1 if a single value s, and for the root with two distinct values a,b the total path length is a+b+2.",
+          "properties": {
+            "leaf_contribution": 0,
+            "merge_condition": "equal child values are merged into single occurrence",
+            "max_distinct_child_values_per_node": 2,
+            "root_two_distinct_values_yields_total_length": true
+          },
+          "evidence_source": "both"
+        },
+        {
+          "name": "final_length_odd_reduction",
+          "description": "After reduction, the computed total path length can be repeatedly halved while even, yielding the shortest possible path length which is the greatest odd divisor of the computed total.",
+          "properties": {
+            "reduction_rule": "while even, divide by 2",
+            "invariant": "shortest length is odd factor of total computed length"
+          },
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 3 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "meets_seed_properties",
+      "selection_reason": "种子题具有明确的合并操作规则和隐式的构造解空间；原输出只为数值，未要求方案，且标准解法不包含方案回溯，正好满足规则禁止项缺失。要求输出规范解（如字典序最小操作序列）将迫使解法在DP基础上加入构造与顺序决策，实质性改变约束优先级与输出轴。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题 core_constraints.operation_rule 定义了清晰的树合并操作，不变量 subtree_contribution_mergeability 表明每个节点可归约出结构化贡献值，这构成可定义规范顺序的解对象；原题 objective 仅为最小化数值，original_problem.description 要求输出 -1 或最小边数，未提及任何方案；standard_solution_code 中 DP 仅计算贡献值，无任何路径记录或回溯代码，因此满足规则 forbidden_seed_properties 中“原题本来就要求输出完整方案”和“原解只要顺手回溯就能拿到方案”均不成立。",
+        "feedback": "规则适用性良好。建议在规划阶段重点设计规范顺序的引入方式，确保其融入核心约束并增加构造难度，避免退化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "local_certificate_exists",
+      "selection_reason": "原题的不变式定义了可局部检查的冲突条件（如子树贡献集合大小限制），无解情形可直接转化为局部证据，且解决方案已隐式利用该证据。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题 schema 中 invariant 'subtree_contribution_mergeability' 规定每个节点的不同子贡献数量上限为2，非根节点不得超过1个不同值，该条件严格且可局部检查；解决方案中通过返回冲突节点（负值）隐式保留了证据，可直接形式化为输出对象。",
+        "feedback": "规则合理，无解情形的局部阻碍证据在现有约束中已有雏形，可进一步设计为显式输出。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.77,
+      "reason_code": "clear_counting_foundation",
+      "selection_reason": "种子题的树形DP通过子树贡献值分解解空间，不同解可明确定义为最终路径的子图相等，有限树保证解空间有限，去重规则自然且可操作，满足计数化的核心前提。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题invariant描述了leaf_contribution为0、merge_condition合并相等子贡献、root_two_distinct_values_yields_total_length等规则，表明解空间可拆分为单元并汇总；树的大小有限，任何合法操作序列终止于一个有限子图，因此解空间有限；不同解等价于最终路径的子图结构相等，去重规则清晰。",
+        "feedback": "规则核心是锁定计数目标为唯一义务，建议新题直接从计数最终路径出发重构核心约束与不变量，避免使用原题最小化DP然后附加计数。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是确定性的树合并问题，操作规则和最终结果完全由树结构决定，没有顺序不确定、资源波动或局部选择差异，不存在可被放大的原生扰动来源。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题的 core_constraints.operation_rule 定义了明确的合并操作，没有任何不确定性；objective 是最小化路径边数，通过确定性 DP 求解。整个问题语义中不包含任何扰动模型所需的不确定性元素。",
+        "feedback": "该规则要求种子题具有原生扰动来源，而此题为纯组合优化问题，不适合用此规则扩展。建议考虑其他规则或更换种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题已经是最小化路径长度的优化题，不存在未优化的临界参数；可行性随树结构变化无单调分层特性，阈值化会退化为机械重述。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints.operation_rule 定义了合并操作，但没有任何参数可产生单调可行区域；objective.type 已是 minimize_value，描述明确要求输出最短路径长度；invariant.final_length_odd_reduction 表明结果是奇因子，不随某个连续阈值单调变化。",
+        "feedback": "规则要求原可行性随参数具有清晰单调性，但本题可行性仅依赖于树的结构推导，无法提炼出一个自然的临界参数进行极值重铸，强行阈值化只会外部套嵌二分或重定义目标，违反 redlines。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_conflicting_secondary_metric",
+      "selection_reason": "原题仅最小化最终路径长度，所有树属性（如边数、操作次数）均为该目标的线性函数或同义改写，不存在自然且与主目标真实冲突的第二评价指标。强行引入的指标（如保留叶子数）与核心操作无关，会破坏原题结构。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'mimimize_value'，描述为'minimum number of edges in the resulting path'；约束中操作合并只会减少总边数，最终路径长度与删除边数之和恒为n-1（完全线性相关）。不变量基于子树贡献合并，无其他独立优化维度。",
+        "feedback": "建议选择本身具有时间/空间、收益/风险等天然权衡的种子题（如带预算的最短路、有限资源下的最大覆盖），而非此类纯结构缩减问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "target_output_as_input_design",
+      "selection_reason": "原题输出（最短路径长度）可直接作为反向目标；存在自然的构造设计自由度（可要求生成树使得合并后达成目标长度），且构造操作与原核心对象（树）相关，未触犯全球红线。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题输出为整数或-1，规则中的target_result_binding helper可将其绑定为新题要达成的反向目标；原题输入为树，构造一棵新的树属于其自然结构的设计自由度；核心规律为合并操作，构造的树需通过该操作得到目标，修改/设计与原核心相关；目标可验证（检查合并结果是否等于给定值）。",
+        "feedback": "该规则适用于构造新输入的反向设计，但需注意目标定义应避免单纯判定原答案，并确保最小性责任可通过要求输出具体构造来体现。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_coupling_feasible",
+      "selection_reason": "原题树分解为子树贡献，这些局部单元可由全局操作次数预算耦合，形成跨组件依赖，符合全局耦合要求。",
+      "risk_tags": [
+        "complex_operation_risk",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "种子题invariant显示每个节点的子树贡献独立计算（leaf_contribution: 0, 内部节点根据子贡献合并），但可通过引入共享全局操作次数限制绑定所有合并操作，使局部单元不再独立。原schema中operation_rule定义了允许的合并操作，可映射为全局资源的消耗。",
+        "feedback": "需确保全局预算直接约束多个局部单元而非单独分配，且目标依赖全局分配结果。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_adversarial_structure",
+      "selection_reason": "原题是单人决策问题，操作由Vanya执行，不存在对抗方，若强行引入第二个玩家将违反红线“对抗方只能靠故事背景硬造”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：Vanya wants to minimize a tree. He can perform the following operation... 题目中只有一个参与者。规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，且 forbidden_seed_properties 包括对抗方只能靠故事背景硬造。此题不满足要求。",
+        "feedback": "规则不适用于该种子题，因为缺乏自然的对抗语义，强制转化只会成为背景故事包装。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.25,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题核心是全局缩减过程而非局部路径性质，缺乏可自然形成覆盖/割关系的本地对象族，与规则要求的‘单路径性质扩展到覆盖/割’语义不匹配。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最小化最终路径长度，操作基于局部路径合并，但问题本身已是全局优化。规则要求从单路径、单区间等性质扩展为覆盖/割，种子题未提供一条待求解的局部性质作为起点，多个操作路径之间并不构成经典的覆盖或割关系，而是递归合并。",
+        "feedback": "建议检查规则适用条件：需存在可独立定义的局部结构族（如所有从某点出发的路径），且这些局部对象能自然产生覆盖/割问题。当前种子题不满足，强行扩展易沦为重复原题逻辑。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_seed",
+      "selection_reason": "种子题是优化问题（求最小边数），不是计数问题，没有明确有限的计数对象，无法应用带权计数规则。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "not_a_counting_problem"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 minimize_value，描述为 'minimum number of edges'，输入输出不涉及任何计数；schema 中 core_constraints 无计数对象，objective.type 为 minimize_value。",
+        "feedback": "规则要求原题已有明确有限的计数对象，但本题是决策/优化问题，没有可供加权或分类统计的计数集合。建议更换种子题或选择计数相关规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "meets_seed_properties",
+      "message": "种子题具有明确的合并操作规则和隐式的构造解空间；原输出只为数值，未要求方案，且标准解法不包含方案回溯，正好满足规则禁止项缺失。要求输出规范解（如字典序最小操作序列）将迫使解法在DP基础上加入构造与顺序决策，实质性改变约束优先级与输出轴。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题 core_constraints.operation_rule 定义了清晰的树合并操作，不变量 subtree_contribution_mergeability 表明每个节点可归约出结构化贡献值，这构成可定义规范顺序的解对象；原题 objective 仅为最小化数值，original_problem.description 要求输出 -1 或最小边数，未提及任何方案；standard_solution_code 中 DP 仅计算贡献值，无任何路径记录或回溯代码，因此满足规则 forbidden_seed_properties 中“原题本来就要求输出完整方案”和“原解只要顺手回溯就能拿到方案”均不成立。",
+        "feedback": "规则适用性良好。建议在规划阶段重点设计规范顺序的引入方式，确保其融入核心约束并增加构造难度，避免退化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_certificate_exists",
+      "message": "原题的不变式定义了可局部检查的冲突条件（如子树贡献集合大小限制），无解情形可直接转化为局部证据，且解决方案已隐式利用该证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题 schema 中 invariant 'subtree_contribution_mergeability' 规定每个节点的不同子贡献数量上限为2，非根节点不得超过1个不同值，该条件严格且可局部检查；解决方案中通过返回冲突节点（负值）隐式保留了证据，可直接形式化为输出对象。",
+        "feedback": "规则合理，无解情形的局部阻碍证据在现有约束中已有雏形，可进一步设计为显式输出。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_foundation",
+      "message": "种子题的树形DP通过子树贡献值分解解空间，不同解可明确定义为最终路径的子图相等，有限树保证解空间有限，去重规则自然且可操作，满足计数化的核心前提。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.77,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题invariant描述了leaf_contribution为0、merge_condition合并相等子贡献、root_two_distinct_values_yields_total_length等规则，表明解空间可拆分为单元并汇总；树的大小有限，任何合法操作序列终止于一个有限子图，因此解空间有限；不同解等价于最终路径的子图结构相等，去重规则清晰。",
+        "feedback": "规则核心是锁定计数目标为唯一义务，建议新题直接从计数最终路径出发重构核心约束与不变量，避免使用原题最小化DP然后附加计数。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是确定性的树合并问题，操作规则和最终结果完全由树结构决定，没有顺序不确定、资源波动或局部选择差异，不存在可被放大的原生扰动来源。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题的 core_constraints.operation_rule 定义了明确的合并操作，没有任何不确定性；objective 是最小化路径边数，通过确定性 DP 求解。整个问题语义中不包含任何扰动模型所需的不确定性元素。",
+        "feedback": "该规则要求种子题具有原生扰动来源，而此题为纯组合优化问题，不适合用此规则扩展。建议考虑其他规则或更换种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题已经是最小化路径长度的优化题，不存在未优化的临界参数；可行性随树结构变化无单调分层特性，阈值化会退化为机械重述。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints.operation_rule 定义了合并操作，但没有任何参数可产生单调可行区域；objective.type 已是 minimize_value，描述明确要求输出最短路径长度；invariant.final_length_odd_reduction 表明结果是奇因子，不随某个连续阈值单调变化。",
+        "feedback": "规则要求原可行性随参数具有清晰单调性，但本题可行性仅依赖于树的结构推导，无法提炼出一个自然的临界参数进行极值重铸，强行阈值化只会外部套嵌二分或重定义目标，违反 redlines。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_secondary_metric",
+      "message": "原题仅最小化最终路径长度，所有树属性（如边数、操作次数）均为该目标的线性函数或同义改写，不存在自然且与主目标真实冲突的第二评价指标。强行引入的指标（如保留叶子数）与核心操作无关，会破坏原题结构。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'mimimize_value'，描述为'minimum number of edges in the resulting path'；约束中操作合并只会减少总边数，最终路径长度与删除边数之和恒为n-1（完全线性相关）。不变量基于子树贡献合并，无其他独立优化维度。",
+        "feedback": "建议选择本身具有时间/空间、收益/风险等天然权衡的种子题（如带预算的最短路、有限资源下的最大覆盖），而非此类纯结构缩减问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "target_output_as_input_design",
+      "message": "原题输出（最短路径长度）可直接作为反向目标；存在自然的构造设计自由度（可要求生成树使得合并后达成目标长度），且构造操作与原核心对象（树）相关，未触犯全球红线。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题输出为整数或-1，规则中的target_result_binding helper可将其绑定为新题要达成的反向目标；原题输入为树，构造一棵新的树属于其自然结构的设计自由度；核心规律为合并操作，构造的树需通过该操作得到目标，修改/设计与原核心相关；目标可验证（检查合并结果是否等于给定值）。",
+        "feedback": "该规则适用于构造新输入的反向设计，但需注意目标定义应避免单纯判定原答案，并确保最小性责任可通过要求输出具体构造来体现。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "natural_coupling_feasible",
+      "message": "原题树分解为子树贡献，这些局部单元可由全局操作次数预算耦合，形成跨组件依赖，符合全局耦合要求。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.92,
+        "risk_tags": [
+          "complex_operation_risk",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "种子题invariant显示每个节点的子树贡献独立计算（leaf_contribution: 0, 内部节点根据子贡献合并），但可通过引入共享全局操作次数限制绑定所有合并操作，使局部单元不再独立。原schema中operation_rule定义了允许的合并操作，可映射为全局资源的消耗。",
+        "feedback": "需确保全局预算直接约束多个局部单元而非单独分配，且目标依赖全局分配结果。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_structure",
+      "message": "原题是单人决策问题，操作由Vanya执行，不存在对抗方，若强行引入第二个玩家将违反红线“对抗方只能靠故事背景硬造”。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：Vanya wants to minimize a tree. He can perform the following operation... 题目中只有一个参与者。规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，且 forbidden_seed_properties 包括对抗方只能靠故事背景硬造。此题不满足要求。",
+        "feedback": "规则不适用于该种子题，因为缺乏自然的对抗语义，强制转化只会成为背景故事包装。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题核心是全局缩减过程而非局部路径性质，缺乏可自然形成覆盖/割关系的本地对象族，与规则要求的‘单路径性质扩展到覆盖/割’语义不匹配。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.25,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最小化最终路径长度，操作基于局部路径合并，但问题本身已是全局优化。规则要求从单路径、单区间等性质扩展为覆盖/割，种子题未提供一条待求解的局部性质作为起点，多个操作路径之间并不构成经典的覆盖或割关系，而是递归合并。",
+        "feedback": "建议检查规则适用条件：需存在可独立定义的局部结构族（如所有从某点出发的路径），且这些局部对象能自然产生覆盖/割问题。当前种子题不满足，强行扩展易沦为重复原题逻辑。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_seed",
+      "message": "种子题是优化问题（求最小边数），不是计数问题，没有明确有限的计数对象，无法应用带权计数规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "not_a_counting_problem"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 minimize_value，描述为 'minimum number of edges'，输入输出不涉及任何计数；schema 中 core_constraints 无计数对象，objective.type 为 minimize_value。",
+        "feedback": "规则要求原题已有明确有限的计数对象，但本题是决策/优化问题，没有可供加权或分类统计的计数集合。建议更换种子题或选择计数相关规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "core_constraints",
+          "input_structure",
+          "invariant",
+          "objective"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "complex_operation_risk",
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 3 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_493eea20f0db_campus_ops_20260529_173639",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_493eea20f0db\\taco_codeforces_493eea20f0db_campus_ops_20260529_173639_round1.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_493eea20f0db\\taco_codeforces_493eea20f0db_campus_ops_20260529_173639_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 88.0,
+      "divergence_score": 47.7,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "错误的唯一性断言",
+          "detail": "描述中“任何最终形成的简单路径，都可以唯一地表示成某个教室作为中心点向外连接若干条臂拼合而成”不准确：例如一条链可选取不同中心点得到多种臂组合表示，与“唯一地”矛盾。选手若据此理解可能错误推导计数规则。",
+          "evidence_refs": [
+            "generated_problem.description"
+          ],
+          "fix_hint": "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "“中间教室”措辞模糊",
+          "detail": "操作描述中“被并入臂上的所有中间教室将被拆除”的“中间教室”意思不够明确，可能被误解为只拆除非端点的教室，而实际应拆除被并入臂上除中心点外的全部教室（包括端点）。",
+          "evidence_refs": [
+            "generated_problem.description"
+          ],
+          "fix_hint": "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "虽然目标从判定与最小化变为计数，但操作规则（选择等长臂进行合并）与原题完全一致，输入均为同一棵树，所有可达路径的生成机制未变。原题的核心解法——自底向上计算子树臂长贡献并合并相等值——在新题中只需将状态从‘存在/最优’扩展为‘计数’，树形DP的遍历、合并等值、约束最多两个不同值的框架可直接复用。选手几乎只需修改状态表示和合并算子即可完成，解法迁移风险很高（0.8）。表层叙事、样例、题目背景已完全重写，未复用原题文本，表面换皮风险较低（0.3），但任务语义差异有限（0.35），主要是因为操作实质相同，数学本质未变。因此判定为换皮题。",
+          "evidence_refs": [
+            "original_problem.description",
+            "generated_problem.description",
+            "new_schema.core_constraints",
+            "new_schema.invariant",
+            "original_schema.invariant",
+            "review_context.algorithmic_delta_claim"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "suggested_revisions": [
+        "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。",
+        "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "修正唯一性断言，避免误导选手。",
+        "优化操作描述的措辞，明确拆除整条被并入臂。",
+        "可在 notes 中补充提示：选手应基于教室集合去重计数，不必拘泥于中心点表示的唯一性。",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "strengths_to_keep": [
+        "样例设计合理且解释详尽，覆盖多种情形。",
+        "校园走廊的比喻生动且贴合题意，未泄露原题。",
+        "题面结构清晰，规范地给出了输入输出格式和约束。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 88.0,
+            "divergence_score": 47.7,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "错误的唯一性断言",
+                "detail": "描述中“任何最终形成的简单路径，都可以唯一地表示成某个教室作为中心点向外连接若干条臂拼合而成”不准确：例如一条链可选取不同中心点得到多种臂组合表示，与“唯一地”矛盾。选手若据此理解可能错误推导计数规则。",
+                "evidence_refs": [
+                  "generated_problem.description"
+                ],
+                "fix_hint": "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "“中间教室”措辞模糊",
+                "detail": "操作描述中“被并入臂上的所有中间教室将被拆除”的“中间教室”意思不够明确，可能被误解为只拆除非端点的教室，而实际应拆除被并入臂上除中心点外的全部教室（包括端点）。",
+                "evidence_refs": [
+                  "generated_problem.description"
+                ],
+                "fix_hint": "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。"
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "虽然目标从判定与最小化变为计数，但操作规则（选择等长臂进行合并）与原题完全一致，输入均为同一棵树，所有可达路径的生成机制未变。原题的核心解法——自底向上计算子树臂长贡献并合并相等值——在新题中只需将状态从‘存在/最优’扩展为‘计数’，树形DP的遍历、合并等值、约束最多两个不同值的框架可直接复用。选手几乎只需修改状态表示和合并算子即可完成，解法迁移风险很高（0.8）。表层叙事、样例、题目背景已完全重写，未复用原题文本，表面换皮风险较低（0.3），但任务语义差异有限（0.35），主要是因为操作实质相同，数学本质未变。因此判定为换皮题。",
+                "evidence_refs": [
+                  "original_problem.description",
+                  "generated_problem.description",
+                  "new_schema.core_constraints",
+                  "new_schema.invariant",
+                  "original_schema.invariant",
+                  "review_context.algorithmic_delta_claim"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。",
+              "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "修正唯一性断言，避免误导选手。",
+              "优化操作描述的措辞，明确拆除整条被并入臂。",
+              "可在 notes 中补充提示：选手应基于教室集合去重计数，不必拘泥于中心点表示的唯一性。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "样例设计合理且解释详尽，覆盖多种情形。",
+              "校园走廊的比喻生动且贴合题意，未泄露原题。",
+              "题面结构清晰，规范地给出了输入输出格式和约束。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 88.0,
+        "latest_divergence_score": 47.7,
+        "suggested_revisions": [
+          "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。",
+          "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "修正唯一性断言，避免误导选手。",
+          "优化操作描述的措辞，明确拆除整条被并入臂。",
+          "可在 notes 中补充提示：选手应基于教室集合去重计数，不必拘泥于中心点表示的唯一性。",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "错误的唯一性断言",
+            "detail": "描述中“任何最终形成的简单路径，都可以唯一地表示成某个教室作为中心点向外连接若干条臂拼合而成”不准确：例如一条链可选取不同中心点得到多种臂组合表示，与“唯一地”矛盾。选手若据此理解可能错误推导计数规则。",
+            "evidence_refs": [
+              "generated_problem.description"
+            ],
+            "fix_hint": "将“唯一地”改为“都可以表示成”，并补充说明“最终计数仅根据教室集合，不同表示若对应同一集合仍视为同一种方案”。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "“中间教室”措辞模糊",
+            "detail": "操作描述中“被并入臂上的所有中间教室将被拆除”的“中间教室”意思不够明确，可能被误解为只拆除非端点的教室，而实际应拆除被并入臂上除中心点外的全部教室（包括端点）。",
+            "evidence_refs": [
+              "generated_problem.description"
+            ],
+            "fix_hint": "将“中间教室”改为“除中心点外的所有教室”或“整条臂上的教室”。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "虽然目标从判定与最小化变为计数，但操作规则（选择等长臂进行合并）与原题完全一致，输入均为同一棵树，所有可达路径的生成机制未变。原题的核心解法——自底向上计算子树臂长贡献并合并相等值——在新题中只需将状态从‘存在/最优’扩展为‘计数’，树形DP的遍历、合并等值、约束最多两个不同值的框架可直接复用。选手几乎只需修改状态表示和合并算子即可完成，解法迁移风险很高（0.8）。表层叙事、样例、题目背景已完全重写，未复用原题文本，表面换皮风险较低（0.3），但任务语义差异有限（0.35），主要是因为操作实质相同，数学本质未变。因此判定为换皮题。",
+            "evidence_refs": [
+              "original_problem.description",
+              "generated_problem.description",
+              "new_schema.core_constraints",
+              "new_schema.invariant",
+              "original_schema.invariant",
+              "review_context.algorithmic_delta_claim"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "样例设计合理且解释详尽，覆盖多种情形。",
+          "校园走廊的比喻生动且贴合题意，未泄露原题。",
+          "题面结构清晰，规范地给出了输入输出格式和约束。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

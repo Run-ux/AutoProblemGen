@@ -1,0 +1,918 @@
+{
+  "problem_id": "taco_codechef_de9f09c45e9e",
+  "source_problem_ids": [
+    "taco_codechef_de9f09c45e9e"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_de9f09c45e9e",
+      "SEAD",
+      "codechef",
+      "Read problems statements in Mandarin Chinese and Russian. Sereja has an array consisting of $n$ integers $a_{1} ≤ a_{2} ≤ \\ldots ≤ a_{n}$. Based on this array, he has to answer $m$ queries represented by pairs integer...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "For each query, find the smallest index i satisfying given chain and threshold conditions.",
+    "target": "index",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "种子题中每个查询的可行起点具有单调性（形成连续后缀区间），可直接转化为多个查询区间的最小点数覆盖问题，这种转换天然契合全局覆盖语义，且无浅改或换皮风险；阈值规则因原题已是求最值而缺乏自然临界参数，逆设计规则需要构造可能牵强的修改操作，覆盖规则结构差异最大且落地最稳。；创新度判断：将原题每个查询独立求解最小起点的任务，转变为对全体查询区间求最小点数覆盖，核心义务从单个链的可行性判定升级为对对象族的全局覆盖完备性证明，彻底改变了问题类型和验证责任。；难度判断：原题主要求解责任是二分查找与区间最值判定，新题要求设计覆盖优化算法（如贪心），并需证明最小性或处理带权/约束的变种，算法复杂度从单查询处理跃迁到全局组合优化，显著抬高难度。；风险判断：风险在于需精确转化区间定义以免破坏原条件语义，且经典区间覆盖可能降低新颖感；可通过引入查询权重、部分覆盖或输出完整覆盖方案等措施加大区分度，整体风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codechef_de9f09c45e9e",
+    "source": "codechef",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "n",
+          "role_description": "Length of array a",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "a",
+          "role_description": "Sorted array of integers",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000
+          },
+          "properties": {
+            "sorted": true
+          }
+        },
+        {
+          "role": "m",
+          "role_description": "Number of queries",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "queries",
+          "role_description": "List of query pairs (t, d)",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "array_non_decreasing",
+          "description": "输入数组 a 已按非递减顺序给出,即 a1 ≤ a2 ≤ … ≤ an。",
+          "formal": "a1 ≤ a2 ≤ … ≤ an",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "query_t_lower_bound",
+          "description": "每个查询中的参数 t 必须不小于数组的最小值 a1。",
+          "formal": "t ≥ a1",
+          "source_sections": [
+            "constraints"
+          ]
+        },
+        {
+          "name": "d_non_negative",
+          "description": "每个查询中的参数 d 为非负数。",
+          "formal": "d ≥ 0",
+          "source_sections": [
+            "constraints"
+          ]
+        },
+        {
+          "name": "answer_condition",
+          "description": "对于查询 (t, d),答案是最小的 i,使得存在某个 k ≥ i,对 j = i,…,k-1 满足 a_j + d ≥ a_{j+1},且 a_k ≤ t,且若 k < n 则 a_{k+1} > t。",
+          "formal": "min i s.t. ∃ k ≥ i: (∀ j ∈ [i, k-1], a_j + d ≥ a_{j+1}) ∧ a_k ≤ t ∧ (k < n → a_{k+1} > t)",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "For each query, find the smallest index i satisfying given chain and threshold conditions.",
+      "target": "index",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "feasible_start_suffix_monotonicity",
+          "description": "For a fixed query (t,d), let idx be the last index with a[idx]≤t. The condition that all adjacent differences from i to idx-1 are ≤d is monotonic in i: if it holds for some i, it also holds for any j>i (j≤idx-1). Thus the set of feasible starts is a suffix of [1,idx-1], enabling binary search.",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "local_path_to_global_cover",
+  "rejected_candidates": [
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 3 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题仅要求输出每个查询的最小索引i，且对应的k由数组最后不超过t的元素唯一确定（即bisect(a,t)-1）。原解法计算i的同时已获得k，若改为输出(i,k)对仅需顺手输出已知值，主要解法（二分+RMQ）完全不变，属于规则所禁止的“原解只要顺手回溯就能拿到方案”。此外，解对象缺乏多样性，难以定义有意义的规范顺序，升级为规范解题的空间极小。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "1. 原题输出为单一整数i，原解通过二分查找i，并维护idx=bisect(a,t)-1。对于任何可行i，满足条件的k必然为idx，因为a_k≤t且a_{k+1}>t（或k=n）唯一确定。2. 规则声明中明确禁止“原解只要顺手回溯就能拿到方案”的种子属性，属于forbidden_seed_properties。3. 辅助工具canonical_order_pressure要求规范顺序进入主状态演化，但种子题状态空间无多余自由度；proof_bearing_output要求输出带证明责任的解对象，但(i,idx)对无需额外证明。4. 全局红线禁止“纯改输入输出格式”，此处若仅追加输出k将视为格式性修改。5. failure_templates中not_applicable描述“这道种子题缺少适合做规范化的解对象”直接匹配本案。",
+        "feedback": "建议放弃该种子题针对此规则的延伸，因其解结构过于狭窄，升级后内容变化不足且违反禁止项。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_cannot_fail",
+      "selection_reason": "种子题中的查询始终有解，不存在“做不到的原因”，无法产生局部冲突证据。规则所需的无解情形缺失，无法落地为可检查的阻碍证据。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "在核心约束中，t ≥ a1 且数组非递减，取 k = 最后一个 ≤ t 的索引 idx 即可满足条件 (a_k ≤ t 且 k< n → a_{k+1} > t)，同时不存在需要检查的中间条件，故对于所有合法查询答案始终存在。标准解法也验证了无解情况不会出现。",
+        "feedback": "规则要求种子具有可局部化的无解原因，但该问题中无解情形不可达，无法应用 construct_or_obstruction 变换。建议选择存在冲突情形的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题求最小索引，其可行起始集具有后缀单调性，计数结果可直接由最小索引和上界线性推导，未能带来新的算法义务或实质性状态重建，仅为答案形式的简单替换，不符合规则所要求的计数核心迁移。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目为每个查询找最小的 i，算法核心在二分查找最小可行起始索引。由于单调性，所有更大的索引若不超过 idx 亦满足条件，故计数答案 = idx - min_i + 1，计数完全寄生在原题最小索引的求解上。规则要求主目标替换并承担新的计数去重责任，但这一变换没有引入新的解空间分解、等价类分析或汇总结构，与原题判定过程高度耦合。",
+        "feedback": "建议寻找更具独立计数复杂性的种子题，或尝试修改条件以打破后缀单调性，使计数与最小索引的求解解耦，才能满足规则对创新性的要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题SEAD是确定性查询问题：数组a已排序且固定，每个查询的t和d给定，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。规则要求扰动必须来自原题语义本身，但该种子无此特性，强行引入会违反‘不能凭背景硬造对手’红线，因此不适合进入规划阶段。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则eligibility.required_seed_properties要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’。SEAD原题核心约束为数组非递减且查询参数确定，所有条件均为确定性输入，无任何不确定性描述（见seed_schema.core_constraints和description：‘a1 ≤ a2 ≤ … ≤ an’，查询的t,d是具体输入）。不存在可被放大的扰动来源。",
+        "feedback": "建议寻找本身就带有不确定性（如动态对手、随机到达序列、可变资源阈值）的种子题目来适配该规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_critical_parameter_found",
+      "selection_reason": "原题中查询参数 d 与可行区域存在单调关系：d 越大，条件 a_j + d ≥ a_{j+1} 越容易满足，形成清晰的临界分化。将其目标从求最小满足条件的索引 i 反转成求最小 d 使解存在，可直接升级为求极值阈值的优化题，符合规则核心要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子题的不变量 'feasible_start_suffix_monotonicity' 表明对固定 (t,d) 可行起点集是后缀，且搜索时利用了 d 对 gap 的约束；d 出现在核心约束 a_j + d ≥ a_{j+1} 中，增大 d 放宽约束，使可行区域单调扩展，具备自然临界值。规则 required_seed_properties ‘阈值变化会改变主约束的可行区域’ 与 ‘清晰单调性’ 均满足。",
+        "feedback": "可应用 helper 'threshold_parameterization' 将 d 设为被优化的阈值，目标转为 min d；helper 'monotone_boundary_invariant' 可基于原题后缀单调性重构 d 的临界边界不变量；helper 'extremal_answer_contract' 确保输出的是带证明的最小 d。整体变换改变 C（d 从输入变为变量）、O（最小 i 变为最小 d）、V（d 的临界性证明替代原来的搜索不变量）。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_secondary_metric",
+      "selection_reason": "原题目标是最小化起始索引i。对于固定查询，终止索引k由t唯一确定，因此最小化i等价于最大化区间长度，两者没有冲突。不存在与i最小化真实冲突的自然第二指标，任何候选指标（如覆盖长度）都是原目标的同义改写，不构成多目标权衡。无法满足规则要求。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'minimize_value: index'，即最小化i。约束中k由条件a_k ≤ t and a_{k+1} > t定义，对于给定t是确定的（二分查找）。可行的起始i集合由区间[i,k-1]内相邻差≤d定义，且最小化i是唯一目标。没有提及任何其他优化指标。规则要求'两个指标之间存在真实冲突，不能同时独立最优'，但在此问题结构中，任何与i相关的指标，如区间长度，都与i负相关，没有冲突。",
+        "feedback": "建议寻找其他种子题，其原始问题本身就具有多个评价维度（如路径长度与风险、收益与代价等）且维度间存在天然张力，而非单目标最优确定性问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "forward_result_as_target_with_natural_edits",
+      "selection_reason": "原题输出为查询的最小起始索引i，可自然作为反向设计的目标答案。修改数组a的元素是核心对象的自然操作，直接影响差分约束条件，存在明确的设计自由度。满足反向设计规则的所有必要条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题SEAD中，每个查询输出最小索引i；规则要求将正向结果绑定为反向目标，helper target_result_binding 提到把原题结果绑定成新题要达成的反向目标。原题核心约束涉及数组a的差分条件，修改a的元素会直接改变这些条件的满足情况，属于原核心对象的自然修改操作，符合helper edit_operation_contract 要求。此外，原题已存在单调性不变量可用于算法设计，可承载最小性证明责任。",
+        "feedback": "种子题具有良好的反向设计基础，可进一步规划为给定目标答案，求最小修改数组a使所有查询答案符合预期。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题中查询为独立局部单元，仅共享只读数组a，无共享预算、守恒量或跨查询依赖，无法通过增加全局约束自然耦合，强行添加将沦为无关背景硬加。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中input_structure包含queries数组，每个查询独立处理；core_constraints中answer_condition定义单个查询内部条件，无跨查询约束；original_problem描述查询独立回答；helper_prompts要求共享资源直接约束多个局部单元，但原题无共享资源。",
+        "feedback": "即使引入全局耦合，查询之间仍无法形成有意义的依赖性，因为求解每个查询所需的数组性质与输入数组固定，不依赖其他查询的答案。强行加全局约束可能违反红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_operational_freedom",
+      "selection_reason": "原题是静态查询，没有可轮流选择的自然操作，所有计算完全确定，无法构成博弈语义。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "题目描述中只要求对给定查询计算满足条件的最小索引i，操作仅限于检查链上相邻差和阈值，不存在任何状态改变或选择；约束条件明确指出操作顺序固定且无选择自由度，完全违反规则的eligibility.forbidden_seed_properties。",
+        "feedback": "该规则要求种子题存在可轮流选择、拿取、移动或改变状态的自然操作，但SEAD问题只是静态查询处理，没有任何动态决策过程，强行博弈化只能硬造玩家和背景故事，属于明确禁止的情况。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_multi_query_cover",
+      "selection_reason": "种子题 SEAD 中,每个查询在有序数组上定义了满足相邻差条件和阈值的局部链(区间),多个查询构成可覆盖的对象族;可将问题扩展为选择最少的起始索引,使每个查询的可行起始集合中至少包含一个选中的点,符合从单路径/区间到全局覆盖的扩展方向。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "种子题 core_constraints 中的 answer_condition 描述每个查询寻找最小 i 且存在满足条件的区间 [i,k];原题包含 m 个查询,每个查询对应的可行起始索引构成集合,这些集合之间可以自然形成覆盖关系;规则 eligibility 中要求原题核心对象具有局部结构且多个局部对象可形成覆盖关系,此处满足。",
+        "feedback": "在后续规划中,需要明确定义对象族(每个查询的可行起始索引集)、覆盖口径(选点覆盖所有查询)和全局验证条件(如检查选中点对每个查询的可行性),避免退化为逐个查询独立输出的 trivial 扩展。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题 SEAD 是一个查询最小索引的判定问题，不涉及任何计数对象，无法满足规则所要求的“已有明确有限的计数对象”和“计数对象上存在自然权重、等级或统计量”两个必要种子属性。",
+      "risk_tags": [
+        "no_counting_object"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "在 seed_schema.core_constraints 和 objective 中，题目要求对于每个查询找出最小的 i，满足一段连续位置上的相邻差条件，输出的是一个索引值（minimize_value），没有任何计数元素。original_problem.description 中未提及任何计数或分布统计，标准解法使用二分和 RMQ，而非组合计数或 DP。",
+        "feedback": "该规则需要种子题存在明确的有限计数对象（例如统计方案数），且该对象具有可自然赋权或分层的属性。当前种子题为判定性问题，无法应用 counting_refinement 系列变化。建议更换为包含组合计数核心的种子题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题仅要求输出每个查询的最小索引i，且对应的k由数组最后不超过t的元素唯一确定（即bisect(a,t)-1）。原解法计算i的同时已获得k，若改为输出(i,k)对仅需顺手输出已知值，主要解法（二分+RMQ）完全不变，属于规则所禁止的“原解只要顺手回溯就能拿到方案”。此外，解对象缺乏多样性，难以定义有意义的规范顺序，升级为规范解题的空间极小。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "1. 原题输出为单一整数i，原解通过二分查找i，并维护idx=bisect(a,t)-1。对于任何可行i，满足条件的k必然为idx，因为a_k≤t且a_{k+1}>t（或k=n）唯一确定。2. 规则声明中明确禁止“原解只要顺手回溯就能拿到方案”的种子属性，属于forbidden_seed_properties。3. 辅助工具canonical_order_pressure要求规范顺序进入主状态演化，但种子题状态空间无多余自由度；proof_bearing_output要求输出带证明责任的解对象，但(i,idx)对无需额外证明。4. 全局红线禁止“纯改输入输出格式”，此处若仅追加输出k将视为格式性修改。5. failure_templates中not_applicable描述“这道种子题缺少适合做规范化的解对象”直接匹配本案。",
+        "feedback": "建议放弃该种子题针对此规则的延伸，因其解结构过于狭窄，升级后内容变化不足且违反禁止项。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_cannot_fail",
+      "message": "种子题中的查询始终有解，不存在“做不到的原因”，无法产生局部冲突证据。规则所需的无解情形缺失，无法落地为可检查的阻碍证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "在核心约束中，t ≥ a1 且数组非递减，取 k = 最后一个 ≤ t 的索引 idx 即可满足条件 (a_k ≤ t 且 k< n → a_{k+1} > t)，同时不存在需要检查的中间条件，故对于所有合法查询答案始终存在。标准解法也验证了无解情况不会出现。",
+        "feedback": "规则要求种子具有可局部化的无解原因，但该问题中无解情形不可达，无法应用 construct_or_obstruction 变换。建议选择存在冲突情形的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题求最小索引，其可行起始集具有后缀单调性，计数结果可直接由最小索引和上界线性推导，未能带来新的算法义务或实质性状态重建，仅为答案形式的简单替换，不符合规则所要求的计数核心迁移。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目为每个查询找最小的 i，算法核心在二分查找最小可行起始索引。由于单调性，所有更大的索引若不超过 idx 亦满足条件，故计数答案 = idx - min_i + 1，计数完全寄生在原题最小索引的求解上。规则要求主目标替换并承担新的计数去重责任，但这一变换没有引入新的解空间分解、等价类分析或汇总结构，与原题判定过程高度耦合。",
+        "feedback": "建议寻找更具独立计数复杂性的种子题，或尝试修改条件以打破后缀单调性，使计数与最小索引的求解解耦，才能满足规则对创新性的要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题SEAD是确定性查询问题：数组a已排序且固定，每个查询的t和d给定，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。规则要求扰动必须来自原题语义本身，但该种子无此特性，强行引入会违反‘不能凭背景硬造对手’红线，因此不适合进入规划阶段。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则eligibility.required_seed_properties要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’。SEAD原题核心约束为数组非递减且查询参数确定，所有条件均为确定性输入，无任何不确定性描述（见seed_schema.core_constraints和description：‘a1 ≤ a2 ≤ … ≤ an’，查询的t,d是具体输入）。不存在可被放大的扰动来源。",
+        "feedback": "建议寻找本身就带有不确定性（如动态对手、随机到达序列、可变资源阈值）的种子题目来适配该规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_critical_parameter_found",
+      "message": "原题中查询参数 d 与可行区域存在单调关系：d 越大，条件 a_j + d ≥ a_{j+1} 越容易满足，形成清晰的临界分化。将其目标从求最小满足条件的索引 i 反转成求最小 d 使解存在，可直接升级为求极值阈值的优化题，符合规则核心要求。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子题的不变量 'feasible_start_suffix_monotonicity' 表明对固定 (t,d) 可行起点集是后缀，且搜索时利用了 d 对 gap 的约束；d 出现在核心约束 a_j + d ≥ a_{j+1} 中，增大 d 放宽约束，使可行区域单调扩展，具备自然临界值。规则 required_seed_properties ‘阈值变化会改变主约束的可行区域’ 与 ‘清晰单调性’ 均满足。",
+        "feedback": "可应用 helper 'threshold_parameterization' 将 d 设为被优化的阈值，目标转为 min d；helper 'monotone_boundary_invariant' 可基于原题后缀单调性重构 d 的临界边界不变量；helper 'extremal_answer_contract' 确保输出的是带证明的最小 d。整体变换改变 C（d 从输入变为变量）、O（最小 i 变为最小 d）、V（d 的临界性证明替代原来的搜索不变量）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_secondary_metric",
+      "message": "原题目标是最小化起始索引i。对于固定查询，终止索引k由t唯一确定，因此最小化i等价于最大化区间长度，两者没有冲突。不存在与i最小化真实冲突的自然第二指标，任何候选指标（如覆盖长度）都是原目标的同义改写，不构成多目标权衡。无法满足规则要求。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'minimize_value: index'，即最小化i。约束中k由条件a_k ≤ t and a_{k+1} > t定义，对于给定t是确定的（二分查找）。可行的起始i集合由区间[i,k-1]内相邻差≤d定义，且最小化i是唯一目标。没有提及任何其他优化指标。规则要求'两个指标之间存在真实冲突，不能同时独立最优'，但在此问题结构中，任何与i相关的指标，如区间长度，都与i负相关，没有冲突。",
+        "feedback": "建议寻找其他种子题，其原始问题本身就具有多个评价维度（如路径长度与风险、收益与代价等）且维度间存在天然张力，而非单目标最优确定性问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "forward_result_as_target_with_natural_edits",
+      "message": "原题输出为查询的最小起始索引i，可自然作为反向设计的目标答案。修改数组a的元素是核心对象的自然操作，直接影响差分约束条件，存在明确的设计自由度。满足反向设计规则的所有必要条件。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题SEAD中，每个查询输出最小索引i；规则要求将正向结果绑定为反向目标，helper target_result_binding 提到把原题结果绑定成新题要达成的反向目标。原题核心约束涉及数组a的差分条件，修改a的元素会直接改变这些条件的满足情况，属于原核心对象的自然修改操作，符合helper edit_operation_contract 要求。此外，原题已存在单调性不变量可用于算法设计，可承载最小性证明责任。",
+        "feedback": "种子题具有良好的反向设计基础，可进一步规划为给定目标答案，求最小修改数组a使所有查询答案符合预期。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题中查询为独立局部单元，仅共享只读数组a，无共享预算、守恒量或跨查询依赖，无法通过增加全局约束自然耦合，强行添加将沦为无关背景硬加。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中input_structure包含queries数组，每个查询独立处理；core_constraints中answer_condition定义单个查询内部条件，无跨查询约束；original_problem描述查询独立回答；helper_prompts要求共享资源直接约束多个局部单元，但原题无共享资源。",
+        "feedback": "即使引入全局耦合，查询之间仍无法形成有意义的依赖性，因为求解每个查询所需的数组性质与输入数组固定，不依赖其他查询的答案。强行加全局约束可能违反红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_operational_freedom",
+      "message": "原题是静态查询，没有可轮流选择的自然操作，所有计算完全确定，无法构成博弈语义。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "题目描述中只要求对给定查询计算满足条件的最小索引i，操作仅限于检查链上相邻差和阈值，不存在任何状态改变或选择；约束条件明确指出操作顺序固定且无选择自由度，完全违反规则的eligibility.forbidden_seed_properties。",
+        "feedback": "该规则要求种子题存在可轮流选择、拿取、移动或改变状态的自然操作，但SEAD问题只是静态查询处理，没有任何动态决策过程，强行博弈化只能硬造玩家和背景故事，属于明确禁止的情况。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "natural_multi_query_cover",
+      "message": "种子题 SEAD 中,每个查询在有序数组上定义了满足相邻差条件和阈值的局部链(区间),多个查询构成可覆盖的对象族;可将问题扩展为选择最少的起始索引,使每个查询的可行起始集合中至少包含一个选中的点,符合从单路径/区间到全局覆盖的扩展方向。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "种子题 core_constraints 中的 answer_condition 描述每个查询寻找最小 i 且存在满足条件的区间 [i,k];原题包含 m 个查询,每个查询对应的可行起始索引构成集合,这些集合之间可以自然形成覆盖关系;规则 eligibility 中要求原题核心对象具有局部结构且多个局部对象可形成覆盖关系,此处满足。",
+        "feedback": "在后续规划中,需要明确定义对象族(每个查询的可行起始索引集)、覆盖口径(选点覆盖所有查询)和全局验证条件(如检查选中点对每个查询的可行性),避免退化为逐个查询独立输出的 trivial 扩展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题 SEAD 是一个查询最小索引的判定问题，不涉及任何计数对象，无法满足规则所要求的“已有明确有限的计数对象”和“计数对象上存在自然权重、等级或统计量”两个必要种子属性。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "no_counting_object"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "在 seed_schema.core_constraints 和 objective 中，题目要求对于每个查询找出最小的 i，满足一段连续位置上的相邻差条件，输出的是一个索引值（minimize_value），没有任何计数元素。original_problem.description 中未提及任何计数或分布统计，标准解法使用二分和 RMQ，而非组合计数或 DP。",
+        "feedback": "该规则需要种子题存在明确的有限计数对象（例如统计方案数），且该对象具有可自然赋权或分层的属性。当前种子题为判定性问题，无法应用 counting_refinement 系列变化。建议更换为包含组合计数核心的种子题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 3 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codechef_de9f09c45e9e_home_organization_20260529_152941",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

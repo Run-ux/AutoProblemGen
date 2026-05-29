@@ -1,0 +1,1180 @@
+{
+  "problem_id": "urban_commute_pareto_001",
+  "source_problem_ids": [
+    "taco_codeforces_6e10787c52e1"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_6e10787c52e1",
+      "codeforces",
+      "Mitya has a rooted tree with $n$ vertices indexed from $1$ to $n$, where the root has index $1$. Each vertex $v$ initially had an integer number $a_v \\ge 0$ written on it. For every vertex $v$ Mitya has computed $s_v$...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "必须改变核心约束引入第二指标和耦合状态，改变目标为帕累托前沿，改变不变式以支撑多目标剪枝与前沿正确性，否则无法从单目标最优蜕变为有意义的折中问题。",
+    "summary": "核心约束增加 max_a 定义、支配关系与双目标耦合；目标从单目标最小化改为输出帕累托前沿；不变式增加叶子总和等价性、极端解贪心基线、前沿单调性及耦合剪枝规则。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4593,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4593,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.597,
+      "O": 0.5292,
+      "V": 0.7393
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.597,
+      "objective_type_distance": 0.6118,
+      "objective_text_distance": 0.4053,
+      "invariant_match_distance": 0.7393
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "pareto_frontier",
+    "description": "输出所有不被任何可行解支配的 (total_sum, max_a) 整数对。对按 total_sum 升序排列，若 total_sum 相同则按 max_a 升序排列。",
+    "target": "pareto_set",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "该规则能将原单目标最优问题扩展为自然冲突的双指标权衡，从根本上改变求解方向，而非仅调整输出格式。相比之下，construct_or_obstruction 已被历史修订证明实质换皮；minimum_guarantee_under_perturbation 缺少原生扰动来源，硬造风险高；inverse_design 缺乏自然的修改操作接口，易退化为搜索变体。；创新度判断：引入与原目标（最小化总和）真实冲突的第二指标（如最大化偶数深度路径和或控制方差），将原题从简单的值恢复变为多目标折中分析，要求定义前沿或预算约束，使问题从确定性贪心变为需要权衡多个评价维度的结构设计。；难度判断：原求解责任是线性扫描和局部 min 操作；新题要求同时维护两个冲突目标的不可支配状态，可能涉及二分、动态规划或前沿构造，证明与剪枝复杂度大幅提升，且必须避免拆分为两个独立子题，主算法完全改变。；风险判断：主要风险在于第二指标必须自然耦合并形成真实冲突，若定义不当可能退化为原目标的后处理附属品。但利用已有偶数层信息与总和之间的反比关系可设计可靠冲突，且 helper 要求状态耦合和支配规则可防范浅改。历史修订要求的实质结构变化亦能通过此规则满足。",
+  "new_schema_snapshot": {
+    "problem_id": "urban_commute_pareto_001",
+    "source": "custom",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "n",
+          "role_description": "number of bus stations",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 2,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "parents",
+          "role_description": "parent station indices for stations 2 to n, forming a rooted tree where station 1 is the central hub",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 99999
+          },
+          "value_range": {
+            "min": 1,
+            "max": 99999
+          },
+          "properties": {
+            "rooted": true,
+            "connected": true,
+            "acyclic": true
+          }
+        },
+        {
+          "role": "s_values",
+          "role_description": "accumulated passenger counts from each station to the root; -1 indicates erased data",
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": -1,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "nonnegative_passenger_counts",
+          "description": "每个车站的实际上车人数 a_v 是非负整数。",
+          "formal": "a_v >= 0 for all v",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "accumulation_definition",
+          "description": "s_v 定义为从 v 到根路径上所有 a_u 之和，且 s_1 = a_1。",
+          "formal": "s_v = sum_{u in path(v to root)} a_u, s_1 = a_1",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "fixed_s_for_odd_depth",
+          "description": "对于深度为奇数的站点（根深度为 1），其 s_v 值在输入中给出且不为 -1，必须保持原值。",
+          "formal": "For all v with odd h_v, s_v = given_s[v] (given_s[v] != -1)",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "total_sum_definition",
+          "description": "总上车人数 total_sum = sum_{v} a_v，可证明 total_sum = sum_{leaf} s_leaf。",
+          "formal": "total_sum = sum_{v} a_v",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "max_station_congestion",
+          "description": "定义最大站点拥塞度 max_a = max_{v} a_v，其中 a_1 = s_1，其余 a_v = s_v - s_parent。",
+          "formal": "max_a = max_{v} a_v",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "pareto_frontier_requirement",
+          "description": "要求找出所有可行的 (total_sum, max_a) 对中非支配的那些。一个对 (S, M) 被另一个 (S', M') 支配当且仅当 S' <= S 且 M' <= M 且两者至少有一个是严格小于。",
+          "formal": "Find all non-dominated feasible (total_sum, max_a) pairs.",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "coupled_objectives",
+          "description": "total_sum 和 max_a 共同受偶数深度 s 的选择影响，不能分割为先后优化。调整一个内部 s 会同时改变多个 a 值，并通过叶子 s 影响 total_sum，因此状态必须同时维护两个指标。",
+          "formal": "The choice of s for even-depth nodes simultaneously alters total_sum and max_a; state must carry both.",
+          "source_sections": [
+            "solution_notes"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "pareto_frontier",
+      "description": "输出所有不被任何可行解支配的 (total_sum, max_a) 整数对。对按 total_sum 升序排列，若 total_sum 相同则按 max_a 升序排列。",
+      "target": "pareto_set",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "monotonicity",
+          "description": "沿任意根到叶子的路径，s 值非递减。",
+          "properties": {
+            "constraint": "s[ancestor] <= s[descendant] for any ancestor-descendant pair"
+          },
+          "evidence_source": "constraint"
+        },
+        {
+          "name": "total_sum_via_leaves",
+          "description": "total_sum = sum_{leaf} s_leaf，因此总和只依赖于叶子节点的 s。",
+          "properties": {
+            "formula": "total_sum = sum_{leaf} s_leaf"
+          },
+          "evidence_source": "deduction"
+        },
+        {
+          "name": "extreme_total_sum_minimizer",
+          "description": "当所有偶数深度 s 取子节点已知 s 的最小值（或 s_parent 若无子）时，得到可达的最小 total_sum，该分配对应一个特定的 max_a 值。",
+          "properties": {
+            "rule": "s_even_depth = min(child_known_s) or s_parent if no child"
+          },
+          "evidence_source": "solution"
+        },
+        {
+          "name": "coupled_state_dominance_pruning",
+          "description": "在枚举内部 s 时，若当前部分分配产生的 (partial_total_sum, partial_max_a) 已被某个已完成可行解支配，则可剪枝。且因为提高 s 必然增加某些叶子 s 从而增加 total_sum，同时可能降低某些 a 从而降低 max_a，无法解耦处理。",
+          "properties": {
+            "pruning_rule": "If exists a feasible pair (S,M) with S <= partial_total and M <= partial_max, prune."
+          },
+          "evidence_source": "algorithm"
+        },
+        {
+          "name": "frontier_monotonicity",
+          "description": "帕累托前沿中，随着 total_sum 增加，max_a 非增，即不存在两个前沿点 (S1,M1) 和 (S2,M2) 满足 S1 < S2 且 M1 < M2。",
+          "properties": {
+            "relation": "For any two frontier points with S1 < S2, we must have M1 > M2"
+          },
+          "evidence_source": "proof"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "medium-hard"
+  },
+  "applied_rule": "single_objective_to_tradeoff_frontier",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "原题解法核心：BFS/DFS确认奇偶深度，对偶数深度节点 s_v 取所有子节点已知s的最小值（若无子节点则为0或等于父s），之后通过 s_v - s_parent 恢复 a_v。整体 O(n) 贪心。",
+    "reusable_subroutines": "树遍历、深度标注、父子关系索引、单调性预检查（判断无解-1）可复用。",
+    "new_solver_core": "新题需生成帕累托前沿。算法可能采用树形 DP 或多目标搜索：将每个节点 v 的决策 s_v 范围离散化或参数化，维护其子树可产生的 (total_sum, max_a) 帕累托前沿集合，合并子节点前沿时进行支配过滤。偶数深度节点 s_v 在 [s_parent, min(child_lower_bound)] 内枚举或直接推导前沿，利用单调性剪枝。最终在根处得到全局前沿。",
+    "new_proof_obligation": "1. 证明总和的叶子等价性，使得 total_sum 只与叶子s相关。2. 证明在 s 单调约束下，任一内部 s 的变化对 total_sum 和 max_a 的影响是耦合的，不能先单独优化一个目标。3. 证明所维护的帕累托前沿集合在对子树合并时是完备的（无支配解遗漏）。4. 证明前沿的 total_sum-max_a 反单调性。5. 证明最小 total_sum 解必可由贪心策略得到，且任何偏离都会导致 total_sum 严格增加。",
+    "why_direct_reuse_fails": "原贪心算法只输出单个极端点，无法给出牺牲部分 total_sum 换取更低 max_a 的其他非支配解。若直接套用原算法，将丢失帕累托前沿的所有内部点，无法满足输出要求。"
+  },
+  "anti_shallow_rationale": "本题不是简单地改变输出格式（如将总和改为分配数组或矛盾对），而是将单目标最优从根本上重定义为双目标帕累托前沿。原题的贪心解只对应前沿的一个端点，必须设计全新的多目标搜索或 DP 才能覆盖整条前沿。同时，背景完全更换为城市公交网络，没有保留原题的变量命名、句式或标识，彻底避免换皮。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "secondary_metric_materialization",
+      "selection_reason": "原题只最小化总和，引入 max_a 作为冲突的第二指标，符合辅助要求。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "将目标空间从一维扩展到二维，形成真实的折中需求。",
+      "difficulty_reason": "要求同时跟踪总和与最大值，增加状态维度与优化难度。"
+    },
+    {
+      "id": "frontier_dominance_rule",
+      "selection_reason": "为输出前沿需明确定义支配关系，并支撑剪枝。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "把答案从单一最优值扩展为可比较、可剪枝的前沿语义，提升问题层次。",
+      "difficulty_reason": "要求保证生成的集合不含被支配解，且剪枝完备，证明要求提高。"
+    },
+    {
+      "id": "coupled_state_expansion",
+      "selection_reason": "防止双目标退化为两个独立单目标子问题。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "强制状态同时承载两个相互影响的指标，避免拆分后逐个优化的退化。",
+      "difficulty_reason": "增加状态复杂度，并需要证明联合优化的正确性，无法复用单目标贪心。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "insufficient_seed_space",
+      "selection_reason": "原题最优解唯一，改为输出规范解仅是输出已计算的数组，无法产生新的算法挑战，属于表面修改。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题标准解法已计算出所有节点的a_v值（ans数组），最小总和唯一确定，输出该方案无需额外推理。规则要求的规范升级（如字典序最小）因解唯一而无实质影响。",
+        "feedback": "建议放弃该种子题，或考虑先对原约束进行非平凡修改（如引入多解空间）再应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "local_obstruction_evidence_exists",
+      "selection_reason": "原题的无解情形由奇数深度祖先与后代之间的路径和单调性违反导致，可以提取出具体冲突顶点对（如祖先 s 值大于后代 s 值）构成可局部检查的阻碍证据。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的 invariant 中明确列出了 'monotonicity_of_known_sums_on_odd_levels'，约束要求 's[ancestor_on_odd_depth] <= s[descendant_on_odd_depth]'。标准解中的 BFS 直接检查该条件，违反时拒绝。因此，能否合法恢复可归结为该单调性的局部违反，输出一对冲突顶点即可作为局部可验证的证书。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "insufficient_solution_space_diversity",
+      "selection_reason": "原题为单一最优值问题，在最小化总和的前提下，所有a_v的取值由贪心策略唯一确定，解空间至多包含一个可行解，计数结果仅为0或1，缺乏有意义的计数挑战，无法形成要求去重与拆分的典型计数题。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题目标为最小化sum(a_v)，且输入给出奇数深度s_v，偶数深度s_v由子节点最小s值确定（见约束 minimize_total_sum_of_a 和 invariant 'resolve_unknown_s_by_min_child'）。标准解法通过后序遍历一次性确定所有s_v和a_v，不存在其他达到最小总和的构造，因此解空间大小为1或0，不符合规则所需的丰富有限解空间。",
+        "feedback": "建议更换种子题，选择存在多个合法构造且去重规则可清晰定义的问题（如组合计数类），否则无法满足计数题的核心要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "native_perturbation_identified",
+      "selection_reason": "原题中偶数深度 s_v 被擦除，形成信息缺失；原解通过取子节点最小已知 s 实现乐观优化。将此不确定性转化为对手控制的扰动模型，可将目标改为最小化最坏情况总和，形成真正的保底优化。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束允许未知 s 在满足单调性和非负性下任意选择，不变式‘resolve_unknown_s_by_min_child’显式依赖乐观假设（取最小值）。这种选择性差异是天然的原生扰动来源。",
+        "feedback": "规则要求扰动必须来自原题内部，本例中擦除值的不确定性直接映射为对抗性扰动，非硬造对手，且最坏情况会退化为原最优解，语义吻合度高。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "already_optimization",
+      "selection_reason": "原题已经是带有最小化总和的优化题，并非纯可行性判定。不存在自然的全局参数可用来定义临界阈值，任何强行引入的外部参数都会退化为在原最小化目标外包裹二分，缺乏实质解题结构改变。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束包括 minimize_total_sum_of_a，目标直接是 minimize sum a_v，并输出最小总和或 -1（不可行）。这已经是极值求解，而非判定。规则要求 target_shift 从判断是否可行改成求临界阈值，但原题没有可供参数化的资源容量或独立阈值。辅助器 threshold_parameterization 要求阈值必须进入核心约束，且原题可行性需随参数具有单调性，但在给定 schema 中，唯一可变的只有输入中的 s 值，它们不是单一可调参数，而是数组。增加一个全局上界参数会导致简单的二分可行性检查，与原最小化总和的本质相同，不会产生新的算法挑战。",
+        "feedback": "建议为规则选择纯可行性判定题作为种子，例如判定是否存在合法赋值，然后引入容量、上限、长度等自然参数，让可行性对该参数单调，方可形成临界阈值优化题。当前种子题的优化目标与阈值概念存在语义重叠，强行转化只会产生浅层包装。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "natural_conflicting_metric",
+      "selection_reason": "原题中最小化总数与最大化路径和总和构成自然冲突，可构建预算约束下的帕累托前沿。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标最小化 sum a_v，而 s_v 之和为另一自然总量；由于 a_v = s_v - s_parent，在奇数层 s_v 固定时，最大化 ∑ s_v 必然增大偶数层 s_v，导致 ∑ a_v 增加，反之亦然，二者真实冲突且非同义改写。",
+        "feedback": "第二指标自然从原题路径和定义中导出，冲突关系清晰，适合扩展为双目标权衡题。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "valid_inverse_target_and_natural_edit",
+      "selection_reason": "原题输出为最小化总顶点值之和，该数值可明确作为反向设计的目标。输入中的已知路径和（奇数深度 s_v）是核心参数，将其从固定变为可修改的操作直接关联原始路径和约束与非负性，属于自然的设计自由度。由此可生成形如“给定目标总和，求最小修改已知 s_v 次数使其成立”的逆问题，且能承载最小性证明责任。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 为 minimize total sum of a_v；core_constraints 中 fixed_s_for_odd_depth 约束原本固定奇数深度 s_v，将其松绑后允许修改即为自然的参数反推操作；original_problem.description 明确了 s_v 的语义和已知/未知划分，使修改操作直接作用于问题核心。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "种子题是一棵树上基于路径和的全局一致性恢复问题，顶点值通过路径和定义紧密耦合，不存在可独立求解的局部单元。规则要求原题有可分解的局部单元，而本题整个树的状态已经全局耦合，无法满足该前提。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "根据种子题 schema，核心约束 (path_sum_definition) 定义 s_v 为从 v 到根路径上所有 a_u 之和，这强制了跨分支的共享祖先段；不变量 (resolve_unknown_s_by_min_child) 显示偶数深度 s 值通过子节点已知 s 的最小值确定，并非独立单元。原题描述未提及任何可分解的独立分量或可单独求解的子结构，所有节点 a 值计算均依赖全局树结构。",
+        "feedback": "该种子题本质上已经是一个全局耦合问题，各节点通过路径和约束相互依赖。规则所需的‘可分解局部单元’在此题中缺失，强行应用只会变成硬加无关全局约束，违反红线。建议更换为具有独立可解单元（如各自独立的区间选点、独立连通块求和）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题为静态树值恢复最小化问题，不存在任何可轮流选择、改变状态的动态操作，无法转化为双方博弈，强行添加玩家将硬造背景，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "no_natural_operations"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束为：给定奇数深度s_v固定，偶数深度s_v擦除，要求最小化∑a_v且a_v≥0，满足单调性。整个问题是一次性静态优化，没有步骤、选择或状态转移过程（见core_constraints和objective）。规则要求原题‘存在可轮流选择、拿取、移动或改变状态的自然操作’，此种子不满足。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "inapplicable_local_structure",
+      "selection_reason": "原题中局部路径对象用于恢复未知值并最小化总和，不存在需要形成覆盖、割或支配的局部对象族，核心约束未涉及选择覆盖关系。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心对象为树中从顶点到根的路径，但约束集中在通过已知路径恢复未知值并最小化和，而非选择局部对象以覆盖或支配其他结构。例如，core_constraints中无涉及选择子集覆盖所有路径的约束，objective为最小化总和而非最小覆盖集大小等。",
+        "feedback": "未能发现可组合成覆盖或割的局部对象；原题本质是全局最优化恢复问题，与规则要求的覆盖/割扩展不匹配。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题目标是求最小总和非负整数值，属于优化问题而非计数问题，不存在有限计数对象。规则要求种子已有明确计数对象，不满足必要条件。",
+      "risk_tags": [
+        "missing_counting_basis"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective字段type为'minimize_value', description为'minimize total sum of vertex values a_v'，未涉及方案计数；原题描述要求输出最小总和或-1，未提及方案数目。",
+        "feedback": "该规则仅适用于已有计数对象的题目，当前种子为最小化求和问题，无法转换。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "insufficient_seed_space",
+      "message": "原题最优解唯一，改为输出规范解仅是输出已计算的数组，无法产生新的算法挑战，属于表面修改。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题标准解法已计算出所有节点的a_v值（ans数组），最小总和唯一确定，输出该方案无需额外推理。规则要求的规范升级（如字典序最小）因解唯一而无实质影响。",
+        "feedback": "建议放弃该种子题，或考虑先对原约束进行非平凡修改（如引入多解空间）再应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_obstruction_evidence_exists",
+      "message": "原题的无解情形由奇数深度祖先与后代之间的路径和单调性违反导致，可以提取出具体冲突顶点对（如祖先 s 值大于后代 s 值）构成可局部检查的阻碍证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的 invariant 中明确列出了 'monotonicity_of_known_sums_on_odd_levels'，约束要求 's[ancestor_on_odd_depth] <= s[descendant_on_odd_depth]'。标准解中的 BFS 直接检查该条件，违反时拒绝。因此，能否合法恢复可归结为该单调性的局部违反，输出一对冲突顶点即可作为局部可验证的证书。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "insufficient_solution_space_diversity",
+      "message": "原题为单一最优值问题，在最小化总和的前提下，所有a_v的取值由贪心策略唯一确定，解空间至多包含一个可行解，计数结果仅为0或1，缺乏有意义的计数挑战，无法形成要求去重与拆分的典型计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题目标为最小化sum(a_v)，且输入给出奇数深度s_v，偶数深度s_v由子节点最小s值确定（见约束 minimize_total_sum_of_a 和 invariant 'resolve_unknown_s_by_min_child'）。标准解法通过后序遍历一次性确定所有s_v和a_v，不存在其他达到最小总和的构造，因此解空间大小为1或0，不符合规则所需的丰富有限解空间。",
+        "feedback": "建议更换种子题，选择存在多个合法构造且去重规则可清晰定义的问题（如组合计数类），否则无法满足计数题的核心要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "pass",
+      "reason_code": "native_perturbation_identified",
+      "message": "原题中偶数深度 s_v 被擦除，形成信息缺失；原解通过取子节点最小已知 s 实现乐观优化。将此不确定性转化为对手控制的扰动模型，可将目标改为最小化最坏情况总和，形成真正的保底优化。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束允许未知 s 在满足单调性和非负性下任意选择，不变式‘resolve_unknown_s_by_min_child’显式依赖乐观假设（取最小值）。这种选择性差异是天然的原生扰动来源。",
+        "feedback": "规则要求扰动必须来自原题内部，本例中擦除值的不确定性直接映射为对抗性扰动，非硬造对手，且最坏情况会退化为原最优解，语义吻合度高。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "already_optimization",
+      "message": "原题已经是带有最小化总和的优化题，并非纯可行性判定。不存在自然的全局参数可用来定义临界阈值，任何强行引入的外部参数都会退化为在原最小化目标外包裹二分，缺乏实质解题结构改变。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束包括 minimize_total_sum_of_a，目标直接是 minimize sum a_v，并输出最小总和或 -1（不可行）。这已经是极值求解，而非判定。规则要求 target_shift 从判断是否可行改成求临界阈值，但原题没有可供参数化的资源容量或独立阈值。辅助器 threshold_parameterization 要求阈值必须进入核心约束，且原题可行性需随参数具有单调性，但在给定 schema 中，唯一可变的只有输入中的 s 值，它们不是单一可调参数，而是数组。增加一个全局上界参数会导致简单的二分可行性检查，与原最小化总和的本质相同，不会产生新的算法挑战。",
+        "feedback": "建议为规则选择纯可行性判定题作为种子，例如判定是否存在合法赋值，然后引入容量、上限、长度等自然参数，让可行性对该参数单调，方可形成临界阈值优化题。当前种子题的优化目标与阈值概念存在语义重叠，强行转化只会产生浅层包装。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_conflicting_metric",
+      "message": "原题中最小化总数与最大化路径和总和构成自然冲突，可构建预算约束下的帕累托前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标最小化 sum a_v，而 s_v 之和为另一自然总量；由于 a_v = s_v - s_parent，在奇数层 s_v 固定时，最大化 ∑ s_v 必然增大偶数层 s_v，导致 ∑ a_v 增加，反之亦然，二者真实冲突且非同义改写。",
+        "feedback": "第二指标自然从原题路径和定义中导出，冲突关系清晰，适合扩展为双目标权衡题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_inverse_target_and_natural_edit",
+      "message": "原题输出为最小化总顶点值之和，该数值可明确作为反向设计的目标。输入中的已知路径和（奇数深度 s_v）是核心参数，将其从固定变为可修改的操作直接关联原始路径和约束与非负性，属于自然的设计自由度。由此可生成形如“给定目标总和，求最小修改已知 s_v 次数使其成立”的逆问题，且能承载最小性证明责任。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 为 minimize total sum of a_v；core_constraints 中 fixed_s_for_odd_depth 约束原本固定奇数深度 s_v，将其松绑后允许修改即为自然的参数反推操作；original_problem.description 明确了 s_v 的语义和已知/未知划分，使修改操作直接作用于问题核心。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "种子题是一棵树上基于路径和的全局一致性恢复问题，顶点值通过路径和定义紧密耦合，不存在可独立求解的局部单元。规则要求原题有可分解的局部单元，而本题整个树的状态已经全局耦合，无法满足该前提。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "根据种子题 schema，核心约束 (path_sum_definition) 定义 s_v 为从 v 到根路径上所有 a_u 之和，这强制了跨分支的共享祖先段；不变量 (resolve_unknown_s_by_min_child) 显示偶数深度 s 值通过子节点已知 s 的最小值确定，并非独立单元。原题描述未提及任何可分解的独立分量或可单独求解的子结构，所有节点 a 值计算均依赖全局树结构。",
+        "feedback": "该种子题本质上已经是一个全局耦合问题，各节点通过路径和约束相互依赖。规则所需的‘可分解局部单元’在此题中缺失，强行应用只会变成硬加无关全局约束，违反红线。建议更换为具有独立可解单元（如各自独立的区间选点、独立连通块求和）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题为静态树值恢复最小化问题，不存在任何可轮流选择、改变状态的动态操作，无法转化为双方博弈，强行添加玩家将硬造背景，违反红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "no_natural_operations"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束为：给定奇数深度s_v固定，偶数深度s_v擦除，要求最小化∑a_v且a_v≥0，满足单调性。整个问题是一次性静态优化，没有步骤、选择或状态转移过程（见core_constraints和objective）。规则要求原题‘存在可轮流选择、拿取、移动或改变状态的自然操作’，此种子不满足。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "inapplicable_local_structure",
+      "message": "原题中局部路径对象用于恢复未知值并最小化总和，不存在需要形成覆盖、割或支配的局部对象族，核心约束未涉及选择覆盖关系。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心对象为树中从顶点到根的路径，但约束集中在通过已知路径恢复未知值并最小化和，而非选择局部对象以覆盖或支配其他结构。例如，core_constraints中无涉及选择子集覆盖所有路径的约束，objective为最小化总和而非最小覆盖集大小等。",
+        "feedback": "未能发现可组合成覆盖或割的局部对象；原题本质是全局最优化恢复问题，与规则要求的覆盖/割扩展不匹配。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题目标是求最小总和非负整数值，属于优化问题而非计数问题，不存在有限计数对象。规则要求种子已有明确计数对象，不满足必要条件。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "missing_counting_basis"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective字段type为'minimize_value', description为'minimize total sum of vertex values a_v'，未涉及方案计数；原题描述要求输出最小总和或-1，未提及方案数目。",
+        "feedback": "该规则仅适用于已有计数对象的题目，当前种子为最小化求和问题，无法转换。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "ok",
+      "message": "规划正确引入与总上车人数真实冲突的第二指标最大站点拥塞度，定义了清晰的支配关系与帕累托前沿输出要求，并通过耦合状态约束阻止退化为两个独立最优值，完全兑现规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名权衡前沿规划审查官，重点确认规划是否形成预算、收益、风险等指标之间的真实耦合。",
+        "review_brief": "确认规划是否定义第二指标、支配关系或预算口径，并阻止退化成两个独立最优值。",
+        "evidence": "1. 第二指标冲突性：总上车人数最小化与最大站点拥塞度最小化存在真实冲突，因为贪心最小化总和可能导致个别站点拥塞度极高（见candidate_schema core_constraints中的coupled_objectives描述）。2. 支配关系定义：objective明确'A pair (S, M) is dominated by (S', M') if and only if S' <= S and M' <= M, and at least one is strictly smaller.'，并在invariant中提供了支配剪枝规则coupled_state_dominance_pruning。3. 耦合状态：core_constraints添加coupled_objectives，说明'total_sum 和 max_a 共同受偶数深度 s 的选择影响，不能分割为先后优化'，同时invariant中通过total_sum_via_leaves和coupled_state_dominance_pruning阐明耦合机制，确保不是独立优化两个目标。4. 所有helper均已兑现：secondary_metric_materialization在C和O轴实现，frontier_dominance_rule在O和V轴实现，coupled_state_expansion在C和V轴实现，且均落在schema的core_constraints、objective和invariant中。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "题面完整兑现了多目标权衡规则：明确定义了冲突的第二指标 max_a、清晰的支配关系，并要求输出帕累托前沿，未退化为独立最优值或附属统计。",
+      "details": {
+        "review_role": "你扮演一名权衡题面审查官，重点确认题面是否清楚表达多指标冲突和前沿或折中输出。",
+        "review_brief": "确认题面是否定义指标比较口径，并要求输出权衡结果而不是附属统计。",
+        "evidence": "description 定义了两个全局指标 S 和 M，且 M 来自原始对象自然属性，与原目标 S 形成真实冲突；明确给出了支配定义“若存在另一个可行方案的对 (S',M') 满足 S' <= S 且 M' <= M，且至少有一个不等式严格成立，则称前者被后者支配”；目标为输出所有非支配对并按 S 升序排列（前沿输出）；状态约束（ci 非减、xi 非负）以及 S 和 M 的计算方式使两个指标通过偶数深度 ci 的分配紧密耦合，无法先单独优化一个；输出格式要求输出前沿集合，而非单个最优值或两个独立最优值。这些均直接对应三个 helper 的语义承诺，且关键内容均在题面文本中写实。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "all_hard_checks_passed",
+      "message": "题面明确定义了支配关系、输出帕累托前沿，并阐述了双目标耦合与无法拆分的性质，符合权衡前沿题的核心要求。",
+      "details": {
+        "review_role": "你扮演一名权衡题面审查官，重点确认题面是否清楚表达多指标冲突和前沿或折中输出。",
+        "review_brief": "确认题面是否定义指标比较口径，并要求输出权衡结果而不是附属统计。",
+        "evidence": "题面描述中定义了两个全局指标 S 和 M，并给出了支配关系的正式定义：'若存在另一个可行方案的对 (S',M') 满足 S' ≤ S 且 M' ≤ M，且至少有一个不等式严格成立，则称前者被后者支配'，同时要求输出所有非支配对，这兑现了 frontier_dominance_rule 的支配口径。题面强调'调整偶数深度站点的 c 值会同时影响 S 和 M，因此无法将两个目标拆分为先后独立的优化问题'，体现了 coupled_state_expansion 所要求的耦合状态。从样例可知，前沿中 S 与 M 呈反向变化，表明第二指标与总和目标真实冲突，未退化为两个独立最优值。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "schema_insufficient",
+    "error_reason": "new_schema 内部存在矛盾：invariant 'total_sum_via_leaves' 声称 total_sum = sum_{leaf} s_leaf 对所有可行解成立，但在多子节点情况下不成立，与核心约束和非负性不兼容，导致无法定义一致的题面和目标函数。为保证题面逻辑严密，需要重新审查该 invariant 或调整约束。",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_6e10787c52e1_home_organization_20260529_073838",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_6e10787c52e1\\taco_codeforces_6e10787c52e1_home_organization_20260529_073838_round1.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_6e10787c52e1\\taco_codeforces_6e10787c52e1_home_organization_20260529_073838_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 100.0,
+      "divergence_score": 39.0,
+      "failed_hard_checks": [
+        {
+          "check_id": "source_leakage",
+          "severity": "blocker",
+          "category": "retheme_issue",
+          "message": "检测到原题标识或标题片段泄露：a",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "source leakage",
+          "detail": "检测到原题标识或标题片段泄露：a",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ],
+          "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "Source leakage flag",
+          "detail": "The hard check 'source_leakage' detected a potential original problem identifier or title fragment 'a'. While it does not visibly degrade the problem statement, it may indicate a minor residue from the source problem that could be cleaned up for a fully independent retheming.",
+          "evidence_refs": [
+            "snapshots.hard_checks[10]"
+          ],
+          "fix_hint": "Inspect the generated problem text for any inadvertently copied short substrings from the original problem and replace them with themed equivalents to ensure complete independence."
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "新题与原题在核心求解结构上完全一致：均为给定部分路径和、部分节点值缺失的树，要求满足非负单调性并最小化总和。原题的解码仅需输出总和，新题改为输出具体分配数组或矛盾证据，但矛盾证据本身源自原题中已有的单调性检查，输出数组只是原题内部计算值的显式化。原题的标准解法只需增加记录冲突对和调整输出格式即可直接迁移，不需要重新建模或改变核心算法。此外，新题的背景、名词和样例虽然重写，但任务展开和样例设计仍与原题高度映射，表层换皮明显。综合判定为原题换皮，不予通过。",
+          "evidence_refs": [
+            "original_schema.core_constraints",
+            "new_schema.core_constraints",
+            "original_schema.invariant",
+            "new_schema.invariant",
+            "review_context.algorithmic_delta_claim",
+            "hard_checks[?(@.check_id=='source_leakage')]",
+            "generated_problem.samples",
+            "original_problem.description",
+            "generated_problem.description"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "suggested_revisions": [
+        "删除原题编号、题源、标题和明显句式复用。",
+        "Inspect the generated problem text for any inadvertently copied short substrings from the original problem and replace them with themed equivalents to ensure complete independence.",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "Consider adding a third sample that demonstrates the recovery strategy for even-depth nodes with children, where the minimum of children's known s values is taken, to better illustrate the notes.",
+        "Explicitly state in the description that the tree is guaranteed to be rooted at 1 and the parent list ensures p_i < i, which may help participants with implementation.",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "strengths_to_keep": [
+        "Clear dual-output specification with distinct formats for feasible and infeasible cases.",
+        "Precise definition of the infeasibility evidence (ancestor-descendant odd-depth pair with s_ancestor > s_descendant) that is locally verifiable.",
+        "Well-chosen samples that demonstrate both branches of the output and include helpful explanations.",
+        "Concise but complete constraints, including time and memory limits."
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 39.0,
+            "failed_hard_checks": [
+              {
+                "check_id": "source_leakage",
+                "severity": "blocker",
+                "category": "retheme_issue",
+                "message": "检测到原题标识或标题片段泄露：a",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "source leakage",
+                "detail": "检测到原题标识或标题片段泄露：a",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ],
+                "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "Source leakage flag",
+                "detail": "The hard check 'source_leakage' detected a potential original problem identifier or title fragment 'a'. While it does not visibly degrade the problem statement, it may indicate a minor residue from the source problem that could be cleaned up for a fully independent retheming.",
+                "evidence_refs": [
+                  "snapshots.hard_checks[10]"
+                ],
+                "fix_hint": "Inspect the generated problem text for any inadvertently copied short substrings from the original problem and replace them with themed equivalents to ensure complete independence."
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "新题与原题在核心求解结构上完全一致：均为给定部分路径和、部分节点值缺失的树，要求满足非负单调性并最小化总和。原题的解码仅需输出总和，新题改为输出具体分配数组或矛盾证据，但矛盾证据本身源自原题中已有的单调性检查，输出数组只是原题内部计算值的显式化。原题的标准解法只需增加记录冲突对和调整输出格式即可直接迁移，不需要重新建模或改变核心算法。此外，新题的背景、名词和样例虽然重写，但任务展开和样例设计仍与原题高度映射，表层换皮明显。综合判定为原题换皮，不予通过。",
+                "evidence_refs": [
+                  "original_schema.core_constraints",
+                  "new_schema.core_constraints",
+                  "original_schema.invariant",
+                  "new_schema.invariant",
+                  "review_context.algorithmic_delta_claim",
+                  "hard_checks[?(@.check_id=='source_leakage')]",
+                  "generated_problem.samples",
+                  "original_problem.description",
+                  "generated_problem.description"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "删除原题编号、题源、标题和明显句式复用。",
+              "Inspect the generated problem text for any inadvertently copied short substrings from the original problem and replace them with themed equivalents to ensure complete independence.",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "Consider adding a third sample that demonstrates the recovery strategy for even-depth nodes with children, where the minimum of children's known s values is taken, to better illustrate the notes.",
+              "Explicitly state in the description that the tree is guaranteed to be rooted at 1 and the parent list ensures p_i < i, which may help participants with implementation.",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "Clear dual-output specification with distinct formats for feasible and infeasible cases.",
+              "Precise definition of the infeasibility evidence (ancestor-descendant odd-depth pair with s_ancestor > s_descendant) that is locally verifiable.",
+              "Well-chosen samples that demonstrate both branches of the output and include helpful explanations.",
+              "Concise but complete constraints, including time and memory limits."
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 100.0,
+        "latest_divergence_score": 39.0,
+        "suggested_revisions": [
+          "删除原题编号、题源、标题和明显句式复用。",
+          "Inspect the generated problem text for any inadvertently copied short substrings from the original problem and replace them with themed equivalents to ensure complete independence.",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "Consider adding a third sample that demonstrates the recovery strategy for even-depth nodes with children, where the minimum of children's known s values is taken, to better illustrate the notes.",
+          "Explicitly state in the description that the tree is guaranteed to be rooted at 1 and the parent list ensures p_i < i, which may help participants with implementation.",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "source leakage",
+            "detail": "检测到原题标识或标题片段泄露：a",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ],
+            "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "Source leakage flag",
+            "detail": "The hard check 'source_leakage' detected a potential original problem identifier or title fragment 'a'. While it does not visibly degrade the problem statement, it may indicate a minor residue from the source problem that could be cleaned up for a fully independent retheming.",
+            "evidence_refs": [
+              "snapshots.hard_checks[10]"
+            ],
+            "fix_hint": "Inspect the generated problem text for any inadvertently copied short substrings from the original problem and replace them with themed equivalents to ensure complete independence."
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "新题与原题在核心求解结构上完全一致：均为给定部分路径和、部分节点值缺失的树，要求满足非负单调性并最小化总和。原题的解码仅需输出总和，新题改为输出具体分配数组或矛盾证据，但矛盾证据本身源自原题中已有的单调性检查，输出数组只是原题内部计算值的显式化。原题的标准解法只需增加记录冲突对和调整输出格式即可直接迁移，不需要重新建模或改变核心算法。此外，新题的背景、名词和样例虽然重写，但任务展开和样例设计仍与原题高度映射，表层换皮明显。综合判定为原题换皮，不予通过。",
+            "evidence_refs": [
+              "original_schema.core_constraints",
+              "new_schema.core_constraints",
+              "original_schema.invariant",
+              "new_schema.invariant",
+              "review_context.algorithmic_delta_claim",
+              "hard_checks[?(@.check_id=='source_leakage')]",
+              "generated_problem.samples",
+              "original_problem.description",
+              "generated_problem.description"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "Clear dual-output specification with distinct formats for feasible and infeasible cases.",
+          "Precise definition of the infeasibility evidence (ancestor-descendant odd-depth pair with s_ancestor > s_descendant) that is locally verifiable.",
+          "Well-chosen samples that demonstrate both branches of the output and include helpful explanations.",
+          "Concise but complete constraints, including time and memory limits."
+        ],
+        "failed_hard_checks": [
+          {
+            "check_id": "source_leakage",
+            "severity": "blocker",
+            "category": "retheme_issue",
+            "message": "检测到原题标识或标题片段泄露：a",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

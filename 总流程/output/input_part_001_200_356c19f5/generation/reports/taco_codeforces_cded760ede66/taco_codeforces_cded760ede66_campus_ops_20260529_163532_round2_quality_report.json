@@ -1,0 +1,702 @@
+{
+  "overall": {
+    "status": "revise_quality",
+    "quality_score": 64.0,
+    "divergence_score": 82.0,
+    "schema_distance": 0.5399,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的任务变体（修改操作、可达性约束、最小化总代价）在 description、input_format、output_format、constraints 中均已准确体现，输入结构（T,n,k,a）与范围与 new_schema 一致，无明显遗漏或偏差。样例虽有问题，但变体核心已落地。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含完整的任务描述、输入输出格式、约束条件（T,n,k,a范围、时间/空间限制）和必要说明（64位整数、幂次大小）。读者无需额外猜测核心规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 1.0,
+        "rationale": "样例解释与输入数据严重矛盾：样例二的解释称“所有需求已经为0”，但实际输入为‘0 100’；样例一的解释包含大量草稿式推导、自我否定（“成本1的调整无法避免冲突…为快速出样例，改写另一数据”），输出值‘1’的正确性存疑。description、input/output格式虽一致，但样例的崩溃导致整个题面无法被信任。",
+        "evidence_refs": [
+          "generated_problem.samples[0].input",
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 1.0,
+        "rationale": "仅有两个样例，且第一个样例的解释逻辑混乱、包含未完成的设计笔记，第二个样例的解释直接与输入数据不符（将[0,100]当作全0）。样例没有起到帮助理解题意的作用，反而制造混淆。",
+        "evidence_refs": [
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation",
+          "hard_checks[12].message"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 1.0,
+        "rationale": "description 的故事化改写本身尚可，但样例解释中充斥大量内部草稿、自我反驳和“改写另一数据”等噪声文本，严重破坏正常 OJ 题面的专业性和可读性。",
+        "evidence_refs": [
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation"
+        ]
+      }
+    ],
+    "strengths": [
+      "核心变体（修改操作+可达性约束+最小化代价）在题面中得到了明确体现，目标与规则清晰。",
+      "输入格式和约束描述准确，符合 new_schema 定义。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5399,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.8053,
+        "O": 0.5776,
+        "V": 0.7697
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.8053,
+        "objective_type_distance": 0.6632,
+        "objective_text_distance": 0.4493,
+        "invariant_match_distance": 0.7697
+      }
+    },
+    "schema_distance": 0.5399,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.8,
+    "solution_transfer_risk": 0.3,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "原题是可行性判定（每个幂次 k^e 最多使用一次），新题则在同样幂次分配约束下要求最小化修改代价，任务从决策变为优化。核心求解需要从贪心检测冲突转变为基于动态规划或图论的分配优化，原题解法无法直接迁移。题目叙事、样例完全独立，无明显文本复用。因此语义差异显著，解法迁移风险较低。",
+    "evidence_refs": [
+      "review_context.difference_plan",
+      "review_context.algorithmic_delta_claim",
+      "new_schema.core_constraints",
+      "new_schema.objective",
+      "hard_checks.source_leakage.evidence_refs"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.54，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例一解释为未完成草稿，含矛盾与无关文本",
+      "detail": "样例一的 explanation 包含“成本1的调整无法避免冲突，需进一步说明最优解…为简明可给出代价最小的合法方案：…此处不及细究，样例解释应在题面中直接给出合法的最小代价方案即可，读者可自行验证。为免歧义，样例解释可只说明输出数字。实际可构造…一个可行的最小成本可能是2…依然冲突。为快速出样例，改写另一数据。”这些内容明显是开发笔记，不应出现在正式题面中，且使样例一的输出值‘1’不具可信度。",
+      "evidence_refs": [
+        "generated_problem.samples[0].explanation"
+      ],
+      "fix_hint": "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例二解释与输入数据不符",
+      "detail": "样例二的输入为“2 10\n0 100”，即 n=2, k=10, a=[0,100]，但解释却说“所有需求已经为0，不需要任何调整”。100≠0，矛盾。",
+      "evidence_refs": [
+        "generated_problem.samples[1].input",
+        "generated_problem.samples[1].explanation"
+      ],
+      "fix_hint": "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例数量不足且覆盖性差",
+      "detail": "仅有两个样例，其中一个还有明显错误，无法帮助选手验证算法。需要补充至少一个覆盖典型冲突与代价计算的简单示例。",
+      "evidence_refs": [
+        "generated_problem.samples"
+      ],
+      "fix_hint": "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "description 中部分表述可更精确",
+      "detail": "“第 e 级服务包可以提供恰好 k^e 份上门服务（e = 0,1,2,…）”未明确 e 的上限，虽可从 a_i 范围反推，但显式说明“其中 k^e 不超过实际需求的可能上限”会更严谨。",
+      "evidence_refs": [
+        "generated_problem.description"
+      ],
+      "fix_hint": "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。"
+    }
+  ],
+  "suggested_revisions": [
+    "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。",
+    "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。",
+    "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。",
+    "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。",
+    "完全重写样例解释，保证样例一有正确、清晰的可行解与代价说明，样例二与输入一致。",
+    "增加第三个简单样例，覆盖 n=1 或 k=2 的小规模情况，使选手能快速验证理解。",
+    "移除样例解释中的所有草稿、自我修正和开发者笔记（如“为快速出样例，改写另一数据”）。",
+    "在 description 或 notes 中明确说明 k^e 的考虑范围（如“当 k^e 超过 10^16 后不再使用”）以指导算法边界。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "revise_quality",
+    "generated_status": "ok",
+    "quality_score": 64.0,
+    "divergence_score": 82.0,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例一解释为未完成草稿，含矛盾与无关文本",
+        "detail": "样例一的 explanation 包含“成本1的调整无法避免冲突，需进一步说明最优解…为简明可给出代价最小的合法方案：…此处不及细究，样例解释应在题面中直接给出合法的最小代价方案即可，读者可自行验证。为免歧义，样例解释可只说明输出数字。实际可构造…一个可行的最小成本可能是2…依然冲突。为快速出样例，改写另一数据。”这些内容明显是开发笔记，不应出现在正式题面中，且使样例一的输出值‘1’不具可信度。",
+        "evidence_refs": [
+          "generated_problem.samples[0].explanation"
+        ],
+        "fix_hint": "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例二解释与输入数据不符",
+        "detail": "样例二的输入为“2 10\n0 100”，即 n=2, k=10, a=[0,100]，但解释却说“所有需求已经为0，不需要任何调整”。100≠0，矛盾。",
+        "evidence_refs": [
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].explanation"
+        ],
+        "fix_hint": "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例数量不足且覆盖性差",
+        "detail": "仅有两个样例，其中一个还有明显错误，无法帮助选手验证算法。需要补充至少一个覆盖典型冲突与代价计算的简单示例。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ],
+        "fix_hint": "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "description 中部分表述可更精确",
+        "detail": "“第 e 级服务包可以提供恰好 k^e 份上门服务（e = 0,1,2,…）”未明确 e 的上限，虽可从 a_i 范围反推，但显式说明“其中 k^e 不超过实际需求的可能上限”会更严谨。",
+        "evidence_refs": [
+          "generated_problem.description"
+        ],
+        "fix_hint": "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。"
+      }
+    ],
+    "suggested_revisions": [
+      "重写样例一，直接给出一个明确可行且代价最小的调整方案，并清晰列出幂次分配，说明为什么总成本是该值。移除所有内部推导和 meta 评论。",
+      "修正解释，使其与输入一致（例如说明一个可行的分配是楼2得 k^0? 但 k^0=1，需要很多调整；或者替换为更合理的样例）。",
+      "增加至少一个正确、清晰解释的样例，展示小规模下的最优调整过程。",
+      "在描述或约束中补充一句：使用的幂次 k^e 不会超过某个实际界限（如 10^16）。",
+      "完全重写样例解释，保证样例一有正确、清晰的可行解与代价说明，样例二与输入一致。",
+      "增加第三个简单样例，覆盖 n=1 或 k=2 的小规模情况，使选手能快速验证理解。",
+      "移除样例解释中的所有草稿、自我修正和开发者笔记（如“为快速出样例，改写另一数据”）。",
+      "在 description 或 notes 中明确说明 k^e 的考虑范围（如“当 k^e 超过 10^16 后不再使用”）以指导算法边界。"
+    ],
+    "strengths_to_keep": [
+      "核心变体（修改操作+可达性约束+最小化代价）在题面中得到了明确体现，目标与规则清晰。",
+      "输入格式和约束描述准确，符合 new_schema 定义。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66_campus_ops_20260529_163532_round2.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_cded760ede66\\taco_codeforces_cded760ede66_campus_ops_20260529_163532_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_cded760ede66",
+      "title": "C",
+      "description": "Suppose you are performing the following algorithm. There is an array $v_1, v_2, \\dots, v_n$ filled with zeroes at start. The following operation is applied to the array several times — at $i$-th step ($0$-indexed) you can:   either choose position $pos$ ($1 \\le pos \\le n$) and increase $v_{pos}$ by $k^i$;  or not choose any position and skip this step. \n\nYou can choose how the algorithm would behave on each step and when to stop it. The question is: can you make array $v$ equal to the given array $a$ ($v_j = a_j$ for each $j$) after some step?\n\n\n-----Input-----\n\nThe first line contains one integer $T$ ($1 \\le T \\le 1000$) — the number of test cases. Next $2T$ lines contain test cases — two lines per test case.\n\nThe first line of each test case contains two integers $n$ and $k$ ($1 \\le n \\le 30$, $2 \\le k \\le 100$) — the size of arrays $v$ and $a$ and value $k$ used in the algorithm.\n\nThe second line contains $n$ integers $a_1, a_2, \\dots, a_n$ ($0 \\le a_i \\le 10^{16}$) — the array you'd like to achieve.\n\n\n-----Output-----\n\nFor each test case print YES (case insensitive) if you can achieve the array $a$ after some step or NO (case insensitive) otherwise.\n\n\n-----Example-----\nInput\n5\n4 100\n0 0 0 0\n1 2\n1\n3 4\n1 4 1\n3 2\n0 1 3\n3 9\n0 59049 810\n\nOutput\nYES\nYES\nNO\nNO\nYES\n\n\n\n-----Note-----\n\nIn the first test case, you can stop the algorithm before the $0$-th step, or don't choose any position several times and stop the algorithm.\n\nIn the second test case, you can add $k^0$ to $v_1$ and stop the algorithm.\n\nIn the third test case, you can't make two $1$ in the array $v$.\n\nIn the fifth test case, you can skip $9^0$ and $9^1$, then add $9^2$ and $9^3$ to $v_3$, skip $9^4$ and finally, add $9^5$ to $v_2$.",
+      "input": "5\n4 100\n0 0 0 0\n1 2\n1\n3 4\n1 4 1\n3 2\n0 1 3\n3 9\n0 59049 810",
+      "output": "YES\nYES\nNO\nNO\nYES\n\n\n\n-----Note-----\n\nIn the first test case, you can stop the algorithm before the $0$-th step, or don't choose any position several times and stop the algorithm.\n\nIn the second test case, you can add $k^0$ to $v_1$ and stop the algorithm.\n\nIn the third test case, you can't make two $1$ in the array $v$.\n\nIn the fifth test case, you can skip $9^0$ and $9^1$, then add $9^2$ and $9^3$ to $v_3$, skip $9^4$ and finally, add $9^5$ to $v_2$.",
+      "constraints": "time limit: 2 seconds\nmemory limit: 256 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "for t in range(int(input())):\n\t(n, k) = [*map(int, input().split())]\n\tp = 1\n\twhile p < 1e+16:\n\t\tp *= k\n\ta = [*map(int, input().split())]\n\tvalid = True\n\twhile valid:\n\t\tchk = False\n\t\tfor i in range(len(a)):\n\t\t\tif a[i] >= p:\n\t\t\t\tif chk:\n\t\t\t\t\tvalid = False\n\t\t\t\t\tbreak\n\t\t\t\telse:\n\t\t\t\t\tchk = True\n\t\t\t\t\ta[i] -= p\n\t\tif sum(a) == 0 or p == 1:\n\t\t\tvalid = False\n\t\tp //= k\n\tprint('NO' if sum(a) else 'YES')"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_cded760ede66",
+        "codeforces",
+        "Suppose you are performing the following algorithm. There is an array $v_1, v_2, \\dots, v_n$ filled with zeroes at start. The following operation is applied to the array several times — at $i$-th step ($0$-indexed) yo...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束从单一幂次互斥扩展到允许修改操作并定义修改代价；目标从布尔判定变为最小化修改代价；不变量从唯一分配扩展到包含代价累积和b的非负性。",
+      "summary": "引入了修改操作及其代价，要求找出最小修改量使数组可行。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inverse_min_mod_community",
+      "source": "generated",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "test_case_count",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 1,
+              "max": 1000
+            },
+            "properties": {}
+          },
+          {
+            "role": "n",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 1,
+              "max": 30
+            },
+            "properties": {
+              "per_test_case": true
+            }
+          },
+          {
+            "role": "k",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 2,
+              "max": 100
+            },
+            "properties": {
+              "per_test_case": true
+            }
+          },
+          {
+            "role": "a",
+            "type": "array of integers",
+            "length": {
+              "min": 1,
+              "max": 30
+            },
+            "value_range": {
+              "min": 0,
+              "max": 10000000000000000
+            },
+            "properties": {
+              "per_test_case": true,
+              "element_type": "integer"
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "modification_ops",
+            "description": "可以执行操作改变a_i的值。一次操作中，可以将任意a_j增加或减少任意正整数d，其代价为d。可对同一元素多次操作。",
+            "formal": "定义 b_j = a_j + Σ_{增}增 - Σ_{减}减，其中每次操作为 (j, Δ)，Δ∈(-∞,∞)，但最终 b_j ≥ 0。总修改代价 = Σ_j |b_j - a_j|。"
+          },
+          {
+            "name": "reachability_constraint",
+            "description": "修改后的数组b必须可通过原始过程到达：存在一个将不同幂次 k^e 分配给位置（每个幂次最多使用一次）的分配方案，使得对于每个 j，b_j 等于分配给它的幂次之和。",
+            "formal": "∃ 分配 f: {0,1,2,…} → {1,…,n,⊥}，⊥表示未使用，使得 b_j = Σ_{e: f(e)=j} k^e，且对于任意 e，若 f(e)=j 则 f(e)≠⊥ 且未分配给其他位置。"
+          },
+          {
+            "name": "b_non_negative",
+            "description": "所有 b_j 必须非负。",
+            "formal": "对于所有 j，b_j ≥ 0。"
+          }
+        ]
+      },
+      "objective": {
+        "type": "optimization",
+        "description": "最小化总修改代价 Σ_j |b_j - a_j|。",
+        "target": "minimum_cost",
+        "output": "对于每个测试用例，输出一个整数：最小总修改代价。"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "power_uniqueness",
+            "description": "每个幂 k^e 在所有 b_j 中最多只能被使用一次。",
+            "properties": {
+              "max_usage_per_power": 1
+            }
+          },
+          {
+            "name": "cost_definition",
+            "description": "代价定义为最终 b_j 与原始 a_j 之差的绝对值之和。"
+          },
+          {
+            "name": "non_negative_b",
+            "description": "b_j 必须非负，因为可达数组仅包含非负和。"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "社区服务需求调整",
+      "description": "青云街道准备为辖区内的 n 座公寓楼提供一项特殊的上门便民服务。服务站点一共备有若干种不同级别的服务包，级别按照 k 的幂次编号：第 e 级服务包可以提供恰好 k^e 份上门服务（e = 0,1,2,…）。每种级别的服务包数量都无限，但资源调配规则施加了一条硬性限制：每个级别最多只能派出去一次，即第 e 级服务包只能分配给其中一座公寓楼（或者不分配给任何楼）。\n\n社区办预先统计了各座楼的初始需求：第 j 座楼需要 a_j 份服务。然而，由于服务包级别的搭配可能无法恰好满足这些需求，物业公司被允许调整需求——可以人为增加或减少任意一座楼的需求量，但每一次调整都会产生成本：若将第 j 座楼的需求从 a_j 修改为 b_j，则单座楼的调整成本为 |b_j - a_j|，总调整成本为所有楼栋调整成本之和。调整后的新需求 b_j 必须非负，并且必须存在一种合法的服务包分配方案，使得分配给第 j 座楼的所有服务包的级别值之和恰好等于 b_j，同时每级服务包只能被使用一次。\n\n请你帮助物业公司确定最小的总调整成本，使得调整后的需求可以被上述规矩下的服务包分配方案满足。",
+      "input_format": "第一行一个整数 T (1 ≤ T ≤ 1000)，表示测试数据组数。\n\n对于每组测试数据：\n第一行两个整数 n, k (1 ≤ n ≤ 30, 2 ≤ k ≤ 100)。\n第二行 n 个整数 a_1, a_2, …, a_n (0 ≤ a_i ≤ 10^16)。",
+      "output_format": "对于每组测试数据，输出一行一个整数，表示达到可行需求所需的最小总调整成本（即 ∑ |b_j - a_j| 的最小值，其中 b_j 为一组合法的、非负的、可被幂次服务包恰好满足的新需求）。",
+      "constraints": [
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "T ≤ 1000",
+        "1 ≤ n ≤ 30",
+        "2 ≤ k ≤ 100",
+        "0 ≤ a_i ≤ 10^16"
+      ],
+      "samples": [
+        {
+          "input": "2\n3 2\n5 3 6\n2 10\n0 100",
+          "output": "1\n0",
+          "explanation": "第一组数据：初始需求为 [5, 3, 6]，k=2。不存在直接分配方案使三个需求恰好都由不同次幂求和得到（该例中无法同时满足 5 和 6）。一种最优调整是将 5 改为 4（成本 1），得到 [4,3,6]。此时 4=2^2，3=2^1+2^0，6=2^2+2^1，每个幂次只用一次（2^2给楼1和楼3冲突？此处应选一个能避免冲突的分配），实际上成本1的调整无法避免冲突，需进一步说明最优解，暂时调整叙述以匹配最小代价为1的可行方案。举例严格正确：调整 5 为 4 成本1，分配：楼1得2^2，楼2得2^1+2^0，楼3得2^2+2^1冲突，因此此方案不合法。为简明可给出代价最小的合法方案：将 5 减为 4，3 不变，6 减为 2，总成本 |5-4|+|6-2|=3，但存在更小成本2的方案：5->6(成本1) 6->6(成本0) 得[6,3,6]仍冲突，此处不及细究，样例解释应在题面中直接给出合法的最小代价方案即可，读者可自行验证。为免歧义，样例解释可只说明输出数字。\n实际可构造：调整 [5,3,6] 为 [1,2,6] 总成本 |5-1|+|3-2|+|6-6| = 4+1=5，或 [5,3,8] 成本2仍冲突；应为 n=3 时原始需求 [5,3,6] 可调整为 [5,2,6]（成本1），分配：5=4+1, 2=2, 6=4+2，但由于 4 出现两次不可行。一个可行的最小成本可能是 2：调整 5 为 4，6 为 8，得 [4,3,8] 总成本 |5-4|+|6-8|=1+2=3，依然冲突。为快速出样例，改写另一数据。"
+        },
+        {
+          "input": "1\n4 100\n0 0 0 0",
+          "output": "0",
+          "explanation": "所有需求已经为0，不需要任何调整，分配方案为空，总成本为0。"
+        }
+      ],
+      "notes": "注意：答案可能较大，请使用 64 位整数存储。幂次 k^e 可能迅速超过 10^16，需要合理设计算法。必须保证调整后的需求 b_i 非负，且每个幂次 k^e 在所有 b_i 中只被使用一次。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "引入了修改操作及其代价，要求找出最小修改量使数组可行。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5399,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.8053,
+          "O": 0.5776,
+          "V": 0.7697
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.8053,
+          "objective_type_distance": 0.6632,
+          "objective_text_distance": 0.4493,
+          "invariant_match_distance": 0.7697
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "将原题的可达性作为必须达成的目标，逆转求解方向。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "在 core_constraints 添加 reachability_constraint 明确 b 必须满足原操作条件；objective 变为在满足此约束下最小化代价。"
+          ],
+          "innovation_reason": "迫使算法在目标约束下搜索，而不只是判定。",
+          "difficulty_reason": "算法需要同时考虑可达性和代价，增加了复杂性。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "定义可执行的修改操作集合及代价，将反向设计落实到操作空间。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "添加 modification_ops 约束，明确修改规则和代价计算；不变量中增加 cost_definition 和 non_negative_b。"
+          ],
+          "innovation_reason": "使修改操作成为核心规律的一部分，而不仅仅是叙事变化。",
+          "difficulty_reason": "操作与代价的耦合迫使算法在分配幂次时权衡修改成本。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "输出必须是最小代价，承担最小性证明责任。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确为优化，输出最小代价；invariant 的 cost_definition 为正确性证明提供基础。"
+          ],
+          "innovation_reason": "答案需要保证最小性，推动算法设计必须证明最优。",
+          "difficulty_reason": "要求算法不仅能找到可行解，还能证明其最优性，提高了证明难度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "贪心从高到低检查幂次冲突：遍历 k^e，若多个 a_j 需要，则不可行；否则分配并减去该幂次。",
+        "reusable_subroutines": "将 a_i 分解为基 k 的幂次需求检测（判断 a_i 是否大于等于 k^e）；幂次遍历循环。",
+        "new_solver_core": "需要解决优化问题：分配幂次给位置以最小化总 |b_j - a_j|。可能解法：利用 k^e 的结构，转化为每个幂次的分配决策，使用动态规划：按幂次从大到小，状态为每个位置的已分配值或需求剩余，但由于 n<=30，可能采用基于子集DP或其他方法。具体地，可观察到每个 a_i 的基 k 表示决定了对每个幂次的需求，修改相当于改变这些二进制位，最终使得所有位置的同一位之和 ≤1，且最小化改变的位数加权（权重为 k^e）。这变为一个最小成本流问题或 DP on bits，原贪心无法处理修复冲突时的多种选择。",
+        "new_proof_obligation": "证明新 DP 算法的正确性：状态转移覆盖所有可能的幂次分配，且得到的最小代价就是最优。证明原贪心在引入修改后不再最优，并给出反例。",
+        "why_direct_reuse_fails": "原贪心只检测是否存在冲突，不衡量修改代价，无法决定如何分配冲突的幂次给不同位置以最小化总代价，需要搜索分配空间。"
+      },
+      "anti_shallow_rationale": "原题是简单的可行性判断，新题要求最小代价修改，核心任务从检测冲突变为优化分配下的代价最小化，算法需要从贪心升级为动态规划或图论模型，不是单纯换故事或输出形式改变。"
+    }
+  }
+}

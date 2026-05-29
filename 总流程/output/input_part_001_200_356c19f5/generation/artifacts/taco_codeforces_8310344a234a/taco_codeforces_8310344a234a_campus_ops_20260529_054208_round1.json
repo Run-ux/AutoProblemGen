@@ -1,0 +1,976 @@
+{
+  "problem_id": "taco_cf_count_purification_sets",
+  "source_problem_ids": [
+    "taco_codeforces_8310344a234a"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_8310344a234a",
+      "codeforces",
+      "You are an adventurer currently journeying inside an evil temple. After defeating a couple of weak zombies, you arrived at a square room consisting of tiles forming an n × n grid. The rows are numbered 1 through n fro...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "目标从输出具体方案变为计数方案总数，约束中增加去重和模运算要求，不变量从可行性判定变为计数公式与去重逻辑。",
+    "summary": "改变目标、约束和不变量，引入计数义务和去重规则，同时保留原网格覆盖和禁施约束。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3737,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3737,
+    "axis_scores": {
+      "I": 0.15,
+      "C": 0.3506,
+      "O": 0.4759,
+      "V": 0.5601
+    },
+    "components": {
+      "input_tree_distance": 0.15,
+      "constraint_match_distance": 0.3506,
+      "objective_type_distance": 0.471,
+      "objective_text_distance": 0.4832,
+      "invariant_match_distance": 0.5601
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_and_min_value",
+    "description": "输出净化全部格子所需的最少施法次数（恒为 n，若不可能则输出 -1），并在可能时输出在最少次数下不同的施法位置集合的数量，对 998244353 取模。",
+    "target": "minimum_spell_count and count_of_minimum_spell_sets",
+    "requires_solution": true,
+    "mod": 998244353
+  },
+  "rule_selection_reason": "该规则能将原题的正向构造（给定网格，输出最小施法集合）彻底翻转为反向设计（给定期望的最优施法集合，通过最少修改网格中的'E'/' .' 状态使其成为可行且最优的解），从而在根本上改变求解方向与核心责任，创新度和难度均显著高于仅变换输出形式的construct_or_obstruction和可能简化题目的existence_to_counting。而feasibility_to_extremal_threshold因原题已是最小化问题且缺乏自然递增参数，不适用。；创新度判断：将原题“从网格计算最小施法”的核心义务替换为“给定目标施法方案，设计一个满足约束的网格，并最小化对原始网格的修改代价”。这迫使解题者从目标驱动角度分析覆盖条件、不可选限制与最优性不变量，使主求解逻辑从构造转为逆向规划与优化。；难度判断：新题要求同时承担可行性验证、修改操作的正确性以及最小修改的证明责任，特别是必须论证为何更少的修改无法达成目标。这需要在原题覆盖逻辑基础上叠加编辑距离与组合逆向分析，显著抬高了分析与证明难度。；风险判断：主要风险在于目标施法集合的通用性可能引发定义歧义（如目标方案本身违反原题最优性条件），但可通过validaton contract中的编辑操作合同和最小性合同明确限定允许的修改类型与证明义务，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_cf_count_purification_sets",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "matrix",
+      "length": {
+        "min": 1,
+        "max": 100
+      },
+      "value_range": {
+        "min": "'.' or 'E'",
+        "max": null
+      },
+      "properties": {
+        "grid_description": "An n x n grid of characters, each either '.' (castable) or 'E' (forbidden)."
+      },
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "spell_target_restriction",
+          "description": "只能选择标记为 '.' 的格子作为施法目标。",
+          "formal": "For any selected spell position (r,c), grid[r][c] must be '.'.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "full_coverage",
+          "description": "选择的 n 个施法位置必须使得每个格子 (i,j) 都与某个施法位置同行或同列，从而被净化。",
+          "formal": "For every cell (i,j), there exists a selected position (r,c) with r=i or c=j.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "minimum_operations",
+          "description": "施法次数必须正好为 n，这是净化全部格子的最小次数。",
+          "formal": "Exactly n spell positions must be chosen.",
+          "source_sections": [
+            "solution_derived"
+          ]
+        },
+        {
+          "name": "counting_and_deduplication",
+          "description": "两个施法集合若包含相同位置的无序集合，则视为相同方案。方案总数需要对 998244353 取模输出。去重时，顺序无关。",
+          "formal": "Two sets of spell positions are considered the same if they are equal as sets. The total count of such sets satisfying the constraints must be computed modulo 998244353.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_and_min_value",
+      "description": "输出净化全部格子所需的最少施法次数（恒为 n，若不可能则输出 -1），并在可能时输出在最少次数下不同的施法位置集合的数量，对 998244353 取模。",
+      "target": "minimum_spell_count and count_of_minimum_spell_sets",
+      "requires_solution": true,
+      "mod": 998244353
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "feasibility_condition",
+          "description": "当且仅当不存在某行全部为 'E' 且同时某列全部为 'E' 时，存在解。",
+          "formal": "A solution exists iff it is not the case that there exists a row i where all cells are 'E' and a column j where all cells are 'E'.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "optimal_spell_count_equals_n",
+          "description": "当解存在时，最少施法次数必为 n。",
+          "formal": "If a solution exists, the minimum number of spells is n.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "counting_formula",
+          "description": "设 row_prod 为所有行的 '.' 个数之积（若某行全 'E' 则 row_prod = 0），col_prod 类似定义； perm_count 为在 '.' 位置中选取 n 个互不同行同列的方案数。则总方案数 = (row_prod + col_prod - perm_count) mod 998244353。",
+          "formal": "total = (row_prod + col_prod - perm_count) mod 998244353, with row_prod, col_prod, perm_count as defined.",
+          "properties": {},
+          "evidence_source": "derived"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Determine if a fully 'E' row and fully 'E' column coexist; if not, construct one optimal spell set by greedily picking one '.' per row (if some column is full 'E') or per column.",
+    "reusable_subroutines": "判定行/列全'E'的逻辑可复用；每个格子是否为'.'的查询。",
+    "new_solver_core": "在判定可行后，计算每行'.'个数乘积、每列'.'个数乘积、以及矩阵中'.'的完美匹配数（可通过状压DP或行列式等），应用容斥公式 (row_prod + col_prod - perm_count) mod MOD。",
+    "new_proof_obligation": "需要证明：1) 任何大小为n的施法集合若覆盖所有格子，必为每行恰好一个或每列恰好一个；2) 去重中排列方案会被两种计数重复计算，需扣除；3) 完美匹配计数对应排列数；4) 取模不影响容斥结果。",
+    "why_direct_reuse_fails": "原算法只构造单个解，不涉及计数，也未处理行选/列选的重叠去重，无法直接用于计数输出。"
+  },
+  "anti_shallow_rationale": "尽管原题也是n次施法，但新题要求计数所有不同集合，引入了去重和组合计数，从构造单一解变为精确计数，核心解题路径截然不同，非换皮。",
+  "shared_core_summary": "None",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "None",
+    "seed_b": "None"
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "必须明确计数对象和去重规则，否则计数问题定义不清。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中增加 counting_and_deduplication 约束，说明集合相等定义和取模；",
+        "在 objective 中明确输出方案数并取模；",
+        "在 invariant 中给出计数公式，体现对象定义和等价关系。"
+      ],
+      "innovation_reason": "将原题单一构造要求替换为明确计数的去重定义，使题目从优化构造变为组合计数。",
+      "difficulty_reason": "要求解题者正确理解不同方案的区分，并设计不重不漏的计数方法，增加推理和实现难度。"
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "需要将解空间拆分成行选、列选和排列等可汇总单元，以支持计数。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在 invariant 中引入 row_prod, col_prod, perm_count 的分解概念；",
+        "core_constraints 维持 full_coverage 但结合最小操作数迫使结构为每行一个或每列一个，从而隐含状态分解。"
+      ],
+      "innovation_reason": "通过强制大小n，自然产生按行或按列的结构分解，使计数从主状态组织方式中长出，而非简单统计。",
+      "difficulty_reason": "需要解题者从覆盖约束中推导出解集合的结构特征（每行或每列），并将其分解为可计数的子问题，提升了分析难度。"
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "必须将计数责任作为求解目标，而非附带输出。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "objective 明确目标为输出最小次数和方案数，原题的方案输出被移除；",
+        "core_constraints 确保所有约束服务于最小次数（n）下的计数，没有保留“输出具体方案”的备选。"
+      ],
+      "innovation_reason": "将计数提升为主要义务，使题目性质从判定/构造彻底转变为计数，与原题形成本质差异。",
+      "difficulty_reason": "要求算法从设计阶段就以精确计数为目标，不能依赖于先构造后计数，增加了综合难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题已要求输出完整方案（施法位置列表），增加规范顺序仅是对输出的后处理约束，主要解法不变，违反forbidden属性。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective要求'output the specific spell positions'，说明原题已经输出完整方案；rule的eligibility.forbidden_seed_properties明确禁止'原题本来就要求输出完整方案'；标准解法直接构造施法位置，无回溯；failure_templates指出'加上规范解输出之后，主要解法几乎没变'。",
+        "feedback": "规则要求种子题不应已要求输出完整方案，但本题核心就是构造并输出最小施法集合，已满足forbidden条件，不建议进入规划。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "conflict_certificate_exists",
+      "selection_reason": "原题的无解条件（存在全'E'行且全'E'列）可以被精确定位为一对行和列，输出它们作为冲突证据即可局部检查，完全满足规则对 seed 属性的要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的不变量 impossibility_condition 指出：'A valid purification exists if and only if it is not the case that both a completely uncastable row and a completely uncastable column exist.' 若违反，则存在一行全'E'和一列全'E'，这两者的交点无法被任何法术覆盖，形成了可输出的局部冲突。检查者只需验证该行全'E'、该列全'E'，即可确认冲突。该证据直接来自主约束中的不可兼容关系，易于局部检查，符合规则要求。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "eligible_clear_counting_domain",
+      "selection_reason": "种子问题的解空间可精确建模为行对列的完美匹配计数，解空间有限，等价关系（不同排列算不同方案）定义清晰，去重规则自然成立，无需额外定义模糊口径。改动将目标从最小化并构造变为计数，同时重构核心约束和不变量，满足must_change要求，且helpers可实现。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原种子题invariant中optimal_spell_count_equals_dimension表明最小施法次数为n，且需要每行至少一个施法、每列至少一个施法，因此最优解等价于选择一个排列π使得每个(i,π(i))均为可施法格子。原题core_constraints中spell_target_restriction限制只能选'.'，这直接定义了二分图的边。解空间为所有合法排列的集合，规模有限（n≤100，虽然组合数可能极大但可数）。计数对象为排列π，不同π视为不同解，去重规则明确无歧义。满足规则要求的required_seed_properties：解空间有限、等价关系清晰、可拆分汇总（完美匹配计数本身可按行/列分解DP）。",
+        "feedback": "规则对种子题完全适用，建议进入下一阶段。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题语义中不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，仅靠故事背景硬造对手属于禁止项，因此无法合规应用该规则。",
+      "risk_tags": [
+        "low_novelty",
+        "native_perturbation_insufficient"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为静态网格与施法覆盖规则（seed_schema.core_constraints.spell_target_restriction、full_coverage），目标是最小化施法次数（objective），解的存在性与构造完全由 'E' 的分布决定，没有动态不确定性或顺序依赖性（invariant.impossibility_condition、optimal_spell_count_equals_dimension）；任何扰动模型只能通过引入外部对手（如 real‐time blocking）或故事背景强行附加，违反规则 forbidden_seed_properties 和 global_redlines。",
+        "feedback": "该题目缺少可被放大的原生不确定性，强行应用保底优化会退化成无意义的最坏情形包装，建议更换具有内在资源竞争或顺序依赖的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "feasibility_monotonic_extension",
+      "selection_reason": "原题有明确的可行性判定（当且仅当不存在全E行且全E列），且约束 spell_target_restriction 严格禁止在 'E' 格施法。该禁止可被参数化放松为一个可单调变化的阈值 k（例如：允许在至多 k 个 'E' 格上施法），从而可行性随 k 单调递增。将原判定问题转化为求最小 k 使得存在合法方案，符合“可行性转临界参数”的核心变换。阈值 k 将进入核心约束定义，目标从最小化施法次数变为最小化 k，不变量需支撑单调性与临界性，满足 required_axis_changes 要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints.constraints[0].description 声明 Purification 咒语只能施放在 '.' 格子上; seed_schema.invariant.invariants[0].description 给出可行性条件依赖于 'E' 的分布; 规则 positive example 为“把判断是否存在合法方案改成求允许合法方案存在的最小容量”，与本扩展一致。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_conflicting_metric",
+      "selection_reason": "种子题目标单一（最小施法次数），最优解结构固定（次数恒为 n，按行或列选择），不存在天然冲突的第二评价指标。任何附加指标（如最小冗余净化）均可通过后处理在最优解集中筛选，不属于真实权衡。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 objective 类型为 minimize_value，目标为 spells；invariant 指出当解存在时最优次数恒为 n，构造方法为每行或每列选一个 '.'，无第二维度冲突空间。",
+        "feedback": "建议更换种子题，选择本身带有天然多目标冲突的问题（如路径规划中的时间与风险、背包中的价值与重量），避免将简单构造题强行扩展为多目标前沿题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "反向目标明确且修改操作天然存在",
+      "selection_reason": "原题输出为具体施法位置序列，可天然绑定为反向目标；网格中 'E' 与 '.' 标记的修改操作与原核心规律紧密相关，构成自然的设计自由度；要求最小修改与可验证性可有效改变求解方向。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 要求输出 minimize spell casts 及具体位置，可作为反向目标直接绑定；invariant 中的 impossibility_condition 和 optimal_spell_count_equals_dimension 提供了目标性质；input_structure 为字符矩阵，允许修改 '.' 和 'E'，符合 edit_operation_contract 的自然修改要求。",
+        "feedback": "题目具备清晰的反向设计基础，需注意防止退化为一维可行性检查，结合最小修改代价可确保难度与创新性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题中局部单元（各行的施法选择）相互独立，无共享资源或跨组件依赖，无法通过全局约束自然耦合。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束仅要求全覆盖和最小施法次数，不变量表明最优次数为 n 且构造为每行或每列各选一个 '.' 位置，各选择之间无相互影响，不存在共享资源、守恒量或跨组件依赖。",
+        "feedback": "规则要求局部单元之间能通过共享资源、总量或全局选择自然耦合，但原题不存在这类耦合，强行添加全局约束会变成无关背景硬加，违反红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_antagonism",
+      "selection_reason": "原题是单人最小覆盖问题，不存在轮流选择或对抗操作，强行引入第二个玩家属于故事背景硬造，违反全局红线和规则 eligibility 要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为单人冒险者施放净化法术，目标是最小化施法次数，无任何对抗元素（如 opponent、轮流选择）。规则 eligibility 要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，并禁止对抗方只能靠故事背景硬造（forbidden_seed_properties）。原题操作仅是选择格子施法，无状态转移的多方互动。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_suitable_local_seed_structure",
+      "selection_reason": "The seed problem is already a global covering problem (purification of all cells by selecting castable points that cover rows and columns). The core objects are the casting operations and their coverage, not a local path, interval, or subtree whose property could be extended. The rule targets problems where a single path, interval, or subtree property can be elevated to a global cover/cut/dominance constraint, but here no such local seed structure exists.",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "Rule eligibility requires 'the original problem's core object has a local structure such as path, interval, subtree, set'. Seed schema reveals core constraints: (1) cast spell on a '.' cell, (2) spell purifies its entire row and column, (3) all cells must be purified. The problem is inherently a covering problem on a 2D grid, where the operation already has global effect. There is no isolated local path or subtree; the minimal objects are the casting cells, which are not localized paths. The invariant shows optimal solution size is n, constructed by selecting one cell per row or column, which is a global cover, not a local-to-global extension.",
+        "feedback": "The rule 'local_path_to_global_cover' expects a seed problem with a local structural property (e.g., a single path, interval, or subtree) that can be transformed into a global cover/cut/dominance formulation. This seed problem is already global in nature; applying the rule would not introduce a meaningful new covering obligation but would merely rephrase the existing one. Therefore, it does not meet the required seed properties."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_seed",
+      "selection_reason": "原题是构造/优化问题，要求输出最小操作次数及方案，不涉及任何计数对象，无法应用带权计数扩展规则。",
+      "risk_tags": [
+        "no_counting_seed"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'Please find some way to purify all the cells with the minimum number of spells cast.' 输出是具体的施法坐标序列，而非计数结果。规则要求'原题已经有明确有限的计数对象'，但此处没有任何计数。",
+        "feedback": "规则只能应用于已有的计数问题，需确认种子题是否涉及计数，而非构造或输出方案。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题已要求输出完整方案（施法位置列表），增加规范顺序仅是对输出的后处理约束，主要解法不变，违反forbidden属性。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective要求'output the specific spell positions'，说明原题已经输出完整方案；rule的eligibility.forbidden_seed_properties明确禁止'原题本来就要求输出完整方案'；标准解法直接构造施法位置，无回溯；failure_templates指出'加上规范解输出之后，主要解法几乎没变'。",
+        "feedback": "规则要求种子题不应已要求输出完整方案，但本题核心就是构造并输出最小施法集合，已满足forbidden条件，不建议进入规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "conflict_certificate_exists",
+      "message": "原题的无解条件（存在全'E'行且全'E'列）可以被精确定位为一对行和列，输出它们作为冲突证据即可局部检查，完全满足规则对 seed 属性的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的不变量 impossibility_condition 指出：'A valid purification exists if and only if it is not the case that both a completely uncastable row and a completely uncastable column exist.' 若违反，则存在一行全'E'和一列全'E'，这两者的交点无法被任何法术覆盖，形成了可输出的局部冲突。检查者只需验证该行全'E'、该列全'E'，即可确认冲突。该证据直接来自主约束中的不可兼容关系，易于局部检查，符合规则要求。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "eligible_clear_counting_domain",
+      "message": "种子问题的解空间可精确建模为行对列的完美匹配计数，解空间有限，等价关系（不同排列算不同方案）定义清晰，去重规则自然成立，无需额外定义模糊口径。改动将目标从最小化并构造变为计数，同时重构核心约束和不变量，满足must_change要求，且helpers可实现。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原种子题invariant中optimal_spell_count_equals_dimension表明最小施法次数为n，且需要每行至少一个施法、每列至少一个施法，因此最优解等价于选择一个排列π使得每个(i,π(i))均为可施法格子。原题core_constraints中spell_target_restriction限制只能选'.'，这直接定义了二分图的边。解空间为所有合法排列的集合，规模有限（n≤100，虽然组合数可能极大但可数）。计数对象为排列π，不同π视为不同解，去重规则明确无歧义。满足规则要求的required_seed_properties：解空间有限、等价关系清晰、可拆分汇总（完美匹配计数本身可按行/列分解DP）。",
+        "feedback": "规则对种子题完全适用，建议进入下一阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题语义中不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，仅靠故事背景硬造对手属于禁止项，因此无法合规应用该规则。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "native_perturbation_insufficient"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束为静态网格与施法覆盖规则（seed_schema.core_constraints.spell_target_restriction、full_coverage），目标是最小化施法次数（objective），解的存在性与构造完全由 'E' 的分布决定，没有动态不确定性或顺序依赖性（invariant.impossibility_condition、optimal_spell_count_equals_dimension）；任何扰动模型只能通过引入外部对手（如 real‐time blocking）或故事背景强行附加，违反规则 forbidden_seed_properties 和 global_redlines。",
+        "feedback": "该题目缺少可被放大的原生不确定性，强行应用保底优化会退化成无意义的最坏情形包装，建议更换具有内在资源竞争或顺序依赖的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "feasibility_monotonic_extension",
+      "message": "原题有明确的可行性判定（当且仅当不存在全E行且全E列），且约束 spell_target_restriction 严格禁止在 'E' 格施法。该禁止可被参数化放松为一个可单调变化的阈值 k（例如：允许在至多 k 个 'E' 格上施法），从而可行性随 k 单调递增。将原判定问题转化为求最小 k 使得存在合法方案，符合“可行性转临界参数”的核心变换。阈值 k 将进入核心约束定义，目标从最小化施法次数变为最小化 k，不变量需支撑单调性与临界性，满足 required_axis_changes 要求。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints.constraints[0].description 声明 Purification 咒语只能施放在 '.' 格子上; seed_schema.invariant.invariants[0].description 给出可行性条件依赖于 'E' 的分布; 规则 positive example 为“把判断是否存在合法方案改成求允许合法方案存在的最小容量”，与本扩展一致。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_metric",
+      "message": "种子题目标单一（最小施法次数），最优解结构固定（次数恒为 n，按行或列选择），不存在天然冲突的第二评价指标。任何附加指标（如最小冗余净化）均可通过后处理在最优解集中筛选，不属于真实权衡。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 objective 类型为 minimize_value，目标为 spells；invariant 指出当解存在时最优次数恒为 n，构造方法为每行或每列选一个 '.'，无第二维度冲突空间。",
+        "feedback": "建议更换种子题，选择本身带有天然多目标冲突的问题（如路径规划中的时间与风险、背包中的价值与重量），避免将简单构造题强行扩展为多目标前沿题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "反向目标明确且修改操作天然存在",
+      "message": "原题输出为具体施法位置序列，可天然绑定为反向目标；网格中 'E' 与 '.' 标记的修改操作与原核心规律紧密相关，构成自然的设计自由度；要求最小修改与可验证性可有效改变求解方向。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 要求输出 minimize spell casts 及具体位置，可作为反向目标直接绑定；invariant 中的 impossibility_condition 和 optimal_spell_count_equals_dimension 提供了目标性质；input_structure 为字符矩阵，允许修改 '.' 和 'E'，符合 edit_operation_contract 的自然修改要求。",
+        "feedback": "题目具备清晰的反向设计基础，需注意防止退化为一维可行性检查，结合最小修改代价可确保难度与创新性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题中局部单元（各行的施法选择）相互独立，无共享资源或跨组件依赖，无法通过全局约束自然耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束仅要求全覆盖和最小施法次数，不变量表明最优次数为 n 且构造为每行或每列各选一个 '.' 位置，各选择之间无相互影响，不存在共享资源、守恒量或跨组件依赖。",
+        "feedback": "规则要求局部单元之间能通过共享资源、总量或全局选择自然耦合，但原题不存在这类耦合，强行添加全局约束会变成无关背景硬加，违反红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_antagonism",
+      "message": "原题是单人最小覆盖问题，不存在轮流选择或对抗操作，强行引入第二个玩家属于故事背景硬造，违反全局红线和规则 eligibility 要求。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为单人冒险者施放净化法术，目标是最小化施法次数，无任何对抗元素（如 opponent、轮流选择）。规则 eligibility 要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，并禁止对抗方只能靠故事背景硬造（forbidden_seed_properties）。原题操作仅是选择格子施法，无状态转移的多方互动。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_suitable_local_seed_structure",
+      "message": "The seed problem is already a global covering problem (purification of all cells by selecting castable points that cover rows and columns). The core objects are the casting operations and their coverage, not a local path, interval, or subtree whose property could be extended. The rule targets problems where a single path, interval, or subtree property can be elevated to a global cover/cut/dominance constraint, but here no such local seed structure exists.",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "Rule eligibility requires 'the original problem's core object has a local structure such as path, interval, subtree, set'. Seed schema reveals core constraints: (1) cast spell on a '.' cell, (2) spell purifies its entire row and column, (3) all cells must be purified. The problem is inherently a covering problem on a 2D grid, where the operation already has global effect. There is no isolated local path or subtree; the minimal objects are the casting cells, which are not localized paths. The invariant shows optimal solution size is n, constructed by selecting one cell per row or column, which is a global cover, not a local-to-global extension.",
+        "feedback": "The rule 'local_path_to_global_cover' expects a seed problem with a local structural property (e.g., a single path, interval, or subtree) that can be transformed into a global cover/cut/dominance formulation. This seed problem is already global in nature; applying the rule would not introduce a meaningful new covering obligation but would merely rephrase the existing one. Therefore, it does not meet the required seed properties."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_seed",
+      "message": "原题是构造/优化问题，要求输出最小操作次数及方案，不涉及任何计数对象，无法应用带权计数扩展规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "no_counting_seed"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'Please find some way to purify all the cells with the minimum number of spells cast.' 输出是具体的施法坐标序列，而非计数结果。规则要求'原题已经有明确有限的计数对象'，但此处没有任何计数。",
+        "feedback": "规则只能应用于已有的计数问题，需确认种子题是否涉及计数，而非构造或输出方案。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "core_constraints",
+          "invariant",
+          "objective"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将原题改造为计数题，明确定义了计数对象（施法位置集合）、去重规则（集合相等）、有限性来源（通过行列约束和模运算保证可数）以及分解单元（行选、列选和排列），满足了规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "candidate_schema 的 core_constraints 中 counting_and_deduplication 约束定义了计数对象和去重规则；objective 中要求输出方案数量并取模 998244353；invariant 的 counting_formula 提供了 row_prod, col_prod, perm_count 的分解；applied_helpers 中每个 helper 都实际影响了对应轴和 schema 部分，如 counting_unit_definition 在 C/O/V 添加了去重和取模，state_factorization 在 C/V 引入分解，counting_obligation_lock 在 C/O 将计数作为主目标。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "counting_unit_split_not_explicit",
+      "message": "题面未明确说明解空间的拆分单元（如按行选择、按列选择），仅在样例解释中零散提及，不满足规则要求的‘必须说明按什么单元拆分和汇总’。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "规则 validation_contract hard_checks 要求‘必须说明按什么单元拆分和汇总’；new_schema 的 invariant 包含 row_prod/col_prod/perm_count 分解，但题面描述未引入这些概念；样例 1 的解释提到了‘按行选择’和‘按列选择’，但该说明依附于具体样例，不够一般化。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确输出了计数对象（不同的最少检查点集合的个数），定义了等价关系（集合相等，与顺序无关），说明了不同方案的判定口径，提供了模数约定（对998244353取模），并通过样例解释了按行选、列选和完美匹配的拆分和汇总方式，完整兑现了计数题专属合同。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "描述中定义'两个检查点集合如果包含完全相同的格子（与顺序无关），则视为相同的方案'；输出格式要求输出方案数并对998244353取模；约束说明'最小检查次数必为n'，进而推导出解集合必然为每行一个或每列一个的结构，并在样例解释中展示行选乘积、列选乘积和去重扣除，实现了状态分解和去重计数。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.07,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "规则existence_to_counting适用，种子题有有限解空间且去重规则可明确定义。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "教室检查方案计数",
+    "description": "今年学校将进行一次全面的教室使用情况检查。共有 n 个班级和 n 个可用时间段（编号为 1 到 n）。\n每个班级在每个时间段可能空闲（用 '.' 表示）或被其他活动占用（用 'E' 表示）。\n为了尽量减少对正常教学的影响，学校希望通过恰好 n 次检查来完成全部覆盖（这是能够覆盖所有情况的必要最小次数）。\n一次检查的方式是：选择一个空闲的格子 (班级 i, 时间段 j)，在那里设置一个检查点。该检查点会检查班级 i 在所有时间段的情况，同时也会检查所有班级在时间段 j 的情况。换句话说，对于任意班级 i' 和时间段 j'，只要 i' = i 或 j' = j，那么这个格子就会被这次检查覆盖到。\n你需要挑出恰好 n 个空闲格子作为检查点，使得每一个 (班级, 时间段) 组合都被至少一个检查点覆盖。\n注意，由于检查次数严格等于 n，任意一个合法的检查点集合中，要么每个班级都恰好作为一个检查点所在的班级（即每行恰好选一个格子）；要么每个时间段都恰好作为一个检查点所在的时间段（即每列恰好选一个格子）。如果你发现某行或某列完全没有空闲格子，则对应的覆盖方式将无法实现。\n两个检查点集合如果包含完全相同的格子（与顺序无关），则视为相同的方案。\n现在请你计算：是否存在这样的检查方案？如果存在，请输出最小检查次数（它必定是 n），并输出不同的最少检查点集合的个数。由于答案可能很大，你需要将个数对 998244353 取模后输出。\n如果不存在任何可行的检查方案（即同时存在某行全为 'E' 且某列全为 'E'），请输出 -1。",
+    "input_format": "第一行包含一个整数 n (1 ≤ n ≤ 100)，表示班级/时间段的数量。\n接下来 n 行，每行包含一个长度为 n 的字符串，由字符 '.' 和 'E' 组成，其中 '.' 表示空闲，'E' 表示被占用。第 i 行的第 j 个字符表示班级 i 在时间段 j 的占用情况。",
+    "output_format": "如果不存在可行的检查方案，输出一行一个整数 -1。\n否则，输出一行两个整数：第一个整数为最小检查次数，即 n；第二个整数为满足要求的不同检查点集合数目对 998244353 取模的结果。",
+    "constraints": [
+      "1 ≤ n ≤ 100",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "3\n.E.\nE.E\n.E.",
+        "output": "3 6",
+        "explanation": "矩阵大小为 3×3。最小检查次数为 3。\n总方案数为 6：按班级选择的方式共有 2×1×2=4 种；按时间段选择的方式同样有 4 种；其中两种方案同时满足按班级和按时间段选择（即每行每列恰选一个点的完美匹配），被重复计算了一次，因此最终结果为 4+4-2=6。"
+      },
+      {
+        "input": "2\nEE\n..",
+        "output": "2 1",
+        "explanation": "矩阵大小为 2×2。第 1 行全为 'E'，无法在该行选取检查点，因此只能按时间段选择：每列选一个点。第 1 列和第 2 列在第 2 行都是 '.'，只有一种选择：{(2,1), (2,2)}。按班级选择的方案数为 0，按时间段选择的方案数为 1×1=1，完美匹配数为 0，总方案数为 1。输出最小检查次数 2 和方案数 1。"
+      }
+    ],
+    "notes": "请注意方案集合是无序的，即只关心选择了哪些格子，不关心选择的顺序。\n当某一行全为 'E' 且某一列全为 'E' 时，不存在可行的检查方案，此时输出 -1。\n模数 998244353 是一个质数。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_8310344a234a_campus_ops_20260529_054208",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

@@ -1,0 +1,960 @@
+{
+  "problem_id": "home_org_construct_or_conflict",
+  "source_problem_ids": [
+    "taco_codeforces_6e10787c52e1"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_6e10787c52e1",
+      "codeforces",
+      "Mitya has a rooted tree with $n$ vertices indexed from $1$ to $n$, where the root has index $1$. Each vertex $v$ initially had an integer number $a_v \\ge 0$ written on it. For every vertex $v$ Mitya has computed $s_v$...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "引入构造或障碍输出模式，必须重新定义成功与失败的输出合同，并引入局部可检查的证据不变量。",
+    "summary": "核心约束增加证据结构和双分支输出规约；目标从最小化求和改为输出方案或证据；不变量从单调性求解规则扩展到包含证据局部检查规则。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.407,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.407,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4768,
+      "O": 0.5689,
+      "V": 0.6086
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4768,
+      "objective_type_distance": 0.6494,
+      "objective_text_distance": 0.4482,
+      "invariant_match_distance": 0.6086
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construct_solution_or_obstruction",
+    "description": "如果存在合法分配，输出每个格子的物品数量 a_1..a_n 使得总和最小；否则，输出一对矛盾格子编号表明不可能。",
+    "target": "solution array or evidence pair",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design 能够将原题的正向求解翻转为输入设计，显著改变核心义务，且通过修改操作与目标绑定避免浅改；construct_or_obstruction 虽可应用但容易退化为后处理证据输出，创新度不足。；创新度判断：新题将要求设计输入（允许擦除部分奇数深度s值）以达到给定总和非负目标并最小化修改次数，使原题从“给定部分已知s求最小a和”转变为“选择擦除哪些已知s以达成目标”，求解方向从恢复变为设计，核心义务远离原题。；难度判断：主要求解责任从贪心恢复提升为树上动态规划同时处理擦除决策和未知赋值，需证明擦除的最少次数或不可行性，难度显著提高。；风险判断：主要风险是可能退化为外层搜索加内层原题求解的串联结构，需在规划时强制统一状态设计，禁止直接复用原题解法；若无法避免串联则规则适用性降低。",
+  "new_schema_snapshot": {
+    "problem_id": "home_org_construct_or_conflict",
+    "source": "transformed_from_taco_codeforces_6e10787c52e1",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "n",
+          "role_description": "收纳格的数量（含根格）",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 2,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "parents",
+          "role_description": "每个非根格的父格编号，形成一棵收纳树",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 99999
+          },
+          "value_range": {
+            "min": 1,
+            "max": 99999
+          },
+          "properties": {
+            "rooted": true,
+            "connected": true,
+            "acyclic": true
+          }
+        },
+        {
+          "role": "s_values",
+          "role_description": "每个格子从根到该格子的路径上物品总数（部分已知），-1表示被隐藏（偶数深度）",
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 100000
+          },
+          "value_range": {
+            "min": -1,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "nonnegative_vertex_values",
+          "description": "每个格子的物品数量 a_v 是非负整数。",
+          "formal": "a_v >= 0 for all v"
+        },
+        {
+          "name": "path_sum_definition",
+          "description": "对于每个格子 v, s_v 定义为从根到 v 路径上所有 a_u 之和，根满足 s_1 = a_1。",
+          "formal": "s_v = sum_{u in path(root to v)} a_u, a_1 = s_1"
+        },
+        {
+          "name": "known_s_for_odd_depth",
+          "description": "深度为奇数的格子 v 的 s_v 在输入中给出（不为 -1），且必须在解中保持不变。",
+          "formal": "For all v with odd h_v, s_v = given[v] (given[v] != -1)"
+        },
+        {
+          "name": "success_branch_output",
+          "description": "当存在合法分配时，输出一个数组 a_1..a_n，使得满足以上所有约束且 sum(a) 尽可能小。",
+          "formal": "if feasible: output a_1,...,a_n minimizing sum(a) subject to constraints"
+        },
+        {
+          "name": "failure_branch_output",
+          "description": "当不存在任何合法分配时，输出一对格子的编号 (u,v)，满足：u 是 v 的祖先，深度均为奇数，且输入中给出的 s_u > s_v，从而证明无解。",
+          "formal": "if infeasible: output (u,v) such that u ancestor of v, h_u odd, h_v odd, and given[u] > given[v]"
+        },
+        {
+          "name": "evidence_locality",
+          "description": "输出的冲突证据 (u,v) 必须能通过直接检查深度、祖先关系和输入值来验证矛盾，无需额外计算。",
+          "formal": "evidence can be verified by checking h_u, h_v odd, u ancestor of v, given[u] > given[v]"
+        }
+      ]
+    },
+    "objective": {
+      "type": "construct_solution_or_obstruction",
+      "description": "如果存在合法分配，输出每个格子的物品数量 a_1..a_n 使得总和最小；否则，输出一对矛盾格子编号表明不可能。",
+      "target": "solution array or evidence pair",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "monotonicity_necessary",
+          "description": "任何合法解的必要条件是：对于任意两个奇数深度格子，若一个是另一个的祖先，则祖先的给定 s 值 ≤ 后代的给定 s 值。",
+          "properties": {
+            "constraint": "given[u] <= given[v] for all odd-depth u ancestor of odd-depth v"
+          }
+        },
+        {
+          "name": "minimization_rule",
+          "description": "对于未知 s 的偶数深度格子，其 s 值可以设置为所有子格中已知 s 的最小值（若无子则设为0），该策略得到最小总和的合法分配（如果存在合法分配）。",
+          "properties": {
+            "rule": "if h_v even: s_v = min( given[w] : w child of v ) if children exist, else 0"
+          }
+        },
+        {
+          "name": "evidence_correctness",
+          "description": "输出的冲突对 (u,v) 必须实际违反单调性条件，从而确凿地证明无解。",
+          "properties": {
+            "check": "u ancestor of v, h_u odd, h_v odd, given[u] > given[v]"
+          }
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "construct_or_obstruction",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "原题通过检查奇数深度已知 s 的单调性判断可行性，并利用子节点最小已知 s 恢复偶数深度未知 s，从而计算最小总和。",
+    "reusable_subroutines": "树的邻接表构建、深度计算、父子关系遍历、已知 s 数组处理、单调性检查循环均可复用。",
+    "new_solver_core": "在单调性检查时记录第一对违反的顶点（祖先与后代，深度均为奇数，给定 s_ancestor > s_descendant）；若全部满足，按原策略恢复未知 s 并计算 a_v（包括反向差分得到叶子值和内部节点值）；输出时，成功分支输出 a 数组，失败分支输出记录的矛盾对。",
+    "new_proof_obligation": "需要证明输出的矛盾对确实导致无解（单调性是合法解的必要条件），且该证据无需额外全局推理即可局部验证；同时证明成功分支输出的数组 a 确实满足所有约束并达到最小总和。",
+    "why_direct_reuse_fails": "原程序只输出单个整数（最小和或-1），无法直接复用输出格式；新题需要区分两种输出类型并管理证据的提取与格式化，原核心逻辑缺少证据定位和成功解的具体数组输出。"
+  },
+  "anti_shallow_rationale": "不是简单将-1替换为输出一对数字；重新定义了输出合同，要求程序在可行时构建完整分配方案（原题仅计算总和），不可行时从树结构中定位具体冲突对，并保证该证据局部可查。这改变了问题的可输出对象和失败语义的表达方式，带来了新的算法职责和正确性证明义务。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "local_certificate_design",
+      "selection_reason": "需要把无解从返回码提升为结构化的、可局部检查的冲突对。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束增加证据结构定义（矛盾顶点对及其条件）",
+        "目标从最小化值改为输出方案或证据",
+        "不变量增加证据局部可检查的承诺"
+      ],
+      "innovation_reason": "失败语义从隐式返回码转为显式可检查的局部冲突对，使得输出直接带有证明力。",
+      "difficulty_reason": "要求算法在求解过程中同时定位并记录矛盾证据，且在输出时正确区分两类分支。"
+    },
+    {
+      "id": "failure_branch_symmetry",
+      "selection_reason": "必须让失败分支与成功分支地位对等，均承担正式的、结构清晰的输出责任。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "目标显式定义双分支输出合同，失败分支不能退化成简单标记",
+        "核心约束分别为成功和失败分支规定输出格式及正确性条件"
+      ],
+      "innovation_reason": "将单目标问题重构为对称的双输出模式，失败分支不再是附属信息。",
+      "difficulty_reason": "程序设计需同时维护两条输出路径，且它们共享同一求解状态，增加了控制流复杂度。"
+    },
+    {
+      "id": "obstruction_embedding",
+      "selection_reason": "冲突证据应直接来自主约束中的不可兼容关系（单调性违反），而不是额外添加的检测逻辑。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束中明确冲突证据源自已知 s 值的祖先-后代关系",
+        "不变量承诺证据可从输入数据中直接检查，无需中间计算结果"
+      ],
+      "innovation_reason": "证据内嵌于问题结构的核心矛盾，使失败输出自然继承问题本身的语义。",
+      "difficulty_reason": "求解器必须在执行单调性检查时同时捕获具体的冲突对信息，而不是事后推导，增加了即时记录的要求。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.94,
+      "reason_code": "viable_canonical_upgrade",
+      "selection_reason": "原题只输出最小总和，但其内部存在多个最小总和方案（偶数层s可在约束内自由取值），要求输出规范解（如字典序最小的a分配）会迫使算法从简单的单一构造转向规范选择，需要修改核心的s分配逻辑，而非表面输出变化。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题约束：奇数层s固定，偶数层s未知且必须满足路径和非减。目标最小化总和。不变量显示标准解法通过取子节点最小s来构造一个可行解，但该解不唯一（例：根s1=5, 子s2未知, 孙s3=7，s2可取[5,7]任意值，总和恒为7，均最小）。因此存在多解空间。规则要求“原题本身有明确的解对象”（a_v数组）且“方案有自然顺序”（顶点索引可字典序），满足required_seed_properties；题目当前未输出方案，不属forbidden。要求输出规范解将必须定义选择机制（如字典序最小），这将触及核心约束C（新增顺序约束）、目标O（从输出值转为输出构造）与验证V（输出数组校验），符合must_change要求。helper要求规范顺序进入主约束，可通过重新设计偶数层s的分配方式（不再固定取min）实现，避免退化为后处理。",
+        "feedback": "种子题存在未被利用的多解空间，标准解法仅返回特定非规范方案。引入规范性输出可引导改变状态转移中的选择逻辑，符合canonical_witness的升级意图，但需注意规范定义必须严密（如字典序细粒度）以防止成为形式化描述。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "local_obstruction_exists",
+      "selection_reason": "种子题的无解情形源自奇数深度路径上的单调性冲突，该冲突可被精确定位为一对祖先-后代顶点及其 s 值，满足 s[ancestor] > s[descendant]，构成一个可局部检查的证书。原题 BFS 代码段已实现该检查，变换后仅需将该冲突顶点对输出为证书，完全符合规则要求的输出冲突证据而非抽象解释。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "规则要求失败时输出可局部检查的冲突证据。种子题 invariant 'monotonicity_of_known_sums_on_odd_levels' 定义：奇数深度的已知 s 值沿根到叶路径必须非递减。标准解 BFS 中检查 `if s[self.parent[self.parent[element]]] > s[element]` 正是这一冲突的实例化，即存在奇数深度祖先的 s 值大于后代 s 值。该检查是局部的（仅需两个顶点），且可被直接验证，无需全局信息。因此无解原因天然可转化为局部证据，满足规则 eligibility 的 required_seed_properties 中“做不到的原因可以用局部证据表示”和“冲突证据可以从输出直接检查”。",
+        "feedback": "规则与种子题高度匹配：种子题的无解证书构造极其自然，且原题已隐含冲突检测逻辑。建议规划时关注将 BFS 中检测到的冲突对直接结构化输出，同时定义合法方案输出字段，并确保算法复杂度不因输出格式大幅增加。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "infinite_or_trivial_solution_space",
+      "selection_reason": "种子题的最优解方案唯一（最小总和由 deterministic 规则确定），若放宽为计数所有合法解则解空间无限（偶数叶子可无限放大），均不满足‘解空间有限且有计数价值’的要求。",
+      "risk_tags": [
+        "infinite_solution_space",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 objective 为 minimize total sum，invariant 显示 unknown s 被 min(child s) 确定，且非负约束下路径和单调；所有合法 a 可由偶数 s 的区间选择生成，但无上界约束时偶数叶子 s 可任意大导致解空间无限。若只计数最优解，则最优解唯一（存在时为 1，不存在为 0），计数无实质挑战。",
+        "feedback": "该种子问题的解空间在计数语境下不足够：最优解个数为常量，全合法解空间无限。需选取具有离散有限组合结构且解数足够丰富的种子才能承载 counting 变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题是确定性最小化问题，偶数深度 s_v 未知但需由算法自主选择以实现最小化，缺乏顺序不确定、资源波动或对抗性扰动来源；引入扰动模型将依赖凭空制造的对手，违反原生扰动必须来自原题语义的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints 中，偶数深度 s_v（-1）代表缺失信息，需要算法通过最小值传播策略确定，整个求解旨在找到所有可能合法赋值中的最小总和，没有外部不确定性或波动；规则 eligibility 要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，而此处局部选择是算法内部的决策，不是外部扰动。",
+        "feedback": "种子题已经对偶地蕴含了‘最坏情况下的最小值’，但缺乏可被放大的原生扰动来源。强行转换为保底优化会要求定义不为原题固有的对手，从而沦为故事背景加套，不符合规则精神和红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_threshold_parameter",
+      "selection_reason": "原题核心是带可行性检查的最小总和优化，而非纯粹的判定或可行性问题。规则要求可行性随某个参数具有清晰单调性或分层结构，但原题缺少天然的可变阈值参数（如容量、误差界等）。引入a_v上界作为阈值属于人为附加，很可能只是对原判定做机械二分，违反规则红线，无法自然地将可行性升级为临界边界定位。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则`required_seed_properties`明确要求“可行性随某个参数具有清晰的单调性或分层结构”，并禁止“没有自然参数可优化”和“阈值只是在原判定外层做机械二分”。种子题`schema`中核心约束为`nonnegative_vertex_values`、`path_sum_definition`、`fixed_s_for_odd_depth`和`minimize_total_sum`，其中没有可调参数；可行性仅由s值单调性决定，输出目标已是最小总和。示例正例要求“判断是否存在合法方案改成求允许合法方案存在的最小容量”，但该题不存在容量概念。",
+        "feedback": "建议选择具有显式可调资源参数（如最大允许值、时间截止等）且以可行性判定为目标的种子题，避免从优化题强行逆向提取判定。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_conflicting_second_metric",
+      "selection_reason": "原题是最小化所有a_v的总和，所有自由度都用于唯一最小化目标，不存在自然且冲突的第二评价指标；任何额外指标要么正相关，要么可通过原解后处理得到。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "题目描述：'find one which minimizes the total sum of values a_v'，目标单一；core_constraints只涉及非负和路径和相等；不变量使用最小偶数深度s_v来达到最小和，没有其他指标。",
+        "feedback": "试图引入第二指标（如最小化最大a_v）将导致目标同向或退化，无法形成真实权衡前沿。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "output_as_target_exists_natural_edit",
+      "selection_reason": "原题输出（所有a_v总和的最小值）可明确作为反向目标；输入结构中的偶数深度s_v被标记为-1（未知），构成自然的修改操作空间，通过为其赋值并结合奇数深度已知值和单调性约束，可设计出达到目标值的具体输入；不变量中的单调性和最小孩子规则为反向验证目标可达性提供了算法基础。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子schema中输出为最小化所有a_v的总和，该值可直接作为反向设计的目标；输入结构包含s_values数组，其中偶数深度顶点的s_v为-1，原题要求恢复这些未知值，因此这些-1构成了允许修改的变量集合；核心约束中奇数深度s_v固定且非负，未知s_v由孩子已知s_v的最小值决定，修改这些孩子的s_v会影响全局最小和，故修改操作与核心规律紧密相关。",
+        "feedback": "方案可行，但需注意反向目标可能需要同时保证可达性和最小性，规划时应明确验证目标T是否为全局最小和的判定条件，以及设计操作的最小性定义。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "shared_core_risk",
+      "selection_reason": "原题中局部单元（各顶点a_v）已通过路径和s_v构成全局耦合，求解过程需全树单调性和最小总和全局优化，并非独立求解；应用该规则将导致耦合叠加，无法产生有意义的差异。",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束包括s_v = 从v到根路径所有a_u之和，已知奇深度s_v固定，要求全局最小化所有a_v之和，解法利用最小已知s_v填充未知s_v，这本质上是跨组件依赖和全局最优，符合规则目标状态但不满足所需前提（原题需有可独立处理的分量）。",
+        "feedback": "建议选择具有真正可分离局部单元（如多个独立子问题）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_adversarial_operation",
+      "selection_reason": "原题是一个在有根树上恢复顶点值以最小化总和的优化问题，不存在可供双方轮流选择、拿取、移动或改变状态的自然操作，无法转化为双方最优博弈。",
+      "risk_tags": [
+        "no_natural_adversarial_operation",
+        "static_optimization"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'Each vertex v initially had an integer number a_v >= 0... Mitya erased all numbers a_v, and by accident he also erased all values s_v for vertices with even depth... Your task is to restore the values a_v for every vertex... minimize the total sum of values a_v.' 输入仅给出树结构和部分已知s_v，解是由确定的算法（规则）计算得到，没有任何选择或操作的环节。",
+        "feedback": "该规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但此种子题是静态的数据恢复问题，没有交互或状态转移过程，因此不满足 eligibility 要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "no_suitable_local_object_family",
+      "selection_reason": "原题已经涉及所有顶点到根路径的全局优化，并不以单路径或单子树为核心；核心约束（path_sum_definition）和目标（minimize total sum of a_v）均未体现覆盖或割的语义，强行扩展会脱离原结构。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束定义了每个顶点到根的路径和 s_v 以及它们之间的单调性关系（invariant）。这些路径自然地构成了嵌套的对象族，但原题的目标是最小化所有 a_v 的总和，要求恢复一个完整的赋值方案，并非选择某个子集来覆盖或切断某些路径。规则要求将单路径性质扩展为覆盖/割，但原题已是以全局对象族为基础进行直接数值优化，不存在从‘单个局部对象’到‘多对象覆盖’的升级空间。助手中的 cover_cut_consistency 和 global_certificate_or_value 在原题中均无对应实现。",
+        "feedback": "种子题的核心是数值恢复与总和最小化，没有适合扩展为覆盖、割或支配问题的局部结构作为起点。若强行应用规则，可能需要凭空定义新的覆盖关系，导致与原始结构脱节，不符合全局审查要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题是优化问题（minimize total sum of a_v），没有计数对象，无法进行带权计数扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中core_constraints均为优化约束（如minimize_total_sum_of_a），objective为minimize_value；problem_id为taco_codeforces_6e10787c52e1，题目描述要求最小化总和，未涉及任何计数或分布统计。",
+        "feedback": "种子题不包含有限计数对象，不符合规则要求的seed property，建议放弃该种子或选择其他规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "viable_canonical_upgrade",
+      "message": "原题只输出最小总和，但其内部存在多个最小总和方案（偶数层s可在约束内自由取值），要求输出规范解（如字典序最小的a分配）会迫使算法从简单的单一构造转向规范选择，需要修改核心的s分配逻辑，而非表面输出变化。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.94,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题约束：奇数层s固定，偶数层s未知且必须满足路径和非减。目标最小化总和。不变量显示标准解法通过取子节点最小s来构造一个可行解，但该解不唯一（例：根s1=5, 子s2未知, 孙s3=7，s2可取[5,7]任意值，总和恒为7，均最小）。因此存在多解空间。规则要求“原题本身有明确的解对象”（a_v数组）且“方案有自然顺序”（顶点索引可字典序），满足required_seed_properties；题目当前未输出方案，不属forbidden。要求输出规范解将必须定义选择机制（如字典序最小），这将触及核心约束C（新增顺序约束）、目标O（从输出值转为输出构造）与验证V（输出数组校验），符合must_change要求。helper要求规范顺序进入主约束，可通过重新设计偶数层s的分配方式（不再固定取min）实现，避免退化为后处理。",
+        "feedback": "种子题存在未被利用的多解空间，标准解法仅返回特定非规范方案。引入规范性输出可引导改变状态转移中的选择逻辑，符合canonical_witness的升级意图，但需注意规范定义必须严密（如字典序细粒度）以防止成为形式化描述。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_obstruction_exists",
+      "message": "种子题的无解情形源自奇数深度路径上的单调性冲突，该冲突可被精确定位为一对祖先-后代顶点及其 s 值，满足 s[ancestor] > s[descendant]，构成一个可局部检查的证书。原题 BFS 代码段已实现该检查，变换后仅需将该冲突顶点对输出为证书，完全符合规则要求的输出冲突证据而非抽象解释。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "规则要求失败时输出可局部检查的冲突证据。种子题 invariant 'monotonicity_of_known_sums_on_odd_levels' 定义：奇数深度的已知 s 值沿根到叶路径必须非递减。标准解 BFS 中检查 `if s[self.parent[self.parent[element]]] > s[element]` 正是这一冲突的实例化，即存在奇数深度祖先的 s 值大于后代 s 值。该检查是局部的（仅需两个顶点），且可被直接验证，无需全局信息。因此无解原因天然可转化为局部证据，满足规则 eligibility 的 required_seed_properties 中“做不到的原因可以用局部证据表示”和“冲突证据可以从输出直接检查”。",
+        "feedback": "规则与种子题高度匹配：种子题的无解证书构造极其自然，且原题已隐含冲突检测逻辑。建议规划时关注将 BFS 中检测到的冲突对直接结构化输出，同时定义合法方案输出字段，并确保算法复杂度不因输出格式大幅增加。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "infinite_or_trivial_solution_space",
+      "message": "种子题的最优解方案唯一（最小总和由 deterministic 规则确定），若放宽为计数所有合法解则解空间无限（偶数叶子可无限放大），均不满足‘解空间有限且有计数价值’的要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "infinite_solution_space",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 objective 为 minimize total sum，invariant 显示 unknown s 被 min(child s) 确定，且非负约束下路径和单调；所有合法 a 可由偶数 s 的区间选择生成，但无上界约束时偶数叶子 s 可任意大导致解空间无限。若只计数最优解，则最优解唯一（存在时为 1，不存在为 0），计数无实质挑战。",
+        "feedback": "该种子问题的解空间在计数语境下不足够：最优解个数为常量，全合法解空间无限。需选取具有离散有限组合结构且解数足够丰富的种子才能承载 counting 变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题是确定性最小化问题，偶数深度 s_v 未知但需由算法自主选择以实现最小化，缺乏顺序不确定、资源波动或对抗性扰动来源；引入扰动模型将依赖凭空制造的对手，违反原生扰动必须来自原题语义的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题 core_constraints 中，偶数深度 s_v（-1）代表缺失信息，需要算法通过最小值传播策略确定，整个求解旨在找到所有可能合法赋值中的最小总和，没有外部不确定性或波动；规则 eligibility 要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，而此处局部选择是算法内部的决策，不是外部扰动。",
+        "feedback": "种子题已经对偶地蕴含了‘最坏情况下的最小值’，但缺乏可被放大的原生扰动来源。强行转换为保底优化会要求定义不为原题固有的对手，从而沦为故事背景加套，不符合规则精神和红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold_parameter",
+      "message": "原题核心是带可行性检查的最小总和优化，而非纯粹的判定或可行性问题。规则要求可行性随某个参数具有清晰单调性或分层结构，但原题缺少天然的可变阈值参数（如容量、误差界等）。引入a_v上界作为阈值属于人为附加，很可能只是对原判定做机械二分，违反规则红线，无法自然地将可行性升级为临界边界定位。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则`required_seed_properties`明确要求“可行性随某个参数具有清晰的单调性或分层结构”，并禁止“没有自然参数可优化”和“阈值只是在原判定外层做机械二分”。种子题`schema`中核心约束为`nonnegative_vertex_values`、`path_sum_definition`、`fixed_s_for_odd_depth`和`minimize_total_sum`，其中没有可调参数；可行性仅由s值单调性决定，输出目标已是最小总和。示例正例要求“判断是否存在合法方案改成求允许合法方案存在的最小容量”，但该题不存在容量概念。",
+        "feedback": "建议选择具有显式可调资源参数（如最大允许值、时间截止等）且以可行性判定为目标的种子题，避免从优化题强行逆向提取判定。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_conflicting_second_metric",
+      "message": "原题是最小化所有a_v的总和，所有自由度都用于唯一最小化目标，不存在自然且冲突的第二评价指标；任何额外指标要么正相关，要么可通过原解后处理得到。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "题目描述：'find one which minimizes the total sum of values a_v'，目标单一；core_constraints只涉及非负和路径和相等；不变量使用最小偶数深度s_v来达到最小和，没有其他指标。",
+        "feedback": "试图引入第二指标（如最小化最大a_v）将导致目标同向或退化，无法形成真实权衡前沿。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "output_as_target_exists_natural_edit",
+      "message": "原题输出（所有a_v总和的最小值）可明确作为反向目标；输入结构中的偶数深度s_v被标记为-1（未知），构成自然的修改操作空间，通过为其赋值并结合奇数深度已知值和单调性约束，可设计出达到目标值的具体输入；不变量中的单调性和最小孩子规则为反向验证目标可达性提供了算法基础。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子schema中输出为最小化所有a_v的总和，该值可直接作为反向设计的目标；输入结构包含s_values数组，其中偶数深度顶点的s_v为-1，原题要求恢复这些未知值，因此这些-1构成了允许修改的变量集合；核心约束中奇数深度s_v固定且非负，未知s_v由孩子已知s_v的最小值决定，修改这些孩子的s_v会影响全局最小和，故修改操作与核心规律紧密相关。",
+        "feedback": "方案可行，但需注意反向目标可能需要同时保证可达性和最小性，规划时应明确验证目标T是否为全局最小和的判定条件，以及设计操作的最小性定义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "shared_core_risk",
+      "message": "原题中局部单元（各顶点a_v）已通过路径和s_v构成全局耦合，求解过程需全树单调性和最小总和全局优化，并非独立求解；应用该规则将导致耦合叠加，无法产生有意义的差异。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束包括s_v = 从v到根路径所有a_u之和，已知奇深度s_v固定，要求全局最小化所有a_v之和，解法利用最小已知s_v填充未知s_v，这本质上是跨组件依赖和全局最优，符合规则目标状态但不满足所需前提（原题需有可独立处理的分量）。",
+        "feedback": "建议选择具有真正可分离局部单元（如多个独立子问题）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_adversarial_operation",
+      "message": "原题是一个在有根树上恢复顶点值以最小化总和的优化问题，不存在可供双方轮流选择、拿取、移动或改变状态的自然操作，无法转化为双方最优博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "no_natural_adversarial_operation",
+          "static_optimization"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'Each vertex v initially had an integer number a_v >= 0... Mitya erased all numbers a_v, and by accident he also erased all values s_v for vertices with even depth... Your task is to restore the values a_v for every vertex... minimize the total sum of values a_v.' 输入仅给出树结构和部分已知s_v，解是由确定的算法（规则）计算得到，没有任何选择或操作的环节。",
+        "feedback": "该规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但此种子题是静态的数据恢复问题，没有交互或状态转移过程，因此不满足 eligibility 要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_suitable_local_object_family",
+      "message": "原题已经涉及所有顶点到根路径的全局优化，并不以单路径或单子树为核心；核心约束（path_sum_definition）和目标（minimize total sum of a_v）均未体现覆盖或割的语义，强行扩展会脱离原结构。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.3,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的核心约束定义了每个顶点到根的路径和 s_v 以及它们之间的单调性关系（invariant）。这些路径自然地构成了嵌套的对象族，但原题的目标是最小化所有 a_v 的总和，要求恢复一个完整的赋值方案，并非选择某个子集来覆盖或切断某些路径。规则要求将单路径性质扩展为覆盖/割，但原题已是以全局对象族为基础进行直接数值优化，不存在从‘单个局部对象’到‘多对象覆盖’的升级空间。助手中的 cover_cut_consistency 和 global_certificate_or_value 在原题中均无对应实现。",
+        "feedback": "种子题的核心是数值恢复与总和最小化，没有适合扩展为覆盖、割或支配问题的局部结构作为起点。若强行应用规则，可能需要凭空定义新的覆盖关系，导致与原始结构脱节，不符合全局审查要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题是优化问题（minimize total sum of a_v），没有计数对象，无法进行带权计数扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中core_constraints均为优化约束（如minimize_total_sum_of_a），objective为minimize_value；problem_id为taco_codeforces_6e10787c52e1，题目描述要求最小化总和，未涉及任何计数或分布统计。",
+        "feedback": "种子题不包含有限计数对象，不符合规则要求的seed property，建议放弃该种子或选择其他规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划兑现了construct_or_obstruction规则合同：成功分支输出完整分配方案，失败分支输出可直接检查的矛盾顶点对证据，三个helper均被实现并落在C、O、V轴上，无违规红线。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据规划审查官，重点确认规划是否同时定义了解分支和可局部检查的失败证据。",
+        "review_brief": "确认规划是否把无解分支写成可直接检查的局部阻碍证据，而不是解释性说明。",
+        "evidence": "在candidate_schema中，core_constraints包含success_branch_output（输出最小化a数组）和failure_branch_output（输出矛盾对(u,v)满足h_u、h_v奇数，u是v祖先，given[u]>given[v]）及evidence_locality；objective改为construct_solution_or_obstruction；invariant中monotonicity_necessary和evidence_correctness支撑证据可局部检查。applied_helpers中local_certificate_design、failure_branch_symmetry、obstruction_embedding均已在schema_changes中具体体现，并符合各自redlines。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面已明确规定失败输出为一对可局部检查的冲突证据（两个奇数深度祖先-后代格子，满足s_u>s_v），证据直接源自核心单调性约束，成功与失败分支对称定义，未退化为解释，符合规则要求。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据题面审查官，重点确认题面是否写清失败输出和证据的检查语义。",
+        "review_brief": "确认题面是否要求在无解时输出一个可局部检查的冲突证据，而不是仅仅解释为什么无解。",
+        "evidence": "题面output_format: '输出一行两个整数 u 和 v...满足：u 是 v 的祖先，深度均为奇数，且 s_u > s_v'；题面描述：'他希望你明确指出矛盾在哪里：找出两个格子...因为路径上的物品数量不可能减少，就形成了一个无法解决的矛盾'；样例2输出'1 3'对应矛盾对。此证据可从输入局部验证，无需全局求解，符合local_certificate_design、failure_branch_symmetry和obstruction_embedding的承诺。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "格子整理",
+    "description": "小华正在整理一个收纳柜。\n\n柜子中有 n 个格子，编号从 1 到 n，形成一棵树形结构：1 号格子是根，每个非根格子都有唯一的父格子。\n\n每个格子 v 里放有 a_v 个物品（a_v 为非负整数）。小华记录了一张清单，上面写着每个格子 v 对应的 s_v —— 从根格子到该格子的路径上所有物品的总数（包含 v 本身）。显然 s_1 = a_1。此外每个格子还有一个隐藏的深度 h_v，定义为从根格子到 v 的路径上的格子个数，根格子深度为 1。\n\n不幸的是，在整理过程中，清单上所有深度为偶数的格子的 s_v 值被墨水污染，变得无法辨认，用 -1 表示。深度为奇数的格子的 s_v 值仍然清晰，保证不为 -1。\n\n小华现在想知道：能不能根据这些剩余的信息，把每个格子最初的物品数量 a_v 恢复出来？\n\n如果可以，他希望你给出一种方案，使得所有格子物品数量总和尽可能小；\n\n如果不可以（即无论如何都找不到合法的恢复方案），他希望你明确指出矛盾在哪里：找出两个格子 u 和 v，满足 u 是 v 的祖先，两者的深度均为奇数，并且已知的 s_u 大于 s_v。这样一来，因为路径上的物品数量不可能减少，就形成了一个无法解决的矛盾。",
+    "input_format": "第一行一个整数 n (2 ≤ n ≤ 10^5)，表示格子数量。\n\n第二行 n-1 个整数 p_2, p_3, …, p_n，其中 p_i 表示格子 i 的父格子编号，保证 1 ≤ p_i < i。\n\n第三行 n 个整数 s_1, s_2, …, s_n (-1 ≤ s_i ≤ 10^9)。若 v 的深度为奇数，则 s_v 不为 -1，表示从根到 v 路径上的物品总数；若 v 的深度为偶数，则 s_v = -1，表示该值已被隐藏。",
+    "output_format": "如果存在合法的恢复方案，输出一行 n 个非负整数 a_1, a_2, …, a_n，表示每个格子原有的物品数量。如果有多种使总和最小的方案，任意输出一种即可。\n\n如果不存在任何合法方案，输出一行两个整数 u 和 v，用空格隔开，满足：\n- u 是 v 的祖先；\n- u 和 v 的深度均为奇数；\n- 输入中给出的 s_u > s_v。\n如果有多组这样的证据，输出任意一组即可。",
+    "constraints": [
+      "2 ≤ n ≤ 100,000",
+      "1 ≤ p_i < i",
+      "-1 ≤ s_i ≤ 1,000,000,000",
+      "确保所有深度为奇数的格子满足 s_i ≠ -1",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "3\n1 1\n1 -1 -1",
+        "output": "1 0 0",
+        "explanation": "格子 1（深度 1）已知 s_1=1。格子 2、3（深度 2，偶数）的 s 值被隐藏。偶数深度的 s 值可以设为 0（因为它们没有子节点），这样总和最小。得到 a_1 = s_1 = 1，a_2 = s_2 - s_1 = 0，a_3 = s_3 - s_1 = 0，总和为 1。"
+      },
+      {
+        "input": "4\n1 2 1\n2 -1 1 -1",
+        "output": "1 3",
+        "explanation": "格子 1（深度 1）s_1=2，格子 3（深度 3）s_3=1。格子 1 是格子 3 的祖先，两个格子的深度均为奇数，但 s_1 > s_3，违反了路径和单调不减的性质，因此不可能存在合法方案。输出这一对矛盾格子。"
+      }
+    ],
+    "notes": "对于隐藏的 s 值（偶数深度），恢复时令其等于所有子节点中已知 s 值的最小值（若无子节点则设为 0），该策略可保证得到的 a 数组总和最小。\n\n如果同时存在多对满足条件的矛盾格子，输出任意一对均可。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_6e10787c52e1_home_organization_20260529_073838",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

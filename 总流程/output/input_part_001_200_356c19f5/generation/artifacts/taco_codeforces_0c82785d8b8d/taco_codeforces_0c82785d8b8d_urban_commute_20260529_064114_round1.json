@@ -1,0 +1,932 @@
+{
+  "problem_id": "urban_commute_certificate_odd_inside",
+  "source_problem_ids": [
+    "taco_codeforces_0c82785d8b8d"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_0c82785d8b8d",
+      "D1",
+      "codeforces",
+      "This is the easy version of the problem. The only difference from the hard version is that in this version all coordinates are even. There are $n$ fence-posts at distinct coordinates on a plane. It is guaranteed that...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "为满足 construct_or_obstruction 规则，将原单纯计数的目标和约束重构为构造/障碍双分支输出，并引入基于模4类计数的证书结构；利用奇偶性不变量连接构造成功与失败证明。",
+    "summary": "目标由计数变为构造或证书输出；约束新增证书有效性与双分支输出合同；不变量扩展为判定存在性与证书正当性的基矗",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.356,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.356,
+    "axis_scores": {
+      "I": 0.1538,
+      "C": 0.4617,
+      "O": 0.5254,
+      "V": 0.2387
+    },
+    "components": {
+      "input_tree_distance": 0.1538,
+      "constraint_match_distance": 0.4617,
+      "objective_type_distance": 0.6796,
+      "objective_text_distance": 0.2941,
+      "invariant_match_distance": 0.2387
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construct_or_certify",
+    "description": "输出一个满足条件的有趣三角形（三个站点），或者如果不存在，输出一个证书（模4类计数）证明无法组成。",
+    "target": "output",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "种子题是典型计数题，而canonical_witness要求原题有明确可输出的解对象，计数题不满足；construct_or_obstruction依赖‘做不到’的失败语义，种子题中不存在；plain_counting_to_weighted_distribution虽然适用，但仅按模4类拆分输出不会改变核心求解逻辑，属于浅改。反向设计将任务从计数翻转为构造与最小修改，引入了新的设计自由度与最优性证明，创新度与难度提升最大，且与原题模4类不变式紧密绑定，没有脱离核心规律。；创新度判断：新题将核心义务从‘统计兴趣三角形总数’拉离为‘设计点集或最小修改点集使兴趣三角形总数恰好等于目标K’。必须定义修改操作、绑定目标结果、承担最小性证明，使得原有计数不变式成为构造约束，而非仅作为计算捷径。；难度判断：主求解责任从O(1)组合计数跃升为基于模4类分布的构造性或优化问题。选手需分析计数公式对各类点数的依赖，转化为修改代价最小化或存在性判定，可能涉及动态规划、整数规划或构造性组合推理，远高于原题的简单组合公式。；风险判断：主要风险在于修改操作的定义可能退化为与核心规律无关的调整，或目标K的设计导致问题无解/平凡。通过严格限制修改动作必须改变点的模4类（保持偶数性质），并将目标计数公式嵌入约束，可确保问题与核心不变式紧密耦合。同时需控制输入规模和目标合理性，以保障可解性。",
+  "new_schema_snapshot": {
+    "problem_id": "urban_commute_certificate_odd_inside",
+    "source": "construct_or_obstruction",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 3,
+        "max": 6000
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "distinct": true,
+        "all_coordinates_even": true,
+        "no_three_collinear": true
+      },
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "all_coordinates_even",
+          "description": "每个公交站点的坐标均为偶数。",
+          "formal": "对于每个点 (x,y)，x mod 2 = 0 且 y mod 2 = 0。",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "points_distinct",
+          "description": "所有站点位于不同坐标。",
+          "formal": "对于任意两个不同下标 i,j，(x_i,y_i) ≠ (x_j,y_j)。",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "no_three_collinear",
+          "description": "不存在三个站点共线。",
+          "formal": "对于任意三个不同下标 i,j,k，三点不共线。",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "interesting_triangle_conditions",
+          "description": "当输出为三角形时，所选三点构成的三角形必须满足：面积为整数，且严格位于三角形内部的整数坐标点（潜在乘客）数量为奇数。",
+          "formal": "令 T 为由输出的三个站点构成的三角形。Area(T) 为整数，且 (严格内部整数点数量) mod 2 = 1。",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "solution_output_contract",
+          "description": "若存在有趣三角形，输出必须为 YES 后跟三个站点下标（或坐标），表示一个合法三角形。",
+          "formal": "输出格式：第一行 \"YES\"，第二行三个整数（站点索引，1-based），满足上述条件。",
+          "source_sections": [
+            "output_specification"
+          ]
+        },
+        {
+          "name": "certificate_output_contract",
+          "description": "若不存在有趣三角形，输出必须为 NO 后跟四个非负整数 c00, c02, c20, c22，表示按 (x mod 4, y mod 4) 分类的站点计数，且该分布必须与输入一致，并保证不存在有趣三角形。",
+          "formal": "输出格式：第一行 \"NO\"，第二行四个整数 c00 c02 c20 c22，满足 c00+c02+c20+c22 = n，且 max(c) ≤ 1（对于 n≥3）或等价条件，从而确保无解。",
+          "source_sections": [
+            "output_specification"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construct_or_certify",
+      "description": "输出一个满足条件的有趣三角形（三个站点），或者如果不存在，输出一个证书（模4类计数）证明无法组成。",
+      "target": "output",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "parity_mod4_feasibility",
+          "description": "由于所有坐标均为偶数，三角形内部整数点数量的奇偶性完全由三个顶点的模4余数类别组合决定。因此，存在有趣三角形的充要条件是：存在某个模4类的点数 ≥ 3，或存在某个类点数 ≥ 2 且至少还有一个其他类的点。若均不满足，则任何三角形皆不有趣，此时四个类的计数构成有效证书。",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "medium-hard"
+  },
+  "applied_rule": "construct_or_obstruction",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "对输入点进行模4分类计数，利用组合公式计算有趣三角形总数。",
+    "reusable_subroutines": "坐标读入、模4除法分类、字典计数均完全可复用。",
+    "new_solver_core": "在分类计数后，判断是否存在有趣三角形：若某类计数≥3，则从中任选三点构成三角形输出；否则若某类计数≥2且总点数＞该类计数，则从该类选两点并任选一个其他类点构成三角形输出；否则输出 NO 及四个计数值作为证书。",
+    "new_proof_obligation": "需证明：当输出证书时，确实不存在任何有趣三角形，即条件“对 n≥3，所有类计数≤1”是无解的充要条件。这需要基于内点奇偶性定理完成双向证明，而原题仅需单方向用于计数。",
+    "why_direct_reuse_fails": "原解仅产生一个总数，不定位具体三角形，也不具备输出失败证书的分支逻辑；其组合公式无法直接改为构造算法或证书生成。"
+  },
+  "anti_shallow_rationale": "本规划不是单纯故事换皮，而是将输出语义从计数转变为构造/证据双分支，并要求在核心算法中增加存在性判定、具体三角形的选取以及失败证书的生成，引入了新的正确性证明义务和算法分支设计，远超出表面主题更换。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "local_certificate_design",
+      "selection_reason": "将不存在有趣三角形的原因转化为模4类计数的结构化证书，使失败输出可被快速验证。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 从计数改为构造或证书输出",
+        "core_constraints 加入证书有效性约束",
+        "invariant 增加基于模4类的可行性判定"
+      ],
+      "innovation_reason": "失败语义从抽象解释变成具体、可检查的数据对象，提升了输出契约的准确度。",
+      "difficulty_reason": "要求算法统一处理成功构造与失败证据的计算路径，增加了分支逻辑和正确性证明责任。"
+    },
+    {
+      "id": "failure_branch_symmetry",
+      "selection_reason": "确保成功分支与失败分支在输出中具有同等地位，而不是失败的附属说明。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "objective 明确定义两个对等输出目标",
+        "core_constraints 分别制定 solution_output_contract 与 certificate_output_contract"
+      ],
+      "innovation_reason": "将单目标输出转变为双分支合同，提升问题结构的对称性。",
+      "difficulty_reason": "解法必须同时处理两类输出语义，而不能用特判跳过主结构，增加了实现的复杂性。"
+    },
+    {
+      "id": "obstruction_embedding",
+      "selection_reason": "使冲突证据直接来源于主约束（坐标模4性质），而非额外设计的判据。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 中有关证书的条件完全基于输入点的模4分类",
+        "invariant 利用相同的分类判定有无解"
+      ],
+      "innovation_reason": "证据结构嵌入主约束内部，强化了问题本身的不兼容性表达。",
+      "difficulty_reason": "要求在同一模4分类状态信息中同时支持构造三角形和生成不可行证书，增加了状态复用的难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "seed_solution_space_and_natural_order",
+      "selection_reason": "种子题具有明确定义的解三角形，且坐标全为偶数，可自然定义字典序等规范顺序；原题只统计个数，不输出方案，满足规则要求。升级为输出规范解将改变目标并引入构造验证责任，可显著变更核心算法。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.type 为 counting，不要求输出方案；seed_schema.core_constraints 包含 interesting triangle 的条件；seed_schema.invariant 描述了模4分类用于计数；原题解为组合计数，不涉及回溯构造；种子题满足 required_seed_properties（有明确解对象，可定义规范顺序）且未违反 forbidden_seed_properties。",
+        "feedback": "种子题具备升级为规范性构造输出的潜力，建议进入规划。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "obstruction_feasible",
+      "selection_reason": "种子题无解情形（所有点分布在不同模4类）可转化为局部冲突证据：输出点的模4分类且证明无重复类即可验证无解，满足规则对可局部检查阻碍证据的要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束要求坐标均为偶数，由 invariant 'parity_mod4_class_invariance' 知内部整点数奇偶仅取决于顶点模4类；当各类至多一个点时，不存在至少两点同类的三角形，因此无解。该条件可通过输出点的模4类集合与对应计数局部检查，无需全枚举三角形。",
+        "feedback": "无解情形可明确表述为模4类冲突证据，符合规则对 failure semantics 的要求；但证据需明确结构化输出，避免退化为自然语言解释。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_already_counting",
+      "selection_reason": "种子题本身已经是计数题，其 objective.type 为 counting，不满足规则要求的从存在性或最优值转向计数的前提。即使解空间有限、去重规则清晰，也无法通过该规则产生有意义的改变，强制应用会导致语义不匹配。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 明确为 'counting'，描述为“统计所有满足条件的三角形个数”，去重规则为“以不同的三点集合为准”，解空间为 C(n,3) 有限集。规则 handler 为 'existence_to_counting'，core_transformation 要求 '从存在性或最优值改成计数'，但种子题已处于计数状态。",
+        "feedback": "该规则对此种子题不适用，建议选择具有存在性判定或单一最优值目标的问题作为种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是确定性计数问题，无原生扰动来源，无法定义最小保底优化。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为统计所有满足条件的三角形个数（objective.type=counting），核心约束均确定（coordinates_even、points_distinct、no_three_collinear、odd_enclosed_cows、integer_triangle_area），输入为固定点集，无语义允许的顺序不确定、资源波动或局部选择差异，不符合规则 eligibility.required_seed_properties 要求。",
+        "feedback": "规则要求原题存在可被放大的原生扰动，但该题中所有条件均为确定，无最坏情况或扰动空间，强行应用会导致人为硬造对手，违反规则红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题是组合计数问题，统计满足奇偶内部点数与整数面积的三角形个数，不存在可行性随某个参数单调变化的结构，无法定义临界阈值；强行扩展只会变成外层机械二分或伪阈值，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为 counting，核心约束包括坐标偶数、内部整点数奇数、面积整数，不变式通过 mod-4 分类直接决定奇偶，没有可调节且影响可行区域的参数。规则要求原题可行性具有单调性或分层结构，而本题只有静态输入和组合计数，无自然参数可优化。",
+        "feedback": "该种子题不适合阈值优化变换，因为其求解本质是分类计数而非判定可行性，缺少临界参数。若强行引入阈值，只会将原计数结果作为‘判定’，再进行无关的二分搜索，导致核心约束未改变，语义不匹配。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_an_optimization_problem",
+      "selection_reason": "种子题是纯粹的计数问题，没有优化目标，无法从单目标最优扩展为双指标权衡。第二指标无法与原目标形成冲突，因为计数结果本身不是可优化的标量。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为counting（schema: objective.type = 'counting'），描述为统计所有满足条件的三角形个数。规则要求必须存在自然且冲突的第二评价指标，但原题没有个体最优的概念，任何附加指标（如面积、周长）与计数目标之间不存在真实冲突，权衡关系无法定义。规则验证合约硬检查要求第二指标必须与原目标真实冲突，但此处无法满足。",
+        "feedback": "规则要求种子题是单目标最优问题，但本题仅统计满足特定属性的三角形数量，不涉及最优化。若强行引入第二指标，新问题将退化为两个独立条件的交集计数，无法形成前沿或折中，且所需轴变化无法落实。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "TARGET_BINDABLE_NATURAL_OPERATIONS",
+      "selection_reason": "原题输出为有趣三角形数目，可直接绑定为反向目标；原题对象为整数点集，移动点坐标是自然修改操作；核心不变量（模4剩余类决定内部格点奇偶性）为最小修改提供论证基础；将正向计数转为最小修改实现目标值，求解方向从组合计数变为带证明的优化设计，符合反向设计精神。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.type == 'counting' (输出计数，可绑定); core_constraints中包含 even 坐标、distinct点、无三点共线；invariant.parity_mod4_class_invariance 揭示了模4类与奇数内部格点的等价关系；修改点坐标可以改变模4类分布，从而改变目标计数，且此操作直接源于几何对象。",
+        "feedback": "规则适用性良好：原题计数结果语义清晰，目标绑定直接；点集修改操作自然且可枚举；最小性可通过模4类的组合优化实现，不会退化为简单判定。下一步规划时应具体设计目标绑定方式、允许的修改操作（如仅改变模4类或允许改变坐标但保持约束）以及最小性证明的要求。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_local_units",
+      "selection_reason": "原题不存在可分解的局部单元，无法应用共享资源或全局守恒进行自然耦合。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 D1 要求统计所有满足条件的三角形个数，输入为全局点集，标准解法直接利用模4余数分类进行组合计数，不涉及任何局部独立求解步骤。schema中 core_constraints 和 invariant 均未体现可分治的局部单元。",
+        "feedback": "该规则要求原题存在可分解的局部单元，但当前种子题是单一全局计数问题，所有点作为整体处理，没有独立可耦合的组件。规则不适用，建议拒绝进入规划。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_iterative_operation",
+      "selection_reason": "原题是一次性选择三个点构成三角形并计数的组合计数问题，不存在可轮流选择的操作序列，强行构造玩家轮流选点会硬造对抗方，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为：选择3个不同的栅栏柱构成三角形围栏，统计所有有趣的围栏数量。输入为n个点坐标，输出为一个整数。整个过程没有迭代状态或操作序列，核心是奇偶性组合计数，没有可转化为轮流选择的基础。",
+        "feedback": "规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但此种子题没有这种操作，故不适合应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_property_mismatch",
+      "selection_reason": "原题的点集和三角形计数问题不具有路径、区间或子树等局部结构，也无天然的覆盖或割对象族，不符合规则要求的种子性质，强行构造会引入无关附加限制。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为平面上n个偶数坐标点，核心约束是无三点共线，目标是计数条件三角形。不存在类似路径或区间的局部对象，也没有定义覆盖或割关系。规则eligibility.required_seed_properties要求‘核心对象具有路径、区间、子树、集合等局部结构’且‘多个局部对象之间可以自然形成覆盖或割关系’，但种子问题中三角形是独立的三元组，之间无覆盖、割或支配语义，无法满足全局覆盖的转换要求。",
+        "feedback": "此种子题无法扩成覆盖、割或支配问题，因为其核心组合结构缺乏局部对象族和自然覆盖关系，规则不适用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "natural_statistic_exists",
+      "selection_reason": "种子题的计数对象（三角形）天然拥有内部整点数这一统计量，该统计量由顶点坐标唯一确定，可扩展为按内部整点数分类的分布计数或带权计数，且不违反任何红线。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "eligible",
+        "evidence": "原题约束‘odd_enclosed_cows’明确定义了三角形内部整点数，且该值由顶点决定；示例中三角形面积整数、内部整点数奇偶性均依赖于该统计量；标准解法利用坐标模4分类间接揭示了内部整点数的结构，证明统计量是自然且可计算的。",
+        "feedback": "内部整点数是最直接的自然统计量，作为带权或分布扩展的起点十分稳固，唯一需注意分布范围可能较大，需在规划阶段设计高效的状态表示。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_solution_space_and_natural_order",
+      "message": "种子题具有明确定义的解三角形，且坐标全为偶数，可自然定义字典序等规范顺序；原题只统计个数，不输出方案，满足规则要求。升级为输出规范解将改变目标并引入构造验证责任，可显著变更核心算法。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.87,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.type 为 counting，不要求输出方案；seed_schema.core_constraints 包含 interesting triangle 的条件；seed_schema.invariant 描述了模4分类用于计数；原题解为组合计数，不涉及回溯构造；种子题满足 required_seed_properties（有明确解对象，可定义规范顺序）且未违反 forbidden_seed_properties。",
+        "feedback": "种子题具备升级为规范性构造输出的潜力，建议进入规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "obstruction_feasible",
+      "message": "种子题无解情形（所有点分布在不同模4类）可转化为局部冲突证据：输出点的模4分类且证明无重复类即可验证无解，满足规则对可局部检查阻碍证据的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.02,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束要求坐标均为偶数，由 invariant 'parity_mod4_class_invariance' 知内部整点数奇偶仅取决于顶点模4类；当各类至多一个点时，不存在至少两点同类的三角形，因此无解。该条件可通过输出点的模4类集合与对应计数局部检查，无需全枚举三角形。",
+        "feedback": "无解情形可明确表述为模4类冲突证据，符合规则对 failure semantics 的要求；但证据需明确结构化输出，避免退化为自然语言解释。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "seed_already_counting",
+      "message": "种子题本身已经是计数题，其 objective.type 为 counting，不满足规则要求的从存在性或最优值转向计数的前提。即使解空间有限、去重规则清晰，也无法通过该规则产生有意义的改变，强制应用会导致语义不匹配。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 明确为 'counting'，描述为“统计所有满足条件的三角形个数”，去重规则为“以不同的三点集合为准”，解空间为 C(n,3) 有限集。规则 handler 为 'existence_to_counting'，core_transformation 要求 '从存在性或最优值改成计数'，但种子题已处于计数状态。",
+        "feedback": "该规则对此种子题不适用，建议选择具有存在性判定或单一最优值目标的问题作为种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是确定性计数问题，无原生扰动来源，无法定义最小保底优化。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为统计所有满足条件的三角形个数（objective.type=counting），核心约束均确定（coordinates_even、points_distinct、no_three_collinear、odd_enclosed_cows、integer_triangle_area），输入为固定点集，无语义允许的顺序不确定、资源波动或局部选择差异，不符合规则 eligibility.required_seed_properties 要求。",
+        "feedback": "规则要求原题存在可被放大的原生扰动，但该题中所有条件均为确定，无最坏情况或扰动空间，强行应用会导致人为硬造对手，违反规则红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题是组合计数问题，统计满足奇偶内部点数与整数面积的三角形个数，不存在可行性随某个参数单调变化的结构，无法定义临界阈值；强行扩展只会变成外层机械二分或伪阈值，违反规则红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为 counting，核心约束包括坐标偶数、内部整点数奇数、面积整数，不变式通过 mod-4 分类直接决定奇偶，没有可调节且影响可行区域的参数。规则要求原题可行性具有单调性或分层结构，而本题只有静态输入和组合计数，无自然参数可优化。",
+        "feedback": "该种子题不适合阈值优化变换，因为其求解本质是分类计数而非判定可行性，缺少临界参数。若强行引入阈值，只会将原计数结果作为‘判定’，再进行无关的二分搜索，导致核心约束未改变，语义不匹配。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "not_an_optimization_problem",
+      "message": "种子题是纯粹的计数问题，没有优化目标，无法从单目标最优扩展为双指标权衡。第二指标无法与原目标形成冲突，因为计数结果本身不是可优化的标量。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为counting（schema: objective.type = 'counting'），描述为统计所有满足条件的三角形个数。规则要求必须存在自然且冲突的第二评价指标，但原题没有个体最优的概念，任何附加指标（如面积、周长）与计数目标之间不存在真实冲突，权衡关系无法定义。规则验证合约硬检查要求第二指标必须与原目标真实冲突，但此处无法满足。",
+        "feedback": "规则要求种子题是单目标最优问题，但本题仅统计满足特定属性的三角形数量，不涉及最优化。若强行引入第二指标，新问题将退化为两个独立条件的交集计数，无法形成前沿或折中，且所需轴变化无法落实。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "TARGET_BINDABLE_NATURAL_OPERATIONS",
+      "message": "原题输出为有趣三角形数目，可直接绑定为反向目标；原题对象为整数点集，移动点坐标是自然修改操作；核心不变量（模4剩余类决定内部格点奇偶性）为最小修改提供论证基础；将正向计数转为最小修改实现目标值，求解方向从组合计数变为带证明的优化设计，符合反向设计精神。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.type == 'counting' (输出计数，可绑定); core_constraints中包含 even 坐标、distinct点、无三点共线；invariant.parity_mod4_class_invariance 揭示了模4类与奇数内部格点的等价关系；修改点坐标可以改变模4类分布，从而改变目标计数，且此操作直接源于几何对象。",
+        "feedback": "规则适用性良好：原题计数结果语义清晰，目标绑定直接；点集修改操作自然且可枚举；最小性可通过模4类的组合优化实现，不会退化为简单判定。下一步规划时应具体设计目标绑定方式、允许的修改操作（如仅改变模4类或允许改变坐标但保持约束）以及最小性证明的要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_local_units",
+      "message": "原题不存在可分解的局部单元，无法应用共享资源或全局守恒进行自然耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 D1 要求统计所有满足条件的三角形个数，输入为全局点集，标准解法直接利用模4余数分类进行组合计数，不涉及任何局部独立求解步骤。schema中 core_constraints 和 invariant 均未体现可分治的局部单元。",
+        "feedback": "该规则要求原题存在可分解的局部单元，但当前种子题是单一全局计数问题，所有点作为整体处理，没有独立可耦合的组件。规则不适用，建议拒绝进入规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_iterative_operation",
+      "message": "原题是一次性选择三个点构成三角形并计数的组合计数问题，不存在可轮流选择的操作序列，强行构造玩家轮流选点会硬造对抗方，违反规则红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为：选择3个不同的栅栏柱构成三角形围栏，统计所有有趣的围栏数量。输入为n个点坐标，输出为一个整数。整个过程没有迭代状态或操作序列，核心是奇偶性组合计数，没有可转化为轮流选择的基础。",
+        "feedback": "规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但此种子题没有这种操作，故不适合应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_property_mismatch",
+      "message": "原题的点集和三角形计数问题不具有路径、区间或子树等局部结构，也无天然的覆盖或割对象族，不符合规则要求的种子性质，强行构造会引入无关附加限制。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为平面上n个偶数坐标点，核心约束是无三点共线，目标是计数条件三角形。不存在类似路径或区间的局部对象，也没有定义覆盖或割关系。规则eligibility.required_seed_properties要求‘核心对象具有路径、区间、子树、集合等局部结构’且‘多个局部对象之间可以自然形成覆盖或割关系’，但种子问题中三角形是独立的三元组，之间无覆盖、割或支配语义，无法满足全局覆盖的转换要求。",
+        "feedback": "此种子题无法扩成覆盖、割或支配问题，因为其核心组合结构缺乏局部对象族和自然覆盖关系，规则不适用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "pass",
+      "reason_code": "natural_statistic_exists",
+      "message": "种子题的计数对象（三角形）天然拥有内部整点数这一统计量，该统计量由顶点坐标唯一确定，可扩展为按内部整点数分类的分布计数或带权计数，且不违反任何红线。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "eligible",
+        "evidence": "原题约束‘odd_enclosed_cows’明确定义了三角形内部整点数，且该值由顶点决定；示例中三角形面积整数、内部整点数奇偶性均依赖于该统计量；标准解法利用坐标模4分类间接揭示了内部整点数的结构，证明统计量是自然且可计算的。",
+        "feedback": "内部整点数是最直接的自然统计量，作为带权或分布扩展的起点十分稳固，唯一需注意分布范围可能较大，需在规划阶段设计高效的状态表示。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划将无解分支设计为局部可检查的模4类计数证书，满足失败证据的局部可验证要求，且所有helper均已兑现。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据规划审查官，重点确认规划是否同时定义了解分支和可局部检查的失败证据。",
+        "review_brief": "确认规划是否把无解分支写成可直接检查的局部阻碍证据，而不是解释性说明。",
+        "evidence": "candidate_schema中certificate_output_contract定义输出'NO'后跟四个整数c00,c02,c20,c22，可直接与输入坐标分类计数比对；applied_helpers中local_certificate_design明确了失败输出转化为可检查对象；eligibility_reason确认该证书可局部验证。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "certificate_not_locally_checkable",
+      "message": "题面仅要求输出计数作为证书，但未提供可直接执行局部检查的具体规则，检查者仍需依赖未陈述的数学定理推断无解，违反‘不能退化为解释’的红线。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据题面审查官，重点确认题面是否写清失败输出和证据的检查语义。",
+        "review_brief": "确认题面是否要求在无解时输出一个可局部检查的冲突证据，而不是仅仅解释为什么无解。",
+        "evidence": "题面 output_format 写‘该统计值必须与输入实际情况一致，且能构成不存在有趣三角形的证明’，但未定义具体验证步骤；样例解释仅引用‘奇偶性定理’而未提供定理陈述，导致证书检查无法通过局部规则完成。规则 helper 'local_certificate_design' 的 redlines 明确禁止‘只写无解原因说明’，而该题面实质上仍依赖外部数学知识来解释无解。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "certificate_fully_realized",
+      "message": "题面在无解分支明确要求输出四个模4类计数作为证书，并规定判题程序可直接校验其正确性与充分条件，成功将失败语义转化为可局部检查的冲突证据，未退化成解释。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据题面审查官，重点确认题面是否写清失败输出和证据的检查语义。",
+        "review_brief": "确认题面是否要求在无解时输出一个可局部检查的冲突证据，而不是仅仅解释为什么无解。",
+        "evidence": "output_format 中规定 NO 时输出 c00 c02 c20 c22 并要求 max(c)≤1 且总和为 n，notes 中写明判题程序会检查计数是否与实际分类一致，new_schema 中 invariant 基于模4类给出可行性充要条件，helpers 中 local_certificate_design 的 redlines 未被触发。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "通勤三角区",
+    "description": "城市公交系统中规划了 n 个站点，每个站点位于平面上的一个坐标 (x, y)。出于调度效率的考虑，所有站点的 x 坐标和 y 坐标均为偶数。任意两个站点位置不同，且不存在三个站点位于同一条直线上。\n\n现在需要选择一个“通勤三角区”：选取三个不同的站点，将它们连成一个三角形。如果一个三角形满足以下两个条件，则称其为“合格的”：\n1. 该三角形的面积为整数；\n2. 严格位于三角形内部的整数坐标点（可以视为潜在乘客的落脚点）的数量为奇数。\n\n你的任务是：如果存在至少一个合格的三角形，则输出 YES 并指出一个具体的合格三角形（给出三个站点的编号）；如果不存在任何合格的三角形，则输出 NO 并提供一个“不存在性证明”——将站点按 (x mod 4, y mod 4) 分类后的四个类别计数，用于直接说明不可能构成合格三角形。",
+    "input_format": "第一行包含一个整数 n (3 ≤ n ≤ 6000)，表示站点数量。\n接下来 n 行，每行包含两个整数 x, y (0 ≤ x, y ≤ 10^7，且 x 和 y 均为偶数)，描述一个站点的坐标。\n输入保证：所有站点坐标互不相同；不存在任意三点共线的情况。",
+    "output_format": "如果存在至少一个合格的三角形，则输出两行：\n第一行输出字符串 \"YES\"（不含引号）；\n第二行输出三个用空格分隔的整数 i1 i2 i3，表示所选站点的编号（站点按照输入顺序从 1 开始编号）。任意一个满足条件的三角形均可被接受。\n\n如果不存在任何合格的三角形，则输出两行：\n第一行输出字符串 \"NO\"（不含引号）；\n第二行输出四个用空格分隔的非负整数 c00 c02 c20 c22，分别表示满足 (x mod 4, y mod 4) 等于 (0,0), (0,2), (2,0), (2,2) 的站点数量。这四个整数必须与输入的实际分类一致，并且为了作为不存在性的有效证明，必须满足：c00, c02, c20, c22 中的每个数值都不超过 1（即 max(c00, c02, c20, c22) ≤ 1）且 c00 + c02 + c20 + c22 = n。",
+    "constraints": [
+      "时间限制：2秒",
+      "空间限制：256MB",
+      "3 ≤ n ≤ 6000",
+      "0 ≤ x, y ≤ 10^7，且 x 和 y 均为偶数",
+      "所有站点坐标互不相同",
+      "不存在三点共线的情况"
+    ],
+    "samples": [
+      {
+        "input": "3\n0 0\n2 0\n0 4",
+        "output": "YES\n1 2 3",
+        "explanation": "三个站点 (0,0), (2,0), (0,4) 构成的三角形面积为 4（整数），且其内部恰好有 1 个整数坐标点（奇数），因此是一个合格的三角形。站点编号 1、2、3 对应输入顺序。"
+      },
+      {
+        "input": "4\n0 0\n0 2\n2 0\n2 2",
+        "output": "NO\n1 1 1 1",
+        "explanation": "四个站点的模 4 分类分别为 (0,0), (0,2), (2,0), (2,2)，因此 c00=1, c02=1, c20=1, c22=1。每个类别计数都不超过 1，且总和为 4，满足证书条件，说明无法构成任何合格的三角形。"
+      }
+    ],
+    "notes": "当存在解时，任意一个合法的三角形均可接受，不要求输出所有解。\n对于 NO 输出的证书，判题程序会检查 c00, c02, c20, c22 是否与实际分类一致，以及是否满足 max(c) ≤ 1 且和等于 n；若不满足，则判定为错误。\n注意：由于所有坐标均为偶数，三角形内部整数点数量的奇偶性完全由所选三个顶点的模 4 分类决定，上述证书条件因此成为不存在性的可靠判据。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": "证书条件已明确为局部可判据：每个类计数 ≤ 1 且总和为 n，使得判题方可直接验证，不再需要额外推导。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_0c82785d8b8d_urban_commute_20260529_064114",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

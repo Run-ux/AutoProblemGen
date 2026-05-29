@@ -1,0 +1,916 @@
+{
+  "problem_id": "community_service_circle",
+  "source_problem_ids": [
+    "taco_codeforces_3b7f10e3d5c5"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_3b7f10e3d5c5",
+      "codeforces",
+      "Berlanders like to eat cones after a hard day. Misha Square and Sasha Circle are local authorities of Berland. Each of them controls its points of cone trade. Misha has n points, Sasha — m. Since their subordinates co...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束 C 新增冲突证据的结构定义与可验证条件；目标 O 从布尔决策变为双向构造（圆 / 证书）；不变式 V 引入输出合同的两支正确性保证。",
+    "summary": "在原有分离性判定基础上，延伸出构造要求和失败证据义务，使问题从判定型转化为构造与证据型。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.5128,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.5128,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.6161,
+      "O": 0.5118,
+      "V": 1.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.6161,
+      "objective_type_distance": 0.622,
+      "objective_text_distance": 0.3466,
+      "invariant_match_distance": 1.0
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construct_or_obstruction",
+    "description": "如果存在一个圆严格分离社区 A 与社区 B 的住户点（即存在半径 r>0 和圆心 (x,y) 使得所有 A 点严格在圆内、所有 B 点严格在圆外），则输出 YES 并给出一个合法圆的圆心和半径；否则输出 NO 并给出一个冲突证书，证书由部分住户点构成，它们自身已可证明不可被任何圆分离，且该事实能仅通过检查证书中的点来验证。",
+    "target": "explicit_solution_or_certificate",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "该规则将原判定问题完全翻转成最小修改设计问题，需要同时优化点的调整和分离判定，能产生全新算法责任，避免了串联和浅改。而其他规则中，canonical_witness容易退化为后处理串联，feasibility_to_extremal_threshold若参数化半径会机械二分，风险高；construct_or_obstruction虽然可行，但证据构造可能依赖原判定，创新幅度不及inverse design。；创新度判断：把正向求解圆分离存在性改成给定目标“可分离”后，求最少移动点坐标（或最小总移动距离）使得存在分离圆，核心义务从判定存在变成目标驱动的最小代价设计，要求解法同时处理点修改和分离条件，方向完全反转。；难度判断：主求解责任从纯几何判定升级为组合-几何优化问题，需要证明最小修改代价，可能涉及计算几何中的瓶颈问题，难度显著高于原题，且不能简单复用原判定作为子过程。；风险判断：主要风险在于确保最小性证明的责任设计合理，避免退化为贪心后处理；但只要在题面中明确要求输出最小代价及证明，并嵌入核心约束，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "community_service_circle",
+    "source": "transformed_from_codeforces_3b7f10e3d5c5",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "community_A_points",
+          "role_description": "社区 A 的住户坐标",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": -10000,
+            "max": 10000
+          },
+          "properties": {
+            "distinct": true
+          }
+        },
+        {
+          "role": "community_B_points",
+          "role_description": "社区 B 的住户坐标",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 10000
+          },
+          "value_range": {
+            "min": -10000,
+            "max": 10000
+          },
+          "properties": {
+            "distinct": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "distinct_points",
+          "description": "所有住户坐标均为整数，且任意两点坐标互不相同。",
+          "formal": "∀ P,Q ∈ A∪B, P≠Q",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "obstruction_certificate_structure",
+          "description": "当输出为冲突证书时，证书由输入点子集构成，并满足不可分离的充分条件：要么两个子集的凸包交集非空，要么一个子集中存在一点严格位于另一子集凸包内部。",
+          "formal": "certificate = (X⊆A, Y⊆B) ∧ (conv(X)∩conv(Y)≠∅ ∨ ∃p∈X s.t. p∈int(conv(Y)) ∨ ∃q∈Y s.t. q∈int(conv(X)))",
+          "source_sections": [
+            "output_spec"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construct_or_obstruction",
+      "description": "如果存在一个圆严格分离社区 A 与社区 B 的住户点（即存在半径 r>0 和圆心 (x,y) 使得所有 A 点严格在圆内、所有 B 点严格在圆外），则输出 YES 并给出一个合法圆的圆心和半径；否则输出 NO 并给出一个冲突证书，证书由部分住户点构成，它们自身已可证明不可被任何圆分离，且该事实能仅通过检查证书中的点来验证。",
+      "target": "explicit_solution_or_certificate",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "solution_correctness",
+          "description": "若输出 YES 和圆 (x,y,r)，则对于所有 p∈A，dist(p,(x,y)) < r；对于所有 q∈B，dist(q,(x,y)) > r。",
+          "formal": "output='YES' ⇒ (∀p∈A: sqrt((p.x-x)^2+(p.y-y)^2) < r) ∧ (∀q∈B: sqrt((q.x-x)^2+(q.y-y)^2) > r)"
+        },
+        {
+          "name": "certificate_correctness",
+          "description": "若输出 NO 和证书 (X⊆A, Y⊆B)，则 X与Y 满足不可分离条件（凸包相交或一点在另一凸包内部），因此不存在任何圆严格分离 X 和 Y。",
+          "formal": "output='NO' ⇒ (X≠∅ ∨ Y≠∅) ∧ (conv(X)∩conv(Y)≠∅ ∨ ∃p∈X: p∈int(conv(Y)) ∨ ∃q∈Y: q∈int(conv(X)))"
+        },
+        {
+          "name": "local_verifiability",
+          "description": "证书正确性可仅通过检查证书提供的点及其凸包关系判定，无需其余输入点参与。",
+          "formal": "verification_uses_only(X, Y, convex_hull_relation)"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "construct_or_obstruction",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "基于凸包的圆分离存在性判定：计算两集合凸包，检查是否相交或包含。",
+    "reusable_subroutines": "凸包计算（Graham/Andrew）、点与凸包位置检测、最小包围圆算法、点集与圆的位置判定。",
+    "new_solver_core": "若可分离，基于凸包顶点与对方点构造一个具体的分离圆（例如对 A 的凸包顶点计算最小包围圆，若内部含 B 点则调整重心与半径）；若不可分离，根据障碍类型构造冲突证书：凸包相交时提取相交的凸包顶点子集，包含时提取被包含点和对方凸包。",
+    "new_proof_obligation": "需证明构造出的圆确实严格分离两个点集；需证明若存在分离圆算法必能构造其一；需证明当不可分离时，提取的证书一定是不可分离的有效证据，且证书总是存在；需证明证书的局部可验证性。",
+    "why_direct_reuse_fails": "原题只输出布尔值，没有构造圆或证书的义务，也没有定义证书的几何结构。直接修改输出形式无法通过新题的正确定性检验。"
+  },
+  "anti_shallow_rationale": "新题不仅将点集重命名为社区住户，更核心地改变了输出语义：从单比特答案变为构造性分离圆或几何冲突证据，要求算法在同一框架内处理成功与失败两条完整计算路径。原题解若简单包装成输出 YES/NO 无法满足证书的构造与验证要求，算法结构与正确性证明均需重新设计，远超出换背景或改格式的浅层修改。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "local_certificate_design",
+      "selection_reason": "需要将不可分离的原因从解释转化为可局部检查的几何证据。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束增加证书结构定义与不可分离充分条件",
+        "目标改为输出证书作为失败分支",
+        "不变量加入证书正确性与局部可验证性"
+      ],
+      "innovation_reason": "使失败语义从抽象说明变为具体、可独立验证的对象，提升问题的概念深度。",
+      "difficulty_reason": "要求算法识别不可分离的根本原因并提取最小证据，增加了实现与证明复杂度。"
+    },
+    {
+      "id": "failure_branch_symmetry",
+      "selection_reason": "确保成功与失败分支都有正式的构造义务，防止失败分支被弱化为备注。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "核心约束中同时规范失败分支的输出结构",
+        "目标要求输出为圆或证书的联合体，且两者均为正式输出"
+      ],
+      "innovation_reason": "打破传统单答案模式，迫使问题设计者同等对待两种输出，产生丰富的算法对称性。",
+      "difficulty_reason": "算法必须统一处理两种输出的构造逻辑，不能依靠特判或返回字符串回避核心计算。"
+    },
+    {
+      "id": "obstruction_embedding",
+      "selection_reason": "让冲突证据直接从主约束（分离圆存在性）的内在矛盾中提取。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束将不可分离条件具体化为凸包相交或点包含等几何关系",
+        "不变量声明证书必须源于这些内在矛盾，且验证只需局部几何信息"
+      ],
+      "innovation_reason": "将证据生成嵌入问题结构本身，避免依赖外部过滤或人为主观分层。",
+      "difficulty_reason": "要求算法在求解过程中同步维护几何关系，以在失败时快速定位冲突子集，增加状态管理开销。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "canonical_witness_applicable",
+      "selection_reason": "原题是典型的决策问题（YES/NO），只判断存在性，符合规则要求的种子属性；解对象可明确定义（分离圆），且可通过最小半径、字典序圆心等定义规范顺序；原题没有要求输出完整方案，且从决策算法到构造规范解的变更会迫使核心约束和验证方式发生实质变化，满足 must_change 对 C、O、V 的要求；不存在 forbidden_seed_properties 所列情形。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "目标类型为 decision (objective.type='decision', requires_solution=false)；输入仅给点集，输出仅 YES/NO；forbidden 中“原题本来就要求输出完整方案”不成立，“顺手回溯就能拿到方案”也不成立，因为标准判断算法（如凸包相交）并不自然附带一个规范圆的显式构造；规则要求 must_change 的 C、O、V 轴均有可达的差异化路径（如引入规范序约束、改变输出义务、更新验证逻辑）。",
+        "feedback": "升级为输出规范圆（如字典序最小圆心或最小半径）是合理方向，但在具体设计时需注意整数坐标下圆方程的表示精度，并确保合法性定义不浮空。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "conflict_evidence_localizable",
+      "selection_reason": "原题中无解原因可表示为最小交错点集（如四点交错），这可以直接检查并作为冲突证据输出，符合规则要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题输入组件为两组点集，核心约束为点集分离；输出示例中无解解释提到因某些点导致任何圆包含一组点必包含另一组点。这证据可局部化为输出一组点（如交错四边形）并验证其性质，满足冲突证据可检查条件。",
+        "feedback": "证据的确可局部检查，但需要明确定义证据结构；注意保持复杂度合理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_countable_solution_space",
+      "selection_reason": "种子题为存在性判定，解空间仅有YES/NO两种状态，缺乏可计数的有限对象。原题未定义任何“不同构造”的等价关系，也缺少可拆分汇总的离散单元，不满足计数变换的基本前提。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 'decision'，目标为 'existence'，并未定义任何圆的具体参数或构造方案。核心约束仅保证点互异，没有提供离散化的计数单元。原题描述始终围绕能否分离，无任何计数或枚举语义。",
+        "feedback": "当前种子题的解空间本质是二值的，若要改为计数必须重新定义计数对象（例如统计某个离散集合中的圆），但这会脱离原题核心规律，且规则要求解空间有限、等价关系明确、可拆分汇总，种子题无法满足。建议更换为具有明确构造或枚举空间的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是静态几何存在性判定，给定确定点集，要求判断是否存在分离圆，问题定义中没有任何顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则对原生扰动的要求，若强行引入扰动则违背禁止硬造对手的红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 decision，描述为“Determine whether there exists a circle that strictly separates two point sets”，输入为两个确定点集，坐标固定，没有不确定性。核心约束为所有点互异，不涉及任何扰动或变异性。规则 eligibility.required_seed_properties 明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但该种子题不具备。",
+        "feedback": "原题不存在可被放大的原生扰动来源，强行改造会沦为在判定外面包一层二分或凭空构造扰动，属于规则明确禁止的情形，不适合进入下阶段。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_threshold_parameter",
+      "selection_reason": "原题是判别两个点集是否存在严格分离圆的二值决策问题，删除点数k可作为自然阈值参数：允许删除至多k个点使得剩余点可分离，可行性随k单调递增（删除更多点使分离更容易），临界值k_min构成极值优化目标。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为decision，target为existence（\"Determine whether there exists a circle that strictly separates two point sets\"）；核心约束仅为点互异，无其他连续参数。引入删除点数k形成单调层级，k=0对应原题。规则要求的单调性与临界参数特性均满足。",
+        "feedback": "规则适用，阈值扩展自然；需注意算法复杂度可能从多项式升至NP难，但变化规则侧重概念跃迁，非难度审查范畴。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "seed_not_optimization",
+      "selection_reason": "种子题是判定存在性的决策问题（输出YES/NO），没有可量化的单目标最优函数，不符合规则对单目标最优题的要求，且难以找到自然且冲突的第二评价指标。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective.type为'decision'，target为'existence'，描述为'Determine whether there exists a circle...'。规则required_seed_properties要求'原题目标附近存在自然的第二评价指标'和'两个指标之间存在真实冲突'，但原题无最优化目标，无法引入冲突指标。",
+        "feedback": "建议仅在种子题具有明确量化目标（如最小化、最大化）时应用此规则。当前种子题更适合其他变换，如将决策问题转化为计数或优化问题，但非本规则范畴。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "target_feasible_and_natural_operation",
+      "selection_reason": "原题输出 YES/NO 可直接作为反向目标（例如要求使得回答为 YES）；原题中的点坐标构成自然的修改对象，移动点是最小修改操作的直观体现，符合逆向设计中给定目标答案求最小修改元素个数模式。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题目标判定是否存在严格分离圆，输出为 YES/NO，可用于设定反向目标（如‘使得答案为 YES 且修改点数最少’）。输入结构包含 Misha 和 Sasha 的点坐标（数组，允许修改坐标值），该修改操作直接源于原题几何对象，与核心规律紧密相关。规则正例为“给定目标答案，求最少修改几个元素使原性质成立”，与此高度吻合。",
+        "feedback": "该规则合理，原题具备自然的逆向设计空间，反向目标清晰，修改操作定义与原题约束一致，未触及任何全局红线。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_independent_components",
+      "selection_reason": "种子题为单一几何分离判定问题（判断是否存在圆分离两个点集），输入是两个点集，目标为整体存在性，不存在可独立求解的局部单元，因此无法通过共享资源或全局守恒自然耦合。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 schema 仅包含两个点集作为输入，目标为判定是否存在分离圆，没有定义任何可分解的局部决策单元。原题描述也显示整个问题是一个整体性几何判定，没有‘多个可独立处理的子问题’。",
+        "feedback": "规则要求原题存在可分解的局部单元，但本题不具备，建议更换具有独立子问题（如多个区间独立选点、多个独立背包等）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_operation",
+      "selection_reason": "原题为静态几何存在性问题（判断圆是否分离点集），无任何轮流选择、拿取、移动或状态改变的操作；不存在可自然对抗化的选择过程，无法满足规则要求的必要种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "根据schema，原题核心约束仅要求点不重复，目标为存在性判断，无任何操作步骤；输入输出仅涉及静态点坐标。规则要求原题存在可轮流选择自然操作，但该题完全是空间几何判定，没有操作空间。规则的正例为“把单人取物最优改成两人轮流取物”，本例无类似操作。",
+        "feedback": "建议仅对具有明确顺序操作或状态转移的原题应用此规则，如取石子、路径选择等，静态存在性问题无法自然博弈化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_local_structure",
+      "selection_reason": "种子问题核心是二维点集分离，不存在路径、区间或子树等局部结构，也没有可组合的局部对象族，无法扩展为覆盖或割问题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema的input_structure包含两个数组，分别表示两组点的坐标，core_constraints仅要求点互异，没有描述任何路径、区间或子树等局部结构，也没有自然形成覆盖或割关系的对象族。",
+        "feedback": "该规则要求原题具有路径、区间、子树等局部结构，但当前种子题完全基于点集分离判定，不具备此类前提，建议另选具有局部结构的问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题是存在性决策问题，不是计数题，没有明确有限的计数对象，无法应用带权计数扩展。",
+      "risk_tags": [
+        "missing_counting_object",
+        "decision_not_counting"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原始问题描述：'Determine whether there exists a circle that strictly separates two point sets'，输出为'YES'或'NO'。Schema中objective类型为'decision'，target为'existence'。计数对象不存在。",
+        "feedback": "规则要求原题有明确计数对象和自然权重，但该种子题是几何决策问题，不适合。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_applicable",
+      "message": "原题是典型的决策问题（YES/NO），只判断存在性，符合规则要求的种子属性；解对象可明确定义（分离圆），且可通过最小半径、字典序圆心等定义规范顺序；原题没有要求输出完整方案，且从决策算法到构造规范解的变更会迫使核心约束和验证方式发生实质变化，满足 must_change 对 C、O、V 的要求；不存在 forbidden_seed_properties 所列情形。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "目标类型为 decision (objective.type='decision', requires_solution=false)；输入仅给点集，输出仅 YES/NO；forbidden 中“原题本来就要求输出完整方案”不成立，“顺手回溯就能拿到方案”也不成立，因为标准判断算法（如凸包相交）并不自然附带一个规范圆的显式构造；规则要求 must_change 的 C、O、V 轴均有可达的差异化路径（如引入规范序约束、改变输出义务、更新验证逻辑）。",
+        "feedback": "升级为输出规范圆（如字典序最小圆心或最小半径）是合理方向，但在具体设计时需注意整数坐标下圆方程的表示精度，并确保合法性定义不浮空。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "conflict_evidence_localizable",
+      "message": "原题中无解原因可表示为最小交错点集（如四点交错），这可以直接检查并作为冲突证据输出，符合规则要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题输入组件为两组点集，核心约束为点集分离；输出示例中无解解释提到因某些点导致任何圆包含一组点必包含另一组点。这证据可局部化为输出一组点（如交错四边形）并验证其性质，满足冲突证据可检查条件。",
+        "feedback": "证据的确可局部检查，但需要明确定义证据结构；注意保持复杂度合理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "no_countable_solution_space",
+      "message": "种子题为存在性判定，解空间仅有YES/NO两种状态，缺乏可计数的有限对象。原题未定义任何“不同构造”的等价关系，也缺少可拆分汇总的离散单元，不满足计数变换的基本前提。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 'decision'，目标为 'existence'，并未定义任何圆的具体参数或构造方案。核心约束仅保证点互异，没有提供离散化的计数单元。原题描述始终围绕能否分离，无任何计数或枚举语义。",
+        "feedback": "当前种子题的解空间本质是二值的，若要改为计数必须重新定义计数对象（例如统计某个离散集合中的圆），但这会脱离原题核心规律，且规则要求解空间有限、等价关系明确、可拆分汇总，种子题无法满足。建议更换为具有明确构造或枚举空间的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是静态几何存在性判定，给定确定点集，要求判断是否存在分离圆，问题定义中没有任何顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则对原生扰动的要求，若强行引入扰动则违背禁止硬造对手的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 decision，描述为“Determine whether there exists a circle that strictly separates two point sets”，输入为两个确定点集，坐标固定，没有不确定性。核心约束为所有点互异，不涉及任何扰动或变异性。规则 eligibility.required_seed_properties 明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但该种子题不具备。",
+        "feedback": "原题不存在可被放大的原生扰动来源，强行改造会沦为在判定外面包一层二分或凭空构造扰动，属于规则明确禁止的情形，不适合进入下阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_threshold_parameter",
+      "message": "原题是判别两个点集是否存在严格分离圆的二值决策问题，删除点数k可作为自然阈值参数：允许删除至多k个点使得剩余点可分离，可行性随k单调递增（删除更多点使分离更容易），临界值k_min构成极值优化目标。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为decision，target为existence（\"Determine whether there exists a circle that strictly separates two point sets\"）；核心约束仅为点互异，无其他连续参数。引入删除点数k形成单调层级，k=0对应原题。规则要求的单调性与临界参数特性均满足。",
+        "feedback": "规则适用，阈值扩展自然；需注意算法复杂度可能从多项式升至NP难，但变化规则侧重概念跃迁，非难度审查范畴。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "seed_not_optimization",
+      "message": "种子题是判定存在性的决策问题（输出YES/NO），没有可量化的单目标最优函数，不符合规则对单目标最优题的要求，且难以找到自然且冲突的第二评价指标。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective.type为'decision'，target为'existence'，描述为'Determine whether there exists a circle...'。规则required_seed_properties要求'原题目标附近存在自然的第二评价指标'和'两个指标之间存在真实冲突'，但原题无最优化目标，无法引入冲突指标。",
+        "feedback": "建议仅在种子题具有明确量化目标（如最小化、最大化）时应用此规则。当前种子题更适合其他变换，如将决策问题转化为计数或优化问题，但非本规则范畴。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "target_feasible_and_natural_operation",
+      "message": "原题输出 YES/NO 可直接作为反向目标（例如要求使得回答为 YES）；原题中的点坐标构成自然的修改对象，移动点是最小修改操作的直观体现，符合逆向设计中给定目标答案求最小修改元素个数模式。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题目标判定是否存在严格分离圆，输出为 YES/NO，可用于设定反向目标（如‘使得答案为 YES 且修改点数最少’）。输入结构包含 Misha 和 Sasha 的点坐标（数组，允许修改坐标值），该修改操作直接源于原题几何对象，与核心规律紧密相关。规则正例为“给定目标答案，求最少修改几个元素使原性质成立”，与此高度吻合。",
+        "feedback": "该规则合理，原题具备自然的逆向设计空间，反向目标清晰，修改操作定义与原题约束一致，未触及任何全局红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_independent_components",
+      "message": "种子题为单一几何分离判定问题（判断是否存在圆分离两个点集），输入是两个点集，目标为整体存在性，不存在可独立求解的局部单元，因此无法通过共享资源或全局守恒自然耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 schema 仅包含两个点集作为输入，目标为判定是否存在分离圆，没有定义任何可分解的局部决策单元。原题描述也显示整个问题是一个整体性几何判定，没有‘多个可独立处理的子问题’。",
+        "feedback": "规则要求原题存在可分解的局部单元，但本题不具备，建议更换具有独立子问题（如多个区间独立选点、多个独立背包等）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_operation",
+      "message": "原题为静态几何存在性问题（判断圆是否分离点集），无任何轮流选择、拿取、移动或状态改变的操作；不存在可自然对抗化的选择过程，无法满足规则要求的必要种子属性。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "根据schema，原题核心约束仅要求点不重复，目标为存在性判断，无任何操作步骤；输入输出仅涉及静态点坐标。规则要求原题存在可轮流选择自然操作，但该题完全是空间几何判定，没有操作空间。规则的正例为“把单人取物最优改成两人轮流取物”，本例无类似操作。",
+        "feedback": "建议仅对具有明确顺序操作或状态转移的原题应用此规则，如取石子、路径选择等，静态存在性问题无法自然博弈化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_local_structure",
+      "message": "种子问题核心是二维点集分离，不存在路径、区间或子树等局部结构，也没有可组合的局部对象族，无法扩展为覆盖或割问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema的input_structure包含两个数组，分别表示两组点的坐标，core_constraints仅要求点互异，没有描述任何路径、区间或子树等局部结构，也没有自然形成覆盖或割关系的对象族。",
+        "feedback": "该规则要求原题具有路径、区间、子树等局部结构，但当前种子题完全基于点集分离判定，不具备此类前提，建议另选具有局部结构的问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题是存在性决策问题，不是计数题，没有明确有限的计数对象，无法应用带权计数扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "missing_counting_object",
+          "decision_not_counting"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原始问题描述：'Determine whether there exists a circle that strictly separates two point sets'，输出为'YES'或'NO'。Schema中objective类型为'decision'，target为'existence'。计数对象不存在。",
+        "feedback": "规则要求原题有明确计数对象和自然权重，但该种子题是几何决策问题，不适合。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划将无解分支定义为可局部检查的冲突证书（点集+凸包关系），而非解释性说明，完全兑现了构造或阻碍规则。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据规划审查官，重点确认规划是否同时定义了解分支和可局部检查的失败证据。",
+        "review_brief": "确认规划是否把无解分支写成可直接检查的局部阻碍证据，而不是解释性说明。",
+        "evidence": "candidate schema的核心约束新增obstruction_certificate_structure，定义了证书的局部可验证结构；目标改为construct_or_obstruction，要求输出YES+圆或NO+证书；不变量包含certificate_correctness和local_verifiability，确保证书仅依赖自身点即可验证；三个helper（local_certificate_design、failure_branch_symmetry、obstruction_embedding）均被应用并反映在schema变化中，且未违反redlines。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "conflict_evidence_defined_with_local_verifiability",
+      "message": "题面在无解时要求输出由具体点集构成的冲突证书，并明确该证书可仅通过自身点集进行局部验证，符合规则对冲突证据的硬性要求。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据题面审查官，重点确认题面是否写清失败输出和证据的检查语义。",
+        "review_brief": "确认题面是否要求在无解时输出一个可局部检查的冲突证据，而不是仅仅解释为什么无解。",
+        "evidence": "题面描述指出：“如果不存在，你需要指出一个‘冲突证据’：从两个社区中各选出一些住户……该证据只需要检查其中包含的住户点即可验证，不需要查看社区中的其他住户。”输出格式进一步规定NO时输出选出的点坐标，并声明“验证者只需依据证书中的点即可做出判定”。样例NO输出提供了完整点集作为证书并解释其凸包相交，体现了局部可检查性而非自然语言解释。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "社区服务圈",
+    "description": "城市里有两个相邻的社区 A 和 B，每个社区内有若干住户。为了方便管理，市政部门计划建立一个圆形区域的社区服务中心，希望服务中心能够覆盖社区 A 的所有住户（所有 A 的住户都严格位于圆内），同时完全不覆盖社区 B 的任何住户（所有 B 的住户都严格位于圆外）。注意：服务中心的半径必须大于 0。\n\n你的任务是判断是否存在这样的圆形服务中心。如果存在，你需要给出一个可行的方案（圆心坐标和半径）。如果不存在，你需要指出一个“冲突证据”：从两个社区中各选出一些住户，这些住户所形成的子集已经足以证明不存在任何圆形服务中心能够将它们分离。具体而言，证据必须满足以下条件之一：\n- 选出的 A 的子集与 B 的子集的凸包（即包含这些点的最小凸多边形）相交；\n- 选出的 A 的子集中存在一个点严格位于 B 子集的凸包内部，或者选出的 B 的子集中存在一个点严格位于 A 子集的凸包内部。\n\n该证据只需要检查其中包含的住户点即可验证，不需要查看社区中的其他住户。",
+    "input_format": "第一行包含两个整数 n 和 m (1 ≤ n, m ≤ 10000)，分别表示社区 A 和社区 B 的住户数量。\n接下来的 n 行，每行两个整数 x y (-10000 ≤ x, y ≤ 10000)，表示社区 A 的一个住户坐标。\n接下来的 m 行，每行两个整数 x y (-10000 ≤ x, y ≤ 10000)，表示社区 B 的一个住户坐标。\n所有给出的 n+m 个点的坐标互不相同。",
+    "output_format": "如果存在满足要求的圆形服务中心，则第一行输出 \"YES\"（不包含引号）。\n第二行输出三个实数 x y r，分别表示圆心的 x 坐标、y 坐标和半径。实数可以输出任意小数位数，但你的输出与正确答案的绝对或相对误差不超过 1e-6 即被视为正确。半径必须大于 0，且对于社区 A 的所有点 p，其到圆心的距离必须严格小于 r；对于社区 B 的所有点 q，到圆心的距离必须严格大于 r。\n\n如果不存在这样的服务中心，则第一行输出 \"NO\"（不包含引号）。\n第二行输出两个正整数 k 和 l，分别表示从社区 A 和社区 B 中选出的住户数量，要求 k ≥ 1 且 l ≥ 1。\n接下来的 k 行，每行两个整数，表示从社区 A 中选出的住户的坐标。\n接下来的 l 行，每行两个整数，表示从社区 B 中选出的住户的坐标。\n这些选出的点必须构成一个不可分离的证据，即满足以下条件之一：\n1. 选出的 A 点子集的凸包与选出的 B 点子集的凸包相交；\n2. 存在选出的 A 子集中的一个点严格位于选出的 B 子集的凸包内部，或者存在选出的 B 子集中的一个点严格位于选出的 A 子集的凸包内部。\n如果满足任意一种情况，则足以证明不存在任何圆能够严格分离这两个子集中的所有点，从而原问题也无解。验证者只需依据证书中的点即可做出判定。",
+    "constraints": [
+      "1 ≤ n, m ≤ 10000",
+      "-10000 ≤ x, y ≤ 10000，所有点坐标为整数且互不相同",
+      "时间限制：2000 ms (2 seconds)",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "2 2\n0 0\n2 0\n1 1\n1 -1",
+        "output": "NO\n2 2\n0 0\n2 0\n1 1\n1 -1",
+        "explanation": "社区 A 的两个住户 (0, 0) 和 (2, 0) 构成的凸包是一条水平线段，社区 B 的两个住户 (1, 1) 和 (1, -1) 构成的凸包是一条垂直线段，这两条线段相交于点 (1, 0)，因此不可能存在一个圆将两个社区严格分开。输出的证书包含了这两个子集本身，它们已经足以证明不可分离。"
+      },
+      {
+        "input": "2 1\n0 0\n0 1\n10 10",
+        "output": "YES\n0.0 0.5 0.6",
+        "explanation": "构造圆心为 (0.0, 0.5)、半径为 0.6 的圆。社区 A 的点 (0, 0) 和 (0, 1) 到圆心的距离均为 0.5，严格小于半径；社区 B 的点 (10, 10) 到圆心的距离约为 13.44，严格大于半径，因此满足要求。"
+      }
+    ],
+    "notes": "1. 当输出 YES 时，任何满足严格分离条件的圆均为正确答案，你可以输出任意一个。\n2. 当输出 NO 时，证书不要求包含的点数最小，只要满足上述冲突条件即可。事实上，若整个问题无解，总是存在这样的证书。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_3b7f10e3d5c5_community_services_20260529_154605",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

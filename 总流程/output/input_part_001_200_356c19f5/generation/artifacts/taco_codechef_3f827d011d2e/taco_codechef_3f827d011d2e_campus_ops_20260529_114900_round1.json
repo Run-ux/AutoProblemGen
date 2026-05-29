@@ -1,0 +1,898 @@
+{
+  "problem_id": "taco_synthetic_game_rooted",
+  "source_problem_ids": [
+    "taco_codechef_3f827d011d2e"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_3f827d011d2e",
+      "ROOTTREE",
+      "codechef",
+      "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well. A *directed tree* is a directed graph such that if all edges were undirected, this graph would be a tree. A *root...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "必须修改核心约束以引入轮流操作和胜负判定（C 轴），目标从最小化操作次数变为判断先手是否有必胜策略（O 轴），不变量从计数入度零的节点个数变为博弈状态的势函数或 Nim 等价量（V 轴）。",
+    "summary": "操作定义基本保留，但加入玩家交替与获胜条件；目标改为判定最优博弈下的胜方；不变量改为基于树势函数的异或和。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.507,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.507,
+    "axis_scores": {
+      "I": 0.0798,
+      "C": 0.699,
+      "O": 0.6528,
+      "V": 0.5707
+    },
+    "components": {
+      "input_tree_distance": 0.0798,
+      "constraint_match_distance": 0.699,
+      "objective_type_distance": 0.6708,
+      "objective_text_distance": 0.6259,
+      "invariant_match_distance": 0.5707
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "determine_winner",
+    "description": "Assuming both players play optimally, determine whether the first player can force a win.",
+    "target": "output 'First' or 'Second'",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "博弈规则将原单人最小化操作过程重构为双方轮流行动、最优博弈胜负判断，彻底改变问题类型和求解方向。原题操作自然可对抗化，状态演化可建立博弈不变量，创新度和难度提升潜力最大。反向设计虽然也可行，但变革程度相对较低，且核心仍保留确定性求解范式。canonical_witness易退化为输出后处理，不予考虑。；创新度判断：将确定性序列操作转化为对抗性博弈，引入轮流决策、最优响应和博弈状态不变量，彻底脱离原题的最优化框架，要求分析必胜策略或得分差。；难度判断：博弈引入后，需要分析状态类别的转移与必胜态判定，从简单计数跃迁至博弈图搜索、不变量构造与策略证明，预测难度显著提高。；风险判断：主要风险是如何定义胜负条件使得博弈不退化（如先手一步必胜），需通过设计初始状态和操作限制来确保深度。但原题最小操作次数可大于1，且操作空间大，有望克服。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_synthetic_game_rooted",
+    "source": "synthetic",
+    "input_structure": {
+      "type": "tree",
+      "length": {
+        "min": 2,
+        "max": 10000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 10000
+      },
+      "properties": {
+        "directed": true,
+        "connected": true,
+        "simple": true,
+        "acyclic_if_undirected": true,
+        "root_candidate_vertex_1": true,
+        "multiple_test_cases": true
+      },
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "input_directed_tree",
+          "description": "The given graph is a directed tree (its underlying undirected graph is a tree) with vertices 1..N.",
+          "formal": "",
+          "source_sections": []
+        },
+        {
+          "name": "legal_operation",
+          "description": "On a turn, a player chooses an existing directed edge (u, v), removes it, and adds a new directed edge (x, y) such that the resulting graph remains a directed tree.",
+          "formal": "",
+          "source_sections": []
+        },
+        {
+          "name": "turn_alternation",
+          "description": "Two players, called First and Second, alternate turns, with First making the first move.",
+          "formal": "",
+          "source_sections": []
+        },
+        {
+          "name": "win_condition",
+          "description": "If after a player's operation the graph becomes a rooted directed tree with vertex 1 as the root (i.e., from 1 it is possible to reach every vertex), that player wins immediately and the game ends.",
+          "formal": "",
+          "source_sections": []
+        },
+        {
+          "name": "initial_non_terminal",
+          "description": "It is guaranteed that the initial graph is not already a rooted directed tree with root 1; otherwise First would win without playing.",
+          "formal": "",
+          "source_sections": []
+        }
+      ]
+    },
+    "objective": {
+      "type": "determine_winner",
+      "description": "Assuming both players play optimally, determine whether the first player can force a win.",
+      "target": "output 'First' or 'Second'",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "node_potential_nim_sum",
+          "description": "For each vertex v ≠ 1, define its potential as the number of edges on the unique undirected path from v to 1 that are directed away from 1. The game is equivalent to Nim with heaps given by these potentials. The Grundy value of a state is the XOR sum of all node potentials. A position is winning for the player to move if and only if the XOR sum is non-zero. Moreover, any legal operation changes exactly one node's potential by some amount, analogous to a Nim move.",
+          "properties": {
+            "initial_xor": "computed from tree",
+            "win_condition": "xor != 0 → First wins"
+          },
+          "evidence_source": "analysis"
+        },
+        {
+          "name": "irreversibility_in_optimal_play",
+          "description": "Under optimal play, players will never make moves that increase the total sum of potentials, ensuring the game terminates after O(N) moves.",
+          "properties": {},
+          "evidence_source": "analysis"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "deterministic_process_to_game_outcome",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Count vertices with in-degree zero; the answer is count - 1.",
+    "reusable_subroutines": "Reading the directed tree structure, computing in-degrees of all vertices.",
+    "new_solver_core": "Compute the XOR sum of node potentials (or equivalently, the Nim value of the game configuration) and determine the winner based on whether the sum is non-zero.",
+    "new_proof_obligation": "Prove that the game is equivalent to Nim with potentials as heap sizes: (1) any valid move only affects the potential of a single node and can decrease it by any positive amount; (2) the terminal state (rooted at 1) has XOR sum zero; (3) no move can increase the XOR sum in optimal play, so the game terminates. Additionally, prove that the parity of potential cannot be left unchanged by a move unless the player chooses a suboptimal move.",
+    "why_direct_reuse_fails": "The original solution formula c-1 does not account for alternating play, adversarial choice, or optimal strategies. The outcome is no longer determined by the mere count of zero-in-degree vertices but by a global Nim-sum over node potentials, requiring a fundamentally different analysis."
+  },
+  "anti_shallow_rationale": "虽然操作与种子题完全相同，但引入了对抗性轮替和博弈目标，致使状态空间必须用 Nim 等价类分析，而不是简单的入度零计数。从单人优化到双人零和博弈是一个本质性的复杂度提升；新题要求论证势函数的不变性和最优策略的性质，不可能通过只在原题上包装故事或修改输入格式实现。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "turn_structure_binding",
+      "selection_reason": "必须将原单人过程转化为双方轮流操作的正式博弈规则，否则对抗语义无法落地。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 增加了 turn_alternation 和 win_condition 约束",
+        "objective 从 minimize_value 变为 determine_winner"
+      ],
+      "innovation_reason": "为原本单纯的操作序列注入对抗交互，使问题从优化变成策略对抗。",
+      "difficulty_reason": "迫使分析双方最优响应，而不是只寻找一条最短路径。"
+    },
+    {
+      "id": "adversarial_state_invariant",
+      "selection_reason": "必须建立刻画必胜与必败状态的博弈不变量，否则无法判定结果。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 维持操作定义作为状态转移规则",
+        "invariant 引入 node_potential_nim_sum 将状态映射到 Nim"
+      ],
+      "innovation_reason": "将状态空间从单人成本可达集扩展为对抗可达集，并通过 Nim 等价提供可计算的不变量。",
+      "difficulty_reason": "需要证明势函数的合理性以及操作对该函数的影响规律，并进行策略转移论证。"
+    },
+    {
+      "id": "optimal_play_contract",
+      "selection_reason": "必须锁定输出为双方均采取最优策略下的博弈结果，否则答案无唯一性。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确输出成立的前提是双方最优",
+        "invariant 中声明 XOR sum 决定胜负的条件是基于最优玩法"
+      ],
+      "innovation_reason": "答案从“给定策略下的最小操作数”变成“所有策略交互下的必然结果”，强化了策略语义。",
+      "difficulty_reason": "要求证明在最优策略下该结果唯一且可被高效计算，不能仅靠模拟某一固定策略。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "seed_has_hidden_construction_and_canonical_space",
+      "selection_reason": "原题仅要求输出最小操作数，其本质为计数问题，但背后存在明确的构造对象（操作序列）且可定义规范顺序（如字典序）。原标准解法只统计入度为0的节点数，不构造或输出任何方案，满足“原题本身有明确的解对象”和“方案有自然顺序”的准入条件，同时回避了“原题本来就要求输出完整方案”和“顺手回溯就能拿到方案”的禁止项。升级为输出带规范性的构造输出会改变核心约束、目标和验证责任，有空间让解法从纯计数转为构造算法。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示目标为minimize_value，输出单一整数；标准解法仅维护入度为0的计数器，无方案记录（evidence: solution_code）。规则声明required_seed_properties包含‘原题本身有明确的解对象，或者答案可以恢复成方案’且‘方案有自然顺序’，forbidden_seed_properties含‘原解只要顺手回溯就能拿到方案’——本种子均符合。helper‘canonical_order_pressure’要求规范顺序进入合法性或最优性定义，可在此通过要求输出字典序最小的操作序列实现，从而改变C、O、V轴。",
+        "feedback": "建议在下一阶段明确规范顺序如何融入目标或约束（如直接要求输出字典序最小的操作序列，或作为第二关键字最小化），以确保其真正影响状态设计和验证逻辑，避免退化为输出后处理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_obstruction_in_seed",
+      "selection_reason": "种子题始终有解，不存在“做不到”的无解情形，无法构造局部冲突证据。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定有向树，允许删除边并添加新边使其保持有向树，求最小操作次数。解法显示最小操作数为入度0节点数减1，对所有输入均能计算出非负整数，不存在无解情况。因此无法满足规则要求的“做不到的原因可以用局部证据表示”。",
+        "feedback": "规则要求输出方案或冲突证据，但种子题没有无解分支，冲突证据无法自然产生。建议选择存在真实障碍的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.35,
+      "reason_code": "deficiency_in_seed_properties",
+      "selection_reason": "种子题是单目标最小化操作数问题，原始解概念仅为一个整数，原题描述和约束中从未定义任何两个操作方案等价的规则；要将这种最优化问题改为计数题，必须重新发明计数对象和去重规则，而原题没有提供任何单元拆分或等价关系基础，不同操作序列、不同最终树形态的等价性缺乏自然定义，无法满足规则要求的“不同解之间的等价关系能说清楚”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中objective为minimize_value，输出仅一个整数；invariant仅给出最小操作数等于入度为零节点数减一，未涉及任何候选解的比较或等价；原题描述与示例均未提及解的多样性或等价分类，因此缺乏定义计数对象等价关系的基础。",
+        "feedback": "该种子题的最优值结构不利于直接形成量化计数题，建议更换为已有多个候选解或解集可枚举的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是静态有向树上的确定性计数问题，不存在顺序不确定、资源波动或局部选择差异等可被形式化为扰动模型的语义元素；违反规则要求的“扰动模型必须来自原题本身”。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述及约束均为确定性结构：给定有向树，每次操作仍保持有向树，目标为最小化操作次数，解法直接统计零入度顶点数，无任何不确定性或最坏情况依赖。规则明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，且禁止“只能靠故事背景硬造对手”。",
+        "feedback": "建议寻找本身包含在线决策、对抗性输入或资源动态变化的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题本身已经是求最小操作次数的优化问题，并非可行性判定问题，缺乏从判定升级为临界参数的自然基础；规则要求的“原题可行性随参数具有单调性”在本问题中不存在，强行应用只会产生与原题几乎等价的题目，无实质新颖性。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为“最小化将给定有向树转化为有根有向树所需操作次数”，属于优化问题；规则要求种子题必须为“判定或可行性问题”且“可行性随某个参数具有清晰单调性”；原题缺少“可行性判定”这一前提，不符合required_seed_properties。",
+        "feedback": "若种子题为判定是否存在不超过k次操作的有根化方案，则本规则可能有意义；当前优化形式与原题高度重复，无法产生有教学价值的区间扩张。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_conflicting_second_objective",
+      "selection_reason": "原题只有一个最小化操作次数的目标，题目描述、约束和标准解法均未涉及任何其他度量（如树高、代价权重等），不存在自然的第二评价指标，更无法构成真实冲突。强行引入第二指标将沦为背景改写或无关附加约束，违反全局红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 schema 中 objective 仅包含“最小化将给定有向树转化为有根有向树所需操作次数”，核心约束仅为输入为有向树且操作后保持有向树，标准解法直接统计入度为零的节点数（c）并输出 c-1。任何额外指标（如深度、直径等）在原题中均未出现，不属于原题对象的自然属性。",
+        "feedback": "该规则要求存在原题目标附近自然的、冲突的第二指标，但当前种子题不具备。建议选用本身含有资源消耗、时间、质量等多维度评分的种子题，或者将规则应用于多指标场景（如费用流、带权覆盖等）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "strong_inverse_design_candidate",
+      "selection_reason": "原题输出最小操作数是明确的标量目标，操作集（删边加边）天然构成设计自由度；反向要求设计输入或修改使该目标成立时，核心约束仍围绕有向树性质，符合helpers对目标绑定与编辑合同的要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为minimize_value，输出操作计数；invariant中包含最小操作数公式(z-1)；core_constraints约束操作后仍为有向树；原问题描述明确定义了允许的边修改操作。",
+        "feedback": "规划时需注意目标绑定不能退化为“判断答案是否等于给定值”，必须通过编辑操作合同引入构造或最小性证明，避免浅层反向。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "原题ROOTTREE求解基于全局统计量（入度为0节点数），没有可独立求解的局部组件，无法满足规则要求的'原题存在可分解的局部单元'。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema显示：输入为一棵有向树，核心约束为操作保持有向树性质，目标为最小操作次数。标准解法是统计入度为0的节点数c，输出c-1，无任何可分治的局部单元。规则required_seed_properties明确要求'原题存在可分解的局部单元'，本种子题不满足。",
+        "feedback": "建议选择具有明显多组件、多区间、多查询可独立求解再整合的种子题，例如多段区间选点、多连通块分别处理等，才能应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "natural_adversarial_extension_possible",
+      "selection_reason": "原题操作（删除并添加有向树中的一条边）可视为轮流行动；不同操作改变图状态和入度分布，能支持博弈状态空间；引入先手后手后，可以定义谁完成有根树为胜的自然胜负条件，符合博弈化要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中操作是‘Choose some edge which currently exists in the graph. Remove this edge. Add a new edge in such a way that the graph becomes a directed tree again.’，这提供了可轮流选择的状态改变操作。原题不变量围绕入度为零的顶点数，该值随操作动态变化，因此不同操作会改变后续状态，具备对抗博弈潜力。",
+        "feedback": "规则符合，建议规划时注意胜负条件的清晰定义和博弈状态不变量的构造。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_mismatch",
+      "selection_reason": "原题核心基于全局计数（入度为0的节点数），不存在路径、区间或子树等局部结构族，无法自然形成覆盖或割关系，规则依赖的局部对象族前提不满足。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题 ROOTTREE 要求最小操作次数将有向树变为根树，其标准解仅为计数入度为0的顶点并减1（invariant 中记录为 z-1），核心结构为有向树整体，不涉及多个可组合的局部路径、区间或子树对象，违反规则 eligibility.required_seed_properties。",
+        "feedback": "种子问题缺少可组合的局部对象族，规则所需的最小局部结构缺失，无法构造覆盖或割语义，建议更换种子或调整规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题 ROOTTREE 是最小化操作次数问题，并非普通计数题，不符合规则对种子题必须为明确有限计数对象的要求。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题 schema 中 objective.type 为 minimize_value，描述为“最小化将给定有向树转化为有根有向树所需操作次数”，不存在计数目标；invariant 虽涉及计数入度为0的节点，但原题并非直接要求统计该计数。",
+        "feedback": "规则要求原题为普通计数题，但本题为最优化题，没有明确的计数对象，因此无法进行带权或分布计数扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_has_hidden_construction_and_canonical_space",
+      "message": "原题仅要求输出最小操作数，其本质为计数问题，但背后存在明确的构造对象（操作序列）且可定义规范顺序（如字典序）。原标准解法只统计入度为0的节点数，不构造或输出任何方案，满足“原题本身有明确的解对象”和“方案有自然顺序”的准入条件，同时回避了“原题本来就要求输出完整方案”和“顺手回溯就能拿到方案”的禁止项。升级为输出带规范性的构造输出会改变核心约束、目标和验证责任，有空间让解法从纯计数转为构造算法。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 1.02,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示目标为minimize_value，输出单一整数；标准解法仅维护入度为0的计数器，无方案记录（evidence: solution_code）。规则声明required_seed_properties包含‘原题本身有明确的解对象，或者答案可以恢复成方案’且‘方案有自然顺序’，forbidden_seed_properties含‘原解只要顺手回溯就能拿到方案’——本种子均符合。helper‘canonical_order_pressure’要求规范顺序进入合法性或最优性定义，可在此通过要求输出字典序最小的操作序列实现，从而改变C、O、V轴。",
+        "feedback": "建议在下一阶段明确规范顺序如何融入目标或约束（如直接要求输出字典序最小的操作序列，或作为第二关键字最小化），以确保其真正影响状态设计和验证逻辑，避免退化为输出后处理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_obstruction_in_seed",
+      "message": "种子题始终有解，不存在“做不到”的无解情形，无法构造局部冲突证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定有向树，允许删除边并添加新边使其保持有向树，求最小操作次数。解法显示最小操作数为入度0节点数减1，对所有输入均能计算出非负整数，不存在无解情况。因此无法满足规则要求的“做不到的原因可以用局部证据表示”。",
+        "feedback": "规则要求输出方案或冲突证据，但种子题没有无解分支，冲突证据无法自然产生。建议选择存在真实障碍的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "deficiency_in_seed_properties",
+      "message": "种子题是单目标最小化操作数问题，原始解概念仅为一个整数，原题描述和约束中从未定义任何两个操作方案等价的规则；要将这种最优化问题改为计数题，必须重新发明计数对象和去重规则，而原题没有提供任何单元拆分或等价关系基础，不同操作序列、不同最终树形态的等价性缺乏自然定义，无法满足规则要求的“不同解之间的等价关系能说清楚”。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.35,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中objective为minimize_value，输出仅一个整数；invariant仅给出最小操作数等于入度为零节点数减一，未涉及任何候选解的比较或等价；原题描述与示例均未提及解的多样性或等价分类，因此缺乏定义计数对象等价关系的基础。",
+        "feedback": "该种子题的最优值结构不利于直接形成量化计数题，建议更换为已有多个候选解或解集可枚举的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是静态有向树上的确定性计数问题，不存在顺序不确定、资源波动或局部选择差异等可被形式化为扰动模型的语义元素；违反规则要求的“扰动模型必须来自原题本身”。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述及约束均为确定性结构：给定有向树，每次操作仍保持有向树，目标为最小化操作次数，解法直接统计零入度顶点数，无任何不确定性或最坏情况依赖。规则明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，且禁止“只能靠故事背景硬造对手”。",
+        "feedback": "建议寻找本身包含在线决策、对抗性输入或资源动态变化的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题本身已经是求最小操作次数的优化问题，并非可行性判定问题，缺乏从判定升级为临界参数的自然基础；规则要求的“原题可行性随参数具有单调性”在本问题中不存在，强行应用只会产生与原题几乎等价的题目，无实质新颖性。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为“最小化将给定有向树转化为有根有向树所需操作次数”，属于优化问题；规则要求种子题必须为“判定或可行性问题”且“可行性随某个参数具有清晰单调性”；原题缺少“可行性判定”这一前提，不符合required_seed_properties。",
+        "feedback": "若种子题为判定是否存在不超过k次操作的有根化方案，则本规则可能有意义；当前优化形式与原题高度重复，无法产生有教学价值的区间扩张。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_second_objective",
+      "message": "原题只有一个最小化操作次数的目标，题目描述、约束和标准解法均未涉及任何其他度量（如树高、代价权重等），不存在自然的第二评价指标，更无法构成真实冲突。强行引入第二指标将沦为背景改写或无关附加约束，违反全局红线。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 schema 中 objective 仅包含“最小化将给定有向树转化为有根有向树所需操作次数”，核心约束仅为输入为有向树且操作后保持有向树，标准解法直接统计入度为零的节点数（c）并输出 c-1。任何额外指标（如深度、直径等）在原题中均未出现，不属于原题对象的自然属性。",
+        "feedback": "该规则要求存在原题目标附近自然的、冲突的第二指标，但当前种子题不具备。建议选用本身含有资源消耗、时间、质量等多维度评分的种子题，或者将规则应用于多指标场景（如费用流、带权覆盖等）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "strong_inverse_design_candidate",
+      "message": "原题输出最小操作数是明确的标量目标，操作集（删边加边）天然构成设计自由度；反向要求设计输入或修改使该目标成立时，核心约束仍围绕有向树性质，符合helpers对目标绑定与编辑合同的要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为minimize_value，输出操作计数；invariant中包含最小操作数公式(z-1)；core_constraints约束操作后仍为有向树；原问题描述明确定义了允许的边修改操作。",
+        "feedback": "规划时需注意目标绑定不能退化为“判断答案是否等于给定值”，必须通过编辑操作合同引入构造或最小性证明，避免浅层反向。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "原题ROOTTREE求解基于全局统计量（入度为0节点数），没有可独立求解的局部组件，无法满足规则要求的'原题存在可分解的局部单元'。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema显示：输入为一棵有向树，核心约束为操作保持有向树性质，目标为最小操作次数。标准解法是统计入度为0的节点数c，输出c-1，无任何可分治的局部单元。规则required_seed_properties明确要求'原题存在可分解的局部单元'，本种子题不满足。",
+        "feedback": "建议选择具有明显多组件、多区间、多查询可独立求解再整合的种子题，例如多段区间选点、多连通块分别处理等，才能应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "natural_adversarial_extension_possible",
+      "message": "原题操作（删除并添加有向树中的一条边）可视为轮流行动；不同操作改变图状态和入度分布，能支持博弈状态空间；引入先手后手后，可以定义谁完成有根树为胜的自然胜负条件，符合博弈化要求。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.82,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中操作是‘Choose some edge which currently exists in the graph. Remove this edge. Add a new edge in such a way that the graph becomes a directed tree again.’，这提供了可轮流选择的状态改变操作。原题不变量围绕入度为零的顶点数，该值随操作动态变化，因此不同操作会改变后续状态，具备对抗博弈潜力。",
+        "feedback": "规则符合，建议规划时注意胜负条件的清晰定义和博弈状态不变量的构造。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_mismatch",
+      "message": "原题核心基于全局计数（入度为0的节点数），不存在路径、区间或子树等局部结构族，无法自然形成覆盖或割关系，规则依赖的局部对象族前提不满足。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题 ROOTTREE 要求最小操作次数将有向树变为根树，其标准解仅为计数入度为0的顶点并减1（invariant 中记录为 z-1），核心结构为有向树整体，不涉及多个可组合的局部路径、区间或子树对象，违反规则 eligibility.required_seed_properties。",
+        "feedback": "种子问题缺少可组合的局部对象族，规则所需的最小局部结构缺失，无法构造覆盖或割语义，建议更换种子或调整规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题 ROOTTREE 是最小化操作次数问题，并非普通计数题，不符合规则对种子题必须为明确有限计数对象的要求。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题 schema 中 objective.type 为 minimize_value，描述为“最小化将给定有向树转化为有根有向树所需操作次数”，不存在计数目标；invariant 虽涉及计数入度为0的节点，但原题并非直接要求统计该计数。",
+        "feedback": "规则要求原题为普通计数题，但本题为最优化题，没有明确的计数对象，因此无法进行带权或分布计数扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划完全兑现了 deterministic_process_to_game_outcome 的专属语义合同：将单人最小化操作次数转化为双人轮流拆添边的零和博弈，建立了 Nim 等价不变量，并锁定最优策略下的胜负判定。",
+      "details": {
+        "review_role": "你扮演一名博弈规划审查官，重点确认规划是否建立双方行动、最优策略和博弈状态不变量。",
+        "review_brief": "确认规划是否把原操作空间转成自然博弈，而不是凭故事背景硬造玩家或固定策略模拟。",
+        "evidence": "所有必须变化轴 C、O、V 均已改变（changed_axes: [\"C\",\"O\",\"V\"]）。三个 helper 全部被应用：turn_structure_binding 通过新增 core_constraints 的 turn_alternation 和 win_condition 以及 objective 变为 determine_winner 实现对抗轮替；adversarial_state_invariant 通过 core_constraints 保留原始操作作为状态转移，并在 invariant 引入 node_potential_nim_sum 将状态映射为 Nim 值；optimal_play_contract 在 objective 中明确“assuming both players play optimally”，并在 invariant 中说明 XOR sum 决定胜负基于最优玩法。硬性检查全部满足：操作源自原题 legal_operation，具备最优语义，形成博弈状态不变量。候选 schema 的 core_constraints 第 3、4 条，objective，invariant 的第 1 条明确支撑了上述兑现。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "rule_semantics_fulfilled",
+      "message": "题面完整兑现了规则专属合同：明确将单人操作转化为两人交替行动，定义了合法操作和即时胜负条件，并锁定双方最优策略下的先手必胜性判断，核心约束、目标和博弈状态不变量均已通过规则语义实现。",
+      "details": {
+        "review_role": "你扮演一名博弈题面审查官，重点确认题面是否写清双方行动、终止条件和最优策略语义。",
+        "review_brief": "确认题面是否要求在双方最优行动下判断胜负或计算得分差。",
+        "evidence": "题面描述中写入“现有两位玩家 A（先手）和 B（后手）轮流调整指导关系”，操作规则从原图操作自然延伸；“一旦某位玩家操作结束后，有向图变成了以社团 1 为根的有向树，该玩家立即获胜”明确胜负目标；“假设双方都采取最优策略且都以获胜为目标”以及输出要求 First/Second 锁定最优博弈结果；操作定义与回合交替共同形成可分析的博弈状态不变量（如 Nim 等价），满足 helpers 的全部 redlines 与合约承诺。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "INVARIANT_NOT_REALIZED",
+      "message": "题面未在描述或约束中体现博弈状态不变量，未能兑现 adversarial_state_invariant 和 optimal_play_contract 中关于 invariant 必须实现的承诺。",
+      "details": {
+        "review_role": "你扮演一名博弈题面审查官，重点确认题面是否写清双方行动、终止条件和最优策略语义。",
+        "review_brief": "确认题面是否要求在双方最优行动下判断胜负或计算得分差。",
+        "evidence": "在 generated_problem 的 description 和 constraints 中，只定义了操作规则和胜负条件，未提及任何关于状态势函数、Nim 等价量或其它博弈不变量的内容。而 new_schema 中明确规划了 node_potential_nim_sum 不变量，但题面完全没有呈现。此外，helper adversarial_state_invariant 的 must_realize_in 指定了 core_constraints 和 invariant，但题面中不存在 invariant 部分。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确描述了双方轮流操作的规则、获胜条件，并要求在双方最优策略下判定先手胜负，完整兑现了博弈转化合同的各项专属责任。",
+      "details": {
+        "review_role": "你扮演一名博弈题面审查官，重点确认题面是否写清双方行动、终止条件和最优策略语义。",
+        "review_brief": "确认题面是否要求在双方最优行动下判断胜负或计算得分差。",
+        "evidence": "题面中‘两位学生干部 A（先手）和 B（后手）轮流修改指导关系’落实了 helper turn_structure_binding 的轮流行动要求（见 core_constraints）；‘一旦某位玩家操作后，有向树变成了以社团 1 为根的状态，该玩家立即获胜’明确了 win_condition（见 core_constraints）；‘假设双方都采取最优策略，并且都以获胜为目标。请判断先手是否有必胜策略’锁定了 optimal_play_contract 的最优博弈结果责任（见 objective）。游戏操作源自原题有向树结构（legal_operation），状态转移隐含 Nim 不变量（adversarial_state_invariant），且最优策略前提在描述和样例解释中反复强调。规划中的 new_schema 的 objective 和 core_constraints 与题面表述一致。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "score": 0.82,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "社团指导权博弈",
+    "description": "某大学有 $N$ 个社团，编号 $1$ 到 $N$。社团之间存在单向的“指导”关系，例如社团 $A$ 指导社团 $B$ 意味着 $A$ 可以向 $B$ 提供支持。这些指导关系构成了一棵有向树：如果把所有指导关系看作无向边，得到的图是一棵无根树。\n\n如果存在一个社团 $r$，使得从 $r$ 出发遵循指导方向可以到达所有其他社团，就说这棵有向树以 $r$ 为根。学生会所在的社团 $1$ 希望未来能够直接或间接指导全校所有社团，也就是达到以社团 $1$ 为根的状态。\n\n现在，两位学生干部 A（先手）和 B（后手）轮流修改指导关系，每次操作规定如下：\n- 选择一条当前存在的有向边 $(u, v)$，将其删除；\n- 再添加一条新的有向边 $(x, y)$，使得整张图仍是一棵有向树（不允许出现重边或多条边指向同一结点导致非树结构）。\n\n一旦某位玩家操作后，有向树变成了以社团 $1$ 为根的状态，该玩家立即获胜，游戏结束。\n\n初始状态保证不是以社团 $1$ 为根（否则先手无需操作即已获胜）。\n\n假设双方都采取最优策略，并且都以获胜为目标。请判断先手是否有必胜策略。",
+    "input_format": "第一行包含一个整数 $T$，表示测试数据的组数。每组数据格式如下：\n第一行包含一个整数 $N$，表示社团数量。\n接下来 $N-1$ 行，每行包含两个整数 $u, v$，表示一条从 $u$ 指向 $v$ 的有向边。",
+    "output_format": "对于每组测试数据，输出一行一个字符串 \"First\" 或 \"Second\"，表示在双方均采取最优策略的条件下，先手是否有必胜策略。",
+    "constraints": [
+      "$1 \\le T \\le 10$",
+      "$2 \\le N \\le 10^4$",
+      "$1 \\le u, v \\le N$",
+      "输入保证给定的图构成一棵有向树",
+      "初始状态下，社团 $1$ 不是能够到达所有社团的根",
+      "所有测试数据的 $N$ 总和不超过 $10^5$",
+      "时间限制：$1$ 秒",
+      "空间限制：$256$ MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n3\n2 1\n3 2",
+        "output": "Second",
+        "explanation": "初始指导关系为 $2 \\to 1, 3 \\to 2$。先手无论执行何种操作，都无法一步达到以社团 $1$ 为根的状态；在最优策略下，后手总能在后续的对局中迫使先手失败，因此后手必胜。"
+      },
+      {
+        "input": "1\n3\n1 2\n3 1",
+        "output": "First",
+        "explanation": "初始指导关系为 $1 \\to 2, 3 \\to 1$。先手可以删除边 $3 \\to 1$ 并添加边 $1 \\to 3$，得到 $1 \\to 2$ 和 $1 \\to 3$，此时从社团 $1$ 可到达所有社团，先手在一步之内获胜，故先手必胜。"
+      }
+    ],
+    "notes": "双方均按照最优策略行动，游戏在有限步内必然结束，且不存在和局。输出应为 'First' 或 'Second'（首字母大写，其余小写）。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_3f827d011d2e_campus_ops_20260529_114900",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

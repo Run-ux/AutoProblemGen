@@ -1,0 +1,915 @@
+{
+  "problem_id": "taco_codeforces_717b530a21a4",
+  "source_problem_ids": [
+    "taco_codeforces_717b530a21a4"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_717b530a21a4",
+      "codeforces",
+      "A subway scheme, classic for all Berland cities is represented by a set of n stations connected by n passages, each of which connects exactly two stations and does not pass through any others. Besides, in the classic...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "Core constraints now define an object family (all vertices) and a coverage condition (distance ≤ K). The objective shifts from distance look‑up to minimization of a covering set. Invariants extend from local correctness to global feasibility and optimality.",
+    "summary": "From local distance computation to global covering optimization.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4259,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4259,
+    "axis_scores": {
+      "I": 0.0556,
+      "C": 0.7037,
+      "O": 0.4658,
+      "V": 0.4221
+    },
+    "components": {
+      "input_tree_distance": 0.0556,
+      "constraint_match_distance": 0.7037,
+      "objective_type_distance": 0.5108,
+      "objective_text_distance": 0.3982,
+      "invariant_match_distance": 0.4221
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "optimization",
+    "description": "Find the minimum number of service points (vertices) to select so that for every vertex v, there exists a selected vertex s with dist(v,s) ≤ K.",
+    "target": "min_cardinality_of_dominating_set_with_radius_K",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "该规则能将原题的单点距离计算自然扩展为基于路径族的全局覆盖问题，既深刻改变了求解核心，又依赖原图结构，可稳定落地；而反向设计虽然有翻转求解方向的潜力，但可能引入组合爆炸或退化为简单判定，落地风险较高。；创新度判断：核心义务从计算每个节点的最短距离转变为选择最小节点集以覆盖所有节点到环的路径，要求理解路径之间的依赖关系和覆盖性质，彻底脱离原题的局部求解模式。；难度判断：在主求解责任上，从简单的BFS距离计算升级为在树-环混合结构上求解最小支配/覆盖集，需要设计贪心或动态规划算法，显著提升了算法设计难度。；风险判断：主要风险是可能退化成独立处理多条路径的浅层组合，但通过强制要求全局最小覆盖并利用图结构设计特有算法，可将风险控制在创新框架内。",
+  "new_schema_snapshot": {
+    "problem_id": "",
+    "source": "derived",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "directed": false,
+        "simple": true,
+        "connected": true,
+        "acyclic": false,
+        "exactly_one_cycle": true
+      },
+      "components": [
+        {
+          "role": "n",
+          "role_description": "number of residences (vertices)",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 3,
+            "max": 3000
+          },
+          "properties": {}
+        },
+        {
+          "role": "K",
+          "role_description": "distance threshold for service coverage",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 3000
+          },
+          "properties": {}
+        },
+        {
+          "role": "edges",
+          "role_description": "list of undirected edges connecting residences",
+          "type": "array",
+          "length": {
+            "min": 3,
+            "max": 3000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "directed": false,
+            "simple": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "graph_unicyclic",
+          "description": "The graph is connected, has n vertices and n edges, contains no self‑loops or multiple edges; therefore it contains exactly one simple cycle.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "object_family",
+          "description": "All n vertices are considered residences that require service coverage. Each residence must be within distance K of at least one chosen service point.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "distance_metric",
+          "description": "Distance between two vertices is the number of edges on a shortest path in the graph.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "optimization",
+      "description": "Find the minimum number of service points (vertices) to select so that for every vertex v, there exists a selected vertex s with dist(v,s) ≤ K.",
+      "target": "min_cardinality_of_dominating_set_with_radius_K",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "global_coverage",
+          "description": "For the output integer m, there exists a set S of size m such that every vertex v satisfies dist(v,S) ≤ K. No set of size less than m satisfies this property.",
+          "properties": {},
+          "evidence_source": "proof"
+        },
+        {
+          "name": "graph_cycle_property",
+          "description": "The graph contains exactly one simple cycle, which is used to decompose the problem into tree components for algorithmic treatment.",
+          "properties": {},
+          "evidence_source": "input"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "local_path_to_global_cover",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Find the unique cycle by DFS back‑edge detection, then compute distances from cycle nodes to all nodes via multi‑source BFS.",
+    "reusable_subroutines": "Cycle detection and BFS‑based distance computation can be reused to pre‑compute all‑pairs distances or to build a rooted tree after breaking the cycle.",
+    "new_solver_core": "Cut one cycle edge to obtain a tree; use dynamic programming on the tree to compute a minimum dominating set with radius K, while iterating over possible states of the cycle to restore correctness.",
+    "new_proof_obligation": "Prove the DP on the tree correctly solves the coverage problem for a given cycle configuration, and that the enumeration over cycle choices leads to the global optimum. This requires arguing the DP state transitions (e.g., node selected / covered by child / covered by parent) and the merging of solutions across the cycle break.",
+    "why_direct_reuse_fails": "The seed algorithm only computes distances from a fixed set (the cycle) and outputs those values. It does not address a combinatorial selection problem where the covering set is variable and must be globally optimal."
+  },
+  "anti_shallow_rationale": "Merely computing per‑vertex distances and outputting a list would be a shallow rewrite. The new problem requires solving a minimum domination problem with distance constraints – a fundamentally different combinatorial optimization task whose solution cannot be derived by a trivial modification of the seed algorithm.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "object_family_expansion",
+      "selection_reason": "The seed only handles individual vertex distances to a fixed cycle. To create a global cover problem, we define every vertex as an object requiring coverage, forming a family.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Core_constraints extended with object family: all vertices are residences needing coverage.",
+        "Objective changed from computing distances to minimizing the size of a dominating set with radius K."
+      ],
+      "innovation_reason": "Promotes the problem from solving a local property per object to managing a global object family with interdependencies.",
+      "difficulty_reason": "The algorithm must now deal with selection and overlapping coverage among many objects, rather than independent distance look‑ups."
+    },
+    {
+      "id": "cover_cut_consistency",
+      "selection_reason": "A single choice of service points must simultaneously satisfy the distance bound for all residences, creating a global consistency requirement.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Core_constraints now explicitly state the coverage relation (distance ≤ K) and the obligation that one set S covers every vertex.",
+        "Invariant strengthened to the fact that every vertex must be within K of the chosen set."
+      ],
+      "innovation_reason": "Introduces mutual constraints across objects governed by a single selection, which was absent in the seed.",
+      "difficulty_reason": "The correctness argument must ensure the chosen set works for all objects simultaneously, complicating the proof."
+    },
+    {
+      "id": "global_certificate_or_value",
+      "selection_reason": "The output must carry a global certificate – the minimum number of service points – which requires proof of optimality.",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Objective becomes a minimization of the set size, entailing an optimality proof.",
+        "Invariant asserts that any smaller set fails to cover all vertices, underlining the minimality guarantee."
+      ],
+      "innovation_reason": "The answer now constitutes a universally valid certificate (minimum coverage) instead of a mere collection of local distances.",
+      "difficulty_reason": "The solver must demonstrate that the output is indeed minimal, adding optimality reasoning on top of feasibility."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "种子题的输出为距离数组，规范解对象（环序列）在解题过程中已被构造但仅作为中间产物，要求输出字典序最小的环序列容易退化为后处理排序，难以迫使主要解法状态转移承担规范性证明，与规则红线‘不能退化为输出后处理’冲突。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 value_computation，输出为 n 个距离整数，无构造输出要求（objective.type）。标准解法通过 DFS 找环得到 parent 数组，回溯即可获得任意环序列，若只需字典序最小则可后处理排序，这属于规则 forbidden_seed_properties 所述‘原解只要顺手回溯就能拿到方案’的变体，且违反 helper 'canonical_order_pressure' 的 redline ‘不能退化为输出后处理’。",
+        "feedback": "种子题虽有明确定义的环对象和自然顺序（最小字典序表示），但核心计算（距离）与规范环输出耦合弱，强行要求规范解很可能仅增加表面格式，无法满足 helper 要求的‘让状态转移承担新的规范性证明’。建议寻找解对象与全局约束紧耦合的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_failure_case",
+      "selection_reason": "种子题输入始终保证是单环连通图，不存在无解情形，因此无法构造构造失败分支或局部冲突证据，规则要求的‘做不到’前提不成立。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题core_constraints[graph_unicyclic]保证图是单环图；invariant[unique_cycle_existence]明确指出图恰好有一个简单环，算法能可靠找到环并计算距离；输入约束不允许反例。",
+        "feedback": "该规则要求种子题存在合法解与无解两种可能，但当前种子题是确定性计算任务，无失败语义，无法将失败原因提炼为可局部检查的冲突证据。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题是确定性的距离计算问题（value_computation），不属于存在性或单一最优值问题，不符合规则 prerequisites。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type = 'value_computation'，输出每节点固定距离；规则 summary 声明适用于 '存在性或单一最优值问题'。",
+        "feedback": "规则严格限定在存在性/最优值问题的计数化，当前种子题为值计算，无法自然转换成计数目标。如放宽种子类型限制，可能可行。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "native_perturbation_absent",
+      "selection_reason": "原题是一道静态图上的距离计算问题，没有顺序不确定、资源波动或局部选择差异，无法找到可被放大的原生扰动来源，强行应用规则会导致扰动模型凭空硬造，违反红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为给定一个 n 个点 n 条边的连通无向图（恰好一个环），要求输出每个点到环的最短距离。输入结构确定，目标为值计算，没有竞争、对手、序列选择或资源分配元素。规则要求的 required_seed_properties 第一条“原题里本来就有顺序不确定、资源波动或局部选择差异”不满足；且原题并非存在性问题，无法应用“从存在性改成最小保底”。",
+        "feedback": "该种子题不具备可被放大的扰动语义，不适合进行最小保底变换。建议更换为具有时序决策、资源分配或竞争背景的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_feasibility_structure",
+      "selection_reason": "原题为计算每个节点到环的最短距离，属于 value_computation 类型，不包含任何可行性判定或是否满足条件的二元性质，无法自然识别出随参数单调变化的可行区域，不满足规则要求的必要种子属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "missing_natural_threshold_parameter"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 objective 是 'value_computation'（计算距离），而非 feasibility；规则要求 required_seed_properties 包含 '原题可行性随某个参数具有清晰的单调性或分层结构'，但原题不存在可行性概念；原题的核心约束是单环图性质和距离遍历，没有可调参数使某些解合法或不合法。",
+        "feedback": "该规则依赖原题已有判定或可行性结构，但当前种子题本质是一个计算题，无法在不重新发明问题的前提下提取出临界参数。若强行引入额外约束（如限制环的大小）将改变原问题域，违背全局红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "ineligible_second_metric_missing",
+      "selection_reason": "原题是计算每个节点到环距离的单指标输出问题，不存在自然的冲突第二评价指标，无法扩展为多目标权衡前沿。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中objective描述为'计算每个节点到环的最短距离'，输出为每个节点距离；原题描述无任何其他指标。规则requires第二指标来自原题对象的自然属性，但该种子题仅涉及距离计算，无其他属性。",
+        "feedback": "种子题是一个单环图上的距离计算问题，没有优化或权衡的语义，缺少引入第二冲突指标的自然基础。建议更换具有天然多属性（如成本、风险、收益）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "反向设计转化可行",
+      "selection_reason": "原题输出距离数组可直接作为反向目标；修改边操作源于图结构，与原核心规律紧密相关；可自然定义最小修改代价，满足规则要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "1. 规则声明要求'原题输出或性质可以作为反向目标被指定'：原题objective为'计算每个节点到环的最短距离'，输出为n个距离值（原题摘要output_summary），可直接作为目标距离数组。2. 要求'存在自然的修改操作或设计自由度'：原题输入为n个节点和n条无向边，构成单环连通图（core_constraints.graph_unicyclic），修改操作可定义为改变边连接，与图结构自然相关，且有足够设计自由度。3. 辅助规则target_result_binding可将原题结果绑定为反向目标；edit_operation_contract可基于边修改定义操作空间；minimality_or_certificate_lock可要求输出最小修改边数或设计正确性证明。4. 不触碰全局红线（非纯换故事、非仅格式改变等），反向求解方向发生根本翻转。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "missing_decomposable_units",
+      "selection_reason": "原题要求计算一张连通图中每个节点到唯一环的最短距离，不存在可独立处理的局部单元；所有节点的距离计算依赖于全局图结构和环检测结果，无法满足规则所需的前提条件「原题存在可分解的局部单元」。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入结构为单一连通图（n个顶点n条边，保证恰好一个环），目标是为每个节点输出到环的距离，该计算必须基于对整张图的遍历找出环，再从环扩展到所有节点，无法分解为多个可独立求解的子任务。规则 eligibility.required_seed_properties 明确要求「原题存在可分解的局部单元」，但原题不具备此特征。",
+        "feedback": "该种子题缺乏多组件或可独立求解的子结构，强行应用全局耦合变换将违反红线「各单元完全没有共同变量」或变得牵强附会，建议拒绝。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_operation",
+      "selection_reason": "原题是一个纯粹的计算任务，没有需要玩家做出选择的自然操作，无法扩展为双方轮流选择的博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为“计算每个节点到环的最短距离”，输入固定，算法是确定性的DFS+BFS，不涉及任何玩家可进行的“拿取”、“移动”等选择操作，也不存在能改变后续状态的选择自由度。",
+        "feedback": "强行对抗化只能靠故事背景硬造玩家，违反红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "local_objects_proven_and_natural_cover_relation",
+      "selection_reason": "原题核心对象（节点到环的路径）天然构成可组合的局部对象族，这些路径在森林结构上可自然施加点覆盖约束，满足规则对局部路径扩展为全局覆盖问题的要求，且原题结构支撑算法求解。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "种子题输入为n节点n边连通图（schema.core_constraints.graph_unicyclic），保证恰有一个简单环。原目标为计算每个节点到环的距离（schema.objective），不变量说明移除环边后形成森林，每个非环节点属于一棵树（schema.invariant.distance_from_cycle_traversal）。由此可构造出每个节点到环的唯一路径作为局部对象，形成路径族，且这些路径在树上相互交叉，能够自然定义覆盖关系（如选取最少点使每条路径至少包含一个选中点），符合规则required_seed_properties。",
+        "feedback": "建议规划时明确将‘节点到环的路径’显式化为对象族，并设计覆盖或割的全局验证条件，避免退化为独立处理每条路径。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_required_seed_properties",
+      "selection_reason": "原题是距离计算题，没有明确的计数对象，更不存在自然权重或统计量，不符合规则要求的种子题基本条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'value_computation'，描述为 '计算每个节点到环的最短距离'，输出为每个节点的距离值，不属于计数问题。整个原题未出现任何需要统计方案总数或带权计数的需求。",
+        "feedback": "此规则仅适用于已有明确计数对象的题目，例如组合计数、方案数问题。当前种子题为图论距离计算，完全不匹配。建议使用组合数学或方案计数类题目作为种子。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "种子题的输出为距离数组，规范解对象（环序列）在解题过程中已被构造但仅作为中间产物，要求输出字典序最小的环序列容易退化为后处理排序，难以迫使主要解法状态转移承担规范性证明，与规则红线‘不能退化为输出后处理’冲突。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 value_computation，输出为 n 个距离整数，无构造输出要求（objective.type）。标准解法通过 DFS 找环得到 parent 数组，回溯即可获得任意环序列，若只需字典序最小则可后处理排序，这属于规则 forbidden_seed_properties 所述‘原解只要顺手回溯就能拿到方案’的变体，且违反 helper 'canonical_order_pressure' 的 redline ‘不能退化为输出后处理’。",
+        "feedback": "种子题虽有明确定义的环对象和自然顺序（最小字典序表示），但核心计算（距离）与规范环输出耦合弱，强行要求规范解很可能仅增加表面格式，无法满足 helper 要求的‘让状态转移承担新的规范性证明’。建议寻找解对象与全局约束紧耦合的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_failure_case",
+      "message": "种子题输入始终保证是单环连通图，不存在无解情形，因此无法构造构造失败分支或局部冲突证据，规则要求的‘做不到’前提不成立。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题core_constraints[graph_unicyclic]保证图是单环图；invariant[unique_cycle_existence]明确指出图恰好有一个简单环，算法能可靠找到环并计算距离；输入约束不允许反例。",
+        "feedback": "该规则要求种子题存在合法解与无解两种可能，但当前种子题是确定性计算任务，无失败语义，无法将失败原因提炼为可局部检查的冲突证据。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题是确定性的距离计算问题（value_computation），不属于存在性或单一最优值问题，不符合规则 prerequisites。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type = 'value_computation'，输出每节点固定距离；规则 summary 声明适用于 '存在性或单一最优值问题'。",
+        "feedback": "规则严格限定在存在性/最优值问题的计数化，当前种子题为值计算，无法自然转换成计数目标。如放宽种子类型限制，可能可行。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "native_perturbation_absent",
+      "message": "原题是一道静态图上的距离计算问题，没有顺序不确定、资源波动或局部选择差异，无法找到可被放大的原生扰动来源，强行应用规则会导致扰动模型凭空硬造，违反红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为给定一个 n 个点 n 条边的连通无向图（恰好一个环），要求输出每个点到环的最短距离。输入结构确定，目标为值计算，没有竞争、对手、序列选择或资源分配元素。规则要求的 required_seed_properties 第一条“原题里本来就有顺序不确定、资源波动或局部选择差异”不满足；且原题并非存在性问题，无法应用“从存在性改成最小保底”。",
+        "feedback": "该种子题不具备可被放大的扰动语义，不适合进行最小保底变换。建议更换为具有时序决策、资源分配或竞争背景的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_feasibility_structure",
+      "message": "原题为计算每个节点到环的最短距离，属于 value_computation 类型，不包含任何可行性判定或是否满足条件的二元性质，无法自然识别出随参数单调变化的可行区域，不满足规则要求的必要种子属性。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "missing_natural_threshold_parameter"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 objective 是 'value_computation'（计算距离），而非 feasibility；规则要求 required_seed_properties 包含 '原题可行性随某个参数具有清晰的单调性或分层结构'，但原题不存在可行性概念；原题的核心约束是单环图性质和距离遍历，没有可调参数使某些解合法或不合法。",
+        "feedback": "该规则依赖原题已有判定或可行性结构，但当前种子题本质是一个计算题，无法在不重新发明问题的前提下提取出临界参数。若强行引入额外约束（如限制环的大小）将改变原问题域，违背全局红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "ineligible_second_metric_missing",
+      "message": "原题是计算每个节点到环距离的单指标输出问题，不存在自然的冲突第二评价指标，无法扩展为多目标权衡前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "Schema中objective描述为'计算每个节点到环的最短距离'，输出为每个节点距离；原题描述无任何其他指标。规则requires第二指标来自原题对象的自然属性，但该种子题仅涉及距离计算，无其他属性。",
+        "feedback": "种子题是一个单环图上的距离计算问题，没有优化或权衡的语义，缺少引入第二冲突指标的自然基础。建议更换具有天然多属性（如成本、风险、收益）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "反向设计转化可行",
+      "message": "原题输出距离数组可直接作为反向目标；修改边操作源于图结构，与原核心规律紧密相关；可自然定义最小修改代价，满足规则要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "1. 规则声明要求'原题输出或性质可以作为反向目标被指定'：原题objective为'计算每个节点到环的最短距离'，输出为n个距离值（原题摘要output_summary），可直接作为目标距离数组。2. 要求'存在自然的修改操作或设计自由度'：原题输入为n个节点和n条无向边，构成单环连通图（core_constraints.graph_unicyclic），修改操作可定义为改变边连接，与图结构自然相关，且有足够设计自由度。3. 辅助规则target_result_binding可将原题结果绑定为反向目标；edit_operation_contract可基于边修改定义操作空间；minimality_or_certificate_lock可要求输出最小修改边数或设计正确性证明。4. 不触碰全局红线（非纯换故事、非仅格式改变等），反向求解方向发生根本翻转。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "missing_decomposable_units",
+      "message": "原题要求计算一张连通图中每个节点到唯一环的最短距离，不存在可独立处理的局部单元；所有节点的距离计算依赖于全局图结构和环检测结果，无法满足规则所需的前提条件「原题存在可分解的局部单元」。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入结构为单一连通图（n个顶点n条边，保证恰好一个环），目标是为每个节点输出到环的距离，该计算必须基于对整张图的遍历找出环，再从环扩展到所有节点，无法分解为多个可独立求解的子任务。规则 eligibility.required_seed_properties 明确要求「原题存在可分解的局部单元」，但原题不具备此特征。",
+        "feedback": "该种子题缺乏多组件或可独立求解的子结构，强行应用全局耦合变换将违反红线「各单元完全没有共同变量」或变得牵强附会，建议拒绝。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_operation",
+      "message": "原题是一个纯粹的计算任务，没有需要玩家做出选择的自然操作，无法扩展为双方轮流选择的博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为“计算每个节点到环的最短距离”，输入固定，算法是确定性的DFS+BFS，不涉及任何玩家可进行的“拿取”、“移动”等选择操作，也不存在能改变后续状态的选择自由度。",
+        "feedback": "强行对抗化只能靠故事背景硬造玩家，违反红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "local_objects_proven_and_natural_cover_relation",
+      "message": "原题核心对象（节点到环的路径）天然构成可组合的局部对象族，这些路径在森林结构上可自然施加点覆盖约束，满足规则对局部路径扩展为全局覆盖问题的要求，且原题结构支撑算法求解。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "种子题输入为n节点n边连通图（schema.core_constraints.graph_unicyclic），保证恰有一个简单环。原目标为计算每个节点到环的距离（schema.objective），不变量说明移除环边后形成森林，每个非环节点属于一棵树（schema.invariant.distance_from_cycle_traversal）。由此可构造出每个节点到环的唯一路径作为局部对象，形成路径族，且这些路径在树上相互交叉，能够自然定义覆盖关系（如选取最少点使每条路径至少包含一个选中点），符合规则required_seed_properties。",
+        "feedback": "建议规划时明确将‘节点到环的路径’显式化为对象族，并设计覆盖或割的全局验证条件，避免退化为独立处理每条路径。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "missing_required_seed_properties",
+      "message": "原题是距离计算题，没有明确的计数对象，更不存在自然权重或统计量，不符合规则要求的种子题基本条件。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'value_computation'，描述为 '计算每个节点到环的最短距离'，输出为每个节点的距离值，不属于计数问题。整个原题未出现任何需要统计方案总数或带权计数的需求。",
+        "feedback": "此规则仅适用于已有明确计数对象的题目，例如组合计数、方案数问题。当前种子题为图论距离计算，完全不匹配。建议使用组合数学或方案计数类题目作为种子。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将单顶点距离计算升级为全局最小支配集问题，定义了对象族、覆盖约束和最优性证明，三个helper均被兑现。",
+      "details": {
+        "review_role": "你扮演一名覆盖规划审查官，重点确认规划是否从单个局部对象升级为对象族上的全局选择。",
+        "review_brief": "确认规划是否定义对象族、覆盖或割关系，并让全局选择同时影响多个对象。",
+        "evidence": "changed_axes包含C,O,V；core_constraints新增object_family约束（'All n vertices are considered residences that require service coverage...'），目标变为最小化集合大小（objective: 'Find the minimum number of service points...'）；invariant新增global_coverage（'For the output integer m, there exists a set S of size m such that every vertex v satisfies dist(v,S) ≤ K. No set of size less than m satisfies this property.'）；applied_helpers明确列出三个helper并给出schema_changes，符合各自must_realize_in和target_axes要求，无红线违反。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "rule_contract_satisfied",
+      "message": "题面将单源距离计算扩展为全局覆盖优化，明确定义了对象族（所有住户）、覆盖口径（距离≤K）和全局可验证目标（最小服务点数），完全兑现了规则 helper 语义和 hard checks。",
+      "details": {
+        "review_role": "你扮演一名覆盖题面审查官，重点确认题面是否写清对象族、覆盖口径和全局验证方式。",
+        "review_brief": "确认题面是否要求输出全局覆盖值、最小割或可验证方案，而不是重复局部任务。",
+        "evidence": "题面描述：“最少需要设立多少个服务点，才能让社区中的每一个住户到某个服务点的距离都不超过 K”（定义对象族和覆盖口径）；目标：输出最小服务点数；不变式：存在集合S使所有顶点距离≤K，且任何更小集合无法满足（全局验证）；样例解释验证了覆盖和最小性。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "社区服务点选址",
+    "description": "在一个新兴社区中，有 n 个住户，住户之间由 n 条道路直接相连。道路可以双向通行，且任意两个住户之间最多只有一条直接道路。整个社区的道路网络是连通的，并且恰好包含一个环路（也就是说，如果看成图，是有 n 个顶点、n 条边的连通图，存在唯一的简单环）。\n\n为了提升居民的生活便利性，社区管委会计划在部分住户处设立服务点（例如快递柜、小型维修站等）。一个服务点可以为距离不超过 K 的住户提供服务。这里，两个住户之间的“距离”定义为沿着道路行走需要经过的最少边数。如果服务点就设在某个住户处，那么该住户的距离为 0。\n\n你需要求出：最少需要设立多少个服务点，才能让社区中的每一个住户到某个服务点的距离都不超过 K。",
+    "input_format": "第一行包含两个整数 n 和 K (3 ≤ n ≤ 3000, 1 ≤ K ≤ 3000)，分别表示住户的数量和服务覆盖的距离阈值。\n\n接下来 n 行，每行包含两个整数 u 和 v (1 ≤ u, v ≤ n, u ≠ v)，表示住户 u 和住户 v 之间有一条直接道路。保证不会出现重复的道路，并且整个道路网络是连通的，恰好包含 n 条边（因此唯一的环路一定存在）。",
+    "output_format": "输出一个整数，表示最少需要设立的服务点数量。",
+    "constraints": [
+      "时间限制：2.0 秒",
+      "空间限制：256 MB",
+      "3 ≤ n ≤ 3000",
+      "1 ≤ K ≤ 3000",
+      "1 ≤ u, v ≤ n，u ≠ v",
+      "图连通，有 n 个顶点和 n 条边，没有重边和自环，因此有且仅有一个简单环",
+      "道路双向通行，距离定义为最短路径上的边数"
+    ],
+    "samples": [
+      {
+        "input": "4 1\n1 2\n2 3\n3 4\n4 1",
+        "output": "2",
+        "explanation": "四个住户构成一个环路。当 K=1 时，每个住户只能被其自身或邻居服务。选择住户 1 和 3 作为服务点：住户 1 覆盖自己、2 和 4；住户 3 覆盖自己、2 和 4。所有住户均被覆盖。容易验证 1 个服务点无法覆盖全部，因此最少需要 2 个。"
+      },
+      {
+        "input": "6 2\n1 2\n2 3\n3 1\n3 4\n4 5\n5 6",
+        "output": "2",
+        "explanation": "图中包含一个三角形 (1,2,3) 以及从 3 到 6 的一条链。K=2 时，只选一个服务点无法覆盖所有住户（例如选 3，则住户 6 的距离为 3，超过 2）。选择住户 3 和 6：住户 3 可覆盖 1(距离1)、2(距离1)、3(0)、4(1)、5(2)；住户 6 可覆盖 6(0) 和 5(1)。所有住户均被覆盖。可以证明最少需要 2 个服务点。"
+      }
+    ],
+    "notes": "",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_717b530a21a4_community_services_20260529_011515",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

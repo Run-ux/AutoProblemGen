@@ -1,0 +1,653 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 96.0,
+    "divergence_score": 82.5,
+    "schema_distance": 0.4595,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的任务变体、输入结构（多测试用例、N、A、Q、requirements 的 p/k/T）、核心约束（编辑操作、重排规则、联合可行性）、目标函数（最小化修改代价）均已准确落地到 generated_problem 的 description、input_format、output_format、constraints 和 samples 中，无缺失或偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立解题所需的全部关键信息：明确的任务说明、详细的输入/输出格式、完整的约束（包括值域、总数限制、时间/空间限制）、样例及解释，以及重要的重排规则和编辑操作说明，没有缺失必要细节。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 4.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间基本一致，但 notes 中“在题目给定的数据中，一定存在可行解”与 output_format 中“如果不可能，请输出 -1”存在轻微矛盾，可能引起理解混淆。其他部分无冲突。",
+        "evidence_refs": [
+          "generated_problem.output_format",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "样例数量为 3，覆盖了无需修改、需修改且多需求、需较大修改等典型情况，解释清晰，有助于理解重排规则和代价计算，质量良好。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面使用温和的社区服务主题，结构清晰，表达规范，符合 OJ 题面习惯，无原题泄露或无关噪声，易于快速理解。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面将抽象的优化问题转化为生动的社区服务场景，易于理解。",
+      "核心规则（编辑操作、虚拟重排、联合可行性）描述准确，无歧义。",
+      "样例丰富，解释详细，覆盖多种策略，帮助读者快速掌握要点。",
+      "约束清晰，指定了数据规模、时间空间限制，便于算法设计。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4595,
+      "axis_scores": {
+        "I": 0.0909,
+        "C": 0.6509,
+        "O": 0.5496,
+        "V": 0.5205
+      },
+      "components": {
+        "input_tree_distance": 0.0909,
+        "constraint_match_distance": 0.6509,
+        "objective_type_distance": 0.5072,
+        "objective_text_distance": 0.6132,
+        "invariant_match_distance": 0.5205
+      }
+    },
+    "schema_distance": 0.4595,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.1,
+    "surface_retheme_risk": 0.15,
+    "verdict": "pass",
+    "rationale": "原题是正向计算每个查询的最大前缀和，核心操作为按质数可重排集合的贪心选择；新题则是在多个查询目标约束下，通过带代价的元素修改最小化全局修改量，决策空间从无代价重排变为带代价修改，求解方向从计算最优值变为满足多目标下界的逆向设计。原题解法（贪心+前缀和）无法直接迁移，必须重新设计组合优化算法。表层叙事、标题、样例均无复用痕迹。尽管重排机制（按质数可动）保留，但整体任务语义已发生实质变化。",
+    "evidence_refs": [
+      "hard_checks.schema_distance_threshold",
+      "hard_checks.changed_axes_threshold",
+      "review_context.distance_breakdown.axis_scores",
+      "original_schema.objective",
+      "new_schema.objective",
+      "new_schema.core_constraints",
+      "generated_problem.description"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.46，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "无解情况的表述矛盾",
+      "detail": "output_format 要求“如果不存在满足所有需求的序列 A'，输出 -1”，而 notes 中称“在题目给定的数据中，一定存在可行解，因此你不需要特别处理无解情况；但为了完整性，如果确实不存在满足要求的序列，请输出 -1”。这两处说法不一致，可能让选手困惑是否真会出现无解数据。",
+      "evidence_refs": [
+        "generated_problem.output_format",
+        "generated_problem.notes"
+      ],
+      "fix_hint": "统一表述：要么直接去掉 output_format 中关于 -1 的说明，并在 notes 中明确“保证数据有解”；要么移除 notes 中“一定存在可行解”的保证，保留 -1 的说明。"
+    }
+  ],
+  "suggested_revisions": [
+    "统一表述：要么直接去掉 output_format 中关于 -1 的说明，并在 notes 中明确“保证数据有解”；要么移除 notes 中“一定存在可行解”的保证，保留 -1 的说明。",
+    "修正 notes 中关于解存在性的矛盾表述，建议明确为“保证所有测试数据均有可行解”或“如果不满足则输出 -1”，避免混淆。",
+    "可考虑在 description 中显式强调“所有需求共享同一个 A'”，虽然已有提及，但可加粗以加深印象。"
+  ],
+  "revision_brief": {
+    "round_index": 5,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 96.0,
+    "divergence_score": 82.5,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "无解情况的表述矛盾",
+        "detail": "output_format 要求“如果不存在满足所有需求的序列 A'，输出 -1”，而 notes 中称“在题目给定的数据中，一定存在可行解，因此你不需要特别处理无解情况；但为了完整性，如果确实不存在满足要求的序列，请输出 -1”。这两处说法不一致，可能让选手困惑是否真会出现无解数据。",
+        "evidence_refs": [
+          "generated_problem.output_format",
+          "generated_problem.notes"
+        ],
+        "fix_hint": "统一表述：要么直接去掉 output_format 中关于 -1 的说明，并在 notes 中明确“保证数据有解”；要么移除 notes 中“一定存在可行解”的保证，保留 -1 的说明。"
+      }
+    ],
+    "suggested_revisions": [
+      "统一表述：要么直接去掉 output_format 中关于 -1 的说明，并在 notes 中明确“保证数据有解”；要么移除 notes 中“一定存在可行解”的保证，保留 -1 的说明。",
+      "修正 notes 中关于解存在性的矛盾表述，建议明确为“保证所有测试数据均有可行解”或“如果不满足则输出 -1”，避免混淆。",
+      "可考虑在 description 中显式强调“所有需求共享同一个 A'”，虽然已有提及，但可加粗以加深印象。"
+    ],
+    "strengths_to_keep": [
+      "题面将抽象的优化问题转化为生动的社区服务场景，易于理解。",
+      "核心规则（编辑操作、虚拟重排、联合可行性）描述准确，无歧义。",
+      "样例丰富，解释详细，覆盖多种策略，帮助读者快速掌握要点。",
+      "约束清晰，指定了数据规模、时间空间限制，便于算法设计。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656_community_services_20260529_030835_round5.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codechef_13e5c69e5656\\taco_codechef_13e5c69e5656_community_services_20260529_030835_round5.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_13e5c69e5656",
+      "title": "DQUERY",
+      "description": "Chef has prepared a menu for his new restaurant. The menu consists of N dishes whose flavour is given by M_{1}, M_{2}, \\dots, M_{N}, where M_{i} denotes the flavour of the i^{th} dish.\n\nChef has some rules in his restaurant-\nA dish is served only if the customer has already eaten all the dishes preceding it on the menu. \nEach dish will only be served once.\n\nAman, the richest man in the area, stops by the restaurant one day and inquires about the deliciousness of a dinner that he may have there. Aman has a favourite ingredient p which is a prime number and he wants to eat dishes with the most flavour that contains this ingredient. A dish with flavour M_{i} contains the ingredient p only if p is a divisor of M_{i}.\n\nIn order for Aman to patronise Chef's restaurant on a regular basis, he agrees to reorder his menu to fulfil Aman's wishes. He decides that he will reorder the dishes that contain Aman's favourite ingredient while leaving the position of other dishes unchanged. For example, if M = [1, 2, 3, 4, 5, 6] and p = 2 then Chef can reorder his menu into [1, 4, 3, 2, 5, 6] or into [1, 4, 3, 6, 5, 2] but not into [2, 1, 3, 4, 5, 6] since the first dish with flavour 1 does not contain p as p is not a divisor of 1.\n\nAman wants to know the deliciousness of his meal, which is the total sum of flavours of all dishes if he eats k dishes (first k dishes of the menu) and his favourite ingredient is p. Can you help Chef find the maximum deliciousness after reordering his menu?\n\nYou have to answer Q queries and each query will contain the favourite ingredient p and the number of dishes Aman wants to eat k. Each query is independent, i.e. changes made to the menu in one query do not affect the next one.\n\n------ Input Format ------ \n\n- The first line of input will contain a single integer T, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n- The first line of each test case contains one integer N — the number of dishes.\n- The next line contains N space-separated integers M_{1}, M_{2}, \\ldots, M_{N}- the flavours of the dishes\n- The third line contains Q — the number of queries.\n- Each of the next Q lines contains two space-separated integers p and k — the favourite ingredient of Aman and the number of dishes he will eat. \n\n------ Output Format ------ \n\nFor each test case, output Q lines, the i^{th} line containing the answer to the i^{th} query.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 100$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ Q ≤ 10^{5}$\n$1 ≤ M_{i}, p ≤ 10^{5}$\n$1 ≤ k ≤ N$\n$p$ is a prime number \n- The sum of $N$ and $Q$ over all test cases does not exceed $2 \\times 10^{5}$\n\n----- Sample Input 1 ------ \n2\n5\n1 2 3 4 5\n2\n2 3\n3 4\n10\n3 4 1 8 9 2 4 10 7 20\n5\n2 5\n3 8\n5 6\n2 3\n7 10\n----- Sample Output 1 ------ \n8\n10\n43\n41\n27\n24\n68\n----- explanation 1 ------ \nTest case $1$: The menu is $[1, 2, 3, 4, 5]$ and we have $2$ queries.\n- The first query has $p = 2$ and $k = 3$. Chef can reorder the menu to $[1, 4, 3, 2, 5]$. Now Aman will eat dishes with flavour $1$, $4$ and $3$. Deliciousness will be $1 + 4 + 3 = 8$\n- The second query has $p = 3$ and $k = 4$. Chef cannot reorder the menu and it remains the same. Now Aman will eat dishes with flavour $1$, $2$, $3$ and $4$. Deliciousness will be $1 + 2 + 3 + 4 = 10$\n\nTest case $2$: The menu is $[3, 4, 1, 8, 9, 2, 4, 10, 7, 20]$.\n- One optimal arrangement for the first query is $[3, 10, 1, 20, 9, 2, 4, 8, 7, 4]$\n- One optimal arrangement for the second query is $[3, 4, 1, 8, 9, 2, 4, 10, 7, 20]$",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 2 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "import math\n\ndef search(k, a):\n\tlt = 0\n\trt = len(a) - 1\n\tans = -1\n\twhile lt <= rt:\n\t\tmid = lt + (rt - lt) // 2\n\t\tif a[mid] > k:\n\t\t\trt = mid - 1\n\t\tif a[mid] <= k:\n\t\t\tlt = mid + 1\n\t\t\tans = mid\n\treturn ans\n\ndef primes(n):\n\tl = set()\n\twhile n % 2 == 0:\n\t\tl.add(2)\n\t\tn = n / 2\n\tfor i in range(3, int(math.sqrt(n)) + 1, 2):\n\t\twhile n % i == 0:\n\t\t\tl.add(i)\n\t\t\tn = n / i\n\tif n > 2:\n\t\tl.add(n)\n\treturn l\nfor _ in range(int(input())):\n\tn = int(input())\n\tm = [int(i) for i in input().split()]\n\tpfs = {}\n\tfor (ix, i) in enumerate(m):\n\t\tpf = primes(i)\n\t\tfor p in pf:\n\t\t\tif p in pfs:\n\t\t\t\tpfs[p][0].append(i)\n\t\t\t\tpfs[p][1].append(ix)\n\t\t\telse:\n\t\t\t\tpfs[p] = [[i], [ix]]\n\tfor pf in pfs:\n\t\tps = pfs[pf][0].copy()\n\t\tps.sort(reverse=True)\n\t\tfor i in range(1, len(ps)):\n\t\t\tpfs[pf][0][i] = pfs[pf][0][i - 1] + pfs[pf][0][i]\n\t\t\tps[i] = ps[i] + ps[i - 1]\n\t\tpfs[pf].append(ps)\n\tsm = m.copy()\n\tfor i in range(1, n):\n\t\tsm[i] = sm[i] + sm[i - 1]\n\tq = int(input())\n\tfor _ in range(q):\n\t\t(p, k) = [int(i) for i in input().split()]\n\t\tif p not in pfs:\n\t\t\tprint(sm[k - 1])\n\t\telse:\n\t\t\tpt = search(k - 1, pfs[p][1])\n\t\t\tif pt == -1:\n\t\t\t\tad = 0\n\t\t\t\tdf = 0\n\t\t\telse:\n\t\t\t\tad = pfs[p][2][pt]\n\t\t\t\tdf = pfs[p][0][pt]\n\t\t\tprint(sm[k - 1] - df + ad)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_13e5c69e5656",
+        "DQUERY",
+        "codechef",
+        "Chef has prepared a menu for his new restaurant. The menu consists of N dishes whose flavour is given by M_{1}, M_{2}, \\dots, M_{N}, where M_{i} denotes the flavour of the i^{th} dish. Chef has some rules in his resta...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "目标从最大化变为最小化修改代价，核心约束新增修改操作和联合查询要求，不变量调整为修改‑重排下的可行性下界。",
+      "summary": "原题仅需计算每个查询的最大前缀和，新题需要在满足多个查询目标的前提下，最小化对序列的修改总代价。算法从贪心前缀计算变为组合优化，原题解法的核心逻辑无法直接复用。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "cs_inv_001",
+      "source": "codechef",
+      "input_structure": {
+        "type": "composite",
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "N",
+            "description": "Number of service points",
+            "type": "integer",
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            }
+          },
+          {
+            "role": "A",
+            "description": "Initial service durations",
+            "type": "array",
+            "length": "N",
+            "element_type": "integer",
+            "element_value_range": {
+              "min": 1,
+              "max": 100000
+            }
+          },
+          {
+            "role": "Q",
+            "description": "Number of resident requirements",
+            "type": "integer",
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            }
+          },
+          {
+            "role": "requirements",
+            "description": "Each requirement: prime p, window length k, target sum T",
+            "type": "array",
+            "length": "Q",
+            "element_structure": {
+              "p": {
+                "type": "integer",
+                "value_range": {
+                  "min": 2,
+                  "max": 100000
+                },
+                "properties": {
+                  "prime": true
+                }
+              },
+              "k": {
+                "type": "integer",
+                "value_range": {
+                  "min": 1,
+                  "max": "N"
+                }
+              },
+              "T": {
+                "type": "integer",
+                "value_range": {
+                  "min": 1,
+                  "max": 1000000000000
+                }
+              }
+            }
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "edit_operation",
+            "description": "你可以选择一个服务点，将其服务时长增加 1 或减少 1。每次操作代价为 1。最终得到修改后的序列 A'，总修改代价为 sum_i |A'_i - A_i|。",
+            "formal": "cost = Σ|A'_i - A_i|"
+          },
+          {
+            "name": "reorder_rule",
+            "description": "对于每个需求 (p, k, T)，在序列 A' 中，时长能被 p 整除的服务点称为灵活服务点，它们可以在 A' 内任意交换位置；其他服务点的位置固定不变。注意该重排是虚拟的，每个需求独立进行，但所有需求共享同一个 A'。",
+            "formal": "令 S = {i: p | A'_i}；重排后序列 B 满足 B_i = A'_i (i∉S)，且 B 在位置 S 上是 A'_i (i∈S) 的一个排列。"
+          },
+          {
+            "name": "joint_feasibility",
+            "description": "必须存在一个序列 A'（经由编辑操作从原始 A 获得），使得对于每一个需求 (p, k, T)，都能通过上述重排规则得到某个序列 B，使得 B 的前 k 项之和 ≥ T。",
+            "formal": "∀j ∃重排 B_j ：sum_{i=1..k_j} B_j,i ≥ T_j"
+          }
+        ],
+        "additional_constraints": [
+          {
+            "name": "prime_p",
+            "description": "每个需求的 p 是质数。"
+          },
+          {
+            "name": "range_limits",
+            "description": "所有数据在指定范围内，总 N 和 Q 不超过 2×10^5。"
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize_cost",
+        "description": "最小化总修改代价，即 sum_i |A'_i - A_i|。",
+        "target": "total_modification_cost"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "lower_bound_per_demand",
+            "description": "对于任何一个需求 (p, k, T)，在最终的 A' 下，令 F 为所有灵活服务点的集合，c 为前 k 个位置（任意重排后）所能包含的最大灵活服务点数量（由原固定点间隔决定）。则任何可行前缀和 ≤ sum_{固定点} + sum_{F 中最大的 c 个值}。这给出了达到 T 的修改代价下界。",
+            "properties": {},
+            "evidence_source": "analysis"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "社区服务的完美协调",
+      "description": "在一个社区中，有 N 个服务点按固定顺序排成一排，每个服务点 i 的当前服务时长记为 A_i。为了满足住户的日常需求，社区管理员可以对服务点进行一次性的时长调整：每次操作可以选择一个服务点，将其服务时长增加 1 或减少 1，每次操作的代价为 1。最终得到一个新的服务时长序列 A'。\n\n现在有 Q 位住户提出了自己的服务需求。每个需求由三个参数 (p, k, T) 描述：\n- p 是一个质数，住户特别关注服务时长能被 p 整除的服务点。\n- k 表示住户希望在排班表的前 k 个服务点中获得服务。\n- T 是住户期望前 k 个服务点的时长总和不小于 T。\n\n管理员可以利用一个特殊的重排规则：对于任意一个需求 (p, k, T)，在序列 A' 中，所有时长能被 p 整除的服务点被视为“灵活服务点”，它们可以在 A' 中任意交换位置；而其他服务点的位置固定不变。注意，这个重排操作是虚拟的——每个需求独立进行重排，不会真正改变序列 A'，但所有需求共享同一个最终序列 A'。\n\n你需要帮助管理员决定最小的总修改代价，使得存在一个序列 A'，能够同时满足所有 Q 个住户的需求。如果不可能，请输出 -1。",
+      "input_format": "第一行包含一个整数 T，表示测试数据的组数。\n每组测试数据按以下格式给出：\n第一行一个整数 N，表示服务点的数量。\n第二行包含 N 个整数 A_1, A_2, ..., A_N，表示初始服务时长。\n第三行一个整数 Q，表示需求的数量。\n接下来 Q 行，每行三个整数 p, k, T，描述一个需求。p 保证是质数。",
+      "output_format": "对于每组测试数据，输出一行一个整数，表示最小的总修改代价。如果不存在满足所有需求的序列 A'，输出 -1。",
+      "constraints": [
+        "1 ≤ T ≤ 100",
+        "1 ≤ N ≤ 10^5",
+        "1 ≤ A_i ≤ 10^5",
+        "1 ≤ Q ≤ 10^5",
+        "2 ≤ p ≤ 10^5，且 p 为质数",
+        "1 ≤ k ≤ N",
+        "1 ≤ T ≤ 10^12",
+        "单个测试数据中 N 与 Q 的总和不超过 2×10^5",
+        "所有测试数据中 N 与 Q 的总和不超过 2×10^5",
+        "时间限制：2 秒",
+        "空间限制：512 MB"
+      ],
+      "samples": [
+        {
+          "input": "1\n5\n1 2 3 4 5\n1\n2 3 8",
+          "output": "0",
+          "explanation": "初始序列为 [1,2,3,4,5]。唯一的需求是 p=2, k=3, T=8。\n在 A'=A 时，能被 2 整除的元素是 2 和 4，分别位于位置 2 和位置 4。在前 3 个位置（索引 1,2,3）中，位置 1 固定为 1，位置 3 固定为 3，位置 2 是灵活位置。我们可以把最大的灵活元素 4 放到位置 2，得到 [1,4,3,2,5]，前 3 项之和为 1+4+3=8，恰好达到目标。因此不需要任何修改，代价为 0。"
+        },
+        {
+          "input": "1\n4\n1 2 3 4\n2\n2 2 5\n3 3 8",
+          "output": "2",
+          "explanation": "初始序列为 [1,2,3,4]。需求 1：p=2, k=2, T=5；需求 2：p=3, k=3, T=8。\n首先考虑不修改：\n- 需求 1：灵活元素为 {2,4}，固定元素 {1,3}。前 2 位置中，位置 1 固定为 1，位置 2 灵活。将 4 移到位置 2 得到 [1,4,3,2]，前 2 和为 5，满足。\n- 需求 2：灵活元素为 {3}，固定元素 {1,2,4}。前 3 位置中，位置 1,2 固定为 1,2，位置 3 灵活为 3，前 3 和为 6 < 8。不满足，必须修改。\n若将位置 3 的值由 3 改为 5，则 A'=[1,2,5,4]，代价=|5-3|=2。\n- 对于需求 1，灵活元素为 {2,4}（2 和 4 均能被 2 整除），固定为 1,5。前 2 和=1+4=5，满足。\n- 对于需求 2，p=3：检查 A' 中是否有能被 3 整除的元素，2,4,5,1 均不能被 3 整除，因此没有灵活元素，序列不可重排，保持 [1,2,5,4]。前 3 项和为 1+2+5=8，满足。\n可以验证，任何总代价为 1 的方案都无法同时满足两个需求（若只修改一点，需求 2 的前 3 项最大只能为 7）。故最小代价为 2。"
+        },
+        {
+          "input": "1\n3\n2 3 5\n1\n2 2 10",
+          "output": "5",
+          "explanation": "初始序列为 [2,3,5]，需求 p=2, k=2, T=10。初始时只有 2 是灵活点，前 2 项最大和为 2+3=5（不能重排，因为位置 2 固定），无法达到 10。修改方案：将位置 1 的 2 改为 3，位置 2 的 3 改为 7，得到 A'=[3,7,5]，代价=|3-2|+|7-3|=5。此时所有元素均不能被 2 整除，因此没有灵活点，序列不可重排，前 2 项和恰好为 3+7=10，满足需求。可以证明任何代价 ≤4 的修改都无法使前 2 项和达到 10（例如修改一处最大只能得到 2+9=11 或 1+9=10，但代价至少 5）。故最小代价为 5。"
+        }
+      ],
+      "notes": "服务时长 A'_i 可以超出原有范围（即修改后的值可以是任意整数），只由修改代价定义绝对值差。所有需求的 p 均为质数。在题目给定的数据中，一定存在可行解，因此你不需要特别处理无解情况；但为了完整性，如果确实不存在满足要求的序列，请输出 -1。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "原题仅需计算每个查询的最大前缀和，新题需要在满足多个查询目标的前提下，最小化对序列的修改总代价。算法从贪心前缀计算变为组合优化，原题解法的核心逻辑无法直接复用。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4595,
+        "axis_scores": {
+          "I": 0.0909,
+          "C": 0.6509,
+          "O": 0.5496,
+          "V": 0.5205
+        },
+        "components": {
+          "input_tree_distance": 0.0909,
+          "constraint_match_distance": 0.6509,
+          "objective_type_distance": 0.5072,
+          "objective_text_distance": 0.6132,
+          "invariant_match_distance": 0.5205
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "必须将原题的正向结果转换为反向目标。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "翻转求解方向，从计算最优值变为设计输入以满足目标。",
+          "difficulty_reason": "要求算法围绕多个目标约束反向推导状态，增加约束组合的复杂性。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "必须定义允许的修改操作。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "将反向设计落实到可优化的操作空间，而非抽象要求。",
+          "difficulty_reason": "要求证明操作序列、修改结果与目标之间的精确对应，最小代价的搜索空间极大。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "确保输出的是最优代价，而非任意可行解。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "强制最优性责任，提升问题深度。",
+          "difficulty_reason": "最小性证明往往需要坚实的理论分析或巧妙的构造。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "对每个质数 p，收集可被 p 整除的元素索引与值，排序并求前缀和；对每个查询 (p,k)，二分查找前 k 个位置中可移动元素的数量，选择最大的填入，得到最大前缀和。预处理 O(N·√M + 质数种类·log N) 等。",
+        "reusable_subroutines": "质数分解函数可以复用；单个需求下前 k 位置固定元素和的计算可复用，但由于 A' 未知，这些固定元素值会变化。",
+        "new_solver_core": "需要求解一个组合优化：选择修改每个 A_i 的值，最小化绝对值代价，同时满足多个线性不等式约束（每个需求产生的不等式）。可能转化为最小代价流或整数规划，利用需求的层次进行贪心或动态规划。由于数据范围大，需创新设计多项式算法。",
+        "new_proof_obligation": "证明找到的修改方案确实最小化全局代价，并给出下界的严格证明。可能需要利用对偶理论或构造一组不可改进的界。",
+        "why_direct_reuse_fails": "原算法只适用于固定序列，利用贪心即可求出最大值。新问题中，修改操作会改变可移动集合，且需要同时满足多个不同 p 的需求，单一贪心策略无法处理代价与多目标的权衡，全局最优性要求全新算法。"
+      },
+      "anti_shallow_rationale": "新问题不只是将最大化改为计数或加最小性，而是引入了有代价的修改操作和需要同时满足多个需求的联合约束。核心决策从无代价的重排优化变为资源分配式的全局修改优化，算法必须彻底重新设计，原题解法的任何子模块都无法直接套用。"
+    }
+  }
+}

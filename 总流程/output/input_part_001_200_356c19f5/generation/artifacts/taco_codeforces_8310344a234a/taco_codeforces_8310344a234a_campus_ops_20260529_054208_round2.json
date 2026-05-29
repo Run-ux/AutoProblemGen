@@ -1,0 +1,1018 @@
+{
+  "problem_id": "urban_commute_certificate",
+  "source_problem_ids": [
+    "taco_codeforces_8310344a234a"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_8310344a234a",
+      "codeforces",
+      "You are an adventurer currently journeying inside an evil temple. After defeating a couple of weak zombies, you arrived at a square room consisting of tiles forming an n × n grid. The rows are numbered 1 through n fro...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "Objective (O) requires outputting a specific obstruction cell on failure. Core constraints (C) add that the obstruction must be a cell whose entire row and column are unusable. Invariant (V) introduces the local checkability of this witness.",
+    "summary": "Replaced scalar '-1' with a cell index that proves impossibility. Added obligation to output either a covering set or that witness, and updated invariants to enforce the witness's correctness and verifiability.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4817,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4817,
+    "axis_scores": {
+      "I": 0.1,
+      "C": 0.63,
+      "O": 0.5875,
+      "V": 0.6039
+    },
+    "components": {
+      "input_tree_distance": 0.1,
+      "constraint_match_distance": 0.63,
+      "objective_type_distance": 0.6764,
+      "objective_text_distance": 0.4542,
+      "invariant_match_distance": 0.6039
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construct_or_obstruction",
+    "description": "Output either a minimum-cardinality set of check start positions that covers all stations, or an obstruction cell whose row and column are entirely blocked.",
+    "target": "set_of_positions_or_cell",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "该规则通过引入行列唯一性约束，将原题各行（或各列）独立选择 '.' 的轻耦合结构升级为全局匹配问题，实质改变了主求解状态和算法核心，创新幅度和难度提升显著高于其他规则。逆设计规则仍可能保留过多原题结构，构造/障碍规则则难以避免退化为输出格式浅改。；创新度判断：会将原题“每行选一个 '.' 即可”的独立分量义务拉向“必须同时满足行列互异”的全局耦合，从而迫使解法维护行与列之间的双向依赖，输出也从宽松的构造变成需要证明完美匹配的存在性。；难度判断：主求解责任从简单的行扫描构造变为二分图完美匹配判定，算法复杂度从 O(n^2) 跃升至 O(n^3)，并需要处理无解的新条件（无完美匹配）和路径构造，显著抬高算法设计和正确性证明门槛。；风险判断：主要风险是全局约束可能被误加为“每行每列恰一个 '.'”导致无解范围陡增，需仔细校准无解条件与原规律的继承关系；但该风险可通过让新约束直接在原可行性不变量上扩展来可控。",
+  "new_schema_snapshot": {
+    "problem_id": "urban_commute_certificate",
+    "source": "constructed",
+    "input_structure": {
+      "type": "matrix",
+      "length": {
+        "min": 1,
+        "max": 100
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "values": "'.' or 'E' repurposed as 'usable' and 'blocked' stations"
+      },
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "start_restriction",
+          "description": "A check can only be started at a usable station ('.'). Starting at a station covers that station and all stations in the same row and the same column.",
+          "formal": "A check start cell must be '.' .",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "full_coverage",
+          "description": "Every station must be covered by at least one check start.",
+          "formal": "For every cell (i,j), there exists a chosen start cell in row i or column j.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "minimum_checks",
+          "description": "If a full coverage is possible, the number of check starts must be minimized (exactly n).",
+          "formal": "If a solution exists, output exactly n check start positions.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "obstruction_output",
+          "description": "If no full coverage is possible, output an obstruction certificate: a cell (r,c) such that row r and column c consist entirely of blocked stations ('E').",
+          "formal": "In case of impossibility, output one cell (r,c) where a[r][i]='E' for all i and a[i][c]='E' for all i.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construct_or_obstruction",
+      "description": "Output either a minimum-cardinality set of check start positions that covers all stations, or an obstruction cell whose row and column are entirely blocked.",
+      "target": "set_of_positions_or_cell",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "impossibility_condition",
+          "description": "A full coverage exists iff there is no row full of 'E' or no column full of 'E'. If a solution exists, the minimum number of starts is n.",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "obstruction_verifiability",
+          "description": "An output cell (r,c) is a valid obstruction only if row r is all 'E' and column c is all 'E'.",
+          "properties": {
+            "check_locally": "iterate through row r and column c"
+          },
+          "evidence_source": "invariant_design"
+        },
+        {
+          "name": "solution_structure",
+          "description": "When a solution exists, an optimal set chooses exactly one start per column (if some row is all 'E') or exactly one per row (otherwise), always picking a '.' cell.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "easy"
+  },
+  "applied_rule": "construct_or_obstruction",
+  "rejected_candidates": [
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题的正向求解过于简单（检查一行全 E 且一列全 E 则无解，否则有 n 次施法解），将其反向设计为给定目标施法位置求最小网格修改后，问题退化为直接统计目标位置和非目标位置中标记与目标不一致的个数，算法核心没有本质变化，没有产生新的证明义务或求解难度。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Scan all rows and columns to find a full-'E' row and a full-'E' column. If both exist, output -1. Else, if a full-'E' row exists, for each column pick a '.' in that column; otherwise for each row pick a '.' in that row. Output selected cells.",
+    "reusable_subroutines": "Scanning for full-'E' rows/columns, column/row '.' picking.",
+    "new_solver_core": "Scan to find a full-'E' row (if any) and a full-'E' column (if any). If both exist, output the cell (r,c) at their intersection as obstruction; else construct a solution as before. The only difference is outputting (r,c) instead of -1.",
+    "new_proof_obligation": "Prove that the output cell (r,c) indeed lies in a row and column that are both entirely blocked, and therefore cannot be covered by any valid start. This was implicit in the seed's impossibility check but must now be explicitly validated against the input.",
+    "why_direct_reuse_fails": "The seed's -1 is not a structured certificate; a solver must extract the specific witness and format it. The new rule demands that the failure output be a directly checkable object, requiring the algorithm to pin down a concrete conflicting cell rather than just signal impossibility."
+  },
+  "anti_shallow_rationale": "Merely replacing -1 with a cell index while keeping the same solving logic would be a retheme if the certificate did not add a new verification obligation. However, the new objective demands that the output be self-verifiable without scanning the whole grid: checking the cell's row and column suffices. This shifts the failure semantics from a global flag to a local proof, which changes what the algorithm must explicitly compute and guarantee.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "local_certificate_design",
+      "selection_reason": "The impossibility is naturally captured by a contradictory cell; turning it into an explicit certificate makes failure verifiable locally.",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Added constraint: obstruction output must be a cell (r,c) with row r all 'E' and column c all 'E'.",
+        "Objective now includes an explicit obstruction branch.",
+        "Invariant added: obstruction verifiability condition."
+      ],
+      "innovation_reason": "Transforms impossibility from a boolean result into a structural witness, elevating the failure branch to a first-class output.",
+      "difficulty_reason": "Requires solutions to construct a concrete evidence object rather than just printing '-1', testing correct identification of the conflicting coordinates."
+    },
+    {
+      "id": "failure_branch_symmetry",
+      "selection_reason": "Both the solution case and the impossibility case must now produce outputs of comparable representational weight.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Objective split into two symmetric branches: output a covering set or output a cell.",
+        "Core constraint makes both branches mandatory, forbidding degenerate failure handling."
+      ],
+      "innovation_reason": "Elevates failure from an afterthought to a structurally defined output, mirroring the success branch's precision.",
+      "difficulty_reason": "Forces the solver to uniformly handle both branches and craft a well-formed output in each, preventing trivial fallbacks."
+    },
+    {
+      "id": "obstruction_embedding",
+      "selection_reason": "The obstruction cell is directly defined by the core constraints: a cell whose row and column are entirely blocked.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Invariant now states that the obstruction cell's row and column consist only of 'E'.",
+        "Core constraints link the impossibility condition to the existence of such a cell."
+      ],
+      "innovation_reason": "Anchors the evidence inside the main constraints, so the failure witness is not an external artifact but a natural consequence of the input structure.",
+      "difficulty_reason": "Demands that the algorithm reason about the interaction of row and column blockages to produce a valid witness."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "violates_forbidden_property",
+      "selection_reason": "种子题本身已经要求输出完整的施法方案，违反规则 'canonical_witness' 的 forbidden_seed_property '原题本来就要求输出完整方案'，强行升级只会变成表面修改，无法带来真正的规范性创新。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility 明确要求 forbidden_seed_properties 包括 '原题本来就要求输出完整方案'。原题描述：'Output a sequence of spells... minimizing the number of times you cast the Purification spell... print x lines. Each line should consist of two integers denoting the row and column numbers...'，且 core_constraints 中 minimum_operations 也指定输出具体施法位置，objective 为 'providing the spell positions if possible'。这表明确实是原题强制输出完整方案。",
+        "feedback": "该种子题已经输出具体构造方案，虽然现有解不唯一，但加上规范顺序（如字典序最小）几乎不改变主要算法结构，不符合规则期望的从答案升级到带证明责任的规范解。建议挑选输出仅为数值或判断的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "obstruction_local_evidence_exists",
+      "selection_reason": "原题无解情形等价于存在全'E'行与全'E'列，此时该行与列的交叉单元格无法被任何施法覆盖，构成一个可局部检查的冲突证据。只需检查该单元格所在行和列是否全为'E'即可验证，符合规则要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "Schema中invariant的impossibility_condition: \"A valid purification exists if and only if it is not the case that both a completely uncastable row and a completely uncastable column exist.\" 标准解法通过检查全'E'行和全'E'列判定无解，并可定位交叉单元格。原题输出-1，但可改为输出该单元格坐标作为冲突证书。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "eligible",
+      "selection_reason": "原题的最优施法方案数量有限，可明确去重规则（施法位置集合相同即为同一方案），且可按行或按列拆分为独立的计数单元。直接符合existence_to_counting规则所要求的有限解空间、清晰去重与可汇总拆分。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束full_coverage保证最少施法次数为n，invariant中的optimal_spell_count_equals_dimension证实最优解结构固定；原题要求输出具体方案，转换为计数后只需统计满足全覆盖且使用n次施法的不同位置集合个数，每一行或每一列的可行格子数相乘即得方案数，有限且可计算。",
+        "feedback": "改造后需明确解释解相同标准，并处理大数取模，避免直接复制原题判定逻辑。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题中净化为静态、确定性过程，无顺序不确定性、资源波动或局部选择差异，无法提取原生扰动模型。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "根据 seed_schema.core_constraints，施法只受目标格子类型限制，净化效果覆盖整行整列，且目标最小化施法次数，无顺序或波动因素。invariant 指出存在性判断基于行和列的完全不可施法状态，最优解是固定选择每行或每列的某个可施法格子，与扰动无关。",
+        "feedback": "规则要求原题有顺序不确定、资源波动或局部选择差异，但此题完全确定，扰动只能从外部强加，违反红线‘不能凭背景硬造对手’。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.25,
+      "reason_code": "NO_NATURAL_THRESHOLD",
+      "selection_reason": "原题可行性由是否存在全 E 行和全 E 列同时存在决定，无单调参数可调优，无法自然升级为临界阈值优化。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束中，可行性条件仅依赖于全 E 行与全 E 列的同时出现，没有连续参数（如 E 的数量、比例）可引入；规则 required_seed_properties 要求“可行性随某个参数具有清晰的单调性或分层结构”，原题完全满足二值判定，不满足此要求；规则 redlines 明确禁止“阈值只是在原判定外层做机械二分”，强行添加参数后仍会退化为二分判定，本质无变化。",
+        "feedback": "种子题缺少自然临界参数，强行扩展只会在外层包装二分搜索而无法改变主约束或证明结构，建议保持原优化形式或寻求其他变换规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "missing_conflicting_secondary_metric",
+      "selection_reason": "原题目标为单一的最小化施法次数，且所有约束均围绕此目标展开。题目中不存在自然的、与原目标真实冲突的第二评价指标；任何附加指标（如总净化次数）要么与施法次数单调正相关，退化为同一方向，要么完全可由原答案直接后处理得到，无法形成有意义的帕累托前沿。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "在种子题 schema 中，objective 仅定义了 'minimize the number of spell casts'（核心约束中亦强调 'minimum_operations'），invariant 仅涉及可解性条件和最优次数等于维度 n，均未暗示存在另一个独立的、且与之冲突的指标。原题描述中的 'E' 与 '.' 仅影响施法位置限制，并未引入资源消耗、风险值或任何可量化的第二维度。规则的 'eligibility.required_seed_properties' 明确要求 '原题目标附近存在自然的第二评价指标' 且 '两个指标之间存在真实冲突'，该种子题不具备此性质。",
+        "feedback": "该种子题为典型的集合覆盖变种，目标空间一维，不适合直接应用 'single_objective_to_tradeoff_frontier' 规则。若需引入第二指标，将不得不人为添加与核心规律无关的额外约束，违反全局红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "eligible_strong_match",
+      "selection_reason": "原题输出（一组坐标）可被绑定为反向目标，要求通过修改输入中的字符（E↔.）来使得给定目标答案成为最优解，这个修改操作与原题核心对象直接相关，且存在最小修改的设计自由度。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出是具体的施法位置列表（examples中输出1 1等），原题核心约束禁止对'E'施法，因此修改字符直接影响施法可行性；标准解法中包含全'E'行/列的判断，修改操作即翻转字符，是原输入的自然结构。",
+        "feedback": "反向设计空间清晰，但需注意设计后的新题可能较简单（仅需统计目标位置中'E'的数量），可考虑增加额外复杂度（如允许修改任意位置，并要求最小化总修改次数使得存在某个解），以保持挑战性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "eligible_natural_binding",
+      "selection_reason": "原题各行独立选点，共享列空间，通过引入列互斥全局约束可将各行绑定为全局排列问题，形成跨组件依赖与全局守恒，难度显著提升且不违背任何红线。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "原题 schema 中 core_constraints 说明各行只需存在 '.' 即可独立选点（见 spell_target_restriction 和 minimum_operations），invariant 指出最优次数为 n 且构造独立（optimal_spell_count_equals_dimension）；辅助规则 shared_resource_constraint 与 cross_component_dependency 允许将列视为共享资源并建立互斥依赖，符合规则全部 hard_checks。",
+        "feedback": "该规则适用于当前种子，局部单元（行）与共享资源（列）具备天然耦合性，可产生有效变体。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题操作本质是单人的确定性构造优化，不存在可自然对抗化的轮流选择语义；强行引入第二个玩家只能依靠故事背景，违反‘对抗方只能靠故事背景硬造’的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中只有一位冒险者，操作‘Purification’是单人施法；eligibility.forbidden_seed_properties 明确指出‘对抗方只能靠故事背景硬造’，而任何对抗化都只能通过叙事虚构另一方，无法从操作空间中自然衍生。原题的操作虽然可选不同单元格，但状态转移不产生分岔的对抗结果，不符合‘不同操作会改变后续可选状态’的博弈前提。",
+        "feedback": "该规则对种子题难以实现自然博弈化，建议寻找本身具有玩家轮流选择或对抗操作的原题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_mismatch",
+      "selection_reason": "原题核心是全局覆盖问题，并非单路径、单区间或单子树性质，无法通过本规则从局部问题跃迁为覆盖/割/支配问题。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题要求通过选择施法点净化全网格，本质是最小点覆盖行/列，且已包含全局最小性与可行性条件；而规则声明要求种子题具备‘单路径、单区间或单子树性质’，示例为‘把求一条路径的性质改成选择最少点覆盖所有给定路径’，两者不匹配。",
+        "feedback": "种子题不具有本规则所需的局部结构起点，强行应用只会重复原题覆盖逻辑，无法产生实质性新问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是优化问题（最小化施法次数），不是计数问题，不存在计数对象，无法应用带权计数扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的objective.type为'minimize_value'，目标是最小化spells数量；core_constraints是关于施法限制和覆盖要求的，不是在计数对象上定义计数。原题摘要中无任何计数目标。",
+        "feedback": "规则要求原题有明确有限的计数对象，但该题不满足此前提，建议更换种子题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "violates_forbidden_property",
+      "message": "种子题本身已经要求输出完整的施法方案，违反规则 'canonical_witness' 的 forbidden_seed_property '原题本来就要求输出完整方案'，强行升级只会变成表面修改，无法带来真正的规范性创新。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility 明确要求 forbidden_seed_properties 包括 '原题本来就要求输出完整方案'。原题描述：'Output a sequence of spells... minimizing the number of times you cast the Purification spell... print x lines. Each line should consist of two integers denoting the row and column numbers...'，且 core_constraints 中 minimum_operations 也指定输出具体施法位置，objective 为 'providing the spell positions if possible'。这表明确实是原题强制输出完整方案。",
+        "feedback": "该种子题已经输出具体构造方案，虽然现有解不唯一，但加上规范顺序（如字典序最小）几乎不改变主要算法结构，不符合规则期望的从答案升级到带证明责任的规范解。建议挑选输出仅为数值或判断的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "obstruction_local_evidence_exists",
+      "message": "原题无解情形等价于存在全'E'行与全'E'列，此时该行与列的交叉单元格无法被任何施法覆盖，构成一个可局部检查的冲突证据。只需检查该单元格所在行和列是否全为'E'即可验证，符合规则要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "Schema中invariant的impossibility_condition: \"A valid purification exists if and only if it is not the case that both a completely uncastable row and a completely uncastable column exist.\" 标准解法通过检查全'E'行和全'E'列判定无解，并可定位交叉单元格。原题输出-1，但可改为输出该单元格坐标作为冲突证书。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "eligible",
+      "message": "原题的最优施法方案数量有限，可明确去重规则（施法位置集合相同即为同一方案），且可按行或按列拆分为独立的计数单元。直接符合existence_to_counting规则所要求的有限解空间、清晰去重与可汇总拆分。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "核心约束full_coverage保证最少施法次数为n，invariant中的optimal_spell_count_equals_dimension证实最优解结构固定；原题要求输出具体方案，转换为计数后只需统计满足全覆盖且使用n次施法的不同位置集合个数，每一行或每一列的可行格子数相乘即得方案数，有限且可计算。",
+        "feedback": "改造后需明确解释解相同标准，并处理大数取模，避免直接复制原题判定逻辑。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题中净化为静态、确定性过程，无顺序不确定性、资源波动或局部选择差异，无法提取原生扰动模型。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "根据 seed_schema.core_constraints，施法只受目标格子类型限制，净化效果覆盖整行整列，且目标最小化施法次数，无顺序或波动因素。invariant 指出存在性判断基于行和列的完全不可施法状态，最优解是固定选择每行或每列的某个可施法格子，与扰动无关。",
+        "feedback": "规则要求原题有顺序不确定、资源波动或局部选择差异，但此题完全确定，扰动只能从外部强加，违反红线‘不能凭背景硬造对手’。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "NO_NATURAL_THRESHOLD",
+      "message": "原题可行性由是否存在全 E 行和全 E 列同时存在决定，无单调参数可调优，无法自然升级为临界阈值优化。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.25,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束中，可行性条件仅依赖于全 E 行与全 E 列的同时出现，没有连续参数（如 E 的数量、比例）可引入；规则 required_seed_properties 要求“可行性随某个参数具有清晰的单调性或分层结构”，原题完全满足二值判定，不满足此要求；规则 redlines 明确禁止“阈值只是在原判定外层做机械二分”，强行添加参数后仍会退化为二分判定，本质无变化。",
+        "feedback": "种子题缺少自然临界参数，强行扩展只会在外层包装二分搜索而无法改变主约束或证明结构，建议保持原优化形式或寻求其他变换规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_conflicting_secondary_metric",
+      "message": "原题目标为单一的最小化施法次数，且所有约束均围绕此目标展开。题目中不存在自然的、与原目标真实冲突的第二评价指标；任何附加指标（如总净化次数）要么与施法次数单调正相关，退化为同一方向，要么完全可由原答案直接后处理得到，无法形成有意义的帕累托前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "在种子题 schema 中，objective 仅定义了 'minimize the number of spell casts'（核心约束中亦强调 'minimum_operations'），invariant 仅涉及可解性条件和最优次数等于维度 n，均未暗示存在另一个独立的、且与之冲突的指标。原题描述中的 'E' 与 '.' 仅影响施法位置限制，并未引入资源消耗、风险值或任何可量化的第二维度。规则的 'eligibility.required_seed_properties' 明确要求 '原题目标附近存在自然的第二评价指标' 且 '两个指标之间存在真实冲突'，该种子题不具备此性质。",
+        "feedback": "该种子题为典型的集合覆盖变种，目标空间一维，不适合直接应用 'single_objective_to_tradeoff_frontier' 规则。若需引入第二指标，将不得不人为添加与核心规律无关的额外约束，违反全局红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible_strong_match",
+      "message": "原题输出（一组坐标）可被绑定为反向目标，要求通过修改输入中的字符（E↔.）来使得给定目标答案成为最优解，这个修改操作与原题核心对象直接相关，且存在最小修改的设计自由度。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出是具体的施法位置列表（examples中输出1 1等），原题核心约束禁止对'E'施法，因此修改字符直接影响施法可行性；标准解法中包含全'E'行/列的判断，修改操作即翻转字符，是原输入的自然结构。",
+        "feedback": "反向设计空间清晰，但需注意设计后的新题可能较简单（仅需统计目标位置中'E'的数量），可考虑增加额外复杂度（如允许修改任意位置，并要求最小化总修改次数使得存在某个解），以保持挑战性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "eligible_natural_binding",
+      "message": "原题各行独立选点，共享列空间，通过引入列互斥全局约束可将各行绑定为全局排列问题，形成跨组件依赖与全局守恒，难度显著提升且不违背任何红线。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "原题 schema 中 core_constraints 说明各行只需存在 '.' 即可独立选点（见 spell_target_restriction 和 minimum_operations），invariant 指出最优次数为 n 且构造独立（optimal_spell_count_equals_dimension）；辅助规则 shared_resource_constraint 与 cross_component_dependency 允许将列视为共享资源并建立互斥依赖，符合规则全部 hard_checks。",
+        "feedback": "该规则适用于当前种子，局部单元（行）与共享资源（列）具备天然耦合性，可产生有效变体。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题操作本质是单人的确定性构造优化，不存在可自然对抗化的轮流选择语义；强行引入第二个玩家只能依靠故事背景，违反‘对抗方只能靠故事背景硬造’的红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中只有一位冒险者，操作‘Purification’是单人施法；eligibility.forbidden_seed_properties 明确指出‘对抗方只能靠故事背景硬造’，而任何对抗化都只能通过叙事虚构另一方，无法从操作空间中自然衍生。原题的操作虽然可选不同单元格，但状态转移不产生分岔的对抗结果，不符合‘不同操作会改变后续可选状态’的博弈前提。",
+        "feedback": "该规则对种子题难以实现自然博弈化，建议寻找本身具有玩家轮流选择或对抗操作的原题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_mismatch",
+      "message": "原题核心是全局覆盖问题，并非单路径、单区间或单子树性质，无法通过本规则从局部问题跃迁为覆盖/割/支配问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题要求通过选择施法点净化全网格，本质是最小点覆盖行/列，且已包含全局最小性与可行性条件；而规则声明要求种子题具备‘单路径、单区间或单子树性质’，示例为‘把求一条路径的性质改成选择最少点覆盖所有给定路径’，两者不匹配。",
+        "feedback": "种子题不具有本规则所需的局部结构起点，强行应用只会重复原题覆盖逻辑，无法产生实质性新问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是优化问题（最小化施法次数），不是计数问题，不存在计数对象，无法应用带权计数扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的objective.type为'minimize_value'，目标是最小化spells数量；core_constraints是关于施法限制和覆盖要求的，不是在计数对象上定义计数。原题摘要中无任何计数目标。",
+        "feedback": "规则要求原题有明确有限的计数对象，但该题不满足此前提，建议更换种子题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "planner_rejected",
+      "message": "种子题的正向求解过于简单（检查一行全 E 且一列全 E 则无解，否则有 n 次施法解），将其反向设计为给定目标施法位置求最小网格修改后，问题退化为直接统计目标位置和非目标位置中标记与目标不一致的个数，算法核心没有本质变化，没有产生新的证明义务或求解难度。",
+      "details": {
+        "planner_status": "difference_insufficient"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划已兑现规则专属合同：定义了成功分支（输出覆盖集合）和失败分支（输出障碍单元格），障碍单元格构成可局部检查的冲突证据。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据规划审查官，重点确认规划是否同时定义了解分支和可局部检查的失败证据。",
+        "review_brief": "确认规划是否把无解分支写成可直接检查的局部阻碍证据，而不是解释性说明。",
+        "evidence": "candidate schema 的 core_constraints 新增 obstruction_output 约束（要求输出一个单元格，其行和列全为 'E'），objective 改为 construct_or_obstruction 明确双分支输出，invariant 增加 obstruction_verifiability 规定局部检查方法。helper 'local_certificate_design' 落在 C、O、V 且 redlines 满足；'failure_branch_symmetry' 使双分支对称；'obstruction_embedding' 将证据嵌入主约束。planner_payload 的 applied_helpers 逐条说明实现。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题的正向求解过于简单（检查一行全 E 且一列全 E 则无解，否则有 n 次施法解），将其反向设计为给定目标施法位置求最小网格修改后，问题退化为直接统计目标位置和非目标位置中标记与目标不一致的个数，算法核心没有本质变化，没有产生新的证明义务或求解难度。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 1.07,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "The seed problem's impossibility condition can be locally witnessed by a cell whose row and column are all 'E'. The transformation creates a structured certificate output that replaces the bare '-1'.",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "算法差异不足：新解法仅将原题的-1替换为具体的障碍单元格坐标，对于熟悉原题的选手只需微小修改（输出交点坐标），题目整体结构和主要解法框架未变，无法形成有效的新题。",
+    "feedback": "建议增加更实质性的变化，例如修改覆盖规则（如只能覆盖同行、不同列）、增加障碍类型、改变目标为计数或最小化等，以迫使解法核心变化。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_8310344a234a_campus_ops_20260529_054208",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_8310344a234a\\taco_codeforces_8310344a234a_campus_ops_20260529_054208_round1.json",
+    "previous_quality_report_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\reports\\taco_codeforces_8310344a234a\\taco_codeforces_8310344a234a_campus_ops_20260529_054208_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 97.0,
+      "divergence_score": 68.0,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "缺少无解和边界样例",
+          "detail": "现有样例未展示无解情况（某行全 E 且某列全 E）和 n=1 的最小边界，可能影响选手对无解条件的理解和边界测试的充分性。",
+          "evidence_refs": [
+            "snapshots.generated_problem.samples"
+          ],
+          "fix_hint": "建议增加一个无解样例，例如 n=2, 'EE\n.E' 或类似，输出 -1；再增加一个 n=1 的样例，如 '.' 输出 '1 1'，'E' 输出 -1。"
+        }
+      ],
+      "suggested_revisions": [
+        "建议增加一个无解样例，例如 n=2, 'EE\n.E' 或类似，输出 -1；再增加一个 n=1 的样例，如 '.' 输出 '1 1'，'E' 输出 -1。",
+        "增添一个无解样例（例如 n=2, 输入 'EE\n.E' 或 'EE\nEE'）并输出 -1，完善边界覆盖。",
+        "增添一个 n=1 的样例（如 '.' 输出 '1 1'），确保最小规模情况得到展示。"
+      ],
+      "strengths_to_keep": [
+        "题面成功地将抽象网格覆盖问题映射为校园教室检查场景，增强了可读性和趣味性。",
+        "描述准确落实了所有核心约束（选择 '.'、全图覆盖、恰好 n 次、集合去重取模），无逻辑缺失。",
+        "样例解释详尽，通过具体计算展示了容斥公式的应用，有助于选手理解计数逻辑。",
+        "输出格式和可行性条件与目标完全一致，无矛盾。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 97.0,
+            "divergence_score": 68.0,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "缺少无解和边界样例",
+                "detail": "现有样例未展示无解情况（某行全 E 且某列全 E）和 n=1 的最小边界，可能影响选手对无解条件的理解和边界测试的充分性。",
+                "evidence_refs": [
+                  "snapshots.generated_problem.samples"
+                ],
+                "fix_hint": "建议增加一个无解样例，例如 n=2, 'EE\n.E' 或类似，输出 -1；再增加一个 n=1 的样例，如 '.' 输出 '1 1'，'E' 输出 -1。"
+              }
+            ],
+            "suggested_revisions": [
+              "建议增加一个无解样例，例如 n=2, 'EE\n.E' 或类似，输出 -1；再增加一个 n=1 的样例，如 '.' 输出 '1 1'，'E' 输出 -1。",
+              "增添一个无解样例（例如 n=2, 输入 'EE\n.E' 或 'EE\nEE'）并输出 -1，完善边界覆盖。",
+              "增添一个 n=1 的样例（如 '.' 输出 '1 1'），确保最小规模情况得到展示。"
+            ],
+            "strengths_to_keep": [
+              "题面成功地将抽象网格覆盖问题映射为校园教室检查场景，增强了可读性和趣味性。",
+              "描述准确落实了所有核心约束（选择 '.'、全图覆盖、恰好 n 次、集合去重取模），无逻辑缺失。",
+              "样例解释详尽，通过具体计算展示了容斥公式的应用，有助于选手理解计数逻辑。",
+              "输出格式和可行性条件与目标完全一致，无矛盾。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 97.0,
+        "latest_divergence_score": 68.0,
+        "suggested_revisions": [
+          "建议增加一个无解样例，例如 n=2, 'EE\n.E' 或类似，输出 -1；再增加一个 n=1 的样例，如 '.' 输出 '1 1'，'E' 输出 -1。",
+          "增添一个无解样例（例如 n=2, 输入 'EE\n.E' 或 'EE\nEE'）并输出 -1，完善边界覆盖。",
+          "增添一个 n=1 的样例（如 '.' 输出 '1 1'），确保最小规模情况得到展示。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "缺少无解和边界样例",
+            "detail": "现有样例未展示无解情况（某行全 E 且某列全 E）和 n=1 的最小边界，可能影响选手对无解条件的理解和边界测试的充分性。",
+            "evidence_refs": [
+              "snapshots.generated_problem.samples"
+            ],
+            "fix_hint": "建议增加一个无解样例，例如 n=2, 'EE\n.E' 或类似，输出 -1；再增加一个 n=1 的样例，如 '.' 输出 '1 1'，'E' 输出 -1。"
+          }
+        ],
+        "strengths_to_keep": [
+          "题面成功地将抽象网格覆盖问题映射为校园教室检查场景，增强了可读性和趣味性。",
+          "描述准确落实了所有核心约束（选择 '.'、全图覆盖、恰好 n 次、集合去重取模），无逻辑缺失。",
+          "样例解释详尽，通过具体计算展示了容斥公式的应用，有助于选手理解计数逻辑。",
+          "输出格式和可行性条件与目标完全一致，无矛盾。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

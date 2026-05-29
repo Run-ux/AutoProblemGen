@@ -1,0 +1,706 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 97.0,
+    "divergence_score": 59.5,
+    "schema_distance": 0.5128,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "题面完全实现了 new_schema 中定义的任务变体：输入结构为两个社区的点集，目标要求输出分离圆或冲突证书，证书结构与不可分离条件、局部可验证性均得到准确描述。输入格式、输出格式、约束和样例均与 schema 一致。",
+        "evidence_refs": [
+          "snapshots.new_schema.input_structure",
+          "snapshots.new_schema.objective",
+          "snapshots.new_schema.core_constraints.obstruction_certificate_structure",
+          "snapshots.new_schema.invariant",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含独立做题所需的所有关键信息：任务说明清晰定义了两种输出分支，输入格式、输出格式、约束条件和样例齐全，证书验证条件被完整描述，未遗漏任何必要细节。",
+        "evidence_refs": [
+          "snapshots.generated_problem.description",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.constraints",
+          "snapshots.generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints 和 samples 之间严格一致，点集大小、坐标范围、输出格式、证书条件均无矛盾，样例输入输出与题意完全匹配。",
+        "evidence_refs": [
+          "snapshots.generated_problem.description",
+          "snapshots.generated_problem.input_format",
+          "snapshots.generated_problem.output_format",
+          "snapshots.generated_problem.constraints",
+          "snapshots.generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 4.0,
+        "rationale": "仅有两个样例，分别覆盖 YES 和 NO 分支，解释清晰；但样例较少，且 NO 样例仅展示了将全部点作为证书的平凡情况，未展示抽取真子集作为证书的更复杂情形，对理解证书构造的多样化帮助有限。",
+        "evidence_refs": [
+          "snapshots.generated_problem.samples",
+          "snapshots.hard_checks.sample_count"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清楚、措辞明确，符合 OJ 题面表达习惯；尽管 hard_check 提示存在疑似原题标识泄露，但题面中未见明显污染或无关文本，不影响正常阅读与理解。",
+        "evidence_refs": [
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "strengths": [
+      "成功将问题从判定型转化为构造/证据型，分支语义清晰且对等。",
+      "证书条件描述详细，局部可验证性在题面中明确强调，符合 new_schema 的创新意图。",
+      "样例解释充分，直接说明了不可分离的几何原因与分离圆的构造逻辑。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5128,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.6161,
+        "O": 0.5118,
+        "V": 1.0
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.6161,
+        "objective_type_distance": 0.622,
+        "objective_text_distance": 0.3466,
+        "invariant_match_distance": 1.0
+      }
+    },
+    "schema_distance": 0.5128,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.45,
+    "solution_transfer_risk": 0.7,
+    "surface_retheme_risk": 0.45,
+    "verdict": "reject_as_retheme",
+    "rationale": "核心几何问题完全相同：判断是否存在一个圆严格分离两个点集，求解依赖凸包计算与相交/包含检测。新题将判定输出扩展为构造分离圆（YES 时）或提交冲突证书（NO 时），这一变化虽增加了实现细节，但并未改变问题的本质建模与核心算法。原题的标准解（凸包判定）几乎可以直接复用，仅需在输出环节追加圆参数计算或子集提取，这些扩展是自然的构造补充，没有产生新的算法层面挑战。输入结构未变，表层叙事仅换了社区服务背景，样例思路也有明显延续。因此，原题解法迁移风险较高，语义实质性差异不足。",
+    "evidence_refs": [
+      "snapshots.original_problem",
+      "snapshots.generated_problem",
+      "snapshots.new_schema.objective",
+      "divergence.schema_distance_breakdown",
+      "hard_checks[source_leakage]"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.51，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：e",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：e",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "疑似原题标识泄露",
+      "detail": "hard_check source_leakage 检测到原题标识或标题片段泄露：“e”，但题面中未发现明显包含原题信息的字符串，可能为误报或微量字符匹配。",
+      "evidence_refs": [
+        "snapshots.hard_checks.source_leakage"
+      ],
+      "fix_hint": "检查题面文本，去除可能存在的原题题号、特殊标识等残留字符；若为误报，可忽略。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例数量偏少且覆盖度不足",
+      "detail": "仅有 2 组样例，且 NO 样例的证书为全集本身，未展示更典型的真子集证书示例，可能影响用户对复杂证书构造的理解。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples",
+        "snapshots.hard_checks.sample_count"
+      ],
+      "fix_hint": "建议增加一个包含真子集证书的 NO 样例（例如凸包相交仅需少数顶点），使样例更全面。"
+    },
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "核心几何问题完全相同：判断是否存在一个圆严格分离两个点集，求解依赖凸包计算与相交/包含检测。新题将判定输出扩展为构造分离圆（YES 时）或提交冲突证书（NO 时），这一变化虽增加了实现细节，但并未改变问题的本质建模与核心算法。原题的标准解（凸包判定）几乎可以直接复用，仅需在输出环节追加圆参数计算或子集提取，这些扩展是自然的构造补充，没有产生新的算法层面挑战。输入结构未变，表层叙事仅换了社区服务背景，样例思路也有明显延续。因此，原题解法迁移风险较高，语义实质性差异不足。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem",
+        "snapshots.new_schema.objective",
+        "divergence.schema_distance_breakdown",
+        "hard_checks[source_leakage]"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "检查题面文本，去除可能存在的原题题号、特殊标识等残留字符；若为误报，可忽略。",
+    "建议增加一个包含真子集证书的 NO 样例（例如凸包相交仅需少数顶点），使样例更全面。",
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "增加一个 NO 样例，展示取真子集作为冲突证书的情形（如凸包相交只需部分顶点）。",
+    "在 notes 中可补充说明：当输出 NO 时，即使将全部点作为证书也是允许的，但更小的证书可能存在，选手可自行选择。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 97.0,
+    "divergence_score": 59.5,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：e",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：e",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "疑似原题标识泄露",
+        "detail": "hard_check source_leakage 检测到原题标识或标题片段泄露：“e”，但题面中未发现明显包含原题信息的字符串，可能为误报或微量字符匹配。",
+        "evidence_refs": [
+          "snapshots.hard_checks.source_leakage"
+        ],
+        "fix_hint": "检查题面文本，去除可能存在的原题题号、特殊标识等残留字符；若为误报，可忽略。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例数量偏少且覆盖度不足",
+        "detail": "仅有 2 组样例，且 NO 样例的证书为全集本身，未展示更典型的真子集证书示例，可能影响用户对复杂证书构造的理解。",
+        "evidence_refs": [
+          "snapshots.generated_problem.samples",
+          "snapshots.hard_checks.sample_count"
+        ],
+        "fix_hint": "建议增加一个包含真子集证书的 NO 样例（例如凸包相交仅需少数顶点），使样例更全面。"
+      },
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "核心几何问题完全相同：判断是否存在一个圆严格分离两个点集，求解依赖凸包计算与相交/包含检测。新题将判定输出扩展为构造分离圆（YES 时）或提交冲突证书（NO 时），这一变化虽增加了实现细节，但并未改变问题的本质建模与核心算法。原题的标准解（凸包判定）几乎可以直接复用，仅需在输出环节追加圆参数计算或子集提取，这些扩展是自然的构造补充，没有产生新的算法层面挑战。输入结构未变，表层叙事仅换了社区服务背景，样例思路也有明显延续。因此，原题解法迁移风险较高，语义实质性差异不足。",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem",
+          "snapshots.new_schema.objective",
+          "divergence.schema_distance_breakdown",
+          "hard_checks[source_leakage]"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "检查题面文本，去除可能存在的原题题号、特殊标识等残留字符；若为误报，可忽略。",
+      "建议增加一个包含真子集证书的 NO 样例（例如凸包相交仅需少数顶点），使样例更全面。",
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "增加一个 NO 样例，展示取真子集作为冲突证书的情形（如凸包相交只需部分顶点）。",
+      "在 notes 中可补充说明：当输出 NO 时，即使将全部点作为证书也是允许的，但更小的证书可能存在，选手可自行选择。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "成功将问题从判定型转化为构造/证据型，分支语义清晰且对等。",
+      "证书条件描述详细，局部可验证性在题面中明确强调，符合 new_schema 的创新意图。",
+      "样例解释充分，直接说明了不可分离的几何原因与分离圆的构造逻辑。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\source\\taco_codeforces_3b7f10e3d5c5\\taco_codeforces_3b7f10e3d5c5.json",
+      "artifact_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\artifacts\\taco_codeforces_3b7f10e3d5c5\\taco_codeforces_3b7f10e3d5c5_community_services_20260529_154605_round1.json",
+      "markdown_path": "D:\\autogen\\AutoProblemGen\\总流程\\output\\input_part_001_200_356c19f5\\generation\\output\\taco_codeforces_3b7f10e3d5c5\\taco_codeforces_3b7f10e3d5c5_community_services_20260529_154605_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_3b7f10e3d5c5",
+      "title": "E",
+      "description": "Berlanders like to eat cones after a hard day. Misha Square and Sasha Circle are local authorities of Berland. Each of them controls its points of cone trade. Misha has n points, Sasha — m. Since their subordinates constantly had conflicts with each other, they decided to build a fence in the form of a circle, so that the points of trade of one businessman are strictly inside a circle, and points of the other one are strictly outside. It doesn't matter which of the two gentlemen will have his trade points inside the circle.\n\nDetermine whether they can build a fence or not.\n\n\n-----Input-----\n\nThe first line contains two integers n and m (1 ≤ n, m ≤ 10000), numbers of Misha's and Sasha's trade points respectively.\n\nThe next n lines contains pairs of space-separated integers M_{x}, M_{y} ( - 10^4 ≤ M_{x}, M_{y} ≤ 10^4), coordinates of Misha's trade points.\n\nThe next m lines contains pairs of space-separated integers S_{x}, S_{y} ( - 10^4 ≤ S_{x}, S_{y} ≤ 10^4), coordinates of Sasha's trade points.\n\nIt is guaranteed that all n + m points are distinct.\n\n\n-----Output-----\n\nThe only output line should contain either word \"YES\" without quotes in case it is possible to build a such fence or word \"NO\" in the other case.\n\n\n-----Examples-----\nInput\n2 2\n-1 0\n1 0\n0 -1\n0 1\n\nOutput\nNO\n\nInput\n4 4\n1 0\n0 1\n-1 0\n0 -1\n1 1\n-1 1\n-1 -1\n1 -1\n\nOutput\nYES\n\n\n\n-----Note-----\n\nIn the first sample there is no possibility to separate points, because any circle that contains both points ( - 1, 0), (1, 0) also contains at least one point from the set (0,  - 1), (0, 1), and vice-versa: any circle that contains both points (0,  - 1), (0, 1) also contains at least one point from the set ( - 1, 0), (1, 0)\n\nIn the second sample one of the possible solution is shown below. Misha's points are marked with red colour and Sasha's are marked with blue. [Image]",
+      "input": "2 2\n-1 0\n1 0\n0 -1\n0 1\n\n4 4\n1 0\n0 1\n-1 0\n0 -1\n1 1\n-1 1\n-1 -1\n1 -1",
+      "output": "NO\n\nYES\n\n\n\n-----Note-----\n\nIn the first sample there is no possibility to separate points, because any circle that contains both points ( - 1, 0), (1, 0) also contains at least one point from the set (0,  - 1), (0, 1), and vice-versa: any circle that contains both points (0,  - 1), (0, 1) also contains at least one point from the set ( - 1, 0), (1, 0)\n\nIn the second sample one of the possible solution is shown below. Misha's points are marked with red colour and Sasha's are marked with blue. [Image]",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "nm = input()\nnOm = nm.split()\nn = int(nOm[0])\nm = int(nOm[1])\na = b = []\nfor i in range(0, n):\n\ta.append(input())\nfor i in range(0, m):\n\tb.append(input())\nif n == 2 and m == 2 and (a[0] == '-1 0') or (n == 2 and m == 3 and (a[0] == '-1 0')) or (n == 3 and m == 3 and (a[0] == '-3 -4')) or (n == 1000 and m == 1000 and (a[0] == '15 70')) or (n == 1000 and m == 1000 and (a[0] == '28 9')) or (n == 10000 and m == 10000 and (a[0] == '917 -4476')) or (n == 3 and m == 2 and (a[0] == '9599 -9999')) or (n == 145 and m == 143 and (a[0] == '-5915 6910')) or (n == 2 and m == 10 and (a[0] == '-1 0' and a[1] == '0 -1' or (a[0] == '1 0' and a[1] == '0 1'))) or (n == 2 and m == 3 and (a[0] == '0 -1')) or (n == 100 and m == 100 and (a[0] == '-10000 6429')):\n\tprint('NO')\nelif n == 4 and m == 4 and (a[0] == '1 0') or (n == 3 and m == 4 and (a[0] == '-9998 -10000')) or n == 1 or (m == 1) or (n == 2 and m == 2 and (a[0] == '3782 2631')) or (n == 1000 and m == 1000 and (a[0] == '-4729 -6837')) or (n == 1000 and m == 1000 and (a[0] == '6558 -2280')) or (n == 1000 and m == 1000 and (a[0] == '-5051 5846')) or (n == 1000 and m == 1000 and (a[0] == '-4547 4547')) or (n == 1000 and m == 1000 and (a[0] == '7010 10000')) or (n == 1948 and m == 1091 and (a[0] == '-1873 -10000')) or (n == 1477 and m == 1211 and (a[0] == '2770 -10000')) or (n == 1000 and m == 1000 and (a[0] == '5245 6141')) or (n == 10000 and m == 10000 and (a[0] == '-4957 8783')) or (n == 10000 and m == 10000 and (a[0] == '-1729 2513')) or (n == 10000 and m == 10000 and (a[0] == '8781 -5556')) or (n == 10000 and m == 10000 and (a[0] == '5715 5323')) or (nm == '10000 10000' and a[0] == '-1323 290') or (nm == '10000 10000' and a[0] == '6828 3257') or (nm == '10000 10000' and a[0] == '1592 -154') or (nm == '10000 10000' and a[0] == '-1535 5405') or (nm == '10000 10000' and (a[0] == '-3041 8307' or a[0] == '-2797 3837' or a[0] == '8393 -5715')):\n\tprint('YES')\nelif n >= 1000:\n\tprint('NO')\nelse:\n\tprint('YES')"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_3b7f10e3d5c5",
+        "codeforces",
+        "Berlanders like to eat cones after a hard day. Misha Square and Sasha Circle are local authorities of Berland. Each of them controls its points of cone trade. Misha has n points, Sasha — m. Since their subordinates co...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束 C 新增冲突证据的结构定义与可验证条件；目标 O 从布尔决策变为双向构造（圆 / 证书）；不变式 V 引入输出合同的两支正确性保证。",
+      "summary": "在原有分离性判定基础上，延伸出构造要求和失败证据义务，使问题从判定型转化为构造与证据型。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "community_service_circle",
+      "source": "transformed_from_codeforces_3b7f10e3d5c5",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "community_A_points",
+            "role_description": "社区 A 的住户坐标",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 10000
+            },
+            "value_range": {
+              "min": -10000,
+              "max": 10000
+            },
+            "properties": {
+              "distinct": true
+            }
+          },
+          {
+            "role": "community_B_points",
+            "role_description": "社区 B 的住户坐标",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 10000
+            },
+            "value_range": {
+              "min": -10000,
+              "max": 10000
+            },
+            "properties": {
+              "distinct": true
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "distinct_points",
+            "description": "所有住户坐标均为整数，且任意两点坐标互不相同。",
+            "formal": "∀ P,Q ∈ A∪B, P≠Q",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "obstruction_certificate_structure",
+            "description": "当输出为冲突证书时，证书由输入点子集构成，并满足不可分离的充分条件：要么两个子集的凸包交集非空，要么一个子集中存在一点严格位于另一子集凸包内部。",
+            "formal": "certificate = (X⊆A, Y⊆B) ∧ (conv(X)∩conv(Y)≠∅ ∨ ∃p∈X s.t. p∈int(conv(Y)) ∨ ∃q∈Y s.t. q∈int(conv(X)))",
+            "source_sections": [
+              "output_spec"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "construct_or_obstruction",
+        "description": "如果存在一个圆严格分离社区 A 与社区 B 的住户点（即存在半径 r>0 和圆心 (x,y) 使得所有 A 点严格在圆内、所有 B 点严格在圆外），则输出 YES 并给出一个合法圆的圆心和半径；否则输出 NO 并给出一个冲突证书，证书由部分住户点构成，它们自身已可证明不可被任何圆分离，且该事实能仅通过检查证书中的点来验证。",
+        "target": "explicit_solution_or_certificate",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "solution_correctness",
+            "description": "若输出 YES 和圆 (x,y,r)，则对于所有 p∈A，dist(p,(x,y)) < r；对于所有 q∈B，dist(q,(x,y)) > r。",
+            "formal": "output='YES' ⇒ (∀p∈A: sqrt((p.x-x)^2+(p.y-y)^2) < r) ∧ (∀q∈B: sqrt((q.x-x)^2+(q.y-y)^2) > r)"
+          },
+          {
+            "name": "certificate_correctness",
+            "description": "若输出 NO 和证书 (X⊆A, Y⊆B)，则 X与Y 满足不可分离条件（凸包相交或一点在另一凸包内部），因此不存在任何圆严格分离 X 和 Y。",
+            "formal": "output='NO' ⇒ (X≠∅ ∨ Y≠∅) ∧ (conv(X)∩conv(Y)≠∅ ∨ ∃p∈X: p∈int(conv(Y)) ∨ ∃q∈Y: q∈int(conv(X)))"
+          },
+          {
+            "name": "local_verifiability",
+            "description": "证书正确性可仅通过检查证书提供的点及其凸包关系判定，无需其余输入点参与。",
+            "formal": "verification_uses_only(X, Y, convex_hull_relation)"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "社区服务圈",
+      "description": "城市里有两个相邻的社区 A 和 B，每个社区内有若干住户。为了方便管理，市政部门计划建立一个圆形区域的社区服务中心，希望服务中心能够覆盖社区 A 的所有住户（所有 A 的住户都严格位于圆内），同时完全不覆盖社区 B 的任何住户（所有 B 的住户都严格位于圆外）。注意：服务中心的半径必须大于 0。\n\n你的任务是判断是否存在这样的圆形服务中心。如果存在，你需要给出一个可行的方案（圆心坐标和半径）。如果不存在，你需要指出一个“冲突证据”：从两个社区中各选出一些住户，这些住户所形成的子集已经足以证明不存在任何圆形服务中心能够将它们分离。具体而言，证据必须满足以下条件之一：\n- 选出的 A 的子集与 B 的子集的凸包（即包含这些点的最小凸多边形）相交；\n- 选出的 A 的子集中存在一个点严格位于 B 子集的凸包内部，或者选出的 B 的子集中存在一个点严格位于 A 子集的凸包内部。\n\n该证据只需要检查其中包含的住户点即可验证，不需要查看社区中的其他住户。",
+      "input_format": "第一行包含两个整数 n 和 m (1 ≤ n, m ≤ 10000)，分别表示社区 A 和社区 B 的住户数量。\n接下来的 n 行，每行两个整数 x y (-10000 ≤ x, y ≤ 10000)，表示社区 A 的一个住户坐标。\n接下来的 m 行，每行两个整数 x y (-10000 ≤ x, y ≤ 10000)，表示社区 B 的一个住户坐标。\n所有给出的 n+m 个点的坐标互不相同。",
+      "output_format": "如果存在满足要求的圆形服务中心，则第一行输出 \"YES\"（不包含引号）。\n第二行输出三个实数 x y r，分别表示圆心的 x 坐标、y 坐标和半径。实数可以输出任意小数位数，但你的输出与正确答案的绝对或相对误差不超过 1e-6 即被视为正确。半径必须大于 0，且对于社区 A 的所有点 p，其到圆心的距离必须严格小于 r；对于社区 B 的所有点 q，到圆心的距离必须严格大于 r。\n\n如果不存在这样的服务中心，则第一行输出 \"NO\"（不包含引号）。\n第二行输出两个正整数 k 和 l，分别表示从社区 A 和社区 B 中选出的住户数量，要求 k ≥ 1 且 l ≥ 1。\n接下来的 k 行，每行两个整数，表示从社区 A 中选出的住户的坐标。\n接下来的 l 行，每行两个整数，表示从社区 B 中选出的住户的坐标。\n这些选出的点必须构成一个不可分离的证据，即满足以下条件之一：\n1. 选出的 A 点子集的凸包与选出的 B 点子集的凸包相交；\n2. 存在选出的 A 子集中的一个点严格位于选出的 B 子集的凸包内部，或者存在选出的 B 子集中的一个点严格位于选出的 A 子集的凸包内部。\n如果满足任意一种情况，则足以证明不存在任何圆能够严格分离这两个子集中的所有点，从而原问题也无解。验证者只需依据证书中的点即可做出判定。",
+      "constraints": [
+        "1 ≤ n, m ≤ 10000",
+        "-10000 ≤ x, y ≤ 10000，所有点坐标为整数且互不相同",
+        "时间限制：2000 ms (2 seconds)",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "2 2\n0 0\n2 0\n1 1\n1 -1",
+          "output": "NO\n2 2\n0 0\n2 0\n1 1\n1 -1",
+          "explanation": "社区 A 的两个住户 (0, 0) 和 (2, 0) 构成的凸包是一条水平线段，社区 B 的两个住户 (1, 1) 和 (1, -1) 构成的凸包是一条垂直线段，这两条线段相交于点 (1, 0)，因此不可能存在一个圆将两个社区严格分开。输出的证书包含了这两个子集本身，它们已经足以证明不可分离。"
+        },
+        {
+          "input": "2 1\n0 0\n0 1\n10 10",
+          "output": "YES\n0.0 0.5 0.6",
+          "explanation": "构造圆心为 (0.0, 0.5)、半径为 0.6 的圆。社区 A 的点 (0, 0) 和 (0, 1) 到圆心的距离均为 0.5，严格小于半径；社区 B 的点 (10, 10) 到圆心的距离约为 13.44，严格大于半径，因此满足要求。"
+        }
+      ],
+      "notes": "1. 当输出 YES 时，任何满足严格分离条件的圆均为正确答案，你可以输出任意一个。\n2. 当输出 NO 时，证书不要求包含的点数最小，只要满足上述冲突条件即可。事实上，若整个问题无解，总是存在这样的证书。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "在原有分离性判定基础上，延伸出构造要求和失败证据义务，使问题从判定型转化为构造与证据型。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5128,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.6161,
+          "O": 0.5118,
+          "V": 1.0
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.6161,
+          "objective_type_distance": 0.622,
+          "objective_text_distance": 0.3466,
+          "invariant_match_distance": 1.0
+        }
+      },
+      "applied_rule": "construct_or_obstruction",
+      "applied_helpers": [
+        {
+          "id": "local_certificate_design",
+          "selection_reason": "需要将不可分离的原因从解释转化为可局部检查的几何证据。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "核心约束增加证书结构定义与不可分离充分条件",
+            "目标改为输出证书作为失败分支",
+            "不变量加入证书正确性与局部可验证性"
+          ],
+          "innovation_reason": "使失败语义从抽象说明变为具体、可独立验证的对象，提升问题的概念深度。",
+          "difficulty_reason": "要求算法识别不可分离的根本原因并提取最小证据，增加了实现与证明复杂度。"
+        },
+        {
+          "id": "failure_branch_symmetry",
+          "selection_reason": "确保成功与失败分支都有正式的构造义务，防止失败分支被弱化为备注。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "核心约束中同时规范失败分支的输出结构",
+            "目标要求输出为圆或证书的联合体，且两者均为正式输出"
+          ],
+          "innovation_reason": "打破传统单答案模式，迫使问题设计者同等对待两种输出，产生丰富的算法对称性。",
+          "difficulty_reason": "算法必须统一处理两种输出的构造逻辑，不能依靠特判或返回字符串回避核心计算。"
+        },
+        {
+          "id": "obstruction_embedding",
+          "selection_reason": "让冲突证据直接从主约束（分离圆存在性）的内在矛盾中提取。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "核心约束将不可分离条件具体化为凸包相交或点包含等几何关系",
+            "不变量声明证书必须源于这些内在矛盾，且验证只需局部几何信息"
+          ],
+          "innovation_reason": "将证据生成嵌入问题结构本身，避免依赖外部过滤或人为主观分层。",
+          "difficulty_reason": "要求算法在求解过程中同步维护几何关系，以在失败时快速定位冲突子集，增加状态管理开销。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "基于凸包的圆分离存在性判定：计算两集合凸包，检查是否相交或包含。",
+        "reusable_subroutines": "凸包计算（Graham/Andrew）、点与凸包位置检测、最小包围圆算法、点集与圆的位置判定。",
+        "new_solver_core": "若可分离，基于凸包顶点与对方点构造一个具体的分离圆（例如对 A 的凸包顶点计算最小包围圆，若内部含 B 点则调整重心与半径）；若不可分离，根据障碍类型构造冲突证书：凸包相交时提取相交的凸包顶点子集，包含时提取被包含点和对方凸包。",
+        "new_proof_obligation": "需证明构造出的圆确实严格分离两个点集；需证明若存在分离圆算法必能构造其一；需证明当不可分离时，提取的证书一定是不可分离的有效证据，且证书总是存在；需证明证书的局部可验证性。",
+        "why_direct_reuse_fails": "原题只输出布尔值，没有构造圆或证书的义务，也没有定义证书的几何结构。直接修改输出形式无法通过新题的正确定性检验。"
+      },
+      "anti_shallow_rationale": "新题不仅将点集重命名为社区住户，更核心地改变了输出语义：从单比特答案变为构造性分离圆或几何冲突证据，要求算法在同一框架内处理成功与失败两条完整计算路径。原题解若简单包装成输出 YES/NO 无法满足证书的构造与验证要求，算法结构与正确性证明均需重新设计，远超出换背景或改格式的浅层修改。"
+    }
+  }
+}
