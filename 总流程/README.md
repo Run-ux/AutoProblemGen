@@ -63,6 +63,8 @@ embedding_llm.env
 python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\requirements.txt
 ```
 
+开始验证前，总流程会用 `PYTHON_EXECUTABLE` 做一次依赖预检；如果该解释器无法 `import cyaron`，流程会 fail-fast 并提示把依赖安装到同一个解释器中。
+
 ## 运行总流程
 
 在本目录执行：

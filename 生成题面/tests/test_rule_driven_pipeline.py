@@ -457,6 +457,54 @@ class SingleSeedExtensionTests(unittest.TestCase):
                 self.assertEqual(len(plan.rejected_candidates), 1)
                 self.assertEqual(plan.rejected_candidates[0]["rule_id"], rule_id)
 
+    def test_planner_contract_retry_repairs_declared_axes_mismatch(self) -> None:
+        invalid_payload = make_single_payload("canonical_witness")
+        invalid_payload["difference_plan"]["changed_axes"] = ["I"]
+        repaired_payload = make_single_payload("canonical_witness")
+        client = FakePlannerClient(
+            {
+                "canonical_witness": [
+                    invalid_payload,
+                    repaired_payload,
+                ]
+            }
+        )
+        planner = VariantPlanner(client=client, rulebook=self.rulebook)
+
+        plan = planner.build_plan(
+            mode="single_seed_extension",
+            variant_index=1,
+            seed_schema=self.source_schema,
+            original_problem=self.original_problem,
+            allowed_rule_ids={"canonical_witness"},
+        )
+
+        self.assertEqual(plan.planning_status, "ok")
+        self.assertEqual(client.calls.count("plan:canonical_witness"), 2)
+        self.assertTrue(any("规划合同定向修复" in prompt for prompt in client.user_prompts))
+        self.assertEqual(plan.candidate_attempts[0]["contract_retry_count"], 1)
+        self.assertIn("declared_axes_mismatch", plan.candidate_attempts[0]["contract_retry_history"][0]["reason_code"])
+
+    def test_planner_contract_retry_does_not_retry_semantic_rejection(self) -> None:
+        payload = make_single_payload("forward_solution_to_inverse_design")
+        for helper in payload["applied_helpers"]:
+            helper["schema_changes"].append("不能只输出任意可行修改。")
+        client = FakePlannerClient({"forward_solution_to_inverse_design": payload})
+        planner = VariantPlanner(client=client, rulebook=self.rulebook)
+
+        plan = planner.build_plan(
+            mode="single_seed_extension",
+            variant_index=1,
+            seed_schema=self.source_schema,
+            original_problem=self.original_problem,
+            allowed_rule_ids={"forward_solution_to_inverse_design"},
+        )
+
+        self.assertEqual(plan.planning_status, "difference_insufficient")
+        self.assertEqual(client.calls.count("plan:forward_solution_to_inverse_design"), 1)
+        self.assertEqual(plan.candidate_attempts[0]["reason_code"], "helper_redline_hit")
+        self.assertNotIn("contract_retry_count", plan.candidate_attempts[0])
+
     def test_rule_selection_runs_before_planning(self) -> None:
         client = FakePlannerClient(
             responses={
@@ -2570,6 +2618,7 @@ class FakePlannerClient:
         self.plan_review_responses = copy.deepcopy(plan_review_responses or {})
         self.problem_review_responses = copy.deepcopy(problem_review_responses or {})
         self.calls: list[str] = []
+        self.user_prompts: list[str] = []
         self.embedding_model = "stub-embedding-v1"
         self.distance_cache_path = None
 
@@ -2580,6 +2629,7 @@ class FakePlannerClient:
         temperature: float = 0.0,
         **_: object,
     ) -> dict:
+        self.user_prompts.append(user_prompt)
         if '"review_type": "eligibility"' in user_prompt:
             rule_id = _extract_rule_under_review_id(user_prompt)
             if rule_id in self.eligibility_responses:
@@ -2620,6 +2670,10 @@ class FakePlannerClient:
         for rule_id, payload in self.responses.items():
             if f'"id": "{rule_id}"' in user_prompt:
                 self.calls.append(f"plan:{rule_id}")
+                if isinstance(payload, list):
+                    if len(payload) > 1:
+                        return copy.deepcopy(payload.pop(0))
+                    return copy.deepcopy(payload[0])
                 return copy.deepcopy(payload)
         raise AssertionError(f"无法从 prompt 中匹配规则。prompt={user_prompt}")
 

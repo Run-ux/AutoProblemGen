@@ -7,6 +7,7 @@ from typing import Any
 from models import AuditTraceEvent, DifferencePlan, NewSchema, RuleSelectionResult, Theme, VariantPlan
 from prompt_builder import (
     build_planner_system_prompt,
+    build_planner_contract_retry_prompt,
     build_planner_user_prompt,
     build_rule_selection_system_prompt,
     build_rule_selection_user_prompt,
@@ -67,6 +68,24 @@ ALLOWED_NEW_SCHEMA_FIELDS = REQUIRED_NEW_SCHEMA_FIELDS + (
     "theme",
     "difficulty",
 )
+
+PLANNER_CONTRACT_RETRY_LIMIT = 2
+PLANNER_CONTRACT_RETRYABLE_REASON_CODES = {
+    "unexpected_schema_fields",
+    "schema_incomplete",
+    "declared_axes_mismatch",
+    "required_axes_missing",
+    "distance_gate_failed",
+    "missing_required_fields",
+    "helper_moves_disabled",
+    "helper_duplicate",
+    "helper_missing",
+    "helper_not_declared",
+    "helper_fields_missing",
+    "helper_schema_changes_missing",
+    "helper_target_axes_missing",
+    "helper_realization_missing",
+}
 
 
 class VariantPlanner:
@@ -447,60 +466,95 @@ class VariantPlanner:
         source_problem_ids: list[str],
         revision_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        payload = self.client.chat_json(
-            system_prompt=build_planner_system_prompt(),
-            user_prompt=build_planner_user_prompt(
-                mode=mode,
-                rule=rule,
-                theme=theme_payload,
-                schema_context=schema_context,
-                original_problem_references=original_refs,
-                global_constraints=self.rulebook.global_constraints(),
-                global_redlines=self.rulebook.global_redlines(),
-                revision_context=revision_context,
-            ),
-            temperature=0.15,
-            request_label=f"variant_planning.{normalize_rule_id(rule.get('id', 'unknown'))}",
-        )
-        accepted, normalized, rejection_reason, validation_trace, reason_code = self._validate_candidate(
+        rule_id = normalize_rule_id(rule.get("id", "unknown"))
+        original_user_prompt = build_planner_user_prompt(
             mode=mode,
             rule=rule,
-            payload=payload,
-            source_schema=source_schema,
-            source_problem_ids=source_problem_ids,
-            theme_payload=theme_payload,
+            theme=theme_payload,
+            schema_context=schema_context,
+            original_problem_references=original_refs,
+            global_constraints=self.rulebook.global_constraints(),
+            global_redlines=self.rulebook.global_redlines(),
+            revision_context=revision_context,
         )
-        summary = {
-            "rule_id": rule.get("id", ""),
-            "handler": rule.get("handler", rule.get("id", "")),
-            "status": str(payload.get("status", "difference_insufficient")),
-            "reason_code": reason_code or ("planner_rejected" if str(payload.get("status", "ok")) != "ok" else "plan_validation_failed"),
-            "reason": rejection_reason or str(payload.get("error_reason", "") or payload.get("feedback", "")),
-        }
-        attempt = {
-            "rule_id": rule.get("id", ""),
-            "handler": rule.get("handler", rule.get("id", "")),
-            "score": selection_result.score,
-            "accepted": accepted,
-            "risk_tags": list(selection_result.risk_tags),
-            "status": summary["status"],
-            "reason_code": summary["reason_code"],
-            "reason": summary["reason"],
-        }
-        if accepted:
-            normalized["summary"] = summary
-            return {
-                "accepted": True,
-                **normalized,
-                "validation_trace": validation_trace,
-                "attempt": attempt,
+        user_prompt = original_user_prompt
+        retry_history: list[dict[str, Any]] = []
+        all_validation_trace: list[dict[str, Any]] = []
+
+        for attempt_index in range(1, PLANNER_CONTRACT_RETRY_LIMIT + 2):
+            payload = self.client.chat_json(
+                system_prompt=build_planner_system_prompt(),
+                user_prompt=user_prompt,
+                temperature=0.15,
+                request_label=(
+                    f"variant_planning.{rule_id}"
+                    if attempt_index == 1
+                    else f"variant_planning.{rule_id}.contract_retry{attempt_index - 1}"
+                ),
+            )
+            accepted, normalized, rejection_reason, validation_trace, reason_code = self._validate_candidate(
+                mode=mode,
+                rule=rule,
+                payload=payload,
+                source_schema=source_schema,
+                source_problem_ids=source_problem_ids,
+                theme_payload=theme_payload,
+            )
+            all_validation_trace.extend(validation_trace)
+            summary = {
+                "rule_id": rule.get("id", ""),
+                "handler": rule.get("handler", rule.get("id", "")),
+                "status": str(payload.get("status", "difference_insufficient")),
+                "reason_code": reason_code
+                or ("planner_rejected" if str(payload.get("status", "ok")) != "ok" else "plan_validation_failed"),
+                "reason": rejection_reason or str(payload.get("error_reason", "") or payload.get("feedback", "")),
             }
-        return {
-            "accepted": False,
-            "summary": summary,
-            "validation_trace": validation_trace,
-            "attempt": attempt,
-        }
+            attempt = {
+                "rule_id": rule.get("id", ""),
+                "handler": rule.get("handler", rule.get("id", "")),
+                "score": selection_result.score,
+                "accepted": accepted,
+                "risk_tags": list(selection_result.risk_tags),
+                "status": summary["status"],
+                "reason_code": summary["reason_code"],
+                "reason": summary["reason"],
+            }
+            if retry_history:
+                attempt["contract_retry_count"] = len(retry_history)
+                attempt["contract_retry_history"] = copy.deepcopy(retry_history)
+            if accepted:
+                normalized["summary"] = summary
+                return {
+                    "accepted": True,
+                    **normalized,
+                    "validation_trace": all_validation_trace,
+                    "attempt": attempt,
+                }
+            if attempt_index > PLANNER_CONTRACT_RETRY_LIMIT or not _is_planner_contract_retryable(summary["reason_code"]):
+                return {
+                    "accepted": False,
+                    "summary": summary,
+                    "validation_trace": all_validation_trace,
+                    "attempt": attempt,
+                }
+
+            failure = {
+                "attempt": attempt_index,
+                "reason_code": summary["reason_code"],
+                "reason": summary["reason"],
+                "status": summary["status"],
+                "validation_trace": validation_trace,
+            }
+            retry_history.append(copy.deepcopy(failure))
+            user_prompt = build_planner_contract_retry_prompt(
+                original_user_prompt=original_user_prompt,
+                previous_payload=payload,
+                failure=failure,
+                retry_history=retry_history,
+                next_attempt=attempt_index + 1,
+            )
+
+        raise AssertionError("unreachable")
 
     def _validate_candidate(
         self,
@@ -917,6 +971,10 @@ def _as_dict(value: Any) -> dict[str, Any]:
 
 def _as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _is_planner_contract_retryable(reason_code: str) -> bool:
+    return str(reason_code).strip() in PLANNER_CONTRACT_RETRYABLE_REASON_CODES
 
 
 def _summarize_rule_selection(payload: dict[str, Any]) -> str:

@@ -356,6 +356,40 @@ def build_planner_user_prompt(
     )
 
 
+def build_planner_contract_retry_prompt(
+    *,
+    original_user_prompt: str,
+    previous_payload: dict[str, Any],
+    failure: dict[str, Any],
+    retry_history: list[dict[str, Any]],
+    next_attempt: int,
+) -> str:
+    failure_json = json.dumps(failure, ensure_ascii=False, indent=2)
+    history_json = json.dumps(retry_history, ensure_ascii=False, indent=2)
+    previous_payload_json = json.dumps(previous_payload, ensure_ascii=False, indent=2)
+    return (
+        f"{original_user_prompt}\n\n"
+        "# 规划合同定向修复\n"
+        f"上一次规划 JSON 未通过代码级规划合同校验。当前是第 {next_attempt} 次尝试。\n"
+        "本轮只允许修复规划合同，不要更换当前规则、主题、种子题或规则意图。\n"
+        "如果规则确实不适用，才返回 `difference_insufficient` 或 `schema_insufficient`；"
+        "不要用失败状态逃避可修复的合同问题。\n\n"
+        "必须遵守：\n"
+        "- 重新输出完整 JSON 对象，不要只返回局部字段或补丁。\n"
+        "- `difference_plan.changed_axes` 必须与 `new_schema` 的真实变化轴一致。\n"
+        "- 如果缺少规则要求的变化轴，必须把对应变化 materialize 到四元组字段中。\n"
+        "- 如果差异度未进入硬门槛，调整 `new_schema` 的结构/约束/目标/不变量，使其落在允许区间且至少落地两个变化轴。\n"
+        "- 如果 helper 落地不完整，必须把 helper 声明的 `must_realize_in` 内容写入对应 schema 部分。\n"
+        "- `new_schema` 只能包含约定字段，不能增加额外键。\n\n"
+        "本轮需要修复的失败信息：\n"
+        f"{failure_json}\n\n"
+        "此前重试历史：\n"
+        f"{history_json}\n\n"
+        "上一版规划 JSON 如下，仅用于定位问题，不可局部复用：\n"
+        f"{previous_payload_json}"
+    )
+
+
 def build_generation_system_prompt() -> str:
     return """你是一名经验丰富的算法竞赛命题人。
 

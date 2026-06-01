@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -38,6 +39,14 @@ PROBLEM_GENERATION_DIR = PROJECT_ROOT / "生成题面"
 TUPLE_EXTRACT_SCRIPT = TUPLE_EXTRACT_DIR / "extract.py"
 PROBLEM_GENERATION_SCRIPT = PROBLEM_GENERATION_DIR / "main.py"
 VERIFICATION_RUNNER_SCRIPT = MODULE_ROOT / "verification_runner.py"
+VERIFICATION_DEPENDENCY_MODULE = "cyaron"
+VERIFICATION_DEPENDENCY_INSTALL_HINT = (
+    r'& "{python}" -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\requirements.txt'
+)
+VERIFICATION_ERROR_TEXT_LIMIT = 2000
+_VERIFICATION_ENV_CHECK_CACHE: dict[str, str] = {}
+_EMBEDDED_ERROR_TYPE_RE = re.compile(r'"error_type"\s*:\s*"([^"]+)"')
+_EMBEDDED_ERROR_MESSAGE_RE = re.compile(r'"error_message"\s*:\s*"([^"]+)"')
 
 TUPLE_DIMENSIONS = (
     "input_structure",
@@ -465,6 +474,17 @@ def _short_hash(value: Any) -> str:
     return text[:12] if text else "无"
 
 
+def _truncate_summary_text(value: Any, limit: int = VERIFICATION_ERROR_TEXT_LIMIT) -> str:
+    text = str(value or "").strip()
+    if len(text) <= limit:
+        return text
+    marker = "\n...<truncated>...\n"
+    keep_each_side = max(0, (limit - len(marker)) // 2)
+    if keep_each_side <= 0:
+        return text[:limit]
+    return text[:keep_each_side] + marker + text[-keep_each_side:]
+
+
 def _reset_problem_for_current_run(problem: dict[str, Any]) -> None:
     problem["status"] = "pending"
     problem["tuple"] = {}
@@ -690,6 +710,49 @@ def _config_summary(
     }
 
 
+def _ensure_verification_python_environment(
+    config: WorkflowConfig,
+    progress: Callable[[str], None],
+) -> None:
+    python_executable = str(config.python_executable)
+    cached_status = _VERIFICATION_ENV_CHECK_CACHE.get(python_executable)
+    if cached_status == "ok":
+        return
+
+    progress(f"[workflow] 检查验证阶段 Python 依赖：{python_executable}")
+    command = [
+        python_executable,
+        "-c",
+        f"import {VERIFICATION_DEPENDENCY_MODULE}",
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise WorkflowError(
+            "验证阶段 Python 依赖检查失败：无法运行 PYTHON_EXECUTABLE。"
+            f"PYTHON_EXECUTABLE={python_executable}；错误={type(exc).__name__}: {exc}"
+        ) from exc
+
+    if result.returncode != 0:
+        stderr = _truncate_summary_text(result.stderr or result.stdout)
+        install_hint = VERIFICATION_DEPENDENCY_INSTALL_HINT.format(python=python_executable)
+        raise WorkflowError(
+            "验证阶段 Python 依赖检查失败："
+            f"`{python_executable}` 无法 import {VERIFICATION_DEPENDENCY_MODULE}。"
+            f"请在同一个解释器中执行：{install_hint}。"
+            f"原始错误：{stderr}"
+        )
+
+    _VERIFICATION_ENV_CHECK_CACHE[python_executable] = "ok"
+
+
 def _load_input_problem_entries(input_path: Path) -> list[dict[str, str]]:
     if not input_path.exists():
         raise WorkflowError(f"输入路径不存在：{input_path}")
@@ -803,9 +866,16 @@ def _run_generation_stage(
         raise WorkflowError(f"{problem_id} 生成题面子进程失败，详见日志：" + result.log_path)
 
 
-def _append_stage(summary: dict[str, Any], name: str, result: CommandResult) -> None:
+def _append_stage(
+    summary: dict[str, Any],
+    name: str,
+    result: CommandResult,
+    extra: dict[str, Any] | None = None,
+) -> None:
     item = {"name": name, **result.to_summary()}
     item["status"] = "ok" if result.ok else "failed"
+    if extra:
+        item.update(extra)
     summary["stages"].append(item)
 
 
@@ -1041,6 +1111,7 @@ def _run_verification_for_single_problem(
     problem_id = str(problem["problem_id"])
     artifact_path = Path(str(generation["artifact_path"]))
     output_path = _verification_output_path(paths["verification"], problem_id, artifact_path)
+    _ensure_verification_python_environment(config, progress)
     progress(f"[stage 5/5] 验证输入 artifact={artifact_path}")
     progress(f"[stage 5/5] 验证输出={output_path}")
     command = [
@@ -1060,7 +1131,8 @@ def _run_verification_for_single_problem(
         timeout_seconds=None,
     )
     stage_name = f"verification:{problem_id}:{artifact_path.stem}"
-    _append_stage(summary, stage_name, result)
+    failure_details = {} if result.ok else _verification_failure_details(output_path, result)
+    _append_stage(summary, stage_name, result, extra=failure_details.get("stage"))
     generation["verification_result_path"] = str(output_path)
     generation["verification_log_path"] = result.log_path
     if result.ok:
@@ -1069,7 +1141,8 @@ def _run_verification_for_single_problem(
         progress("[stage 5/5] 验证完成；结果=verified。")
     else:
         generation["status"] = "verification_failed"
-        generation["verification_error"] = "验证阶段失败或超时，详见日志。"
+        generation.update(failure_details.get("generation", {}))
+        generation.setdefault("verification_error", "验证阶段失败或超时，详见日志。")
         problem["status"] = "verification_failed"
         if result.timed_out:
             progress("[stage 5/5] 验证超时，已记为 verification_failed。")
@@ -1105,6 +1178,7 @@ def _run_verification_for_quality_passed_generations(
 
         artifact_path = Path(generation["artifact_path"])
         output_path = _verification_output_path(paths["verification"], problem["problem_id"], artifact_path)
+        _ensure_verification_python_environment(config, progress)
         progress(
             f"[workflow] {problem['problem_id']} 通过质量门槛，开始验证：{artifact_path.name}，"
             f"输出={output_path.name}。"
@@ -1126,7 +1200,8 @@ def _run_verification_for_quality_passed_generations(
             timeout_seconds=None,
         )
         stage_name = f"verification:{problem['problem_id']}:{artifact_path.stem}"
-        _append_stage(summary, stage_name, result)
+        failure_details = {} if result.ok else _verification_failure_details(output_path, result)
+        _append_stage(summary, stage_name, result, extra=failure_details.get("stage"))
         generation["verification_result_path"] = str(output_path)
         generation["verification_log_path"] = result.log_path
         if result.ok:
@@ -1135,7 +1210,8 @@ def _run_verification_for_quality_passed_generations(
             progress(f"[workflow] {problem['problem_id']} 验证完成，结果=verified。")
         else:
             generation["status"] = "verification_failed"
-            generation["verification_error"] = "验证阶段失败或超时，详见日志。"
+            generation.update(failure_details.get("generation", {}))
+            generation.setdefault("verification_error", "验证阶段失败或超时，详见日志。")
             problem["status"] = "verification_failed"
             if result.timed_out:
                 progress(f"[workflow] {problem['problem_id']} 验证超时，已记为失败。")
@@ -1182,6 +1258,61 @@ def _quality_gate_result(generation: dict[str, Any]) -> dict[str, Any]:
         "generated_status": generated_status,
         "stop_reason": stop_reason,
         "reason": "" if passed else "质量门槛未通过。",
+    }
+
+
+def _verification_failure_details(output_path: Path, result: CommandResult) -> dict[str, Any]:
+    if result.timed_out:
+        message = "验证阶段执行超时。"
+        return {
+            "stage": {"error": {"type": "TimeoutExpired", "message": message}},
+            "generation": {
+                "verification_error_type": "TimeoutExpired",
+                "verification_error": message,
+            },
+        }
+
+    payload: dict[str, Any] = {}
+    if output_path.exists():
+        try:
+            loaded = json.loads(output_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                payload = loaded
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+
+    error_type = str(payload.get("error_type", "") or "VerificationFailed")
+    error_message = str(payload.get("error", "") or result.stderr or result.stdout or "验证阶段失败。")
+    error_message = _truncate_summary_text(error_message)
+    nested_error = _extract_embedded_execution_error(error_message)
+
+    stage_error = {
+        "type": error_type,
+        "message": error_message,
+    }
+    generation_error = {
+        "verification_error_type": error_type,
+        "verification_error": error_message,
+    }
+    if nested_error:
+        stage_error["nested_execution"] = nested_error
+        generation_error["verification_embedded_error_type"] = nested_error.get("type", "")
+        generation_error["verification_embedded_error_message"] = nested_error.get("message", "")
+
+    return {
+        "stage": {"error": stage_error},
+        "generation": generation_error,
+    }
+
+
+def _extract_embedded_execution_error(value: str) -> dict[str, str]:
+    error_type_match = _EMBEDDED_ERROR_TYPE_RE.search(value)
+    if not error_type_match:
+        return {}
+    message_match = _EMBEDDED_ERROR_MESSAGE_RE.search(value)
+    return {
+        "type": error_type_match.group(1),
+        "message": message_match.group(1) if message_match else "",
     }
 
 

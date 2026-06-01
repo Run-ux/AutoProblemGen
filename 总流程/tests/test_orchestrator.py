@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import contextlib
+import copy
 import io
 import os
 import sys
@@ -25,7 +26,15 @@ from llm_trace import (
     retry_call,
     start_call,
 )
-from orchestrator import CommandResult, TUPLE_DIMENSIONS, WorkflowConfig, run_workflow
+from orchestrator import (
+    CommandResult,
+    TUPLE_DIMENSIONS,
+    WorkflowConfig,
+    WorkflowError,
+    _VERIFICATION_ENV_CHECK_CACHE,
+    _ensure_verification_python_environment,
+    run_workflow,
+)
 from runtime_config import (
     ContextLimits,
     ExecutionLimits,
@@ -181,6 +190,7 @@ class FakeCommandRunner:
         generation_returncode: int = 0,
         verification_returncode: int = 0,
         verification_timed_out: bool = False,
+        verification_failure_payload: dict[str, Any] | None = None,
     ) -> None:
         self.failed_dimensions = failed_dimensions or {}
         self.quality_status = quality_status
@@ -189,6 +199,7 @@ class FakeCommandRunner:
         self.generation_returncode = generation_returncode
         self.verification_returncode = verification_returncode
         self.verification_timed_out = verification_timed_out
+        self.verification_failure_payload = copy.deepcopy(verification_failure_payload)
         self.calls: list[dict[str, Any]] = []
         self.problem_ids: list[str] = []
 
@@ -223,6 +234,9 @@ class FakeCommandRunner:
             if not self.verification_timed_out and self.verification_returncode == 0:
                 output_path = Path(_option(command, "--output"))
                 _write_json(output_path, {"status": "ok"})
+            elif not self.verification_timed_out and self.verification_failure_payload is not None:
+                output_path = Path(_option(command, "--output"))
+                _write_json(output_path, self.verification_failure_payload)
             return self._result(
                 command,
                 cwd,
@@ -737,6 +751,57 @@ class OrchestratorTests(unittest.TestCase):
             self.assertNotIn("secret-generation-key", summary_text)
             self.assertNotIn("secret-embedding-key", summary_text)
             self.assertIn("chat-model", summary_text)
+
+    def test_verification_failure_records_structured_error_summary(self) -> None:
+        failure_payload = {
+            "status": "failed",
+            "error_type": "VerificationError",
+            "error": (
+                "random 第 1 次生成输入 执行失败："
+                '{"error_type": "ModuleNotFoundError", "error_message": "No module named cyaron"}'
+            ),
+        }
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            runner = FakeCommandRunner(
+                verification_returncode=1,
+                verification_failure_payload=failure_payload,
+            )
+
+            summary = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out"),
+                command_runner=runner,
+                progress_writer=lambda _: None,
+            )
+
+            generation = summary["problems"][0]["generation"]
+            stage = summary["stages"][-1]
+            self.assertEqual(summary["status"], "completed_with_failures")
+            self.assertEqual(generation["verification_error_type"], "VerificationError")
+            self.assertEqual(generation["verification_embedded_error_type"], "ModuleNotFoundError")
+            self.assertIn("No module named cyaron", generation["verification_embedded_error_message"])
+            self.assertEqual(stage["error"]["type"], "VerificationError")
+            self.assertEqual(stage["error"]["nested_execution"]["type"], "ModuleNotFoundError")
+
+    def test_verification_dependency_preflight_fails_fast_for_missing_python(self) -> None:
+        _VERIFICATION_ENV_CHECK_CACHE.clear()
+        config = _make_workflow_config(
+            input_path=Path("input.json"),
+            output_root=Path("out"),
+        )
+        config = WorkflowConfig(
+            **{
+                **config.__dict__,
+                "python_executable": r"Z:\missing-python.exe",
+            }
+        )
+
+        with self.assertRaises(WorkflowError) as caught:
+            _ensure_verification_python_environment(config, lambda _: None)
+
+        self.assertIn("PYTHON_EXECUTABLE", str(caught.exception))
 
     def test_workflow_emits_stage_progress_messages(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

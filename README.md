@@ -178,6 +178,8 @@ artifact 会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_select
 python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\requirements.txt
 ```
 
+总流程在进入验证阶段前会检查 `PYTHON_EXECUTABLE` 是否能导入 `cyaron`；若检查失败，会在 summary 中记录失败原因并停止后续验证。
+
 `workflow.env` 负责流程参数和两个 LLM 配置文件路径：
 
 ```dotenv
