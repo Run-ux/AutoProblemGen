@@ -5,6 +5,7 @@ import unittest
 
 import path_setup  # noqa: F401
 from generation_pipeline import generate_all_artifacts
+from llm_json import LLMResponseError
 from prompts.wrong_solution.prompt_fixed_category_wrong_solution import FIXED_WRONG_CATEGORIES
 
 
@@ -140,6 +141,123 @@ class GenerationPipelineTests(unittest.TestCase):
         self.assertEqual(result["metadata"]["fixed_wrong_category_count"], len(FIXED_WRONG_CATEGORIES))
         self.assertEqual(result["metadata"]["strategy_wrong_solution_count"], 2)
         self.assertTrue(result["metadata"]["json_mode"])
+
+    def test_llm_contract_retry_accepts_valid_json_after_invalid_json(self) -> None:
+        class Client(FakeLLMClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self.standard_calls = 0
+
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                if task_name == "standard_solution":
+                    self.standard_calls += 1
+                    if self.standard_calls == 1:
+                        self.calls.append(
+                            {
+                                "task_name": task_name,
+                                "system_prompt": system_prompt,
+                                "user_prompt": user_prompt,
+                            }
+                        )
+                        return "{not json"
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+        client = Client()
+
+        result = generate_all_artifacts(self.artifact, client=client)
+
+        self.assertEqual(result["standard_solution"]["status"], "ok")
+        standard_calls = [call for call in client.calls if call["task_name"] == "standard_solution"]
+        self.assertEqual(len(standard_calls), 2)
+        self.assertIn("JSON 合同修复重试", standard_calls[1]["user_prompt"])
+        self.assertIn("返回内容不是合法 JSON 对象", standard_calls[1]["user_prompt"])
+
+    def test_strategy_analysis_contract_retry_repairs_missing_trigger_case(self) -> None:
+        class Client(FakeLLMClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self.strategy_calls = 0
+
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                if task_name == "strategy_analysis":
+                    self.strategy_calls += 1
+                    self.calls.append(
+                        {
+                            "task_name": task_name,
+                            "system_prompt": system_prompt,
+                            "user_prompt": user_prompt,
+                        }
+                    )
+                    if self.strategy_calls == 1:
+                        return json.dumps(
+                            {
+                                "strategies": [
+                                    {
+                                        "title": "忽略负数",
+                                        "wrong_idea": "只累加正数。",
+                                        "plausible_reason": "样例可能都是正数。",
+                                        "failure_reason": "题面允许负数。",
+                                    }
+                                ]
+                            },
+                            ensure_ascii=False,
+                        )
+                    return json.dumps(
+                        {
+                            "strategies": [
+                                {
+                                    "title": "忽略负数",
+                                    "wrong_idea": "只累加正数。",
+                                    "plausible_reason": "样例可能都是正数。",
+                                    "failure_reason": "题面允许负数。",
+                                    "trigger_case": "包含负数的数组。",
+                                }
+                            ]
+                        },
+                        ensure_ascii=False,
+                    )
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+        client = Client()
+
+        result = generate_all_artifacts(self.artifact, client=client)
+
+        self.assertEqual(len(result["wrong_solutions"]["strategy_based"]), 1)
+        self.assertEqual(client.strategy_calls, 2)
+        self.assertIn("trigger_case", result["wrong_solutions"]["strategy_analysis"]["strategies"][0])
+
+    def test_llm_contract_retry_fails_fast_after_two_extra_rounds(self) -> None:
+        class Client(FakeLLMClient):
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                self.calls.append(
+                    {
+                        "task_name": task_name,
+                        "system_prompt": system_prompt,
+                        "user_prompt": user_prompt,
+                    }
+                )
+                if task_name == "standard_solution":
+                    return "{not json"
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+        client = Client()
+
+        with self.assertRaisesRegex(LLMResponseError, "已额外重试 2 轮.*失败历史"):
+            generate_all_artifacts(self.artifact, client=client)
+
+        self.assertEqual([call["task_name"] for call in client.calls].count("standard_solution"), 3)
 
 
 if __name__ == "__main__":

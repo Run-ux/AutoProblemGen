@@ -12,6 +12,9 @@ from rule_handlers import get_rule_handler
 from schema_tools import dataclass_to_dict
 
 
+PROBLEM_CONTRACT_RETRY_LIMIT = 2
+
+
 class ProblemGenerator:
     def __init__(
         self,
@@ -78,10 +81,12 @@ class ProblemGenerator:
             revision_context=revision_context,
         )
         last_errors: list[str] = []
+        failure_history: list[dict[str, Any]] = []
         base_temperature = min(self.temperature, 0.3)
         new_schema = dataclass_to_dict(plan.new_schema_snapshot)
+        max_attempts = max(1, min(self.max_validation_attempts, PROBLEM_CONTRACT_RETRY_LIMIT + 1))
 
-        for attempt in range(1, self.max_validation_attempts + 1):
+        for attempt in range(1, max_attempts + 1):
             payload = self.client.chat_json(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
@@ -97,19 +102,36 @@ class ProblemGenerator:
                 return problem
 
             last_errors = errors
-            if attempt == self.max_validation_attempts:
+            failure_history.append(
+                {
+                    "attempt": attempt,
+                    "errors": errors,
+                    "payload": payload,
+                }
+            )
+            contract_errors, non_contract_errors = self._split_contract_errors(errors)
+            if non_contract_errors or not contract_errors:
                 break
-            user_prompt = self._build_retry_prompt(
+            if attempt == max_attempts:
+                break
+            user_prompt = self._build_contract_retry_prompt(
                 schema_context,
                 plan,
                 payload,
-                errors,
+                contract_errors,
                 attempt + 1,
                 original_problems or [],
                 revision_context,
+                failure_history,
             )
 
-        raise RuntimeError("模型连续返回不合法题面，校验失败：" + "；".join(last_errors[:5]))
+        failure_detail = json.dumps(failure_history, ensure_ascii=False, indent=2)
+        raise RuntimeError(
+            "模型连续返回不合法题面，校验失败："
+            + "；".join(last_errors[:5])
+            + "；失败历史："
+            + failure_detail
+        )
 
     def _normalize_payload(self, payload: dict[str, Any], plan: VariantPlan) -> GeneratedProblem:
         status = self._clean_text(str(payload.get("status", "ok"))) or "ok"
@@ -207,10 +229,42 @@ class ProblemGenerator:
                     )
 
         errors.extend(self._validate_objective(problem, plan))
+        if errors:
+            return errors
+
         errors.extend(self._validate_structural_commitments(problem, schema, plan))
         errors.extend(self._validate_rule_commitments(problem, plan))
         errors.extend(self._validate_source_reuse(problem, original_problems))
         return errors
+
+    def _split_contract_errors(self, errors: list[str]) -> tuple[list[str], list[str]]:
+        contract_errors: list[str] = []
+        non_contract_errors: list[str] = []
+        for error in errors:
+            if self._is_contract_retryable_error(error):
+                contract_errors.append(error)
+            else:
+                non_contract_errors.append(error)
+        return contract_errors, non_contract_errors
+
+    def _is_contract_retryable_error(self, error: str) -> bool:
+        contract_markers = (
+            "title 不能为空",
+            "description 不能为空",
+            "input_format 不能为空",
+            "output_format 不能为空",
+            "constraints 至少需要包含",
+            "constraints 必须包含时间限制",
+            "constraints 必须包含空间限制",
+            "samples 至少需要",
+            "题面声明的输入项数量",
+            "样例",
+            "当前 objective 是计数类",
+            "当前 objective 是判定类",
+            "当前 objective 是构造类",
+            "当前 objective 要求字典序规范",
+        )
+        return any(marker in error for marker in contract_markers)
 
     def _repair_problem(self, problem: GeneratedProblem, schema: dict[str, Any]) -> None:
         expected_sample_lines = self._infer_expected_sample_lines(schema)
@@ -236,10 +290,61 @@ class ProblemGenerator:
 
     def _validate_objective(self, problem: GeneratedProblem, plan: VariantPlan) -> list[str]:
         objective_type = str(plan.objective.get("type", "")).lower()
-        combined = "\n".join([problem.description, problem.output_format, problem.notes]).lower()
+        combined = "\n".join(
+            [problem.description, problem.output_format, problem.notes, "\n".join(problem.constraints)]
+        ).lower()
         errors: list[str] = []
-        if objective_type == "counting" and not any(token in combined for token in ("方案数", "个数", "count", "模", "mod")):
-            errors.append("当前 objective 是计数类，但题面没有明确说明输出的是方案数/计数结果。")
+        if objective_type == "counting":
+            if not any(
+                token in combined
+                for token in (
+                    "方案数",
+                    "计数结果",
+                    "合法方案数",
+                    "不同方案数",
+                    "个数",
+                    "数量",
+                    "number of ways",
+                    "count result",
+                    "count",
+                )
+            ):
+                errors.append("当前 objective 是计数类，但题面没有明确说明输出的是方案数/计数结果。")
+            if not any(
+                token in combined
+                for token in (
+                    "不同方案",
+                    "等价方案",
+                    "重复计数",
+                    "去重",
+                    "视为同一种",
+                    "distinct",
+                    "deduplicate",
+                    "unique",
+                )
+            ):
+                errors.append("当前 objective 是计数类，但题面没有明确不同方案的定义或去重规则。")
+            if not any(
+                token in combined
+                for token in (
+                    "取模",
+                    "模数",
+                    "mod",
+                    "998244353",
+                    "1000000007",
+                    "有限",
+                    "有限性",
+                    "上界",
+                    "长度上限",
+                    "输入规模",
+                    "取值范围",
+                    "至多",
+                    "最多",
+                    "bounded",
+                    "finite",
+                )
+            ):
+                errors.append("当前 objective 是计数类，但题面没有说明计数空间有限性的来源或取模规则。")
         if objective_type == "decision" and not any(token in combined for token in ("yes", "no", "是否", "存在")):
             errors.append("当前 objective 是判定类，但题面没有明确说明输出判定结果。")
         if objective_type == "construction" and not any(token in combined for token in ("构造", "方案", "witness", "输出一个")):
@@ -357,6 +462,57 @@ class ProblemGenerator:
             if len(normalized_lines) == expected_lines and not self._contains_html_artifact(normalized):
                 return normalized
         return None
+
+    def _build_contract_retry_prompt(
+        self,
+        schema_context: dict[str, Any],
+        plan: VariantPlan,
+        payload: dict[str, Any],
+        errors: list[str],
+        next_attempt: int,
+        original_problems: list[dict[str, Any]],
+        revision_context: dict[str, Any] | None,
+        failure_history: list[dict[str, Any]],
+    ) -> str:
+        base_prompt = build_generation_user_prompt(
+            schema_context,
+            plan,
+            original_problem_references=original_problems,
+            revision_context=revision_context,
+        )
+        error_lines = "\n".join(f"- {error}" for error in errors)
+        invalid_payload = json.dumps(payload, ensure_ascii=False, indent=2)
+        history_summary = json.dumps(
+            [
+                {
+                    "attempt": item["attempt"],
+                    "errors": item["errors"],
+                }
+                for item in failure_history
+            ],
+            ensure_ascii=False,
+            indent=2,
+        )
+        return (
+            f"{base_prompt}\n\n"
+            "# 题面合同定向修复\n"
+            f"上一次返回的题面 JSON 未通过格式/可数性合同校验。当前是第 {next_attempt} 次尝试。\n"
+            "本轮只允许修复题面合同，不要改变 new_schema、difference_plan、目标语义或规则承诺。\n"
+            "必须修复以下问题：\n"
+            f"{error_lines}\n\n"
+            "硬性要求：\n"
+            "- 重新生成整份成功格式 JSON，不要只返回局部字段或补丁。\n"
+            "- 不要把样例不足、输入/输出格式缺失、时间/空间限制缺失等合同错误改写成 `difference_insufficient`。\n"
+            "- `samples` 至少 2 组，每组 input、output、explanation 均为非空纯文本。\n"
+            "- `constraints` 必须明确时间限制和空间限制。\n"
+            "- 如果目标是计数类，必须明确输出方案数/计数结果、不同方案或去重定义，并说明计数空间有限性来源或取模规则。\n"
+            "- 样例输入必须是纯文本，不要包含引号拼接残留、HTML 片段或 Markdown 标记。\n"
+            "- 必须按实例化后的 schema 写输入数量、目标函数和结构约束，不要退回种子题设定。\n\n"
+            "此前失败摘要：\n"
+            f"{history_summary}\n\n"
+            "上一次的错误 JSON 如下，仅用于定位问题，不可局部复用：\n"
+            f"{invalid_payload}"
+        )
 
     def _build_retry_prompt(
         self,

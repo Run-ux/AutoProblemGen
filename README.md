@@ -158,7 +158,7 @@ artifact 会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_select
 - 固定类别错误解
 - 基于 schema 错误策略分析的错误解
 
-当前已实现 artifact 字段抽取、prompt 组织、LLM JSON 调用、严格 JSON 解析、输出合同校验、生成后本地验证闭环、错误解池增强验证和单元测试。暂未实现独立 CLI、题包流水线和落盘式输出目录。
+当前已实现 artifact 字段抽取、prompt 组织、LLM JSON 调用、严格 JSON 解析、输出合同校验、合同型 LLM 自动重试、测试输入生成器定向修复、生成后本地验证闭环、错误解池增强验证和单元测试。暂未实现独立 CLI、题包流水线和落盘式输出目录。
 
 总流程会在质量门槛通过后调用 `generate_verified_artifacts`，并显式传入 generation LLM 配置与执行限制。该模块不再读取本地 `.env`。
 

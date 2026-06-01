@@ -95,6 +95,8 @@ result = generate_verified_artifacts(artifact, config, execution_config=executio
             "adversarial": 10,
             "small_challenge": 10,
         },
+        "test_input_repair_history": [],
+        "test_input_repair_iteration_count": 0,
     },
     "bruteforce_verification": {
         "status": "ok",
@@ -120,11 +122,11 @@ result = generate_verified_artifacts(artifact, config, execution_config=executio
 
 验证入口会把修复后的标准解写回 `standard_solution.code`，并保留 `standard_solution.initial_code`；会把修复后的暴力解法写回 `bruteforce_solution.code`，并保留 `bruteforce_solution.initial_code`；需要 checker 且完成验证时，也会把修复后的 checker 写回 `checker.checker_code`，并保留 `checker.initial_checker_code`。
 
-调用默认启用 `response_format={"type": "json_object"}`。普通生成入口只解析和校验 LLM 返回的 JSON；验证入口会在受限子进程中执行生成代码，但不落盘。
+调用默认启用 `response_format={"type": "json_object"}`。普通生成入口会解析和校验 LLM 返回的 JSON；若返回非法 JSON、缺字段或字段类型不符合合同，会把错误摘要和截断后的原始响应反馈给同一 prompt，最多额外重试 2 轮。验证入口会在受限子进程中执行生成代码，但不落盘。
 
 ## 验证闭环行为
 
-- 输入收集：随机输入和对抗输入各运行生成器 10 次，并通过各自 `validate_test_input`；小规模挑战输入使用初始返回加 9 次额外 LLM 调用凑满 10 条，并用随机输入的 validate 函数校验。
+- 输入收集：随机输入和对抗输入各运行生成器 10 次，并通过各自 `validate_test_input`；若生成器运行失败、返回值不是非空字符串，或 validate 误拒生成输入，会调用测试输入 debug prompt 重新生成整组 `constraint_analysis/generate_test_input_code/validate_test_input_code`，每个来源最多额外修复 2 轮，成功后从该来源第 1 条重新收集 10 条，并把修复后的 payload 写回 `test_inputs`。小规模挑战输入使用初始返回加 9 次额外 LLM 调用凑满 10 条，并用修复后的随机输入 validate 函数校验。
 - 暴力解法：对 30 条输入逐一运行 `solve`。编译错误、接口错误和运行时错误会触发暴力 debug LLM 修复，并从头重新验证；超时或超内存输入会归为 `large_scale_inputs`，不触发 debug。
 - 真值用例：最终只保留暴力解法能正常返回字符串输出的 `solved_cases`，数量允许少于已验证输入总数。
 - checker：当 `needs_checker=false` 时跳过 checker 闭环；当需要 checker 时，先用 `solved_cases` 验证不误拒合法输出，再由反例生成 LLM 构造错误输出集合验证不误收非法输出。
@@ -183,6 +185,7 @@ def build_user_prompt(...) -> str:
 - `prompts.verification.prompt_checker_counterexample`
 - `prompts.verification.prompt_checker_false_accept_debug`
 - `prompts.verification.prompt_checker_false_reject_debug`
+- `prompts.verification.prompt_test_input_debug`
 - `prompts.tool_generation.prompt_wrong_solution_targeted_test_input`
 - `prompts.wrong_solution.prompt_fixed_category_wrong_solution`
 - `prompts.wrong_solution.prompt_schema_mistake_analysis`
@@ -190,9 +193,9 @@ def build_user_prompt(...) -> str:
 
 ## JSON 输出合同
 
-所有 prompt 都要求 LLM 最终只输出单个 JSON 对象，不允许 JSON 外解释或 Markdown 代码块。流水线会严格 `json.loads`，不会尝试修复脏文本。
+所有 prompt 都要求 LLM 最终只输出单个 JSON 对象，不允许 JSON 外解释或 Markdown 代码块。流水线会严格 `json.loads`；遇到 JSON/字段合同错误时只通过重新调用 LLM 修复，不在本地拼接或猜测脏文本。
 
-- 随机/对抗测试输入：`constraint_analysis`、`generate_test_input_code`、`validate_test_input_code`
+- 随机/对抗测试输入：`constraint_analysis`、`generate_test_input_code`、`validate_test_input_code`。生成代码使用 `cyaron==0.7.0`；需要打乱列表时使用标准库 `random.shuffle`，不要调用 `cyaron.shuffle`。
 - 小规模挑战输入：`test_input`
 - 标准解：`status`、`block_reason`、`solution_markdown`、`code`、`time_complexity`、`space_complexity`
 - 暴力解：`status`、`block_reason`、`bruteforce_markdown`、`code`、`time_complexity`、`space_complexity`

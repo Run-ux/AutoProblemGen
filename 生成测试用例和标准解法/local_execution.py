@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -15,6 +16,7 @@ EXECUTION_OK = "ok"
 EXECUTION_ERROR = "error"
 EXECUTION_TIMEOUT = "timeout"
 EXECUTION_MEMORY_LIMIT = "memory_limit"
+SURROGATE_CHAR_RE = re.compile(r"[\ud800-\udfff]")
 
 
 @dataclass
@@ -44,12 +46,22 @@ _WORKER_SCRIPT = r"""
 import contextlib
 import io
 import json
+import random
 import sys
 import traceback
 
 
+try:
+    import cyaron as _cyaron
+except BaseException:
+    _cyaron = None
+else:
+    if not hasattr(_cyaron, "shuffle"):
+        _cyaron.shuffle = random.shuffle
+
+
 def emit(payload):
-    sys.__stdout__.write(json.dumps(payload, ensure_ascii=False))
+    sys.__stdout__.write(json.dumps(payload, ensure_ascii=True))
     sys.__stdout__.flush()
 
 
@@ -150,6 +162,21 @@ main()
 """
 
 
+def _strip_surrogate_chars(value: Any) -> Any:
+    """清理 LLM 生成内容中的孤立 surrogate，避免 UTF-8 编译或序列化失败。"""
+
+    if isinstance(value, str):
+        return SURROGATE_CHAR_RE.sub("", value)
+    if isinstance(value, list):
+        return [_strip_surrogate_chars(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            _strip_surrogate_chars(key): _strip_surrogate_chars(item)
+            for key, item in value.items()
+        }
+    return value
+
+
 def _read_windows_memory_mb(pid: int) -> float | None:
     PROCESS_QUERY_INFORMATION = 0x0400
     PROCESS_VM_READ = 0x0010
@@ -236,15 +263,19 @@ def run_python_function(
 
     payload = json.dumps(
         {
-            "code": code,
+            "code": _strip_surrogate_chars(code),
             "function_name": function_name,
-            "args": args or [],
+            "args": _strip_surrogate_chars(args or []),
         },
         ensure_ascii=False,
     )
     start_time = time.monotonic()
+    # 允许用户站点包中的 cyaron 可见，同时避免把当前工作目录自动加入 sys.path。
+    python_args = [sys.executable, "-c", _WORKER_SCRIPT]
+    if sys.version_info >= (3, 11):
+        python_args = [sys.executable, "-P", "-c", _WORKER_SCRIPT]
     process = subprocess.Popen(
-        [sys.executable, "-I", "-c", _WORKER_SCRIPT],
+        python_args,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -299,7 +330,7 @@ def run_python_function(
         )
 
     try:
-        worker_payload = json.loads(stdout)
+        worker_payload = _strip_surrogate_chars(json.loads(stdout))
     except json.JSONDecodeError as exc:
         return ExecutionResult(
             status=EXECUTION_ERROR,

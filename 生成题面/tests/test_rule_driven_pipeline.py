@@ -1082,6 +1082,57 @@ class RuleHandlerTests(unittest.TestCase):
 
 
 class ProblemGeneratorTests(unittest.TestCase):
+    class SequencedProblemClient:
+        def __init__(self, responses: list[dict[str, object]]) -> None:
+            self.responses = list(responses)
+            self.calls: list[dict[str, object]] = []
+
+        def chat_json(
+            self,
+            system_prompt: str,
+            user_prompt: str,
+            temperature: float = 0.0,
+            request_label: str = "chat_json",
+            **_: object,
+        ) -> dict[str, object]:
+            self.calls.append(
+                {
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                    "temperature": temperature,
+                    "request_label": request_label,
+                }
+            )
+            if not self.responses:
+                raise AssertionError("没有更多题面生成响应。")
+            return copy.deepcopy(self.responses.pop(0))
+
+    def _contract_retry_plan(self, objective_type: str = "construction") -> VariantPlan:
+        plan = copy.deepcopy(make_validation_plan("canonical_witness"))
+        plan.applied_rule = ""
+        plan.objective = {"type": objective_type, "description": "测试目标。"}
+        plan.new_schema_snapshot.objective = copy.deepcopy(plan.objective)
+        return plan
+
+    def _valid_problem_payload(self, *, samples: list[dict[str, str]] | None = None, notes: str = "无") -> dict[str, object]:
+        return {
+            "status": "ok",
+            "error_reason": "",
+            "feedback": "",
+            "title": "构造任务",
+            "description": "请输出一个满足条件的构造。",
+            "input_format": "输入三行，每行一个整数。",
+            "output_format": "输出一个构造。",
+            "constraints": ["时间限制：2 秒。", "空间限制：256 MB。"],
+            "samples": samples
+            if samples is not None
+            else [
+                {"input": "1\n2\n3", "output": "1 2 3", "explanation": "样例一。"},
+                {"input": "3\n2\n1", "output": "1 2 3", "explanation": "样例二。"},
+            ],
+            "notes": notes,
+        }
+
     def test_normalize_payload_tolerates_null_list_fields(self) -> None:
         generator = ProblemGenerator(client=None)
         plan = make_validation_plan("canonical_witness")
@@ -1139,6 +1190,61 @@ class ProblemGeneratorTests(unittest.TestCase):
         )
 
         self.assertIn("seed match", errors[0])
+
+    def test_problem_contract_retry_repairs_single_sample(self) -> None:
+        first_payload = self._valid_problem_payload(
+            samples=[{"input": "1\n2\n3", "output": "1 2 3", "explanation": "样例一。"}]
+        )
+        second_payload = self._valid_problem_payload()
+        client = self.SequencedProblemClient([first_payload, second_payload])
+        generator = ProblemGenerator(client=client)
+
+        problem = generator.generate({}, self._contract_retry_plan(), [])
+
+        self.assertEqual(len(problem.samples), 2)
+        self.assertEqual(len(client.calls), 2)
+        self.assertIn("题面合同定向修复", str(client.calls[1]["user_prompt"]))
+        self.assertIn("samples 至少需要 2 组", str(client.calls[1]["user_prompt"]))
+
+    def test_problem_contract_retry_repairs_counting_finiteness_and_dedup(self) -> None:
+        plan = self._contract_retry_plan("counting")
+        first_payload = self._valid_problem_payload(notes="")
+        first_payload["description"] = "请统计所有合法方案。"
+        first_payload["output_format"] = "输出方案数。"
+        second_payload = copy.deepcopy(first_payload)
+        second_payload["description"] = "请统计所有不同合法方案的方案数。"
+        second_payload["notes"] = "不同方案按选择序列逐项比较，等价方案不重复计数；结果对 998244353 取模。"
+        client = self.SequencedProblemClient([first_payload, second_payload])
+        generator = ProblemGenerator(client=client)
+
+        problem = generator.generate({}, plan, [])
+
+        self.assertIn("998244353", problem.notes)
+        self.assertEqual(len(client.calls), 2)
+        retry_prompt = str(client.calls[1]["user_prompt"])
+        self.assertIn("不同方案的定义或去重规则", retry_prompt)
+        self.assertIn("有限性的来源或取模规则", retry_prompt)
+
+    def test_difference_insufficient_status_does_not_trigger_contract_retry(self) -> None:
+        payload = {
+            "status": "difference_insufficient",
+            "error_reason": "算法差异不足。",
+            "feedback": "规则不适配。",
+            "title": "",
+            "description": "",
+            "input_format": "",
+            "output_format": "",
+            "constraints": [],
+            "samples": [],
+            "notes": "",
+        }
+        client = self.SequencedProblemClient([payload])
+        generator = ProblemGenerator(client=client)
+
+        problem = generator.generate({}, self._contract_retry_plan(), [])
+
+        self.assertEqual(problem.status, "difference_insufficient")
+        self.assertEqual(len(client.calls), 1)
 
 
 class PipelineArtifactTests(unittest.TestCase):

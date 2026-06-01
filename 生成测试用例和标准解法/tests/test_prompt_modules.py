@@ -18,6 +18,7 @@ from prompts.verification import (
     prompt_checker_false_accept_debug,
     prompt_checker_false_reject_debug,
     prompt_standard_solution_debug,
+    prompt_test_input_debug,
 )
 from prompts.wrong_solution import (
     prompt_fixed_category_wrong_solution,
@@ -60,6 +61,7 @@ class PromptModuleTests(unittest.TestCase):
             prompt_checker_counterexample,
             prompt_checker_false_accept_debug,
             prompt_checker_false_reject_debug,
+            prompt_test_input_debug,
         ]
 
     def test_modules_expose_uniform_build_functions(self) -> None:
@@ -116,6 +118,8 @@ class PromptModuleTests(unittest.TestCase):
             self.assertIn("cy.Integer()", prompt)
             self.assertIn("cy.randint", prompt)
             self.assertIn("cy.String.random", prompt)
+            self.assertIn("random.shuffle", prompt)
+            self.assertIn("不要使用 cy.shuffle 或 cyaron.shuffle", prompt)
             self.assertIn("generate_test_input() 不接收任何参数", prompt)
             self.assertIn("constraint_analysis", prompt)
             self.assertIn("generate_test_input_code", prompt)
@@ -238,6 +242,16 @@ class PromptModuleTests(unittest.TestCase):
             wrong_output="2",
             error_report="返回 True",
         )
+        test_input_debug_prompt = prompt_test_input_debug.build_user_prompt(
+            self.artifact,
+            source="random",
+            constraint_analysis="n 与数组约束",
+            generate_test_input_code="import cyaron as cy\n\ndef generate_test_input():\n    return None",
+            validate_test_input_code="def validate_test_input(input_string):\n    return False",
+            failure_stage="run_generate_test_input",
+            error_report="ValueError",
+            failing_input="",
+        )
         counterexample_prompt = prompt_checker_counterexample.build_user_prompt(
             self.artifact,
             solved_cases=[{"case_id": "case_001", "input": "1\n1", "correct_output": "1"}],
@@ -249,6 +263,10 @@ class PromptModuleTests(unittest.TestCase):
         self.assertIn("当前标准解实际输出", standard_debug_prompt)
         self.assertIn('"checker_code"', false_reject_prompt)
         self.assertIn('"checker_code"', false_accept_prompt)
+        self.assertIn('"generate_test_input_code"', test_input_debug_prompt)
+        self.assertIn('"validate_test_input_code"', test_input_debug_prompt)
+        self.assertIn("cyaron==0.7.0", test_input_debug_prompt)
+        self.assertIn("不要使用 cy.shuffle 或 cyaron.shuffle", test_input_debug_prompt)
         self.assertIn('"counterexamples"', counterexample_prompt)
         self.assertIn("confidence", counterexample_prompt)
         self.assertIn("可用破坏策略是候选启发清单", counterexample_prompt)
@@ -259,7 +277,7 @@ class PromptModuleTests(unittest.TestCase):
         self.assertIn("CONSTRAINT_DISCONNECTED_PATH：约束错误，构造不连续路径、不相邻转移或不可达序列。", counterexample_prompt)
         self.assertIn("NUMERIC_NAN_INF：数值错误，输出 nan、inf、-inf 等非法数值。", counterexample_prompt)
         self.assertIn("FORGED_UNRELATED_OUTPUT：伪造错误，输出格式看似合理，但内容与输入无关，不能满足题意。", counterexample_prompt)
-        for prompt in [brute_prompt, false_reject_prompt, false_accept_prompt, counterexample_prompt]:
+        for prompt in [brute_prompt, false_reject_prompt, false_accept_prompt, test_input_debug_prompt, counterexample_prompt]:
             self.assertIn("最终只输出单个 JSON 对象", prompt)
 
     def test_wrong_pool_prompts_have_strict_json_contracts(self) -> None:

@@ -12,12 +12,13 @@ try:  # 兼容包内导入与当前目录直接运行两种方式。
     from .generation_pipeline import generate_all_artifacts
     from .llm_client import ChatLLMClient, OpenAIChatLLMClient
     from .llm_config import LLMConfig
+    from .llm_contract import call_prompt_with_contract_retry
     from .llm_json import (
-        parse_json_object,
         validate_checker_repair_response,
         validate_code_repair_response,
         validate_counterexample_response,
         validate_small_challenge_response,
+        validate_test_generator_response,
     )
     from .local_execution import (
         EXECUTION_MEMORY_LIMIT,
@@ -36,18 +37,20 @@ try:  # 兼容包内导入与当前目录直接运行两种方式。
         prompt_checker_false_accept_debug,
         prompt_checker_false_reject_debug,
         prompt_standard_solution_debug,
+        prompt_test_input_debug,
     )
 except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导入。
     from execution_config import ExecutionConfig
     from generation_pipeline import generate_all_artifacts
     from llm_client import ChatLLMClient, OpenAIChatLLMClient
     from llm_config import LLMConfig
+    from llm_contract import call_prompt_with_contract_retry
     from llm_json import (
-        parse_json_object,
         validate_checker_repair_response,
         validate_code_repair_response,
         validate_counterexample_response,
         validate_small_challenge_response,
+        validate_test_generator_response,
     )
     from local_execution import (
         EXECUTION_MEMORY_LIMIT,
@@ -66,6 +69,7 @@ except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导�
         prompt_checker_false_accept_debug,
         prompt_checker_false_reject_debug,
         prompt_standard_solution_debug,
+        prompt_test_input_debug,
     )
 
 
@@ -74,6 +78,7 @@ logger = logging.getLogger(__name__)
 Validator = Callable[[dict[str, Any]], dict[str, Any]]
 
 WRONG_POOL_STOP_KILL_RATIO = 0.8
+TEST_INPUT_REPAIR_LIMIT = 2
 TIME_LIMIT_LABEL_RE = re.compile(r"(时间限制|time\s*limit)", re.IGNORECASE)
 MEMORY_LIMIT_LABEL_RE = re.compile(r"(空间限制|内存限制|memory\s*limit)", re.IGNORECASE)
 TIME_LIMIT_VALUE_RE = re.compile(
@@ -156,9 +161,13 @@ def _call_prompt(
     user_prompt: str,
     validator: Validator,
 ) -> dict[str, Any]:
-    raw_response = client.complete_json(task_name=task_name, system_prompt=system_prompt, user_prompt=user_prompt)
-    parsed = parse_json_object(raw_response, task_name)
-    return validator(parsed)
+    return call_prompt_with_contract_retry(
+        client,
+        task_name=task_name,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        validator=validator,
+    )
 
 
 def _truncate_middle(value: str, limit: int) -> str:
@@ -427,7 +436,36 @@ def _validate_input(
     _ensure_true_result(context, result)
 
 
-def _collect_generated_inputs(
+def _test_input_failure_record(
+    *,
+    source: str,
+    local_index: int,
+    failure_stage: str,
+    error_report: str,
+    failing_input: str = "",
+) -> dict[str, Any]:
+    return {
+        "source": source,
+        "source_index": local_index,
+        "failure_stage": failure_stage,
+        "error_report": error_report,
+        "failing_input": _truncate_middle(failing_input, 4000) if failing_input else "",
+    }
+
+
+def _format_return_value_failure(result: ExecutionResult, *, expectation: str) -> str:
+    return json.dumps(
+        {
+            "expectation": expectation,
+            "actual_return_value": result.return_value,
+            "execution_result": _result_summary(result),
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+def _collect_generated_inputs_once(
     *,
     source: str,
     generator_code: str,
@@ -435,7 +473,7 @@ def _collect_generated_inputs(
     start_index: int,
     execution_config: ExecutionConfig,
     context_limits: LLMContextLimits,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     cases: list[dict[str, Any]] = []
     for local_index in range(1, 11):
         result = run_generate_test_input(
@@ -443,13 +481,57 @@ def _collect_generated_inputs(
             timeout_seconds=execution_config.test_input_timeout_seconds,
             memory_limit_mb=execution_config.test_input_memory_limit_mb,
         )
-        input_string = _ensure_string_result(f"{source} 第 {local_index} 次生成输入", result)
-        _validate_input(
-            context=f"{source} 第 {local_index} 条输入",
-            validate_code=validate_code,
-            input_string=input_string,
-            execution_config=execution_config,
+        if result.status != EXECUTION_OK:
+            return cases, _test_input_failure_record(
+                source=source,
+                local_index=local_index,
+                failure_stage="run_generate_test_input",
+                error_report=_format_execution_report(
+                    result,
+                    expectation="generate_test_input() 必须正常返回非空输入字符串。",
+                ),
+            )
+        if not isinstance(result.return_value, str) or not result.return_value.strip():
+            return cases, _test_input_failure_record(
+                source=source,
+                local_index=local_index,
+                failure_stage="return_value_type",
+                error_report=_format_return_value_failure(
+                    result,
+                    expectation="generate_test_input() 必须返回非空字符串，不能返回列表、None 或其它类型。",
+                ),
+            )
+
+        input_string = result.return_value
+        validate_result = run_validate_test_input(
+            validate_code,
+            input_string,
+            timeout_seconds=execution_config.test_input_timeout_seconds,
+            memory_limit_mb=execution_config.test_input_memory_limit_mb,
         )
+        if validate_result.status != EXECUTION_OK:
+            return cases, _test_input_failure_record(
+                source=source,
+                local_index=local_index,
+                failure_stage="run_validate_test_input",
+                error_report=_format_execution_report(
+                    validate_result,
+                    expectation="validate_test_input(input_string) 必须正常返回 True/False。",
+                ),
+                failing_input=input_string,
+            )
+        if validate_result.return_value is not True:
+            return cases, _test_input_failure_record(
+                source=source,
+                local_index=local_index,
+                failure_stage="run_validate_test_input",
+                error_report=_format_return_value_failure(
+                    validate_result,
+                    expectation="生成出的输入必须被 validate_test_input 判为 True。",
+                ),
+                failing_input=input_string,
+            )
+
         case_id = f"case_{start_index + local_index - 1:03d}"
         cases.append(
             {
@@ -460,7 +542,117 @@ def _collect_generated_inputs(
                 **_input_case_metadata(input_string, context_limits),
             }
         )
-    return cases
+    return cases, None
+
+
+def _repair_test_input_payload(
+    artifact: dict[str, Any],
+    client: ChatLLMClient,
+    *,
+    source: str,
+    repair_round: int,
+    current_payload: dict[str, Any],
+    failure: dict[str, Any],
+) -> dict[str, Any]:
+    task_name = f"test_input_debug:{source}:{repair_round}"
+    return _call_prompt(
+        client,
+        task_name=task_name,
+        system_prompt=prompt_test_input_debug.build_system_prompt(),
+        user_prompt=prompt_test_input_debug.build_user_prompt(
+            artifact,
+            source=source,
+            constraint_analysis=str(current_payload.get("constraint_analysis", "")),
+            generate_test_input_code=str(current_payload.get("generate_test_input_code", "")),
+            validate_test_input_code=str(current_payload.get("validate_test_input_code", "")),
+            failure_stage=str(failure.get("failure_stage", "")),
+            error_report=str(failure.get("error_report", "")),
+            failing_input=str(failure.get("failing_input", "")),
+        ),
+        validator=lambda payload, task_name=task_name: validate_test_generator_response(payload, task_name=task_name),
+    )
+
+
+def _format_test_input_repair_failure(
+    *,
+    source: str,
+    failure: dict[str, Any],
+    repair_history: list[dict[str, Any]],
+) -> str:
+    return (
+        f"{source} 测试输入生成器修复超过 {TEST_INPUT_REPAIR_LIMIT} 轮仍失败："
+        + json.dumps(
+            {
+                "last_failure": failure,
+                "repair_history": repair_history,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
+def _collect_generated_inputs(
+    *,
+    artifact: dict[str, Any],
+    client: ChatLLMClient,
+    source: str,
+    payload: dict[str, Any],
+    start_index: int,
+    execution_config: ExecutionConfig,
+    context_limits: LLMContextLimits,
+) -> dict[str, Any]:
+    current_payload = dict(payload)
+    repair_history: list[dict[str, Any]] = []
+    while True:
+        cases, failure = _collect_generated_inputs_once(
+            source=source,
+            generator_code=current_payload["generate_test_input_code"],
+            validate_code=current_payload["validate_test_input_code"],
+            start_index=start_index,
+            execution_config=execution_config,
+            context_limits=context_limits,
+        )
+        if failure is None:
+            if repair_history:
+                _emit_progress(
+                    f"[verification repair] {source} 测试输入修复循环结束；"
+                    f"累计修复 {len(repair_history)} 轮，重新收集 10 条输入通过。"
+                )
+            return {
+                "payload": current_payload,
+                "cases": cases,
+                "repair_history": repair_history,
+            }
+        if len(repair_history) >= TEST_INPUT_REPAIR_LIMIT:
+            raise VerificationError(
+                _format_test_input_repair_failure(
+                    source=source,
+                    failure=failure,
+                    repair_history=repair_history,
+                )
+            )
+
+        repair_round = len(repair_history) + 1
+        _emit_repair_progress(f"{source} 测试输入修复", repair_round, "开始。")
+        repair = _repair_test_input_payload(
+            artifact,
+            client,
+            source=source,
+            repair_round=repair_round,
+            current_payload=current_payload,
+            failure=failure,
+        )
+        repair_history.append(
+            {
+                "source": source,
+                "repair_round": repair_round,
+                "failure": failure,
+                "repair": repair,
+            }
+        )
+        current_payload = repair
+        _emit_repair_progress(f"{source} 测试输入修复", repair_round, "完成，重新收集该来源 10 条输入。")
 
 
 def _collect_small_challenge_inputs(
@@ -524,26 +716,34 @@ def collect_verified_test_inputs(
     small_payload = test_inputs["small_challenge"]
 
     cases: list[dict[str, Any]] = []
-    cases.extend(
-        _collect_generated_inputs(
-            source="random",
-            generator_code=random_payload["generate_test_input_code"],
-            validate_code=random_payload["validate_test_input_code"],
-            start_index=1,
-            execution_config=execution_config,
-            context_limits=context_limits,
-        )
+    repair_history: list[dict[str, Any]] = []
+    random_collection = _collect_generated_inputs(
+        artifact=artifact,
+        client=client,
+        source="random",
+        payload=random_payload,
+        start_index=1,
+        execution_config=execution_config,
+        context_limits=context_limits,
     )
-    cases.extend(
-        _collect_generated_inputs(
-            source="adversarial",
-            generator_code=adversarial_payload["generate_test_input_code"],
-            validate_code=adversarial_payload["validate_test_input_code"],
-            start_index=11,
-            execution_config=execution_config,
-            context_limits=context_limits,
-        )
+    test_inputs["random"] = random_collection["payload"]
+    random_payload = test_inputs["random"]
+    cases.extend(random_collection["cases"])
+    repair_history.extend(random_collection["repair_history"])
+
+    adversarial_collection = _collect_generated_inputs(
+        artifact=artifact,
+        client=client,
+        source="adversarial",
+        payload=adversarial_payload,
+        start_index=11,
+        execution_config=execution_config,
+        context_limits=context_limits,
     )
+    test_inputs["adversarial"] = adversarial_collection["payload"]
+    cases.extend(adversarial_collection["cases"])
+    repair_history.extend(adversarial_collection["repair_history"])
+
     cases.extend(
         _collect_small_challenge_inputs(
             artifact=artifact,
@@ -565,6 +765,8 @@ def collect_verified_test_inputs(
             "small_challenge": 10,
         },
         "small_challenge_llm_calls_including_initial": 10,
+        "test_input_repair_history": repair_history,
+        "test_input_repair_iteration_count": len(repair_history),
     }
 
 
@@ -2139,6 +2341,10 @@ def generate_verified_artifacts(
                 ],
                 "wrong_solution_pool_killed_count": wrong_solution_pool_result["verification"]["killed_count"],
                 "wrong_solution_pool_survived_count": wrong_solution_pool_result["verification"]["survived_count"],
+                "test_input_repair_iteration_count": verified_test_inputs.get(
+                    "test_input_repair_iteration_count",
+                    0,
+                ),
             },
         }
     )

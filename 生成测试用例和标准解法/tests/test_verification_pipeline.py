@@ -276,6 +276,149 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(fake_generate.call_count, 20)
         self.assertEqual(fake_validate.call_count, 30)
 
+    @patch("verification_pipeline.run_validate_test_input")
+    @patch("verification_pipeline.run_generate_test_input")
+    def test_collect_verified_test_inputs_repairs_generator_runtime_failure(
+        self,
+        fake_generate,
+        fake_validate,
+    ) -> None:
+        class RepairClient(FakeLLMClient):
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                if task_name.startswith("test_input_debug:random:"):
+                    self.calls.append(task_name)
+                    return json.dumps(
+                        {
+                            "constraint_analysis": "修复后的约束",
+                            "generate_test_input_code": "fixed_random_generate",
+                            "validate_test_input_code": "fixed_random_validate",
+                        },
+                        ensure_ascii=False,
+                    )
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+        def generate_side_effect(code, *, timeout_seconds, memory_limit_mb):
+            if code == "bad_random_generate":
+                return ExecutionResult(
+                    status=EXECUTION_ERROR,
+                    phase="runtime",
+                    error_type="ValueError",
+                    error_message="not enough values to unpack",
+                )
+            return ExecutionResult(status=EXECUTION_OK, return_value="1\n1")
+
+        fake_generate.side_effect = generate_side_effect
+        fake_validate.return_value = ExecutionResult(status=EXECUTION_OK, return_value=True)
+        client = RepairClient()
+        generated_artifacts = {
+            "test_inputs": {
+                "random": {
+                    "constraint_analysis": "旧约束",
+                    "generate_test_input_code": "bad_random_generate",
+                    "validate_test_input_code": "bad_random_validate",
+                },
+                "adversarial": {
+                    "constraint_analysis": "对抗约束",
+                    "generate_test_input_code": "adversarial_generate",
+                    "validate_test_input_code": "adversarial_validate",
+                },
+                "small_challenge": {"test_input": "1\n1"},
+            }
+        }
+
+        result = collect_verified_test_inputs(
+            sample_artifact(),
+            generated_artifacts,
+            client,
+            self.config,
+            LLMContextLimits(),
+        )
+
+        self.assertEqual(result["count"], 30)
+        self.assertEqual(result["test_input_repair_iteration_count"], 1)
+        self.assertEqual(result["test_input_repair_history"][0]["source"], "random")
+        self.assertEqual(
+            result["test_input_repair_history"][0]["failure"]["failure_stage"],
+            "run_generate_test_input",
+        )
+        self.assertEqual(
+            generated_artifacts["test_inputs"]["random"]["generate_test_input_code"],
+            "fixed_random_generate",
+        )
+        self.assertIn("test_input_debug:random:1", client.calls)
+        self.assertEqual(fake_generate.call_count, 21)
+
+    @patch("verification_pipeline.run_validate_test_input")
+    @patch("verification_pipeline.run_generate_test_input")
+    def test_collect_verified_test_inputs_uses_repaired_validate_for_small_challenge(
+        self,
+        fake_generate,
+        fake_validate,
+    ) -> None:
+        class RepairClient(FakeLLMClient):
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                if task_name.startswith("test_input_debug:random:"):
+                    self.calls.append(task_name)
+                    return json.dumps(
+                        {
+                            "constraint_analysis": "修复后的约束",
+                            "generate_test_input_code": "fixed_random_generate",
+                            "validate_test_input_code": "fixed_random_validate",
+                        },
+                        ensure_ascii=False,
+                    )
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+        fake_generate.return_value = ExecutionResult(status=EXECUTION_OK, return_value="1\n1")
+
+        def validate_side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            if code == "bad_random_validate":
+                return ExecutionResult(status=EXECUTION_OK, return_value=False)
+            return ExecutionResult(status=EXECUTION_OK, return_value=True)
+
+        fake_validate.side_effect = validate_side_effect
+        client = RepairClient()
+        generated_artifacts = {
+            "test_inputs": {
+                "random": {
+                    "constraint_analysis": "旧约束",
+                    "generate_test_input_code": "random_generate",
+                    "validate_test_input_code": "bad_random_validate",
+                },
+                "adversarial": {
+                    "constraint_analysis": "对抗约束",
+                    "generate_test_input_code": "adversarial_generate",
+                    "validate_test_input_code": "adversarial_validate",
+                },
+                "small_challenge": {"test_input": "1\n1"},
+            }
+        }
+
+        result = collect_verified_test_inputs(
+            sample_artifact(),
+            generated_artifacts,
+            client,
+            self.config,
+            LLMContextLimits(),
+        )
+
+        validate_codes = [call.args[0] for call in fake_validate.call_args_list]
+        self.assertEqual(result["test_input_repair_iteration_count"], 1)
+        self.assertEqual(
+            generated_artifacts["test_inputs"]["random"]["validate_test_input_code"],
+            "fixed_random_validate",
+        )
+        self.assertEqual(validate_codes.count("bad_random_validate"), 1)
+        self.assertEqual(validate_codes.count("fixed_random_validate"), 20)
+
     @patch("verification_pipeline.run_solution")
     def test_verify_bruteforce_repairs_runtime_error_and_keeps_large_scale_inputs(self, fake_run_solution) -> None:
         client = FakeLLMClient()

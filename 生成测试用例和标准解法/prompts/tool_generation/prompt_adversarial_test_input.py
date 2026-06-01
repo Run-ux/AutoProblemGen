@@ -27,6 +27,7 @@ def build_user_prompt(artifact: dict) -> str:
 - 生成代码必须包含 import cyaron as cy，并可按需使用 import random。
 - 不支持 cy.Integer()；应使用 cy.randint。
 - 使用 cy.String.random，不要使用 cy.String。
+- 若需要打乱列表，使用标准库 random.shuffle；不要使用 cy.shuffle 或 cyaron.shuffle。
 - generate_test_input() 不接收任何参数。
 - generate_test_input() 必须返回一条单独的对抗性输入字符串，而不是列表。
 - 对抗策略必须贴合当前题目，不要照搬无关题目的变量名或策略名。

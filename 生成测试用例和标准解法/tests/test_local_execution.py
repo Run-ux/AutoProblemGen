@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
 
 import path_setup  # noqa: F401
@@ -62,6 +63,31 @@ class LocalExecutionTests(unittest.TestCase):
 
         self.assertEqual(result.status, EXECUTION_MEMORY_LIMIT)
         self.assertEqual(result.error_type, "MemoryLimitExceeded")
+
+    def test_run_python_function_strips_lone_surrogates_before_exec(self) -> None:
+        result = run_python_function(
+            "def solve(input_str):\n    marker = '\udcae'\n    return 'ok' + marker",
+            "solve",
+            [""],
+            timeout_seconds=2,
+            memory_limit_mb=512,
+        )
+
+        self.assertEqual(result.status, EXECUTION_OK)
+        self.assertEqual(result.return_value, "ok")
+
+    @unittest.skipUnless(importlib.util.find_spec("cyaron"), "cyaron 未安装")
+    def test_run_python_function_allows_cyaron_and_shuffle_compat(self) -> None:
+        result = run_python_function(
+            "import cyaron as cy\n\ndef solve(input_str):\n    values = [3, 1, 2]\n    cy.shuffle(values)\n    return ' '.join(map(str, sorted(values)))",
+            "solve",
+            [""],
+            timeout_seconds=2,
+            memory_limit_mb=512,
+        )
+
+        self.assertEqual(result.status, EXECUTION_OK)
+        self.assertEqual(result.return_value, "1 2 3")
 
 
 if __name__ == "__main__":

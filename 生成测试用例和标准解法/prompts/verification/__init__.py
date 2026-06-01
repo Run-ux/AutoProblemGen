@@ -6,4 +6,5 @@ __all__ = [
     "prompt_checker_false_accept_debug",
     "prompt_checker_false_reject_debug",
     "prompt_standard_solution_debug",
+    "prompt_test_input_debug",
 ]

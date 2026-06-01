@@ -6,8 +6,8 @@ from typing import Any, Callable
 try:  # 兼容包内导入与当前目录直接运行两种方式。
     from .llm_client import ChatLLMClient, OpenAIChatLLMClient
     from .llm_config import LLMConfig
+    from .llm_contract import call_prompt_with_contract_retry
     from .llm_json import (
-        parse_json_object,
         validate_checker_response,
         validate_small_challenge_response,
         validate_solution_response,
@@ -31,8 +31,8 @@ try:  # 兼容包内导入与当前目录直接运行两种方式。
 except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导入。
     from llm_client import ChatLLMClient, OpenAIChatLLMClient
     from llm_config import LLMConfig
+    from llm_contract import call_prompt_with_contract_retry
     from llm_json import (
-        parse_json_object,
         validate_checker_response,
         validate_small_challenge_response,
         validate_solution_response,
@@ -68,9 +68,13 @@ def _call_prompt(
     user_prompt: str,
     validator: Validator,
 ) -> dict[str, Any]:
-    raw_response = client.complete_json(task_name=task_name, system_prompt=system_prompt, user_prompt=user_prompt)
-    parsed = parse_json_object(raw_response, task_name)
-    return validator(parsed)
+    return call_prompt_with_contract_retry(
+        client,
+        task_name=task_name,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        validator=validator,
+    )
 
 
 def _build_client(config: LLMConfig | None, client: ChatLLMClient | None) -> tuple[LLMConfig | None, ChatLLMClient]:
