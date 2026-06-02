@@ -30,7 +30,7 @@ python D:\AutoProblemGen\总流程\main.py ^
 
 总流程 v1 只支持 `single_seed_extension`，不包含爬取阶段，也不串 `same_family_fusion`。输入可以是单个原始 schema JSON，或包含多个 schema JSON 的目录；目录输入会按题串行跑完整流水线，即一题完成四元组抽取、题面生成、质量门槛和验证后，再开始下一题。流程参数全部从 `workflow.env` 读取，`QUALITY_ITERATIONS` 必须为 `1`、`2` 或 `3`，不能关闭质量评价；只有最终质量报告满足 `generated_status=ok`、`overall.status=pass`，且迭代摘要 `stop_reason=pass` 的题目才会进入测试用例与标准解法验证阶段。
 
-`RUN_ID` 留空时，总流程会基于 `INPUT_PATH` 的规范化绝对路径生成稳定运行标识，用于断点续传。重跑同一个输入目录会读取已有 `workflow_summary.json`，跳过已 `verified` 且输入文件 hash 未变化的题；未完成、失败或输入变化的题会从四元组抽取开始完整重跑。如需保留多次完整实验，请手动设置新的 `RUN_ID`。
+`RUN_ID` 留空时，总流程会基于 `INPUT_PATH` 的规范化绝对路径生成稳定运行标识，用于断点续传。重跑同一个输入目录会读取已有 `workflow_summary.json`，跳过已 `verified` 且输入文件 hash 未变化的题；默认会重跑未完成、失败或输入变化的题。若命令带 `--skip-previous-failures`，历史已跑过但未 `verified` 且输入 hash 未变化的题会在本次运行中保留原状态并跳过，流程优先处理未跑过的题。如需保留多次完整实验，请手动设置新的 `RUN_ID`。
 
 默认输出位于：
 

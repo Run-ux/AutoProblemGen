@@ -279,6 +279,7 @@ def run_workflow(
     *,
     command_runner: CommandRunner | None = None,
     progress_writer: Callable[[str], None] | None = None,
+    skip_previous_failures: bool = False,
 ) -> dict[str, Any]:
     runner = command_runner or default_command_runner
     progress = progress_writer or (lambda message: print(message, flush=True))
@@ -302,10 +303,17 @@ def run_workflow(
         paths=paths,
         problems=problems,
         existing_summary=existing_summary,
+        skip_previous_failures=skip_previous_failures,
     )
 
     try:
-        skip_count = sum(1 for problem in summary["problems"] if _can_skip_problem(problem))
+        verified_skip_count = sum(1 for problem in summary["problems"] if _can_skip_problem(problem))
+        previous_failure_skip_count = (
+            sum(1 for problem in summary["problems"] if _can_skip_previous_failure(problem))
+            if skip_previous_failures
+            else 0
+        )
+        pending_count = len(problems) - verified_skip_count - previous_failure_skip_count
         progress("=" * 80)
         progress("[workflow] 运行开始")
         progress(f"[workflow] run_id={run_id}；来源={run_id_source}")
@@ -315,7 +323,8 @@ def run_workflow(
         )
         progress(
             f"[workflow] 历史 summary={'已发现' if existing_summary else '未发现'}；"
-            f"可跳过={skip_count}；待处理={len(problems) - skip_count}"
+            f"verified可跳过={verified_skip_count}；"
+            f"历史失败可跳过={previous_failure_skip_count}；待处理={pending_count}"
         )
         progress(f"[workflow] summary={summary_path}")
         progress(f"[workflow] 日志目录={paths['logs']}")
@@ -325,12 +334,30 @@ def run_workflow(
         for order, problem in enumerate(summary["problems"], start=1):
             if _can_skip_problem(problem):
                 problem["skipped_this_run"] = True
+                problem["processed_this_run"] = False
+                problem["skip_reason"] = "verified"
                 progress("=" * 80)
                 progress(f"[problem {order}/{len(problems)}] 跳过")
                 progress(f"[problem] problem_id={problem['problem_id']}")
                 progress("[problem] 原因=workflow_summary 显示 verified，且输入文件 hash 未变化。")
                 progress(
                     "[problem] 上次完成状态=verified；"
+                    f"input_hash校验=match；previous={_short_hash(problem.get('previous_input_sha256'))}；"
+                    f"current={_short_hash(problem.get('input_sha256'))}"
+                )
+                continue
+
+            if skip_previous_failures and _can_skip_previous_failure(problem):
+                previous_status = _previous_problem_status(problem)
+                problem["skipped_this_run"] = True
+                problem["processed_this_run"] = False
+                problem["skip_reason"] = "previous_failure"
+                progress("=" * 80)
+                progress(f"[problem {order}/{len(problems)}] 跳过")
+                progress(f"[problem] problem_id={problem['problem_id']}")
+                progress("[problem] 原因=启用 --skip-previous-failures，历史状态未成功且输入文件 hash 未变化。")
+                progress(
+                    f"[problem] 历史状态={previous_status}；"
                     f"input_hash校验=match；previous={_short_hash(problem.get('previous_input_sha256'))}；"
                     f"current={_short_hash(problem.get('input_sha256'))}"
                 )
@@ -393,6 +420,7 @@ def _build_run_summary(
     paths: dict[str, Path],
     problems: list[dict[str, str]],
     existing_summary: dict[str, Any] | None,
+    skip_previous_failures: bool,
 ) -> dict[str, Any]:
     existing_problems = {
         str(item.get("problem_id", "")): item
@@ -419,6 +447,10 @@ def _build_run_summary(
         entry["input_sha256"] = item["input_sha256"]
         entry.setdefault("tuple", {})
         entry.setdefault("generation", {})
+        # 这两个字段描述当前运行，合并历史 summary 时必须重新计算。
+        entry["skipped_this_run"] = False
+        entry["processed_this_run"] = False
+        entry["skip_reason"] = ""
         merged_problems.append(entry)
 
     return {
@@ -432,6 +464,12 @@ def _build_run_summary(
         "resume": {
             "existing_summary_found": existing_summary is not None,
             "loaded_from": str(paths["summary"]) if existing_summary else "",
+            "skip_previous_failures": skip_previous_failures,
+            "skip_previous_failures_policy": (
+                "启用时跳过历史已跑过但未 verified 且输入 hash 未变化的题。"
+                if skip_previous_failures
+                else "未启用；历史失败或未完成题会按默认逻辑重跑。"
+            ),
         },
         "stages": list((existing_summary or {}).get("stages", [])),
         "problems": merged_problems,
@@ -440,15 +478,26 @@ def _build_run_summary(
 
 
 def _can_skip_problem(problem: dict[str, Any]) -> bool:
-    return (
-        problem.get("status") == "verified"
-        and bool(problem.get("input_sha256"))
-        and problem.get("previous_input_sha256") == problem.get("input_sha256")
-    )
+    return _previous_problem_status(problem) == "verified" and _input_hash_unchanged(problem)
+
+
+def _can_skip_previous_failure(problem: dict[str, Any]) -> bool:
+    previous_status = _previous_problem_status(problem)
+    return _input_hash_unchanged(problem) and previous_status not in {"verified", "pending"}
+
+
+def _previous_problem_status(problem: dict[str, Any]) -> str:
+    return str(problem.get("status") or "pending")
+
+
+def _input_hash_unchanged(problem: dict[str, Any]) -> bool:
+    previous_hash = str(problem.get("previous_input_sha256") or "")
+    current_hash = str(problem.get("input_sha256") or "")
+    return bool(previous_hash and current_hash and previous_hash == current_hash)
 
 
 def _resume_decision(problem: dict[str, Any]) -> str:
-    previous_status = str(problem.get("status") or "pending")
+    previous_status = _previous_problem_status(problem)
     previous_hash = str(problem.get("previous_input_sha256") or "")
     current_hash = str(problem.get("input_sha256") or "")
     if previous_hash and previous_hash != current_hash:
@@ -491,6 +540,7 @@ def _reset_problem_for_current_run(problem: dict[str, Any]) -> None:
     problem["generation"] = {}
     problem["skipped_this_run"] = False
     problem["processed_this_run"] = True
+    problem["skip_reason"] = ""
 
 
 def _run_single_problem_workflow(
@@ -1354,7 +1404,16 @@ def _emit_final_progress(
     llm_trace_path: Path,
 ) -> None:
     counts = _build_counts(summary.get("problems", []))
-    skipped = sum(1 for problem in summary.get("problems", []) if problem.get("skipped_this_run"))
+    skipped_verified = sum(
+        1
+        for problem in summary.get("problems", [])
+        if problem.get("skipped_this_run") and problem.get("skip_reason") == "verified"
+    )
+    skipped_previous_failures = sum(
+        1
+        for problem in summary.get("problems", [])
+        if problem.get("skipped_this_run") and problem.get("skip_reason") == "previous_failure"
+    )
     processed = sum(1 for problem in summary.get("problems", []) if problem.get("processed_this_run"))
     failed_problem_ids = [
         str(problem.get("problem_id", ""))
@@ -1365,7 +1424,8 @@ def _emit_final_progress(
     progress("[workflow] 运行结束")
     progress(f"[workflow] status={summary.get('status')}")
     progress(
-        f"[workflow] total={counts.get('total', 0)}；skipped_verified={skipped}；processed_this_run={processed}"
+        f"[workflow] total={counts.get('total', 0)}；skipped_verified={skipped_verified}；"
+        f"skipped_previous_failures={skipped_previous_failures}；processed_this_run={processed}"
     )
     progress(
         "[workflow] 状态计数="

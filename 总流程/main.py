@@ -9,6 +9,11 @@ from runtime_config import RuntimeConfigError
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="AutoProblemGen 端到端总流程")
     parser.add_argument("--workflow-config", required=True, help="总流程配置文件路径")
+    parser.add_argument(
+        "--skip-previous-failures",
+        action="store_true",
+        help="跳过历史已跑过但未 verified 且输入 hash 未变化的题，只处理未跑过的题。",
+    )
     return parser
 
 
@@ -30,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(str(exc))
     validate_config(parser, config)
 
-    summary = run_workflow(config)
+    summary = run_workflow(config, skip_previous_failures=args.skip_previous_failures)
     print(f"[workflow] status={summary['status']}")
     print(f"[workflow] summary={summary['paths']['summary']}")
     return 0 if summary["status"] == "completed" else 1

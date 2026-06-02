@@ -491,6 +491,7 @@ class CliTests(unittest.TestCase):
 
             workflow_main.validate_config(parser, config)
 
+            self.assertFalse(args.skip_previous_failures)
             self.assertEqual(config.quality_iterations, 3)
             self.assertEqual(config.quality_full_score_max_iterations, 10)
             self.assertEqual(config.generation_llm.model, "chat-model")
@@ -502,6 +503,28 @@ class CliTests(unittest.TestCase):
             with contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit):
                     workflow_main.validate_config(parser, WorkflowConfig.from_file(bad_workflow_path))
+
+    def test_cli_passes_skip_previous_failures_to_workflow(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            workflow_path = _write_workflow_files(temp, input_path)
+
+            fake_summary = {
+                "status": "completed",
+                "paths": {"summary": str(temp / "out" / "run" / "workflow_summary.json")},
+            }
+            stdout = io.StringIO()
+            with mock.patch.object(workflow_main, "run_workflow", return_value=fake_summary) as fake_run:
+                with contextlib.redirect_stdout(stdout):
+                    exit_code = workflow_main.main(
+                        ["--workflow-config", str(workflow_path), "--skip-previous-failures"]
+                    )
+
+            self.assertEqual(exit_code, 0)
+            fake_run.assert_called_once()
+            self.assertTrue(fake_run.call_args.kwargs["skip_previous_failures"])
 
     def test_workflow_config_rejects_removed_theme_and_variants(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -684,6 +707,80 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(summary["status"], "completed")
             self.assertGreater(len(runner.calls), 0)
             self.assertFalse(summary["problems"][0].get("skipped_this_run", False))
+            extract_calls = runner.stage_calls("extract.py")
+            self.assertEqual(len(extract_calls), 1)
+            self.assertNotIn("--resume", extract_calls[0]["command"])
+
+    def test_skip_previous_failures_skips_failed_history_and_runs_new_problem(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_dir = temp / "input"
+            _make_input(input_dir / "A.json", "A")
+
+            first = run_workflow(
+                _make_workflow_config(input_path=input_dir, output_root=temp / "out", run_id=None),
+                command_runner=FakeCommandRunner(
+                    quality_status="revise_quality",
+                    stop_reason="reached_requested_rounds",
+                ),
+                progress_writer=lambda _: None,
+            )
+            self.assertEqual(first["status"], "completed_with_failures")
+            self.assertEqual(first["problems"][0]["status"], "quality_gate_failed")
+
+            _make_input(input_dir / "B.json", "B")
+            runner = FakeCommandRunner()
+            second = run_workflow(
+                _make_workflow_config(input_path=input_dir, output_root=temp / "out", run_id=None),
+                command_runner=runner,
+                progress_writer=lambda _: None,
+                skip_previous_failures=True,
+            )
+
+            problems = {problem["problem_id"]: problem for problem in second["problems"]}
+            self.assertEqual(second["status"], "completed_with_failures")
+            self.assertTrue(second["resume"]["skip_previous_failures"])
+            self.assertEqual(problems["A"]["status"], "quality_gate_failed")
+            self.assertTrue(problems["A"]["skipped_this_run"])
+            self.assertFalse(problems["A"]["processed_this_run"])
+            self.assertEqual(problems["A"]["skip_reason"], "previous_failure")
+            self.assertEqual(problems["B"]["status"], "verified")
+            self.assertFalse(problems["B"]["skipped_this_run"])
+            self.assertTrue(problems["B"]["processed_this_run"])
+
+            extract_calls = runner.stage_calls("extract.py")
+            self.assertEqual(len(extract_calls), 1)
+            self.assertEqual(Path(_option(extract_calls[0]["command"], "--input")).name, "B.json")
+
+    def test_skip_previous_failures_reprocesses_failed_problem_when_input_hash_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=FakeCommandRunner(
+                    quality_status="revise_quality",
+                    stop_reason="reached_requested_rounds",
+                ),
+                progress_writer=lambda _: None,
+            )
+            payload = json.loads(input_path.read_text(encoding="utf-8"))
+            payload["description"] = "失败后修改过的题面"
+            _write_json(input_path, payload)
+
+            runner = FakeCommandRunner()
+            summary = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=runner,
+                progress_writer=lambda _: None,
+                skip_previous_failures=True,
+            )
+
+            self.assertEqual(summary["status"], "completed")
+            self.assertEqual(summary["problems"][0]["status"], "verified")
+            self.assertFalse(summary["problems"][0]["skipped_this_run"])
+            self.assertTrue(summary["problems"][0]["processed_this_run"])
             extract_calls = runner.stage_calls("extract.py")
             self.assertEqual(len(extract_calls), 1)
             self.assertNotIn("--resume", extract_calls[0]["command"])

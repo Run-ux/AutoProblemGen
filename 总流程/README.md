@@ -73,6 +73,12 @@ python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\req
 python main.py --workflow-config workflow.env
 ```
 
+如果希望本次先推进未跑过的题，暂时不重跑历史已跑过但未成功的题，可以加：
+
+```powershell
+python main.py --workflow-config workflow.env --skip-previous-failures
+```
+
 如果需要使用指定虚拟环境的 Python，可以在 `workflow.env` 中设置：
 
 ```text
@@ -107,7 +113,9 @@ input_sample_400_autoproblemgen_a13f92c8
 - 该题上次状态为 `verified`。
 - 该题输入文件内容 hash 与上次一致。
 
-未完成或失败的题会重新进入流水线，但四元组抽取阶段默认带 `--resume`：同一输出目录下已存在的 `tuple/raw/<problem_id>_<dimension>.json` 不会再次抽取，后续阶段直接使用已有结果。若 `workflow_summary.json` 显示该题输入文件 hash 已变化，则四元组会重新抽取，避免旧四元组污染新输入。
+默认情况下，未完成或失败的题会重新进入流水线，但四元组抽取阶段默认带 `--resume`：同一输出目录下已存在的 `tuple/raw/<problem_id>_<dimension>.json` 不会再次抽取，后续阶段直接使用已有结果。若 `workflow_summary.json` 显示该题输入文件 hash 已变化，则四元组会重新抽取，避免旧四元组污染新输入。
+
+如果运行命令带 `--skip-previous-failures`，历史已跑过但未 `verified` 且输入 hash 未变化的题会在本次运行中跳过，保留原状态，不会被标记为成功；未跑过的题仍会继续处理。之后不带该参数运行，仍可按默认逻辑重跑这些失败题。输入 hash 变化的历史失败题不会被该参数跳过。
 
 若需要重新做一次完整实验、保留多次实验结果，或强制重新抽取四元组，请显式填写新的 `RUN_ID`，或删除对应题目的旧 `tuple/raw` 文件后再运行。
 
@@ -133,7 +141,7 @@ OUTPUT_ROOT\RUN_ID
 
 运行时终端会输出：
 
-- 启动摘要：`run_id` 来源、输入模式、题目总数、可跳过数、待处理数、summary 路径和 LLM 详细日志路径。
+- 启动摘要：`run_id` 来源、输入模式、题目总数、已 `verified` 可跳过数、历史失败可跳过数、待处理数、summary 路径和 LLM 详细日志路径。
 - 每题进度：题号、`problem_id`、输入文件、每个阶段的开始/完成/跳过原因。
 - 验证内部进度：进入测试用例与标准解法阶段后，会输出 `[verification 2/7] Prompt 与 LLM 生成`、`[verification 4/7] 本地验证闭环`、`[verification 5/7] checker 验证`、`[verification 6/7] 错误解池增强` 等关键阶段。
 - LLM 修复轮次：暴力解、checker 误拒、checker 误收和标准解触发修复时，会输出当前是第几轮修复以及修复后重新验证的动作。
