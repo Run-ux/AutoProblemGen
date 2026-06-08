@@ -10,6 +10,7 @@ DEFAULT_BRUTEFORCE_TIMEOUT_SECONDS = 5.0
 DEFAULT_BRUTEFORCE_MEMORY_LIMIT_MB = 512
 DEFAULT_CHECKER_TIMEOUT_SECONDS = 5.0
 DEFAULT_CHECKER_MEMORY_LIMIT_MB = 512
+DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS = 5
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class ExecutionConfig:
     bruteforce_memory_limit_mb: int = DEFAULT_BRUTEFORCE_MEMORY_LIMIT_MB
     checker_timeout_seconds: float = DEFAULT_CHECKER_TIMEOUT_SECONDS
     checker_memory_limit_mb: int = DEFAULT_CHECKER_MEMORY_LIMIT_MB
+    standard_solution_max_repair_iterations: int = DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS
 
     @classmethod
     def from_runtime_limits(cls, limits: Any) -> "ExecutionConfig":
@@ -32,4 +34,5 @@ class ExecutionConfig:
             bruteforce_memory_limit_mb=int(limits.bruteforce_memory_limit_mb),
             checker_timeout_seconds=float(limits.checker_timeout_seconds),
             checker_memory_limit_mb=int(limits.checker_memory_limit_mb),
+            standard_solution_max_repair_iterations=int(limits.standard_solution_max_repair_iterations),
         )

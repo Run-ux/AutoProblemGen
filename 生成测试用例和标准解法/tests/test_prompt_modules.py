@@ -166,6 +166,29 @@ class PromptModuleTests(unittest.TestCase):
         self.assertIn('status="blocked"', standard_prompt)
         self.assertIn('status="blocked"', brute_prompt)
 
+    def test_bruteforce_prompt_defines_small_scale_oracle(self) -> None:
+        prompt = prompt_bruteforce_solution.build_user_prompt(self.artifact)
+
+        self.assertIn("小规模真值 oracle", prompt)
+        self.assertIn("小规模合法输入", prompt)
+        self.assertIn("不能单独作为返回 status=\"blocked\" 的理由", prompt)
+        self.assertIn("不能仅因题面最大输入规模过大", prompt)
+        self.assertIn("大规模输入可能超时或超内存", prompt)
+        self.assertNotIn("对任意符合输入约束的测试数据，都能得到正确输出", prompt)
+
+    def test_bruteforce_debug_keeps_small_scale_oracle_scope(self) -> None:
+        prompt = prompt_bruteforce_debug.build_user_prompt(
+            self.artifact,
+            bruteforce_code="def solve(input_str):\n    return ''",
+            failing_input="1\n1",
+            error_report="Traceback",
+        )
+
+        self.assertIn("小规模真值 oracle", prompt)
+        self.assertIn("不要求修复后代码在题面最大输入规模内可运行", prompt)
+        self.assertIn("大规模超时或超内存", prompt)
+        self.assertIn("不要改写为复杂高效算法", prompt)
+
     def test_checker_json_contract_has_two_branches(self) -> None:
         prompt = prompt_checker.build_user_prompt(self.artifact)
         for marker in [
@@ -223,10 +246,21 @@ class PromptModuleTests(unittest.TestCase):
             self.artifact,
             initial_code="def solve(input_str):\n    return '0'",
             current_code="def solve(input_str):\n    return '0'",
-            failing_input="1\n1",
-            expected_output="1",
-            actual_output="0",
-            error_report="输出不一致",
+            failure_summary={
+                "iteration": 1,
+                "failed_count": 1,
+                "failure_classification_counts": {"output_mismatch": 1},
+            },
+            failed_cases=[
+                {
+                    "case_id": "case_001",
+                    "classification": "output_mismatch",
+                    "input": "1\n1",
+                    "expected_output": "1",
+                    "actual_output": "0",
+                    "error_report": "输出不一致",
+                }
+            ],
         )
         false_reject_prompt = prompt_checker_false_reject_debug.build_user_prompt(
             self.artifact,
@@ -259,8 +293,11 @@ class PromptModuleTests(unittest.TestCase):
 
         self.assertIn('"code"', brute_prompt)
         self.assertIn('"code"', standard_debug_prompt)
-        self.assertIn("小规模真值输出", standard_debug_prompt)
-        self.assertIn("当前标准解实际输出", standard_debug_prompt)
+        self.assertIn('"analysis"', standard_debug_prompt)
+        self.assertIn('"fix_plan"', standard_debug_prompt)
+        self.assertIn("本轮失败分类统计", standard_debug_prompt)
+        self.assertIn("本轮代表性失败样例", standard_debug_prompt)
+        self.assertIn("先综合本轮全部失败样例", standard_debug_prompt)
         self.assertIn('"checker_code"', false_reject_prompt)
         self.assertIn('"checker_code"', false_accept_prompt)
         self.assertIn('"generate_test_input_code"', test_input_debug_prompt)
@@ -277,7 +314,14 @@ class PromptModuleTests(unittest.TestCase):
         self.assertIn("CONSTRAINT_DISCONNECTED_PATH：约束错误，构造不连续路径、不相邻转移或不可达序列。", counterexample_prompt)
         self.assertIn("NUMERIC_NAN_INF：数值错误，输出 nan、inf、-inf 等非法数值。", counterexample_prompt)
         self.assertIn("FORGED_UNRELATED_OUTPUT：伪造错误，输出格式看似合理，但内容与输入无关，不能满足题意。", counterexample_prompt)
-        for prompt in [brute_prompt, false_reject_prompt, false_accept_prompt, test_input_debug_prompt, counterexample_prompt]:
+        for prompt in [
+            brute_prompt,
+            standard_debug_prompt,
+            false_reject_prompt,
+            false_accept_prompt,
+            test_input_debug_prompt,
+            counterexample_prompt,
+        ]:
             self.assertIn("最终只输出单个 JSON 对象", prompt)
 
     def test_wrong_pool_prompts_have_strict_json_contracts(self) -> None:

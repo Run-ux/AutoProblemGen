@@ -15,6 +15,7 @@ from execution_config import (
     DEFAULT_BRUTEFORCE_TIMEOUT_SECONDS,
     DEFAULT_CHECKER_MEMORY_LIMIT_MB,
     DEFAULT_CHECKER_TIMEOUT_SECONDS,
+    DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS,
     DEFAULT_TEST_INPUT_MEMORY_LIMIT_MB,
     DEFAULT_TEST_INPUT_TIMEOUT_SECONDS,
     ExecutionConfig,
@@ -32,6 +33,10 @@ class ExecutionConfigTests(unittest.TestCase):
         self.assertEqual(config.bruteforce_memory_limit_mb, DEFAULT_BRUTEFORCE_MEMORY_LIMIT_MB)
         self.assertEqual(config.checker_timeout_seconds, DEFAULT_CHECKER_TIMEOUT_SECONDS)
         self.assertEqual(config.checker_memory_limit_mb, DEFAULT_CHECKER_MEMORY_LIMIT_MB)
+        self.assertEqual(
+            config.standard_solution_max_repair_iterations,
+            DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS,
+        )
 
     def test_from_runtime_limits_maps_total_workflow_config(self) -> None:
         limits = ExecutionLimits(
@@ -41,6 +46,7 @@ class ExecutionConfigTests(unittest.TestCase):
             bruteforce_memory_limit_mb=256,
             checker_timeout_seconds=3.5,
             checker_memory_limit_mb=384,
+            standard_solution_max_repair_iterations=9,
         )
 
         config = ExecutionConfig.from_runtime_limits(limits)
@@ -51,6 +57,7 @@ class ExecutionConfigTests(unittest.TestCase):
         self.assertEqual(config.bruteforce_memory_limit_mb, 256)
         self.assertEqual(config.checker_timeout_seconds, 3.5)
         self.assertEqual(config.checker_memory_limit_mb, 384)
+        self.assertEqual(config.standard_solution_max_repair_iterations, 9)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from llm_json import (
     validate_code_repair_response,
     validate_counterexample_response,
     validate_solution_response,
+    validate_standard_solution_repair_response,
     validate_strategy_analysis_response,
     validate_test_generator_response,
     validate_wrong_solution_response,
@@ -100,6 +101,22 @@ class LLMJsonTests(unittest.TestCase):
             validate_code_repair_response({"code": "def solve(input_str):\n    return ''"}, task_name="debug")["code"],
             "def solve(input_str):\n    return ''",
         )
+        self.assertEqual(
+            validate_standard_solution_repair_response(
+                {
+                    "analysis": "边界处理错误",
+                    "fix_plan": "修正边界",
+                    "code": "def solve(input_str):\n    return ''",
+                },
+                task_name="standard_debug",
+            )["fix_plan"],
+            "修正边界",
+        )
+        with self.assertRaisesRegex(LLMResponseError, "analysis"):
+            validate_standard_solution_repair_response(
+                {"fix_plan": "修正边界", "code": "def solve(input_str):\n    return ''"},
+                task_name="standard_debug",
+            )
         self.assertEqual(
             validate_checker_repair_response(
                 {

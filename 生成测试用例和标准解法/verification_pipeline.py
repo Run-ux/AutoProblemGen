@@ -18,6 +18,7 @@ try:  # 兼容包内导入与当前目录直接运行两种方式。
         validate_code_repair_response,
         validate_counterexample_response,
         validate_small_challenge_response,
+        validate_standard_solution_repair_response,
         validate_test_generator_response,
     )
     from .local_execution import (
@@ -50,6 +51,7 @@ except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导�
         validate_code_repair_response,
         validate_counterexample_response,
         validate_small_challenge_response,
+        validate_standard_solution_repair_response,
         validate_test_generator_response,
     )
     from local_execution import (
@@ -97,6 +99,7 @@ DEFAULT_LLM_CASE_TOTAL_CHARS = 160_000
 DEFAULT_LLM_CASE_MAX_COUNT = 10
 DEFAULT_MAX_LLM_PROMPT_CHARS = 600_000
 DEFAULT_LLM_TRACE_MAX_TEXT_CHARS = 30_000
+STANDARD_DEBUG_PROMPT_FAILED_CASE_LIMIT = 10
 
 
 class VerificationError(RuntimeError):
@@ -1418,10 +1421,8 @@ def _repair_standard_solution(
     *,
     initial_code: str,
     current_code: str,
-    failing_input: str,
-    expected_output: str,
-    actual_output: str,
-    error_report: str,
+    failure_summary: dict[str, Any],
+    failed_cases: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return _call_prompt(
         client,
@@ -1431,12 +1432,13 @@ def _repair_standard_solution(
             artifact,
             initial_code=initial_code,
             current_code=current_code,
-            failing_input=failing_input,
-            expected_output=expected_output,
-            actual_output=actual_output,
-            error_report=error_report,
+            failure_summary=failure_summary,
+            failed_cases=failed_cases,
         ),
-        validator=lambda payload: validate_code_repair_response(payload, task_name="standard_solution_debug"),
+        validator=lambda payload: validate_standard_solution_repair_response(
+            payload,
+            task_name="standard_solution_debug",
+        ),
     )
 
 
@@ -1483,6 +1485,195 @@ def _standard_output_failure_report(
     )
 
 
+def _standard_failure_counts(failed_cases: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for case in failed_cases:
+        classification = str(case["classification"])
+        counts[classification] = counts.get(classification, 0) + 1
+    return counts
+
+
+def _standard_failed_case_record(
+    *,
+    case: dict[str, Any],
+    classification: str,
+    expected_output: str,
+    actual_output: str,
+    error_report: str,
+    solution_result: ExecutionResult,
+    checker_result: ExecutionResult | None = None,
+) -> dict[str, Any]:
+    record = {
+        "status": "failed",
+        "case_id": case["case_id"],
+        "source": case.get("source", ""),
+        "classification": classification,
+        "input": case["input"],
+        "expected_output": expected_output,
+        "actual_output": actual_output,
+        "error_report": error_report,
+        "standard_solution_execution_result": _result_summary(solution_result),
+    }
+    if checker_result is not None:
+        record["checker_execution_result"] = _result_summary(checker_result)
+    return record
+
+
+def _evaluate_standard_solution_case(
+    *,
+    code: str,
+    case: dict[str, Any],
+    checker_code: str | None,
+    standard_limits: dict[str, Any],
+    execution_config: ExecutionConfig,
+) -> dict[str, Any]:
+    result = run_solution(
+        code,
+        case["input"],
+        timeout_seconds=standard_limits["timeout_seconds"],
+        memory_limit_mb=standard_limits["memory_limit_mb"],
+    )
+    expected_output = case["output"]
+    actual_output = (
+        result.return_value
+        if result.status == EXECUTION_OK and isinstance(result.return_value, str)
+        else ""
+    )
+
+    if result.status == EXECUTION_OK and isinstance(result.return_value, str):
+        if checker_code is None:
+            if actual_output == expected_output:
+                return {"status": "accepted", "case_id": case["case_id"], "verdict": "accepted"}
+            error_report = _standard_output_failure_report(
+                solution_result=result,
+                expected_output=expected_output,
+                actual_output=actual_output,
+                checker_result=None,
+            )
+            return _standard_failed_case_record(
+                case=case,
+                classification="output_mismatch",
+                expected_output=expected_output,
+                actual_output=actual_output,
+                error_report=error_report,
+                solution_result=result,
+            )
+
+        checker_result = run_checker(
+            checker_code,
+            case["input"],
+            actual_output,
+            timeout_seconds=execution_config.checker_timeout_seconds,
+            memory_limit_mb=execution_config.checker_memory_limit_mb,
+        )
+        if checker_result.status == EXECUTION_OK and checker_result.return_value is True:
+            return {"status": "accepted", "case_id": case["case_id"], "verdict": "accepted_by_checker"}
+        classification = (
+            "checker_rejected"
+            if checker_result.status == EXECUTION_OK and checker_result.return_value is False
+            else "checker_error"
+        )
+        error_report = _standard_output_failure_report(
+            solution_result=result,
+            expected_output=expected_output,
+            actual_output=actual_output,
+            checker_result=checker_result,
+        )
+        return _standard_failed_case_record(
+            case=case,
+            classification=classification,
+            expected_output=expected_output,
+            actual_output=actual_output,
+            error_report=error_report,
+            solution_result=result,
+            checker_result=checker_result,
+        )
+
+    if result.status == EXECUTION_OK:
+        error_report = json.dumps(
+            {
+                "expectation": "solve(input_str) 必须返回字符串。",
+                "expected_output": expected_output,
+                "actual_return_value": result.return_value,
+                "standard_solution_execution_result": _result_summary(result),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        return _standard_failed_case_record(
+            case=case,
+            classification="non_string_return",
+            expected_output=expected_output,
+            actual_output=actual_output,
+            error_report=error_report,
+            solution_result=result,
+        )
+
+    if result.status == EXECUTION_TIMEOUT:
+        classification = "timeout"
+    elif result.status == EXECUTION_MEMORY_LIMIT:
+        classification = "memory_limit"
+    else:
+        classification = "execution_error"
+    error_report = _format_execution_report(result, expectation="标准解应在题面限制内正常返回输出字符串。")
+    return _standard_failed_case_record(
+        case=case,
+        classification=classification,
+        expected_output=expected_output,
+        actual_output=actual_output,
+        error_report=error_report,
+        solution_result=result,
+    )
+
+
+def _select_standard_debug_failed_cases(failed_cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    seen_classifications: set[str] = set()
+    for case in failed_cases:
+        classification = str(case["classification"])
+        if classification in seen_classifications:
+            continue
+        selected.append(case)
+        seen_classifications.add(classification)
+        if len(selected) >= STANDARD_DEBUG_PROMPT_FAILED_CASE_LIMIT:
+            return selected
+
+    for case in failed_cases:
+        if case in selected:
+            continue
+        selected.append(case)
+        if len(selected) >= STANDARD_DEBUG_PROMPT_FAILED_CASE_LIMIT:
+            break
+    return selected
+
+
+def _standard_failure_summary(
+    *,
+    iteration: int,
+    checked_cases: list[dict[str, Any]],
+    failed_cases: list[dict[str, Any]],
+    solved_case_count: int,
+) -> dict[str, Any]:
+    return {
+        "iteration": iteration,
+        "solved_case_count": solved_case_count,
+        "accepted_count": len(checked_cases),
+        "failed_count": len(failed_cases),
+        "failure_classification_counts": _standard_failure_counts(failed_cases),
+    }
+
+
+def _standard_repair_limit_failure_message(
+    *,
+    max_repair_iterations: int,
+    failure_summary: dict[str, Any],
+) -> str:
+    return (
+        f"标准解修复达到最大轮数 {max_repair_iterations} 后仍失败："
+        + json.dumps(failure_summary, ensure_ascii=False, indent=2)
+    )
+
+
 def verify_standard_solution(
     artifact: dict[str, Any],
     standard_payload: dict[str, Any],
@@ -1502,95 +1693,28 @@ def verify_standard_solution(
     initial_code = standard_payload["code"]
     current_code = initial_code
     repair_history: list[dict[str, Any]] = []
+    max_repair_iterations = execution_config.standard_solution_max_repair_iterations
     iteration = 0
 
     while True:
         iteration += 1
         checked_cases: list[dict[str, Any]] = []
-        should_restart = False
+        failed_cases: list[dict[str, Any]] = []
 
         for case in solved_cases:
-            result = run_solution(
-                current_code,
-                case["input"],
-                timeout_seconds=standard_limits["timeout_seconds"],
-                memory_limit_mb=standard_limits["memory_limit_mb"],
+            evaluation = _evaluate_standard_solution_case(
+                code=current_code,
+                case=case,
+                checker_code=checker_code,
+                standard_limits=standard_limits,
+                execution_config=execution_config,
             )
-            expected_output = case["output"]
-            actual_output = result.return_value if result.status == EXECUTION_OK and isinstance(result.return_value, str) else ""
-
-            if result.status == EXECUTION_OK and isinstance(result.return_value, str):
-                if checker_code is None:
-                    if actual_output == expected_output:
-                        checked_cases.append({"case_id": case["case_id"], "verdict": "accepted"})
-                        continue
-                    error_report = _standard_output_failure_report(
-                        solution_result=result,
-                        expected_output=expected_output,
-                        actual_output=actual_output,
-                        checker_result=None,
-                    )
-                else:
-                    checker_result = run_checker(
-                        checker_code,
-                        case["input"],
-                        actual_output,
-                        timeout_seconds=execution_config.checker_timeout_seconds,
-                        memory_limit_mb=execution_config.checker_memory_limit_mb,
-                    )
-                    if checker_result.status == EXECUTION_OK and checker_result.return_value is True:
-                        checked_cases.append({"case_id": case["case_id"], "verdict": "accepted_by_checker"})
-                        continue
-                    error_report = _standard_output_failure_report(
-                        solution_result=result,
-                        expected_output=expected_output,
-                        actual_output=actual_output,
-                        checker_result=checker_result,
-                    )
-            elif result.status == EXECUTION_OK:
-                error_report = json.dumps(
-                    {
-                        "expectation": "solve(input_str) 必须返回字符串。",
-                        "expected_output": expected_output,
-                        "actual_return_value": result.return_value,
-                        "standard_solution_execution_result": _result_summary(result),
-                    },
-                    ensure_ascii=False,
-                    indent=2,
-                )
+            if evaluation.get("status") == "accepted":
+                checked_cases.append(evaluation)
             else:
-                error_report = _format_execution_report(result, expectation="标准解应在题面限制内正常返回输出字符串。")
+                failed_cases.append(evaluation)
 
-            repair_round = len(repair_history) + 1
-            _emit_repair_progress("标准解修复", repair_round, "开始。")
-            repair = _repair_standard_solution(
-                artifact,
-                client,
-                initial_code=initial_code,
-                current_code=current_code,
-                failing_input=case["input"],
-                expected_output=expected_output,
-                actual_output=actual_output,
-                error_report=error_report,
-            )
-            repair_history.append(
-                {
-                    "iteration": iteration,
-                    "failed_case_id": case["case_id"],
-                    "failed_input": case["input"],
-                    "expected_output": expected_output,
-                    "actual_output": actual_output,
-                    "error_report": error_report,
-                    "repair": repair,
-                }
-            )
-            current_code = repair["code"]
-            should_restart = True
-            _emit_repair_progress("标准解修复", repair_round, "完成，重新验证全部小规模真值输入。")
-            logger.info("标准解已修复，准备重新验证全部小规模真值输入: iteration=%s", iteration)
-            break
-
-        if not should_restart:
+        if not failed_cases:
             if repair_history:
                 _emit_progress(
                     f"[verification repair] 标准解修复循环结束；累计修复 {len(repair_history)} 轮，验证通过。"
@@ -1604,7 +1728,55 @@ def verify_standard_solution(
                 "checker_used": checker_code is not None,
                 "repair_history": repair_history,
                 "repair_iteration_count": len(repair_history),
+                "max_repair_iterations": max_repair_iterations,
             }
+
+        failure_summary = _standard_failure_summary(
+            iteration=iteration,
+            checked_cases=checked_cases,
+            failed_cases=failed_cases,
+            solved_case_count=len(solved_cases),
+        )
+        if len(repair_history) >= max_repair_iterations:
+            raise VerificationError(
+                _standard_repair_limit_failure_message(
+                    max_repair_iterations=max_repair_iterations,
+                    failure_summary=failure_summary,
+                )
+            )
+
+        repair_round = len(repair_history) + 1
+        prompt_failed_cases = _select_standard_debug_failed_cases(failed_cases)
+        _emit_repair_progress(
+            "标准解修复",
+            repair_round,
+            f"开始；本轮失败 {len(failed_cases)} 条，分类={failure_summary['failure_classification_counts']}。",
+        )
+        repair = _repair_standard_solution(
+            artifact,
+            client,
+            initial_code=initial_code,
+            current_code=current_code,
+            failure_summary=failure_summary,
+            failed_cases=prompt_failed_cases,
+        )
+        repair_history.append(
+            {
+                "iteration": iteration,
+                "repair_round": repair_round,
+                "failed_count": len(failed_cases),
+                "failure_classification_counts": failure_summary["failure_classification_counts"],
+                "failure_summary": failure_summary,
+                "failed_cases": failed_cases,
+                "prompt_failed_cases": prompt_failed_cases,
+                "analysis": repair["analysis"],
+                "fix_plan": repair["fix_plan"],
+                "repair": repair,
+            }
+        )
+        current_code = repair["code"]
+        _emit_repair_progress("标准解修复", repair_round, "完成，重新验证全部小规模真值输入。")
+        logger.info("标准解已修复，准备重新验证全部小规模真值输入: iteration=%s", iteration)
 
 
 def generate_large_scale_truth_outputs(
@@ -2307,6 +2479,9 @@ def generate_verified_artifacts(
                     "bruteforce_memory_limit_mb": active_execution_config.bruteforce_memory_limit_mb,
                     "checker_timeout_seconds": active_execution_config.checker_timeout_seconds,
                     "checker_memory_limit_mb": active_execution_config.checker_memory_limit_mb,
+                    "standard_solution_max_repair_iterations": (
+                        active_execution_config.standard_solution_max_repair_iterations
+                    ),
                 },
                 "context_limits": {
                     "llm_case_max_chars": active_context_limits.llm_case_max_chars,
@@ -2331,6 +2506,9 @@ def generate_verified_artifacts(
                 ],
                 "standard_solution_repair_iteration_count": standard_solution_verification[
                     "repair_iteration_count"
+                ],
+                "standard_solution_max_repair_iterations": standard_solution_verification[
+                    "max_repair_iterations"
                 ],
                 "standard_solution_checked_count": standard_solution_verification["checked_count"],
                 "large_scale_truth_output_count": large_scale_truth_outputs["count"],

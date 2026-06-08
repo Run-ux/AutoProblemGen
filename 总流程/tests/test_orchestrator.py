@@ -107,6 +107,7 @@ def _make_workflow_config(
             bruteforce_memory_limit_mb=384,
             checker_timeout_seconds=8.0,
             checker_memory_limit_mb=512,
+            standard_solution_max_repair_iterations=9,
         ),
         context_limits=ContextLimits(
             llm_case_max_chars=111,
@@ -165,6 +166,7 @@ def _write_workflow_files(temp: Path, input_path: Path, *, quality_iterations: i
                 "EXECUTION_BRUTEFORCE_MEMORY_LIMIT_MB=384",
                 "EXECUTION_CHECKER_TIMEOUT_SECONDS=8",
                 "EXECUTION_CHECKER_MEMORY_LIMIT_MB=512",
+                "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS=9",
                 "LLM_CASE_MAX_CHARS=111",
                 "LLM_CASE_INPUT_MAX_CHARS=112",
                 "LLM_CASE_OUTPUT_MAX_CHARS=113",
@@ -374,6 +376,7 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertEqual(embedding.api_key, "secret-embedding-key")
         self.assertEqual(execution_limits.test_input_timeout_seconds, 6.0)
         self.assertEqual(execution_limits.checker_memory_limit_mb, 512)
+        self.assertEqual(execution_limits.standard_solution_max_repair_iterations, 9)
         self.assertEqual(context_limits.llm_case_max_chars, 111)
         self.assertEqual(context_limits.max_llm_prompt_chars, 115)
 
@@ -496,6 +499,7 @@ class CliTests(unittest.TestCase):
             self.assertEqual(config.quality_full_score_max_iterations, 10)
             self.assertEqual(config.generation_llm.model, "chat-model")
             self.assertEqual(config.embedding_llm.model, "embedding-model")
+            self.assertEqual(config.execution_limits.standard_solution_max_repair_iterations, 9)
             self.assertEqual(config.context_limits.llm_case_max_chars, 111)
             self.assertEqual(config.context_limits.llm_trace_max_text_chars, 116)
 
@@ -503,6 +507,23 @@ class CliTests(unittest.TestCase):
             with contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit):
                     workflow_main.validate_config(parser, WorkflowConfig.from_file(bad_workflow_path))
+
+    def test_workflow_config_rejects_non_positive_standard_solution_repair_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            workflow_path = _write_workflow_files(temp, input_path)
+            workflow_path.write_text(
+                workflow_path.read_text(encoding="utf-8").replace(
+                    "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS=9",
+                    "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS=0",
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(RuntimeConfigError, "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS"):
+                WorkflowConfig.from_file(workflow_path)
 
     def test_cli_passes_skip_previous_failures_to_workflow(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

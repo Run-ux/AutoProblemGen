@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from .._common import generated_problem_section, json_contract, schema_section
 
 
@@ -16,10 +18,8 @@ def build_user_prompt(
     *,
     initial_code: str,
     current_code: str,
-    failing_input: str,
-    expected_output: str,
-    actual_output: str,
-    error_report: str,
+    failure_summary: dict,
+    failed_cases: list[dict],
 ) -> str:
     return "\n\n".join(
         [
@@ -29,16 +29,13 @@ def build_user_prompt(
             initial_code,
             "# 当前迭代标准解完整代码",
             current_code,
-            "# 触发失败的测试输入",
-            failing_input,
-            "# 小规模真值输出",
-            expected_output,
-            "# 当前标准解实际输出",
-            actual_output,
-            "# 完整错误信息或判定信息",
-            error_report,
+            "# 本轮失败分类统计",
+            json.dumps(failure_summary, ensure_ascii=False, indent=2),
+            "# 本轮代表性失败样例",
+            json.dumps(failed_cases, ensure_ascii=False, indent=2),
             """# 修复要求
-- 优先定位导致当前失败用例不通过的根本原因，并做通用修复。
+- 先综合本轮全部失败样例，输出根因分析，再输出修复计划，最后产出完整代码。
+- 优先定位导致失败批次不通过的共同根因，并做通用修复。
 - 标准解应保持高效算法定位，允许修正算法、边界处理和复杂度问题。
 - 必须严格贴合题意，不得引入题面未给出的假设。
 - 保持输入输出格式完全一致，不要添加额外输出。
@@ -48,6 +45,8 @@ def build_user_prompt(
             json_contract(
                 """
 {
+  "analysis": "根因分析，说明失败批次暴露的通用问题",
+  "fix_plan": "修复计划，说明将如何修改算法或边界处理",
   "code": "修改后的完整 Python 代码字符串，只包含可执行源码，不包含 Markdown"
 }
 """
