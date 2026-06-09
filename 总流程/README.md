@@ -73,6 +73,14 @@ python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\req
 python main.py --workflow-config workflow.env
 ```
 
+如果只想本次运行临时换一个输入路径，可以使用命令行参数覆盖 `workflow.env` 中的 `INPUT_PATH`：
+
+```powershell
+python main.py --workflow-config workflow.env --input-path D:\AutoProblemGen\爬取题目\output\taco\sample_400_autoproblemgen
+```
+
+`--input-path` 支持单个 JSON 文件或题目 JSON 目录，只影响当前进程，不会写回或修改 `workflow.env`。如果传入相对路径，会按当前命令执行目录解析。
+
 如果希望本次先推进未跑过的题，暂时不重跑历史已跑过但未成功的题，可以加：
 
 ```powershell

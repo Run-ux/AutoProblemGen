@@ -547,6 +547,59 @@ class CliTests(unittest.TestCase):
             fake_run.assert_called_once()
             self.assertTrue(fake_run.call_args.kwargs["skip_previous_failures"])
 
+    def test_cli_input_path_overrides_workflow_config_for_current_run_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            config_input_path = temp / "A.json"
+            override_input_path = temp / "B.json"
+            _make_input(config_input_path, "A")
+            _make_input(override_input_path, "B")
+            workflow_path = _write_workflow_files(temp, config_input_path)
+            original_workflow_text = workflow_path.read_text(encoding="utf-8")
+
+            fake_summary = {
+                "status": "completed",
+                "paths": {"summary": str(temp / "out" / "run" / "workflow_summary.json")},
+            }
+            stdout = io.StringIO()
+            with mock.patch.object(workflow_main, "run_workflow", return_value=fake_summary) as fake_run:
+                with contextlib.redirect_stdout(stdout):
+                    exit_code = workflow_main.main(
+                        [
+                            "--workflow-config",
+                            str(workflow_path),
+                            "--input-path",
+                            str(override_input_path),
+                        ]
+                    )
+
+            self.assertEqual(exit_code, 0)
+            fake_run.assert_called_once()
+            config = fake_run.call_args.args[0]
+            self.assertEqual(config.input_path, override_input_path.resolve())
+            self.assertEqual(workflow_path.read_text(encoding="utf-8"), original_workflow_text)
+
+    def test_cli_uses_workflow_config_input_path_without_override(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            workflow_path = _write_workflow_files(temp, input_path)
+
+            fake_summary = {
+                "status": "completed",
+                "paths": {"summary": str(temp / "out" / "run" / "workflow_summary.json")},
+            }
+            stdout = io.StringIO()
+            with mock.patch.object(workflow_main, "run_workflow", return_value=fake_summary) as fake_run:
+                with contextlib.redirect_stdout(stdout):
+                    exit_code = workflow_main.main(["--workflow-config", str(workflow_path)])
+
+            self.assertEqual(exit_code, 0)
+            fake_run.assert_called_once()
+            config = fake_run.call_args.args[0]
+            self.assertEqual(config.input_path, input_path)
+
     def test_workflow_config_rejects_removed_theme_and_variants(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp = Path(tempdir)

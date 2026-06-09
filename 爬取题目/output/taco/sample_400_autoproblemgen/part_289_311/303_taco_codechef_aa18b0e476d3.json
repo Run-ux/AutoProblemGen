@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_aa18b0e476d3",
+  "title": "GOODINDICES",
+  "description": "Chef has an array A of length N.\n\nHe calls an index i (1 ≤ i ≤ N) *good* if there exists some j \\neq i such that A_{i} = A_{j}.\n\nChef can perform the following operation at most once:\n\nChoose any [subsequence] of the array A and add any positive integer to all the elements of the chosen subsequence.\n\nDetermine the maximum number of good indices Chef can get.\n\n------ Input Format ------ \n\n- The first line of input will contain a single integer T, denoting the number of test cases.\n- Each test case consists of two lines of input.\n- The first line of each test case contains a single integer N denoting the length of the array A.\n- The second line contains N space-separated integers denoting the array A.\n\n------ Output Format ------ \n\nFor each test case, output the maximum number of good indices Chef can get after performing the given operation at most once.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 500$\n$2 ≤ N ≤ 1000$\n$1 ≤ A_{i} ≤ 1000$\n- The sum of $N$ over all test cases won't exceed $2000$.\n\n----- Sample Input 1 ------ \n3\n6\n1 3 5 2 4 8\n4\n2 3 4 5\n7\n1 1 2 2 3 4 4\n\n----- Sample Output 1 ------ \n4\n4\n7",
+  "input": "",
+  "output": "",
+  "constraints": "time limit: 2 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "def soln(A):\n\tfreq = {}\n\tfor i in A:\n\t\tif i in freq.keys():\n\t\t\tfreq[i] += 1\n\t\telse:\n\t\t\tfreq[i] = 1\n\tA = [*freq.keys()]\n\tA.sort()\n\tmax_count = sum((freq[x] for x in freq if freq[x] > 1))\n\tfor x in range(1, A[-1] - A[0] + 1):\n\t\t(s, p, count) = ([], {}, 0)\n\t\tfor i in A:\n\t\t\tif i - x in freq:\n\t\t\t\tp[i] = p[i - x]\n\t\t\telse:\n\t\t\t\tp[i] = len(s)\n\t\t\t\ts.append([])\n\t\t\ts[p[i]].append(freq[i])\n\t\tfor v in s:\n\t\t\tcount += sum(v)\n\t\t\tv.sort()\n\t\t\tif len(v) & 1 and v[-1] == 1:\n\t\t\t\tcount -= 1\n\t\tmax_count = max(max_count, count)\n\treturn max_count\nfor _ in range(int(input())):\n\tn = int(input())\n\tA = list(map(int, input().split()))\n\tprint(soln(A))"
+}

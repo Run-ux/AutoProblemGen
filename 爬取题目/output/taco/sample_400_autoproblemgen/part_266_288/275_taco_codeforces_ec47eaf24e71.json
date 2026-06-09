@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_ec47eaf24e71",
+  "title": "B",
+  "description": "Whereas humans nowadays read fewer and fewer books on paper, book readership among marmots has surged. Heidi has expanded the library and is now serving longer request sequences.\n\n\n-----Input-----\n\nSame as the easy version, but the limits have changed: 1 ≤ n, k ≤ 400 000.\n\n\n-----Output-----\n\nSame as the easy version.\n\n\n-----Examples-----\nInput\n4 100\n1 2 2 1\n\nOutput\n2\n\nInput\n4 1\n1 2 2 1\n\nOutput\n3\n\nInput\n4 2\n1 2 3 1\n\nOutput\n3",
+  "input": "4 100\n1 2 2 1\n\n4 1\n1 2 2 1\n\n4 2\n1 2 3 1",
+  "output": "2\n\n3\n\n3",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "import sys\ninput = sys.stdin.readline\nfrom collections import deque, defaultdict\nfrom heapq import heappush, heappop\n(n, k) = map(int, input().split())\nA = list(map(int, input().split()))\ndic = defaultdict(deque)\nfor (i, a) in enumerate(A):\n\tdic[a].append(i)\nhp = []\nS = set()\nans = 0\nfor (i, a) in enumerate(A):\n\tdic[a].popleft()\n\tif a not in S:\n\t\tif len(S) < k:\n\t\t\tS.add(a)\n\t\t\tans += 1\n\t\telse:\n\t\t\tidx = heappop(hp)[1]\n\t\t\tS.discard(idx)\n\t\t\tS.add(a)\n\t\t\tans += 1\n\tif dic[a]:\n\t\theappush(hp, (-dic[a][0], a))\n\telse:\n\t\theappush(hp, (float('-inf'), a))\nprint(ans)"
+}

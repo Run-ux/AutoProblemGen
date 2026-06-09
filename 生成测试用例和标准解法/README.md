@@ -38,6 +38,7 @@ python D:\AutoProblemGen\总流程\main.py --workflow-config D:\AutoProblemGen\�
 - `generate_all_artifacts` 必须接收总流程传入的 `LLMConfig` 或显式 client。
 - `generate_verified_artifacts` 必须额外接收总流程传入的 `ExecutionConfig`。
 - 缺少 LLM 配置或执行限制时会 fail-fast，不会尝试读取模块本地配置文件。
+- 初始 LLM 产物生成会并行执行彼此独立的标准解、暴力解、输入生成器、checker、固定类别错误解和错误策略分析任务；模块内部默认最多同时执行 8 个初始生成任务，不新增配置项。
 
 ## 库函数入口
 
@@ -122,10 +123,11 @@ result = generate_verified_artifacts(artifact, config, execution_config=executio
 
 验证入口会把修复后的标准解写回 `standard_solution.code`，并保留 `standard_solution.initial_code`；会把修复后的暴力解法写回 `bruteforce_solution.code`，并保留 `bruteforce_solution.initial_code`；需要 checker 且完成验证时，也会把修复后的 checker 写回 `checker.checker_code`，并保留 `checker.initial_checker_code`。
 
-调用默认启用 `response_format={"type": "json_object"}`。普通生成入口会解析和校验 LLM 返回的 JSON；若返回非法 JSON、缺字段或字段类型不符合合同，会把错误摘要和截断后的原始响应反馈给同一 prompt，最多额外重试 2 轮。验证入口会在受限子进程中执行生成代码，但不落盘。
+调用默认启用 `response_format={"type": "json_object"}`。普通生成入口会并行执行无依赖的初始 prompt，并解析和校验 LLM 返回的 JSON；若返回非法 JSON、缺字段或字段类型不符合合同，会把错误摘要和截断后的原始响应反馈给同一 prompt，最多额外重试 2 轮。验证入口会在受限子进程中执行生成代码，但不落盘。
 
 ## 验证闭环行为
 
+- 验证闭环仍按数据依赖顺序执行：先完成初始 LLM 生成，再收集输入、验证暴力解、验证 checker、增强错误解池、验证标准解和生成大规模真值。
 - 输入收集：随机输入和对抗输入各运行生成器 10 次，并通过各自 `validate_test_input`；若生成器运行失败、返回值不是非空字符串，或 validate 误拒生成输入，会调用测试输入 debug prompt 重新生成整组 `constraint_analysis/generate_test_input_code/validate_test_input_code`，每个来源最多额外修复 2 轮，成功后从该来源第 1 条重新收集 10 条，并把修复后的 payload 写回 `test_inputs`。小规模挑战输入使用初始返回加 9 次额外 LLM 调用凑满 10 条，并用修复后的随机输入 validate 函数校验。
 - 小规模真值 oracle（暴力解）：对 30 条输入逐一运行 `solve`。它只要求为小规模合法输入产出可信真值，不要求覆盖题面最大输入规模。编译错误、接口错误和可缩小到小规模的运行时错误会触发暴力 debug LLM 修复，并从头重新验证；超时或超内存输入会归为 `large_scale_inputs`，不触发 debug。
 - 真值用例：最终只保留小规模真值 oracle 能正常返回字符串输出的 `solved_cases`，数量允许少于已验证输入总数；`large_scale_inputs` 和 `large_scale_runtime_failures` 后续由标准解生成真值。
