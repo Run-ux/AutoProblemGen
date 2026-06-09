@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_9401105973b7",
+  "title": "split array largest sum",
+  "description": "Given an array which consists of non-negative integers and an integer m, you can split the array into m non-empty continuous subarrays. Write an algorithm to minimize the largest sum among these m subarrays.\n\n\nNote:\nIf n is the length of array, assume the following constraints are satisfied:\n\n1 ≤ n ≤ 1000\n1 ≤ m ≤ min(50, n)\n\n\n\nExamples: \n\nInput:\nnums = [7,2,5,10,8]\nm = 2\n\nOutput:\n18\n\nExplanation:\nThere are four ways to split nums into two subarrays.\nThe best way is to split it into [7,2,5] and [10,8],\nwhere the largest sum among the two subarrays is only 18.",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef splitArray(self, nums, m):\n\t\taccum = [0]\n\t\tN = len(nums)\n\t\tmmm = max(nums)\n\t\tif m >= N:\n\t\t\treturn mmm\n\t\tres = 0\n\t\tfor i in nums:\n\t\t\tres += i\n\t\t\taccum.append(res)\n\t\t(lower, upper) = (mmm, sum(nums))\n\t\twhile lower < upper:\n\t\t\tmid = (lower + upper) // 2\n\t\t\tif not self.isSplitable(accum, m, mid):\n\t\t\t\tlower = mid + 1\n\t\t\telse:\n\t\t\t\tupper = mid\n\t\treturn upper\n\n\tdef isSplitable(self, accum, m, maxx):\n\t\tstart = 0\n\t\tN = len(accum)\n\t\tend = 0\n\t\tcount = 0\n\t\twhile end < N and count < m:\n\t\t\tif accum[end] - accum[start] > maxx:\n\t\t\t\tstart = end - 1\n\t\t\t\tcount += 1\n\t\t\tend += 1\n\t\tif accum[-1] - accum[start] > maxx:\n\t\t\tcount += 2\n\t\telse:\n\t\t\tcount += 1\n\t\tif end != N or count > m:\n\t\t\treturn False\n\t\treturn True"
+}

@@ -1,0 +1,679 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 86.7,
+    "schema_distance": 0.4819,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的所有结构、约束、目标均准确落地到 generated_problem 的 description、input_format、output_format、constraints、samples。输入输出格式匹配，约束（区间有效性、可见性规则、目标覆盖约束、修改操作）均在题面中明确表述。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了任务说明、输入格式、输出格式、约束条件、必要说明和注释，无需读者自行猜测规则或边界条件。所有核心信息齐全。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间字段数量、目标定义、样例格式、符号含义均一致，无冲突。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "共有 5 个样例，覆盖了不需要修改、修改一个、修改两个、无解等典型情况，每个样例均有解释，有助于理解。",
+        "evidence_refs": [
+          "hard_checks.sample_count",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，有标题、描述、输入输出格式、约束、样例和注释，措辞明确，无来源污染或无关文本，便于快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面完全忠实地实现了 new_schema 中的结构和约束，无遗漏或偏差。",
+      "描述清晰，使用收纳主题（小明整理柜子）使问题直观易理解。",
+      "提供了丰富的样例，包括无解情况，解释到位。",
+      "输入输出格式明确，约束完整，可直接用于在线评测。",
+      "修改操作的描述明确（每个物品至多修改一次，新区间合法），避免歧义。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4819,
+      "axis_scores": {
+        "I": 0.0304,
+        "C": 0.7329,
+        "O": 0.541,
+        "V": 0.5958
+      },
+      "components": {
+        "input_tree_distance": 0.0304,
+        "constraint_match_distance": 0.7329,
+        "objective_type_distance": 0.5689,
+        "objective_text_distance": 0.4991,
+        "invariant_match_distance": 0.5958
+      }
+    },
+    "schema_distance": 0.4819,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.92,
+    "solution_transfer_risk": 0.08,
+    "surface_retheme_risk": 0.05,
+    "verdict": "pass",
+    "rationale": "新题将正向区间覆盖计数彻底翻转为带目标约束的最小修改设计问题：输入增加每个查询的目标可见物品数（C 轴变化 0.73），目标从统计数量变为最小化修改次数（O 轴变化 0.54），核心求解逻辑从线性扫描 + BIT 转为组合优化与可行性下界证明（V 轴变化 0.60）。原题的事件排序 + BIT 方案只能被动计算覆盖，无法主动决定物品保留或修改，更无法解决最小性证明，因此解法几乎无法迁移。表层主题从外星人下载视频变为家庭物品整理，叙事、标题、样例均无重合。综上，该题具有实质语义差异和低解法迁移风险，不属于换皮。",
+    "evidence_refs": [
+      "hard_checks.source_leakage",
+      "hard_checks.title_overlap",
+      "review_context.distance_breakdown.axis_scores",
+      "review_context.algorithmic_delta_claim",
+      "generated_problem.description",
+      "generated_problem.samples"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.48，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=5。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [
+    "可考虑在约束部分显式声明无多测试用例，强调仅单个测试案例。",
+    "样例解释可以更加突出显示物品修改前后的区间变化，但当前解释已足够。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 86.7,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [
+      "可考虑在约束部分显式声明无多测试用例，强调仅单个测试案例。",
+      "样例解释可以更加突出显示物品修改前后的区间变化，但当前解释已足够。"
+    ],
+    "strengths_to_keep": [
+      "题面完全忠实地实现了 new_schema 中的结构和约束，无遗漏或偏差。",
+      "描述清晰，使用收纳主题（小明整理柜子）使问题直观易理解。",
+      "提供了丰富的样例，包括无解情况，解释到位。",
+      "输入输出格式明确，约束完整，可直接用于在线评测。",
+      "修改操作的描述明确（每个物品至多修改一次，新区间合法），避免歧义。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\source\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\artifacts\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec_community_services_20260609_192642_round2.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\output\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec_community_services_20260609_192642_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_aae782d1d2ec",
+      "title": "DOWNLOAD",
+      "description": "The aliens living in outer space are very advanced in technology, \nintelligence and everything, except one, and that is Cooking. \nEach year they spend millions of dollars in research, to crack famous recipes prepared by humans.\n\nRecently they came to know about Khana-Academy, \na non-profit organization streaming free cooking lesson videos on earth. \nThere are N recipes, \nnumbered 1 to N, and the video of the i^{th} recipe is live in the time interval [S_{i}, E_{i}]. \nAn alien can visit earth but can not survive for more than just a small moment (earth is so advanced in pollution). \nAn alien visits the earth at an integer time t and instantly downloads the complete video of all the lessons \nthat are live at that moment of time t and leaves earth immediately. \nYou are given the visiting times of a small group of K aliens. \nFind the number of different recipes aliens can learn by watching the downloaded videos. \nNot just one group of aliens, there are Q such groups, \nso you have to find the answer for each of these Q groups.\n\n------ Input ------ \n\nThe first line has an integer N. \nEach of the following N lines has two integers S_{i} E_{i}. \nThe next line has an integer Q, the number of groups. \nEach of the following Q lines has information of a group of aliens. \nThe first integer is K, the number of aliens in that group, followed by K integers in the same line, \nthe integer visiting times t of the aliens.\n\n1 ≤ N ≤ 100000 (10^{5})\n\n1 ≤ Q ≤ 5000 (5 · 10^{3})\n\n1 ≤ K ≤ 20\n\n1 ≤ S_{i}, E_{i}, t ≤ 1000000000 (10^{9})\n\nS_{i} < E_{i}\n\n------ Output ------ \n\nFor each of the Q groups, output the number of different recipes that group of aliens can learn by watching the downloaded videos.\n\n------ Example ------ \n\nInput:\n4\n1 4\n3 10\n2 6\n5 8\n3\n1 5\n2 2 6\n3 1 10 9\n\nOutput:\n3\n4\n2\n\nExplanation:\n\nGiven videos of 4 recipes in the following closed intervals.\n\n1. [ 1 , 4 ]\n\n2. [ 3 , 10 ]\n\n3. [ 2 , 6 ]\n\n4. [ 5 , 8 ]\n\nIn the first query, only one alien arrives at t = 5 and can download 3 recipes 2, 3, 4.\n\nIn the second query, two aliens arrive at t = 2 and 6. They can learn all the 4 recipes.\n\nIn the third query, three aliens arrive at t = 1, 10 and 9. They can learn only two recipes, 1 and 2.",
+      "input": "4\n1 4\n3 10\n2 6\n5 8\n3\n1 5\n2 2 6\n3 1 10 9",
+      "output": "3\n4\n2\n\nExplanation:\n\nGiven videos of 4 recipes in the following closed intervals.\n\n1. [ 1 , 4 ]\n\n2. [ 3 , 10 ]\n\n3. [ 2 , 6 ]\n\n4. [ 5 , 8 ]\n\nIn the first query, only one alien arrives at t = 5 and can download 3 recipes 2, 3, 4.\n\nIn the second query, two aliens arrive at t = 2 and 6. They can learn all the 4 recipes.\n\nIn the third query, three aliens arrive at t = 1, 10 and 9. They can learn only two recipes, 1 and 2.",
+      "constraints": "time limit: 0.396667 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "def give_index(time_stamp):\n\tnextind = 0\n\tres = {}\n\tfor (t, check, _) in time_stamp:\n\t\tif check != 2 and t not in res:\n\t\t\tres[t] = nextind\n\t\t\tnextind += 1\n\treturn res\n\ndef add_sum(tree, index, value):\n\twhile index < len(tree):\n\t\ttree[index] += value\n\t\tindex += index & -index\n\ndef give_sum(tree, index):\n\tres = 0\n\twhile index > 0:\n\t\tres += tree[index]\n\t\tindex -= index & -index\n\treturn res\nno_of_shows = int(input())\ntime_stamp = []\n(START, CHECK, END) = (0, 1, 2)\nfor i in range(no_of_shows):\n\t(start, end) = map(int, input().split())\n\ttime_stamp.append((start, START, None))\n\ttime_stamp.append((end, END, start))\ntotal_queries = int(input())\nfor i in range(total_queries):\n\tfor j in map(int, input().split()[1:]):\n\t\ttime_stamp.append((j, CHECK, i))\ntime_stamp = sorted(time_stamp)\nindexed = give_index(time_stamp)\ntree = [0] * (len(indexed) + 1)\nfinal_result = [0] * total_queries\nprev_result = [None] * total_queries\nfor i in time_stamp:\n\t(start, value, end) = i\n\tif value == START:\n\t\tadd_sum(tree, indexed[start] + 1, 1)\n\telif value == END:\n\t\tadd_sum(tree, indexed[end] + 1, -1)\n\telse:\n\t\tquery_no = end\n\t\tfinal_result[query_no] += give_sum(tree, indexed[start] + 1)\n\t\tif prev_result[query_no] != None:\n\t\t\tfinal_result[query_no] -= give_sum(tree, prev_result[query_no])\n\t\tprev_result[query_no] = indexed[start] + 1\nfor i in final_result:\n\tprint(i)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_aae782d1d2ec",
+        "DOWNLOAD",
+        "codechef",
+        "The aliens living in outer space are very advanced in technology, intelligence and everything, except one, and that is Cooking. Each year they spend millions of dollars in research, to crack famous recipes prepared by...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "C轴：引入目标覆盖数约束和修改操作定义；O轴：从计数变为最小化修改次数；V轴：从BIT维护覆盖统计变为基于需求差分的可行性下界证明。",
+      "summary": "将正向查询统计翻转为带目标约束的最小修改设计问题，结构上查询变为单时刻并增加目标值，算法核心从简单统计转为组合优化与可行性判定。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "home_org_inverse_min_shift",
+      "source": "derived_from_codechef_DOWNLOAD",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": 2,
+          "max": 105000
+        },
+        "value_range": {
+          "min": 1,
+          "max": 1000000000
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "items",
+            "role_description": "物品及其占据的连续格子区间",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000000000
+            },
+            "properties": {
+              "interval_constraint": "Si ≤ Ei"
+            },
+            "elements": {
+              "type": "tuple",
+              "fields": [
+                {
+                  "name": "S",
+                  "type": "integer",
+                  "range": {
+                    "min": 1,
+                    "max": 1000000000
+                  }
+                },
+                {
+                  "name": "E",
+                  "type": "integer",
+                  "range": {
+                    "min": 1,
+                    "max": 1000000000
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "role": "queries",
+            "role_description": "单时刻查询，包含查看位置和目标可见物品数",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 5000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000000000
+            },
+            "properties": {},
+            "elements": {
+              "type": "tuple",
+              "fields": [
+                {
+                  "name": "position",
+                  "type": "integer",
+                  "range": {
+                    "min": 1,
+                    "max": 1000000000
+                  }
+                },
+                {
+                  "name": "target_count",
+                  "type": "integer",
+                  "range": {
+                    "min": 0,
+                    "max": 100000
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "interval_validity",
+            "description": "每个物品的区间必须满足起始格子编号不大于结束格子编号，即 Si ≤ Ei。",
+            "formal": "Si ≤ Ei",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "visibility_rule",
+            "description": "物品i在位置p可见当且仅当p落在区间[Si, Ei]内。",
+            "formal": "item i visible at position p ⇔ Si ≤ p ≤ Ei",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "target_cover_constraint",
+            "description": "对于每个查询j，在最终物品区间配置下，位置p_j处的可见物品总数必须恰好等于target_count_j。",
+            "formal": "∀j, |{i : Si_final ≤ p_j ≤ Ei_final}| = target_count_j",
+            "source_sections": [
+              "reverse_objective"
+            ]
+          },
+          {
+            "name": "modification_operation",
+            "description": "允许选择任意数量的物品，将其区间改为任意新值[Si', Ei']满足1≤Si'≤Ei'≤1e9，一次修改一个物品算一次操作。每个物品至多被修改一次。",
+            "formal": "modify(i, S', E') where 1≤S'≤E'≤1e9, and each item modified at most once",
+            "source_sections": [
+              "reverse_operation"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize",
+        "description": "最小化需要修改的物品数量，使得所有查询的可见物品数恰好等于各自的目标值。若无解，输出-1。",
+        "target": "min_modified_items",
+        "requires_solution": true,
+        "value_range": "integer ≥ 0 or -1"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "initial_coverage_array",
+            "description": "初始物品区间形成覆盖数组 orig[t]，可通过 BIT 快速查询任意位置 t 的原始可见物品数。",
+            "properties": {},
+            "evidence_source": "derived_from_seed"
+          },
+          {
+            "name": "residual_demand_lower_bound",
+            "description": "对于保留物品集合 R，剩余需求 diff[t] = target[t] - cov_R[t] 须非负；满足该需求所需的最少新区间数为 sum_t max(0, diff[t] - diff[t-1])，该值构成修改数的下界。",
+            "properties": {},
+            "evidence_source": "proof_of_minimality"
+          },
+          {
+            "name": "feasibility_condition",
+            "description": "若 sum_t max(0, diff[t] - diff[t-1]) ≤ N - |R|，则存在构造方案用 N-|R| 个新区间精确达到所有目标；进而最小修改数等于 N - max_{feasible R} |R|。",
+            "properties": {},
+            "evidence_source": "construction_algorithm"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "物品整理最小调整",
+      "description": "小明有一个很长的柜子，柜子被划分成连续的正整数编号的格子，编号范围从 1 到 10^9。他有 N 个物品，每个物品会占据一段连续的格子。初始时，每个物品已经放置在某个区间 [S_i, E_i] 上（S_i ≤ E_i）。\n\n小明计划整理这些物品，使得在之后的一些特定位置上检查时，看到的物品数量正好满足他的要求。具体地，小明会进行 Q 次检查，每次检查选择一个位置 p 和一个期望看到的物品数量 t，他希望在最终的物品放置方案中，恰好有 t 个物品的区间覆盖位置 p。\n\n小明可以改变物品的放置位置：对于任意一个物品，他可以将该物品的区间修改为任意新的区间 [S', E']，满足 1 ≤ S' ≤ E' ≤ 10^9。一次修改只能改变一个物品的区间，每个物品最多只能被修改一次。小明希望知道，最少需要修改多少个物品，才能让所有 Q 次检查的要求同时得到满足。如果无法做到，请输出 -1。",
+      "input_format": "第一行一个整数 N，表示物品的数量。\n接下来 N 行，每行两个整数 S_i, E_i，表示第 i 个物品初始占据的区间，保证 S_i ≤ E_i。\n接下来一行一个整数 Q，表示检查要求的数量。\n接下来 Q 行，每行两个整数 p, t，表示一次检查要求：希望在位置 p 处恰好看到 t 个物品。",
+      "output_format": "输出一个整数，表示最少需要修改的物品数量。如果无法满足所有检查要求，输出 -1。",
+      "constraints": [
+        "1 ≤ N ≤ 100,000",
+        "1 ≤ Q ≤ 5,000",
+        "1 ≤ S_i ≤ E_i ≤ 1,000,000,000",
+        "1 ≤ p ≤ 1,000,000,000",
+        "0 ≤ t ≤ 100,000",
+        "时间限制: 2 秒",
+        "空间限制: 256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3\n1 2\n2 3\n3 4\n2\n2 2\n3 2",
+          "output": "0",
+          "explanation": "初始方案：物品1在[1,2]，物品2在[2,3]，物品3在[3,4]。\n检查1在位置2要求看到2个物品：物品1和2覆盖位置2，恰好2个。\n检查2在位置3要求看到2个物品：物品2和3覆盖位置3，恰好2个。\n所有要求均已满足，不需要修改任何物品。"
+        },
+        {
+          "input": "3\n1 1\n2 2\n3 3\n1\n2 2",
+          "output": "1",
+          "explanation": "初始方案：每个物品只占据一个格子，位置2只有物品2覆盖，要求看到2个物品。\n只需修改物品1，将其区间改为[2,2]，则位置2有物品1和物品2，恰好2个。修改1个物品为最优。"
+        },
+        {
+          "input": "2\n1 5\n3 7\n1\n4 2",
+          "output": "0",
+          "explanation": "初始方案中，物品1覆盖[1,5]，物品2覆盖[3,7]。位置4同时被两个物品覆盖，满足要求。"
+        },
+        {
+          "input": "3\n1 2\n3 4\n5 6\n2\n3 3\n5 1",
+          "output": "2",
+          "explanation": "初始方案：位置3只有物品2覆盖；位置5只有物品3覆盖。\n要求位置3有3个物品，位置5有1个物品。\n一种最优方案：保留物品2不变，修改物品1为[3,3]，修改物品3为[3,5]。\n最终：位置3有物品1、2、3（3个），位置5有物品3（1个）。共修改2个物品。可以证明无法只修改1个物品达成目标。"
+        },
+        {
+          "input": "1\n1 1\n1\n1 2",
+          "output": "-1",
+          "explanation": "只有一个物品，它最多只能覆盖一个格子，无法在位置1看到2个物品。"
+        }
+      ],
+      "notes": "如果无法通过修改物品来满足所有检查要求，输出 -1。注意每个物品至多被修改一次，修改后的区间可以是任意合法的 [S', E']。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "将正向查询统计翻转为带目标约束的最小修改设计问题，结构上查询变为单时刻并增加目标值，算法核心从简单统计转为组合优化与可行性判定。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4819,
+        "axis_scores": {
+          "I": 0.0304,
+          "C": 0.7329,
+          "O": 0.541,
+          "V": 0.5958
+        },
+        "components": {
+          "input_tree_distance": 0.0304,
+          "constraint_match_distance": 0.7329,
+          "objective_type_distance": 0.5689,
+          "objective_text_distance": 0.4991,
+          "invariant_match_distance": 0.5958
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "原题结果（单次查询的覆盖数）可直接作为反向目标，形成自然的设计要求。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中加入 target_cover_constraint，强制每个查询达到指定覆盖数；",
+            "objective 从计数变为判断并最小化修改次数。"
+          ],
+          "innovation_reason": "迫使解题方向从正向计算变为目标驱动，需围绕目标约束反推物品区间设置。",
+          "difficulty_reason": "目标约束增加了可行解的存在性判定，使算法必须考虑全局组合结构。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "物品区间是原题核心对象，自然允许调整区间作为修改操作，且操作定义符合收纳场景。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中增加了 modification_operation 约束，清晰定义修改动作及计数方式；",
+            "invariant 中引入 residual_demand_lower_bound，将修改操作与目标达成所需资源关联。"
+          ],
+          "innovation_reason": "将反向设计落实到可枚举、可优化的操作空间，避免抽象叙事。",
+          "difficulty_reason": "需要分析操作对覆盖的影响，并证明操作序列与目标结果的对应关系，提高算法复杂度。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "要求输出最小修改数而非任意可行解，紧扣逆问题的优化本质。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确定义为最小化修改物品数；",
+            "invariant 提供基于需求差分的下界，作为最小性的证明基础。"
+          ],
+          "innovation_reason": "答案必须承担最小性责任，不能仅输出任意可行修改方案。",
+          "difficulty_reason": "要求算法不仅要构造解，还要证明或保证用最少的修改数达成目标，引入下界推理。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "事件排序 + BIT 维护差分数组，处理区间添加/删除与查询时刻的覆盖计数。",
+        "reusable_subroutines": "坐标压缩、BIT 结构、单点更新与前缀查询等局部子程序可直接复用。",
+        "new_solver_core": "需设计保留物品的选择策略（可能基于贪心或 DP），利用剩余需求的下界公式进行可行性剪枝，而不是仅做覆盖统计。",
+        "new_proof_obligation": "证明由需求差分给出的新区间数下界是紧的，并能构造对应数量的区间；证明选出的保留集合确实最大化保留数，且剩余物品足够填补缺口。",
+        "why_direct_reuse_fails": "原 BIT 仅能被动计算给定配置下的覆盖数，无法主动决定哪些物品应保留或修改以实现目标，且缺少对修改操作空间与最小性的推理机制。"
+      },
+      "anti_shallow_rationale": "题目并未简单将原输出形式改为“是否等于目标”，而是增加了最小修改次数这一优化维度，要求算法在目标约束下搜索最优保留子集，并证明下界。覆盖计数仅作为子程序判断可行性，主求解方向从纯统计翻转为组合设计。"
+    }
+  }
+}

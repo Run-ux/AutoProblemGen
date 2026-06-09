@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_geeksforgeeks_467ea1806315",
+  "title": "1",
+  "description": "There are p balls of type P, q balls of type Q and r balls of type R. Using the balls we want to create a straight line such that no two balls of same type are adjacent.\n \nExample 1:\nInput: p = 2, q = 2, r = 2\nOutput: 30\nExplanation: There are 30 possible arrangements\nof balls. Some of them are PQR, PRQ, PRP, PRQ,\nPQR,...\nExample 2:\nInput: p = 1, q = 1, r = 1\nOutput: 6\nExplanation: There are 6 possible arrangements\nand these are PQR, PRQ, QPR, QRP, RPQ, RQP.\n \nYour Task:\nYou don't need to read or print anything. Your task is to complete the function CountWays() which takes count of P type balls, Q type balls and R type balls and returns total number of possible arrangements such that no two balls of same type are adjacent modulo 10^{9} + 7.\n \nExpected Time Complexity: O(N^{3}) where N = max(p, q, r)\nExpected Space Complexity: O(N^{3})\n \nConstranits: \n1 <= p, q, r <= 100",
+  "input": "",
+  "output": "",
+  "constraints": "expected time complexity: O(N^{3}) where N = max(p, q, r)\nexpected auxiliary space: O(N^{3})",
+  "source": "geeksforgeeks",
+  "standard_solution_code": "MAX = 101\ndp = [[[[-1] * 4 for i in range(MAX)] for j in range(MAX)] for k in range(MAX)]\n\ndef countWayss(p, q, r, last):\n\tif p < 0 or q < 0 or r < 0:\n\t\treturn 0\n\tif p == 1 and q == 0 and (r == 0) and (last == 0):\n\t\treturn 1\n\tif p == 0 and q == 1 and (r == 0) and (last == 1):\n\t\treturn 1\n\tif p == 0 and q == 0 and (r == 1) and (last == 2):\n\t\treturn 1\n\tif dp[p][q][r][last] != -1:\n\t\treturn dp[p][q][r][last]\n\tif last == 0:\n\t\tdp[p][q][r][last] = countWayss(p - 1, q, r, 1) + countWayss(p - 1, q, r, 2)\n\telif last == 1:\n\t\tdp[p][q][r][last] = countWayss(p, q - 1, r, 0) + countWayss(p, q - 1, r, 2)\n\telse:\n\t\tdp[p][q][r][last] = countWayss(p, q, r - 1, 0) + countWayss(p, q, r - 1, 1)\n\treturn dp[p][q][r][last]\n\ndef countUtil(p, q, r):\n\treturn countWayss(p, q, r, 0) + countWayss(p, q, r, 1) + countWayss(p, q, r, 2)\n\nclass Solution:\n\n\tdef CountWays(self, p, q, r):\n\t\treturn countUtil(p, q, r) % int(1000000000.0 + 7)"
+}

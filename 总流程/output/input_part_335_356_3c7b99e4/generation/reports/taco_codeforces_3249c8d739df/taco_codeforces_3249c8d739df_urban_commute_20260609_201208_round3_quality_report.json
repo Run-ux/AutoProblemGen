@@ -1,0 +1,687 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 77.3,
+    "schema_distance": 0.4069,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "The generated problem accurately reflects the new_schema: tree structure (connected, acyclic, undirected, simple), input components (config tuple n,k, 2k distinct item locations, n-1 edges), core constraints (complete pairing, distinct items, edge usage equality, unit corridor length), and objective (count modulo 998244353). All mandatory elements are present and correctly described.",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "The problem includes a clear task description, fully specified input format, output format, constraints (including limits and time/memory), and notes that clarify modulo handling and unordered pairing semantics. All information needed to solve the problem independently is present.",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "All sections are internally consistent: the description's tree and pairing rules match the input format; the sample inputs/outputs align with the specified constraints and task; the edge usage condition is correctly illustrated in explanations; no contradictions exist between any parts.",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "Two samples are provided with clear explanations. They cover small but meaningful cases: a minimal tree and a chain, illustrating the counting condition and output. The explanations step through the reasoning, aiding understanding. The number of samples is adequate for the problem's difficulty.",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks[12]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "The problem statement follows standard OJ conventions with a clean structure (description, input/output format, constraints, samples, notes). The language is precise and free of irrelevant noise. The only possible issue is a false-positive source leakage flag ('b'), which does not materially affect readability or originality.",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "Precise and complete restatement of the variant in a new thematic context.",
+      "Clear explanation of the edge usage equality constraint and its connection to optimality.",
+      "Modulo handling and unordered pairing semantics explicitly clarified in notes.",
+      "Samples are well-chosen and explained, helping to validate understanding."
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4069,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.3777,
+        "O": 0.5452,
+        "V": 0.7863
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.3777,
+        "objective_type_distance": 0.6258,
+        "objective_text_distance": 0.4242,
+        "invariant_match_distance": 0.7863
+      }
+    },
+    "schema_distance": 0.4069,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.15,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "新题将原最大化目标彻底改为计数满足边缘容量约束的配对方案数，核心任务从“求最大距离总和”变为“组合计数取模”，解法从简单的树上贪心变为树形DP与组合数学结合。原题解法仅能输出数值，无法直接用于计数；树遍历可复用但整体状态设计与转移需全新构建。尽管输入格式与树结构相似，但语义差异实质且解法迁移风险极低。表层背景完全重写，无文本复用痕迹。",
+    "evidence_refs": [
+      "snapshots.original_problem",
+      "snapshots.new_schema",
+      "snapshots.generated_problem",
+      "hard_checks[source_leakage]",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.41，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：b",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：b",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "False-positive source leakage flag",
+      "detail": "Hard check `source_leakage` failed with message '检测到原题标识或标题片段泄露：b', but no meaningful original problem text or identifiers are present. The problem has been thoroughly re-themed and rewritten; the flag is likely triggered by an incidental occurrence of the letter 'b'.",
+      "evidence_refs": [
+        "hard_checks[10]",
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "Review and possibly adjust the leakage detection heuristic to avoid such false positives. No change to the problem content is required."
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "Review and possibly adjust the leakage detection heuristic to avoid such false positives. No change to the problem content is required."
+  ],
+  "revision_brief": {
+    "round_index": 3,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 77.3,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：b",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：b",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "False-positive source leakage flag",
+        "detail": "Hard check `source_leakage` failed with message '检测到原题标识或标题片段泄露：b', but no meaningful original problem text or identifiers are present. The problem has been thoroughly re-themed and rewritten; the flag is likely triggered by an incidental occurrence of the letter 'b'.",
+        "evidence_refs": [
+          "hard_checks[10]",
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "Review and possibly adjust the leakage detection heuristic to avoid such false positives. No change to the problem content is required."
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "Review and possibly adjust the leakage detection heuristic to avoid such false positives. No change to the problem content is required."
+    ],
+    "strengths_to_keep": [
+      "Precise and complete restatement of the variant in a new thematic context.",
+      "Clear explanation of the edge usage equality constraint and its connection to optimality.",
+      "Modulo handling and unordered pairing semantics explicitly clarified in notes.",
+      "Samples are well-chosen and explained, helping to validate understanding."
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\source\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df_urban_commute_20260609_201208_round3.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\output\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df_urban_commute_20260609_201208_round3.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_3249c8d739df",
+      "title": "B",
+      "description": "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. \n\nIn Treeland there are 2k universities which are located in different towns. \n\nRecently, the president signed the decree to connect universities by high-speed network.The Ministry of Education understood the decree in its own way and decided that it was enough to connect each university with another one by using a cable. Formally, the decree will be done! \n\nTo have the maximum sum in the budget, the Ministry decided to divide universities into pairs so that the total length of the required cable will be maximum. In other words, the total distance between universities in k pairs should be as large as possible. \n\nHelp the Ministry to find the maximum total distance. Of course, each university should be present in only one pair. Consider that all roads have the same length which is equal to 1. \n\n\n-----Input-----\n\nThe first line of the input contains two integers n and k (2 ≤ n ≤ 200 000, 1 ≤ k ≤ n / 2) — the number of towns in Treeland and the number of university pairs. Consider that towns are numbered from 1 to n. \n\nThe second line contains 2k distinct integers u_1, u_2, ..., u_2k (1 ≤ u_{i} ≤ n) — indices of towns in which universities are located. \n\nThe next n - 1 line contains the description of roads. Each line contains the pair of integers x_{j} and y_{j} (1 ≤ x_{j}, y_{j} ≤ n), which means that the j-th road connects towns x_{j} and y_{j}. All of them are two-way roads. You can move from any town to any other using only these roads. \n\n\n-----Output-----\n\nPrint the maximum possible sum of distances in the division of universities into k pairs.\n\n\n-----Examples-----\nInput\n7 2\n1 5 6 2\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6\n\nOutput\n6\n\nInput\n9 3\n3 2 1 6 5 9\n8 9\n3 2\n2 7\n3 4\n7 6\n4 5\n2 1\n2 8\n\nOutput\n9\n\n\n\n-----Note-----\n\nThe figure below shows one of possible division into pairs in the first test. If you connect universities number 1 and 6 (marked in red) and universities number 2 and 5 (marked in blue) by using the cable, the total distance will equal 6 which will be the maximum sum in this example. \n\n [Image]",
+      "input": "7 2\n1 5 6 2\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6\n\n9 3\n3 2 1 6 5 9\n8 9\n3 2\n2 7\n3 4\n7 6\n4 5\n2 1\n2 8",
+      "output": "6\n\n9\n\n\n\n-----Note-----\n\nThe figure below shows one of possible division into pairs in the first test. If you connect universities number 1 and 6 (marked in red) and universities number 2 and 5 (marked in blue) by using the cable, the total distance will equal 6 which will be the maximum sum in this example. \n\n [Image]",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "def main():\n\t(n, k) = list(map(int, input().split()))\n\ts = [0] * n\n\tfor i in map(int, input().split()):\n\t\ts[i - 1] = 1\n\te = [[] for _ in range(n)]\n\tfor _ in range(n - 1):\n\t\t(x, y) = (int(s) - 1 for s in input().split())\n\t\te[x].append(y)\n\t\te[y].append(x)\n\t(q, fa) = ([0], [-1] * n)\n\tfa[0] = 0\n\tfor i in range(n):\n\t\tx = q[i]\n\t\tfor y in e[x]:\n\t\t\tif fa[y] == -1:\n\t\t\t\tfa[y] = x\n\t\t\t\tq.append(y)\n\t(dp, k2) = ([0] * n, k * 2)\n\tfor x in reversed(q):\n\t\tfor y in e[x]:\n\t\t\tif fa[y] == x:\n\t\t\t\ti = s[y]\n\t\t\t\ts[x] += i\n\t\t\t\tdp[x] += dp[y] + (k2 - i if i > k else i)\n\tprint(dp[0])\n\ndef __starting_point():\n\tmain()\n__starting_point()"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_3249c8d739df",
+        "codeforces",
+        "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. In Treeland there are 2k universities which are located in different tow...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "将树中大学配对的‘最大化总距离’问题转化为统计所有达到最大总距离的配对方案数。核心约束新增强制边流量上限的等式，目标从最大化变为计数，不变量从仅提供上界扩展为子问题分解和组合规则。",
+      "summary": "将原最大化问题转换为计数问题，核心变化在目标、强制约束和不变量。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "home_org_counting_pairs",
+      "source": "home_organization",
+      "input_structure": {
+        "type": "composite",
+        "properties": {
+          "connected": true,
+          "acyclic": true,
+          "directed": false,
+          "simple": true
+        },
+        "components": [
+          {
+            "role": "config",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          },
+          {
+            "role": "items",
+            "type": "array",
+            "length": {
+              "min": 2,
+              "max": 200000
+            },
+            "value_range": {
+              "min": 1,
+              "max": null
+            },
+            "properties": {
+              "distinct": true
+            }
+          },
+          {
+            "role": "corridors",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 199999
+            },
+            "value_range": {
+              "min": 1,
+              "max": null
+            },
+            "properties": {
+              "directed": false
+            }
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "complete_pairing",
+            "description": "The 2k items must be partitioned into exactly k disjoint pairs, with each item belonging to exactly one pair.",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "distinct_items",
+            "description": "All 2k items are located in mutually distinct rooms.",
+            "formal": "",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "edge_usage_equality",
+            "description": "For every corridor, the number of pairs whose path includes that corridor must equal the smaller of the item counts on its two sides.",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "unit_corridor_length",
+            "description": "Each corridor has length equal to 1, so the distance between two items is the number of corridors on the unique path.",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_mod",
+        "description": "Count the number of ways to partition the 2k items into k unordered pairs such that the edge_usage_equality constraint holds for all corridors, modulo 998244353.",
+        "target": "number_of_ways",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "edge_capacity_upper_bound",
+            "description": "For each corridor, the maximum possible number of pair paths going through it is min(c, 2k-c) where c is the number of items in one side of the cut induced by removing that corridor.",
+            "properties": {},
+            "evidence_source": "both"
+          },
+          {
+            "name": "optimality_equivalence",
+            "description": "A pairing achieves the maximum possible total distance if and only if every corridor is used exactly at its capacity min(c, 2k-c). Therefore, counting pairings that satisfy the edge_usage_equality constraint is equivalent to counting all optimal pairings.",
+            "properties": {},
+            "evidence_source": "both"
+          },
+          {
+            "name": "subproblem_decomposition",
+            "description": "The counting can be performed by recursively considering subtrees. Each subtree returns the number of ways to internally satisfy the edge capacity constraints for all corridors inside it, along with the number of unpaired items that must be paired outside the subtree. These subproblem solutions can be combined without double-counting by considering all ways to pair items from different subtrees at their common parent node.",
+            "properties": {},
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "家庭收纳：物品配对方案计数",
+      "description": "小明的家里有 n 个房间，房间之间由 n-1 条走廊连接，任意两个房间都可以通过若干条走廊相互到达，且所有走廊的长度都是 1。\n\n小明有 2k 件物品，它们分别放在不同的房间里（每个房间最多放一件物品）。他打算将这些物品两两配对，共分成 k 对。对于一条连接房间 u 和 v 的走廊，如果移除这条走廊，整个家会分成两个区域。设其中一个区域中包含 x 件物品，则另一个区域中包含 2k - x 件物品。\n\n小明希望配完所有物品后，每条走廊恰好被 min(x, 2k - x) 对物品的配对路径经过。可以证明，满足这一条件的配对方案恰好使所有配对路径的总长度达到最大，且不会出现某条走廊被“过度使用”。\n\n请你帮小明计算：一共有多少种不同的物品配对方案满足上述条件？由于答案可能很大，请输出方案数对 998244353 取模的结果。\n\n注意：物品配对是无序的，即 (a, b) 和 (b, a) 视为同一对；作为结果的 k 对也是无序的，即配对集合中配对之间的顺序不影响方案计数。",
+      "input_format": "第一行包含两个整数 n, k (2 ≤ n ≤ 200,000, 1 ≤ k ≤ n/2)，分别表示房间的数量和需要配成的对数。\n\n第二行包含 2k 个互不相同的整数，表示每一件物品所在的房间编号，编号范围为 1 到 n。\n\n接下来 n-1 行，每行包含两个整数 u, v (1 ≤ u, v ≤ n, u ≠ v)，表示一条直接连接房间 u 和房间 v 的走廊。输入保证所有走廊构成一棵树。",
+      "output_format": "输出一个整数，表示满足条件的配对方案数对 998244353 取模的结果。",
+      "constraints": [
+        "2 ≤ n ≤ 200,000",
+        "1 ≤ k ≤ n/2",
+        "时间限制：2.5 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3 1\n1 2\n1 2\n2 3",
+          "output": "1",
+          "explanation": "只有房间 1 和房间 2 放有物品，唯一的走廊是 (1,2) 和 (2,3)。移除走廊 (1,2)，一侧有 1 件物品，另一侧有 1 件物品，min=1，因此这条走廊必须被一对经过。唯一可行的配对就是将这两件物品配成一对，所以方案数为 1。"
+        },
+        {
+          "input": "4 2\n1 2 3 4\n1 2\n2 3\n3 4",
+          "output": "2",
+          "explanation": "四个房间形成一条链，每个房间都有一件物品。各条走廊两侧的物品数量较小值分别为 (1,2):1，(2,3):2，(3,4):1。要求每条走廊的经过对数恰好等于该值。枚举所有配对方式，只有 (1,4) 和 (2,3) 以及 (1,3) 和 (2,4) 满足条件，共 2 种方案。"
+        }
+      ],
+      "notes": "题目中的取模数 998244353 是一个质数，用于避免大整数溢出。配对方案中，物品对的内部顺序以及对之间的顺序均不计入方案差异，只关心哪两件物品被配成一对。输入数据保证 2k ≤ n，即物品数量不超过房间总数。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "将原最大化问题转换为计数问题，核心变化在目标、强制约束和不变量。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4069,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.3777,
+          "O": 0.5452,
+          "V": 0.7863
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.3777,
+          "objective_type_distance": 0.6258,
+          "objective_text_distance": 0.4242,
+          "invariant_match_distance": 0.7863
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "由于需要从最大化问题转变为计数问题，必须定义清晰的计数对象和等价关系。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中新增 edge_usage_equality 约束，定义方案满足的条件。",
+            "在 objective 中明确计数对象是满足约束的配对方案数，并指定模数。",
+            "在 invariant 中解释等价关系和方案计数前提。"
+          ],
+          "innovation_reason": "通过定义满足流量上限的方案作为计数对象，将原最优值问题完全转化为计数问题，创新度高。",
+          "difficulty_reason": "要求解法正确处理方案等价性，防止重复计数，增加了证明难度。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "解空间需要拆分为子树单元以进行 DP 计数，符合 helper 要求。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在 invariant 中引入了 subproblem_decomposition，说明如何按子树拆分解空间。"
+          ],
+          "innovation_reason": "通过子树分解将计数问题结构化，使解法从贪心转为 DP 成为可能，创新点在状态组织。",
+          "difficulty_reason": "要求正确设计 DP 状态和转移，避免重复计数，增加了实现复杂度。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "确保计数成为主目标，而非在原最大化目标基础上附带计数。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "将 objective 从最大化距离改为计数方案数。",
+            "将 core_constraints 中的最大化约束移除，替换为强制性的 edge_usage_equality 约束，使得所有满足约束的方案自动最大化距离，从而锁定计数为目标。"
+          ],
+          "innovation_reason": "将原目标的角色完全替换为计数，强行改变解题的方向，显著创新。",
+          "difficulty_reason": "要求算法直接处理计数，而非先求值再计数，增加了对边流量约束的理解要求。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "自底向上 DFS，对每条边累加 min(c, 2k-c) 得到最大总距离。",
+        "reusable_subroutines": "树的邻接表存储与遍历，子树 size 统计（用于计算 c）。",
+        "new_solver_core": "树形 DP 计数：对于每个节点，合并其子节点的方案数和未配对的物品数，使用组合乘法计算内部配对方案数，根节点方案数即为答案，需取模。",
+        "new_proof_obligation": "证明 DP 状态只需维护未配对物品数量，即可无重复地统计所有满足各边流量上限的配对方案；证明子树合并时方案数的乘法原理正确；证明根节点结果包含了所有可能的最优配对方案。",
+        "why_direct_reuse_fails": "原题解法仅累加数值，无法输出方案数；计数需要维护状态和组合计数，直接增添计数输出会遗漏中间方案组合，导致错误。"
+      },
+      "anti_shallow_rationale": "虽然输入格式和树结构相似，但通过将目标从最大化改为强制满足流量上限并计数，核心约束和解题思路从贪心变为带约束的组合计数DP，本质不同，不是浅层改写。"
+    }
+  }
+}

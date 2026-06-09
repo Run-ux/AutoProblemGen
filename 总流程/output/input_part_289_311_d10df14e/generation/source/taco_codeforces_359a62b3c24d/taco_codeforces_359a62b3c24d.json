@@ -1,0 +1,90 @@
+{
+  "problem_id": "taco_codeforces_359a62b3c24d",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": 1,
+      "max": 2000
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "item_count",
+        "role_description": "number of items",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 2000
+        },
+        "properties": {}
+      },
+      {
+        "role": "items",
+        "role_description": "list of items, each given as a pair of time and cost",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 2000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "time_coverage_constraint",
+        "description": "Bob必须支付一组物品,使得这些物品的总处理时间（秒数）至少等于需要偷走的物品数量。即支付集合P必须满足 ∑_{i∈P} t_i ≥ n - |P|。",
+        "formal": "∑_{i∈P} t_i ≥ n - |P|",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "最小化 Bob 需要支付的总金额",
+    "target": "total_cost",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "dp_state_invariance",
+        "description": "在依次处理每个物品后,数组 ar[k] (0 ≤ k ≤ n) 始终等于已考虑物品中选出若干物品,使得每个被选物品的贡献体积 t_i+1 之和达到 k 的最小总花费 c_i；当 k 超过 n 时截断到 n。这一性质由倒序循环避免同一物品重复使用,以及转移方程 ar[w] = min(ar[w], ar[j] + c) 维护最优子结构来保证,最终答案 ar[n] 即为满足总体积至少为 n 的最小花费。",
+        "properties": {
+          "volume_unit": "t_i + 1",
+          "target_volume": "n",
+          "minimized_value": "cost c_i",
+          "update_rule": "ar[min(j + t + 1, n)] = min(ar[min(j + t + 1, n)], ar[j] + c)"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_359a62b3c24d",
+    "title": "B",
+    "description": "Bob came to a cash & carry store, put n items into his trolley, and went to the checkout counter to pay. Each item is described by its price ci and time ti in seconds that a checkout assistant spends on this item. While the checkout assistant is occupied with some item, Bob can steal some other items from his trolley. To steal one item Bob needs exactly 1 second. What is the minimum amount of money that Bob will have to pay to the checkout assistant? Remember, please, that it is Bob, who determines the order of items for the checkout assistant.\n\nInput\n\nThe first input line contains number n (1 ≤ n ≤ 2000). In each of the following n lines each item is described by a pair of numbers ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 109). If ti is 0, Bob won't be able to steal anything, while the checkout assistant is occupied with item i.\n\nOutput\n\nOutput one number — answer to the problem: what is the minimum amount of money that Bob will have to pay.\n\nExamples\n\nInput\n\n4\n2 10\n0 20\n1 5\n1 3\n\n\nOutput\n\n8\n\n\nInput\n\n3\n0 1\n0 10\n0 100\n\n\nOutput\n\n111",
+    "input": "The first input line contains number n (1 ≤ n ≤ 2000). In each of the following n lines each item is described by a pair of numbers ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 109). If ti is 0, Bob won't be able to steal anything, while the checkout assistant is occupied with item i.",
+    "output": "Output one number — answer to the problem: what is the minimum amount of money that Bob will have to pay.",
+    "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+    "source": "codeforces",
+    "standard_solution_code": "n = int(input())\nar = [float('inf')] * (n + 1)\nar[0] = 0\nfor i in range(n):\n\t(t, c) = map(int, input().split())\n\tfor j in range(n - 1, -1, -1):\n\t\tw = min(j + t + 1, n)\n\t\tar[w] = min(ar[w], ar[j] + c)\nprint(ar[n])"
+  }
+}

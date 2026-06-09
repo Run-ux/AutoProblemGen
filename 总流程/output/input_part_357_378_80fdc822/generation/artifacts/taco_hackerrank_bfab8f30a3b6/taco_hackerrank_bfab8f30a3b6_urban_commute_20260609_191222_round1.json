@@ -1,0 +1,816 @@
+{
+  "problem_id": "taco_hackerrank_bfab8f30a3b6",
+  "source_problem_ids": [
+    "taco_hackerrank_bfab8f30a3b6"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_hackerrank_bfab8f30a3b6",
+      "problem",
+      "hackerrank",
+      "Chief's bot is playing an old DOS based game. There is a row of buildings of different heights arranged at each index along a number line. The bot starts at building $\\mbox{o}$ and at a height of $\\mbox{o}$. You must...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "目标结果绑定错误：原题结果是最小初始能量，但新题目标约束却要求最终能量等于给定值 F，没有体现对原题结果的绑定。；不符合 redline '不能让目标与原核心规律脱节'：新题核心约束中的 target_final_energy 是一个独立参数，与原题计算最终能量的过程绑定，而非与原题求解的答案（最小初始能量）绑定。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimum initial energy ensuring bot can jump all buildings without energy dropping below zero",
+    "target": "initial_energy",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（最小起始能量）可以自然绑定为反向目标；建筑高度是核心输入，修改操作直接关联能量更新公式，具有自然的编辑空间；不变式（能量单调性）可支撑最小性证明，完全符合反向设计要求。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_hackerrank_bfab8f30a3b6",
+    "source": "hackerrank",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 100000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 100000
+      },
+      "properties": {
+        "ordered": true
+      },
+      "components": []
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "energy_non_negative",
+          "description": "The bot's energy must never go below zero during the entire jumping process.",
+          "formal": "For each step i (1 ≤ i ≤ n), energy_i ≥ 0.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "minimum initial energy ensuring bot can jump all buildings without energy dropping below zero",
+      "target": "initial_energy",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "energy_monotonicity",
+          "description": "The final energy after processing all buildings is a strictly increasing function of the initial energy e, because each update e := 2*e - h is linear with a positive coefficient (2). This monotonicity allows binary search on the initial energy.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "nonnegative_final_implies_feasibility",
+          "description": "If the final energy after all jumps is nonnegative, then the energy never drops below zero during the entire process. This property justifies checking only the final energy instead of validating intermediate steps, ensuring the starting energy satisfies the problem's constraint.",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "helper_target_result_binding_violation",
+      "reason": "目标结果绑定错误：原题结果是最小初始能量，但新题目标约束却要求最终能量等于给定值 F，没有体现对原题结果的绑定。；不符合 redline '不能让目标与原核心规律脱节'：新题核心约束中的 target_final_energy 是一个独立参数，与原题计算最终能量的过程绑定，而非与原题求解的答案（最小初始能量）绑定。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "目标结果绑定错误：原题结果是最小初始能量，但新题目标约束却要求最终能量等于给定值 F，没有体现对原题结果的绑定。；不符合 redline '不能让目标与原核心规律脱节'：新题核心约束中的 target_final_energy 是一个独立参数，与原题计算最终能量的过程绑定，而非与原题求解的答案（最小初始能量）绑定。",
+  "planning_feedback": "已尝试 1 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题求解最小初始能量，解为标量，无多种方案，难以定义规范解。若输出能量序列，仅为后处理，不改变核心解法，不符合规范解升级要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题输出要求一个整数(initial energy)，标准解法二分搜索最终能量，未构造序列；约束仅能量非负，目标为最小化数值；不变量为单调性，不涉及方案构造。规则要求方案有自然顺序，但原题解唯一无排序需求，强行输出序列将退化为表面修改。",
+        "feedback": "建议选择具有构造空间的种子题，如存在多种可行方案且可定义字典序等问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_no_unsolvable_case",
+      "selection_reason": "原种子题总能找到最小初始能量，不存在无解情形，无法稳定产生可局部检查的冲突证据，不符合规则要求的required_seed_properties。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述和约束显示能量更新公式为 e := 2e - h，初始能量无上界，始终存在可行解，且最终能量非负即保证中间状态非负（invariant: nonnegative_final_implies_feasibility），因此无法构造‘做不到’的场景，规则中的failure_templates明确指出‘这道种子题做不到的原因没法稳定地写成局部证据’。",
+        "feedback": "规则要求输出方案或局部冲突证据，但种子题为无失败分支的数值优化问题，强行引入无解情形可能需要添加无关的上界约束，违反global_redlines中的‘跟原核心规律无关的额外约束’，且难以保证证据的局部可检查性。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题是求最小初始能量的最优值问题，改为计数所有可行初始能量后，虽然解空间、去重规则可定义，但计数仅需在原判定逻辑基础上计算区间长度，状态结构和核心算法未变，违反“不能继续由原题判定过程主导”和“不能把计数只当成结果后处理”红线，不满足创新要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题objective为minimize_value，invariant说明最终能量非负等价于可行性且单调性允许二分搜索；标准解通过二分或公式得到最小初始能量。若改为计数，只需找到可行下界L后计算(max_h - L + 1)，未涉及state_factorization等helper要求的解空间重构，完全沿用原判定核心。",
+        "feedback": "单纯将最优值改为计数仅修改输出形式，无实质性算法责任转移。若要构造有意义计数题，需设计具有组合结构的解空间（如不同跳跃序列），但原题固定建筑序列，过程确定，无法满足helper中拆分汇总等要求。建议放弃此规则应用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题语义中建筑顺序固定、能量更新公式确定，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则对种子属性“原题里本来就有顺序不确定、资源波动或局部选择差异”的要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'a row of buildings of different heights arranged at each index along a number line'，表明遍历顺序完全固定；能量计算规则 'newenergy = botEnergy + (botEnergy - height)' 为确定性函数；原题约束仅要求能量非负，无任何不确定性的语义。",
+        "feedback": "该种子题没有可稳定放大的原生扰动来源，强行引入扰动模型将沦为背景硬造对手，违反规则禁止项。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题已经是求最小初始能量的极值优化题，阈值参数明确且使用二分搜索求解，规则套用只会得到重复的变体，无法产生足够差异。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为'minimum starting botEnergy'，已直接是最小阈值。核心约束能量非负，不变量表明最终能量单调且最终非负蕴含全程可行，这些已体现临界参数与单调结构。规则要求从判定可行性改为求临界阈值，与现有构造重合，缺乏本质创新。",
+        "feedback": "规则需要种子题是纯判定问题，而非已经求出极值的优化题。当前种子不符合这一前提，强行变化只会产生表面改动，无法满足阈值优化题的深度要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "insufficient_multidimensional_conflict",
+      "selection_reason": "虽然最小化初始能量与最大化过程最低能量存在表面冲突，但原题的决策变量仅为单一初始能量，两个目标完全由该变量决定，帕累托前沿退化为平凡的一维曲线，无法形成需要同时跟踪两个指标的状态耦合，难以实现规则要求的算法创新。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题种子schema的核心约束仅要求能量非负，目标为最小化初始能量，解法利用单调性二分搜索；第二指标若引入最低能量，仅需在原计算过程中额外记录一个值，不改变状态结构或优化搜索空间，与helper要求的“状态空间耦合变化”不符。Invariant中的‘最终非负则全过程非负’已隐含最低能量始终非负，但从未被作为优化维度。目标冲突虽然存在，但无法支撑有意义的非平凡前沿，属于failure_templates中的‘新增指标未进入主状态，只是原答案的附属统计’。",
+        "feedback": "建议寻找具有独立决策维度或需要探索非平凡折中空间的种子题，例如资源分配、路径选择等，以确保第二指标能引发核心状态的重构。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.99,
+      "reason_code": "feasible_inverse_target",
+      "selection_reason": "原题输出（最小起始能量）可以自然绑定为反向目标；建筑高度是核心输入，修改操作直接关联能量更新公式，具有自然的编辑空间；不变式（能量单调性）可支撑最小性证明，完全符合反向设计要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题结果是最小起始能量值（objective.target='initial_energy'），可作为反向目标。输入是建筑高度数组，core_constraints定义能量更新 e:=2e-h，修改高度直接改变约束。invariant中能量单调性（energy_monotonicity）和非负最终能量蕴含可行性（nonnegative_final_implies_feasibility）可为最小修改提供判定基础。",
+        "feedback": "该种子题非常适合做反向设计扩展，只需明确定义目标结果、允许的修改操作（如最多修改K个高度）及最小性要求即可生成高质量变体。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题不存在可独立处理的局部单元；建筑序列通过能量变量顺序耦合，不具备规则要求的可分解、可并行求解的独立分量，全局约束无法自然绑定，强行应用会违反红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中，core_constraints 仅包含能量非负约束，输入为有序建筑高度数组，能量更新式 e := 2e - h 将各建筑严格顺序耦合，无任何局部独立求解的可能；original_problem 的求解逻辑依赖全局单调性，各建筑不能独立处理。required_seed_properties 第一条‘原题存在可分解的局部单元’不满足。",
+        "feedback": "该规则要求原题具备可自然拆分的局部单元（如独立区间、并行查询等），并利用共享资源或全局守恒将它们绑定。本题是严格顺序依赖的单链结构，缺少这样的局部独立性，建议寻找具有并行局部决策空间的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_natural_actions",
+      "selection_reason": "原题是单机器人按固定顺序处理建筑高度，能量更新为确定性函数，过程中无任何分支或选择，不存在可轮流选择、拿取、移动或改变状态的自然操作。强行引入对抗方只能依靠故事背景硬造，违反规则禁止项。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：机器人从开始到结束依次处理每个建筑，能量更新规则为 e := 2e - h，无任何决策点；输入固定数组，无交互选择。",
+        "feedback": "原题缺乏可博弈化的核心操作空间，建议换用具有自然决策或状态转移选择的种子题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "insufficient_local_objects",
+      "selection_reason": "原题仅涉及单一序列的整体性质，不存在可组合的局部对象族，无法形成覆盖或割关系。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目的输入为一个建筑物高度数组，核心对象是单个完整序列；规则要求'原题核心对象具有路径、区间、子树、集合等局部结构'且'多个局部对象之间可以自然形成覆盖或割关系'，但原题缺乏多个局部对象，不满足准入条件。",
+        "feedback": "该规则不适用于此种子题。尝试引入多个独立路径或区间将违背原题结构，导致语义不匹配。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题是求最小初始能量的优化问题，不存在明确有限的计数对象，与规则要求的计数扩展基础不符。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'minimize_value'，目标是 'minimum initial energy'，整个问题描述中没有计数或统计对象；original_problem 要求返回最小的起始能量值，属于最优化而非计数。",
+        "feedback": "该规则仅适用于已有明确计数对象的种子题，本题不具备任何计数属性，无法定义自然权重或分布统计。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题求解最小初始能量，解为标量，无多种方案，难以定义规范解。若输出能量序列，仅为后处理，不改变核心解法，不符合规范解升级要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题输出要求一个整数(initial energy)，标准解法二分搜索最终能量，未构造序列；约束仅能量非负，目标为最小化数值；不变量为单调性，不涉及方案构造。规则要求方案有自然顺序，但原题解唯一无排序需求，强行输出序列将退化为表面修改。",
+        "feedback": "建议选择具有构造空间的种子题，如存在多种可行方案且可定义字典序等问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_no_unsolvable_case",
+      "message": "原种子题总能找到最小初始能量，不存在无解情形，无法稳定产生可局部检查的冲突证据，不符合规则要求的required_seed_properties。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述和约束显示能量更新公式为 e := 2e - h，初始能量无上界，始终存在可行解，且最终能量非负即保证中间状态非负（invariant: nonnegative_final_implies_feasibility），因此无法构造‘做不到’的场景，规则中的failure_templates明确指出‘这道种子题做不到的原因没法稳定地写成局部证据’。",
+        "feedback": "规则要求输出方案或局部冲突证据，但种子题为无失败分支的数值优化问题，强行引入无解情形可能需要添加无关的上界约束，违反global_redlines中的‘跟原核心规律无关的额外约束’，且难以保证证据的局部可检查性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题是求最小初始能量的最优值问题，改为计数所有可行初始能量后，虽然解空间、去重规则可定义，但计数仅需在原判定逻辑基础上计算区间长度，状态结构和核心算法未变，违反“不能继续由原题判定过程主导”和“不能把计数只当成结果后处理”红线，不满足创新要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题objective为minimize_value，invariant说明最终能量非负等价于可行性且单调性允许二分搜索；标准解通过二分或公式得到最小初始能量。若改为计数，只需找到可行下界L后计算(max_h - L + 1)，未涉及state_factorization等helper要求的解空间重构，完全沿用原判定核心。",
+        "feedback": "单纯将最优值改为计数仅修改输出形式，无实质性算法责任转移。若要构造有意义计数题，需设计具有组合结构的解空间（如不同跳跃序列），但原题固定建筑序列，过程确定，无法满足helper中拆分汇总等要求。建议放弃此规则应用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题语义中建筑顺序固定、能量更新公式确定，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则对种子属性“原题里本来就有顺序不确定、资源波动或局部选择差异”的要求。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'a row of buildings of different heights arranged at each index along a number line'，表明遍历顺序完全固定；能量计算规则 'newenergy = botEnergy + (botEnergy - height)' 为确定性函数；原题约束仅要求能量非负，无任何不确定性的语义。",
+        "feedback": "该种子题没有可稳定放大的原生扰动来源，强行引入扰动模型将沦为背景硬造对手，违反规则禁止项。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题已经是求最小初始能量的极值优化题，阈值参数明确且使用二分搜索求解，规则套用只会得到重复的变体，无法产生足够差异。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为'minimum starting botEnergy'，已直接是最小阈值。核心约束能量非负，不变量表明最终能量单调且最终非负蕴含全程可行，这些已体现临界参数与单调结构。规则要求从判定可行性改为求临界阈值，与现有构造重合，缺乏本质创新。",
+        "feedback": "规则需要种子题是纯判定问题，而非已经求出极值的优化题。当前种子不符合这一前提，强行变化只会产生表面改动，无法满足阈值优化题的深度要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "insufficient_multidimensional_conflict",
+      "message": "虽然最小化初始能量与最大化过程最低能量存在表面冲突，但原题的决策变量仅为单一初始能量，两个目标完全由该变量决定，帕累托前沿退化为平凡的一维曲线，无法形成需要同时跟踪两个指标的状态耦合，难以实现规则要求的算法创新。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题种子schema的核心约束仅要求能量非负，目标为最小化初始能量，解法利用单调性二分搜索；第二指标若引入最低能量，仅需在原计算过程中额外记录一个值，不改变状态结构或优化搜索空间，与helper要求的“状态空间耦合变化”不符。Invariant中的‘最终非负则全过程非负’已隐含最低能量始终非负，但从未被作为优化维度。目标冲突虽然存在，但无法支撑有意义的非平凡前沿，属于failure_templates中的‘新增指标未进入主状态，只是原答案的附属统计’。",
+        "feedback": "建议寻找具有独立决策维度或需要探索非平凡折中空间的种子题，例如资源分配、路径选择等，以确保第二指标能引发核心状态的重构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "feasible_inverse_target",
+      "message": "原题输出（最小起始能量）可以自然绑定为反向目标；建筑高度是核心输入，修改操作直接关联能量更新公式，具有自然的编辑空间；不变式（能量单调性）可支撑最小性证明，完全符合反向设计要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.99,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题结果是最小起始能量值（objective.target='initial_energy'），可作为反向目标。输入是建筑高度数组，core_constraints定义能量更新 e:=2e-h，修改高度直接改变约束。invariant中能量单调性（energy_monotonicity）和非负最终能量蕴含可行性（nonnegative_final_implies_feasibility）可为最小修改提供判定基础。",
+        "feedback": "该种子题非常适合做反向设计扩展，只需明确定义目标结果、允许的修改操作（如最多修改K个高度）及最小性要求即可生成高质量变体。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题不存在可独立处理的局部单元；建筑序列通过能量变量顺序耦合，不具备规则要求的可分解、可并行求解的独立分量，全局约束无法自然绑定，强行应用会违反红线。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中，core_constraints 仅包含能量非负约束，输入为有序建筑高度数组，能量更新式 e := 2e - h 将各建筑严格顺序耦合，无任何局部独立求解的可能；original_problem 的求解逻辑依赖全局单调性，各建筑不能独立处理。required_seed_properties 第一条‘原题存在可分解的局部单元’不满足。",
+        "feedback": "该规则要求原题具备可自然拆分的局部单元（如独立区间、并行查询等），并利用共享资源或全局守恒将它们绑定。本题是严格顺序依赖的单链结构，缺少这样的局部独立性，建议寻找具有并行局部决策空间的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_actions",
+      "message": "原题是单机器人按固定顺序处理建筑高度，能量更新为确定性函数，过程中无任何分支或选择，不存在可轮流选择、拿取、移动或改变状态的自然操作。强行引入对抗方只能依靠故事背景硬造，违反规则禁止项。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：机器人从开始到结束依次处理每个建筑，能量更新规则为 e := 2e - h，无任何决策点；输入固定数组，无交互选择。",
+        "feedback": "原题缺乏可博弈化的核心操作空间，建议换用具有自然决策或状态转移选择的种子题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "insufficient_local_objects",
+      "message": "原题仅涉及单一序列的整体性质，不存在可组合的局部对象族，无法形成覆盖或割关系。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目的输入为一个建筑物高度数组，核心对象是单个完整序列；规则要求'原题核心对象具有路径、区间、子树、集合等局部结构'且'多个局部对象之间可以自然形成覆盖或割关系'，但原题缺乏多个局部对象，不满足准入条件。",
+        "feedback": "该规则不适用于此种子题。尝试引入多个独立路径或区间将违背原题结构，导致语义不匹配。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题是求最小初始能量的优化问题，不存在明确有限的计数对象，与规则要求的计数扩展基础不符。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'minimize_value'，目标是 'minimum initial energy'，整个问题描述中没有计数或统计对象；original_problem 要求返回最小的起始能量值，属于最优化而非计数。",
+        "feedback": "该规则仅适用于已有明确计数对象的种子题，本题不具备任何计数属性，无法定义自然权重或分布统计。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "helper_target_result_binding_violation",
+      "message": "规划未能将原题结果（最小初始能量）正确绑定为反向目标，而是错误地将最终能量设为目标，导致新题目标与原题结果语义脱节，违反了 target_result_binding helper 的 redlines。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "planner_payload.eligibility_reason 声称 'The seed problem's output (minimum initial energy) can be inverted into a target constraint (e.g., a desired final energy)'，但 desired final energy 不是原题结果；candidate_schema.core_constraints 中包含 'target_final_energy: The final energy must exactly equal the target F'，而 F 是输入参数，与最小初始能量无直接绑定关系。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.99,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "helper_target_result_binding_violation",
+      "reason": "目标结果绑定错误：原题结果是最小初始能量，但新题目标约束却要求最终能量等于给定值 F，没有体现对原题结果的绑定。；不符合 redline '不能让目标与原核心规律脱节'：新题核心约束中的 target_final_energy 是一个独立参数，与原题计算最终能量的过程绑定，而非与原题求解的答案（最小初始能量）绑定。",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "I",
+                  "C",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "目标结果绑定错误：原题结果是最小初始能量，但新题目标约束却要求最终能量等于给定值 F，没有体现对原题结果的绑定。；不符合 redline '不能让目标与原核心规律脱节'：新题核心约束中的 target_final_energy 是一个独立参数，与原题计算最终能量的过程绑定，而非与原题求解的答案（最小初始能量）绑定。",
+    "feedback": "已尝试 1 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_hackerrank_bfab8f30a3b6_urban_commute_20260609_191222",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

@@ -1,0 +1,1303 @@
+{
+  "problem_id": "taco_leetcode_inverse_edit_equal_home",
+  "source_problem_ids": [
+    "taco_leetcode_180d25df7224"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_leetcode_180d25df7224",
+      "equal rational numbers",
+      "leetcode",
+      "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the ration...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束（C）新增了编辑操作定义及操作代价；目标（O）从决策型改为最小化总代价并输出修改证据的优化型；不变量（V）从仅保证有限位比较扩展到编辑操作保持格式合法性，并与代价、相等性绑定。输入结构（I）维持原样，仅重命名角色以贴合主题。",
+    "summary": "通过翻转求解方向，将判定问题变为设计问题，并强制要求最小代价证明，从根本改变算法策略。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3915,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3915,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5017,
+      "O": 0.5718,
+      "V": 0.4903
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5017,
+      "objective_type_distance": 0.6632,
+      "objective_text_distance": 0.4348,
+      "invariant_match_distance": 0.4903
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "optimization",
+    "description": "找出最小的总编辑代价，使得两个字符串修改后表示相同的非负有制数。输出一个整数表示最小总代价，以及两行修改后满足格式且相等的字符串（任意一组最小代价方案）。若存在多组解，输出任意一组即可。",
+    "target": "minimum_cost",
+    "requires_solution": true,
+    "cost_function": "sum of costs of applied operations (each operation cost = 1)"
+  },
+  "rule_selection_reason": "修订上下文显示规则 construct_or_obstruction 已被尝试两次并因解决方案直接迁移风险高而被拒绝，其输出冲突证据仅是原比较逻辑的副产品，未能改变核心任务。反观 forward_solution_to_inverse_design 可将判定相等彻底翻转为以目标驱动的输入设计与最小修改优化，任务本质不同，且满足 eligibility 要求（原题输出可作为反向目标，字符串编辑操作自然存在）。；创新度判断：将核心义务从‘判断两个字符串是否表示同一有理数’拉离为‘给定目标相等性质，设计最少数目的字符编辑操作，使输入字符串满足该性质’。这使算法必须构建修改空间、搜索最优序列并证明最小性，完全脱离原题的解析-比较流程。；难度判断：主求解责任从简单的大小比较变为组合优化：需在字符级编辑动作（插入、删除、替换）的指数级空间中找出最小代价路径，同时维持有理数表示的法律约束，并要求下界证明。这引入动态规划、搜索或数学归约等高难度技术。；风险判断：主要风险在于编辑操作集合的边界定义（如是否允许修改括号、循环节完整性）可能导致问题歧义，但可通过明确的语法约束与合法操作列表加以控制，不会退化为原题判定逻辑的复用。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_leetcode_inverse_edit_equal_home",
+    "source": "leetcode",
+    "input_structure": {
+      "type": "tuple",
+      "length": {
+        "min": 2,
+        "max": 2
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "first_vault_inventory",
+          "role_description": "一个表示家庭收纳清单的字符串，格式与种子题相同（带循环节的有理数表示），表示第一个柜子的物品编码。",
+          "type": "string",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "second_vault_inventory",
+          "role_description": "另一个相同格式的字符串，表示第二个柜子的物品编码。",
+          "type": "string",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "original_format_constraints",
+          "description": "每个输入字符串必须符合原题的三种格式之一：<整数部分>、<整数部分>.<非重复部分> 或 <整数部分>.<非重复部分>(<重复部分>)。整数部分长度 1~4，非重复部分长度 0~4，重复部分长度 1~4。仅由数字组成，整数部分不能以两个以上零开头。这些约束在编辑过程中也必须保持。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "edit_operations",
+          "description": "允许以下操作，每种操作的成本固定为1：(a) 替换一个数字为另一个数字（0-9）；(b) 在符合格式的位置插入一对括号，标记新的循环节（须保证非重复部分长度合法）；(c) 删除一对括号，将原循环节转化为非重复部分（可能产生格式违规则不允许）；(d) 将左括号向左或向右移动一个字符位置（改变循环节长度），前提是新位置仍产生合法格式。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "legality_preservation",
+          "description": "任何编辑操作得到的中间字符串或最终字符串都必须严格满足原题格式约束。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "equality_check_cost",
+          "description": "若原始字符串已经表示相同的数，代价为0，且不需要输出修改。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "optimization",
+      "description": "找出最小的总编辑代价，使得两个字符串修改后表示相同的非负有制数。输出一个整数表示最小总代价，以及两行修改后满足格式且相等的字符串（任意一组最小代价方案）。若存在多组解，输出任意一组即可。",
+      "target": "minimum_cost",
+      "requires_solution": true,
+      "cost_function": "sum of costs of applied operations (each operation cost = 1)"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "format_closed_under_edits",
+          "description": "合法编辑操作作用于合法字符串得到合法字符串。",
+          "properties": {},
+          "evidence_source": "design"
+        },
+        {
+          "name": "cost_lower_bound",
+          "description": "若两数不等，最小编辑代价至少为从S到T在编辑图上的最短路径长度，且该长度下界可由数值差异与格式约束共同导出。",
+          "properties": {},
+          "evidence_source": "design"
+        },
+        {
+          "name": "finite_prefix_equality_holds",
+          "description": "对于任何合法字符串对，若它们表示的数相等，则扩展至17位小数后必然相等（原题不变性在修改后的字符串上仍成立）。",
+          "properties": {
+            "prefix_length": 17
+          },
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "通过有限展开和特殊处理（全9循环）判断两个字符串表示的数是否相等，核心为字符串展开与前缀比较。",
+    "reusable_subroutines": "字符串解析提取整数、非重复、重复部分；展开无限小数到有限位（如17位）；检测全9循环并处理四舍五入。",
+    "new_solver_core": "在定义的编辑操作图上进行状态空间搜索（BFS/DP/最短路），状态为(S,T)对，目标为两个字符串表示的数相等；底层调用解析与相等判定作为单步验证。核心转变为优化与搜索，而非原题的单次展开比较。",
+    "new_proof_obligation": "证明编辑操作图上的最短路径对应最小总代价；证明搜索算法能正确找到全局最优解；证明代价下界分析与数值差异的一致性；证明修改后的字符串仍满足格式约束。",
+    "why_direct_reuse_fails": "原题直接输出一个布尔值，既无代价概念，也无编辑方案输出，算法完全不涉及状态转移和优化；新题必须构造状态空间并求解最优化问题，原解只能作为子程序用于目标验证，主导逻辑完全改变。"
+  },
+  "anti_shallow_rationale": "本题没有停留在只改变故事背景或输出包装。核心从二值判定转变为基于编辑操作图的最优化问题，求解方向从正向计算翻转为目标驱动的逆向设计，并强制要求最小代价证明。即使底层字符串相等性可复用，整体算法框架已从“解析-比较”变为“搜索-验证”，构成实质性差异，完全避免了换皮风险。",
+  "shared_core_summary": "None",
+  "shared_core_anchors": {
+    "shared_state": "None",
+    "shared_transition": "None",
+    "shared_decision_basis": "None"
+  },
+  "seed_contributions": {
+    "seed_a": "None",
+    "seed_b": "None"
+  },
+  "fusion_ablation": {
+    "without_seed_a": "None",
+    "without_seed_b": "None"
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "规则必需的 helper，用于将原题结果绑定为反向目标。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中明确目标为“使两字符串表示的数相等”；",
+        "在 objective 中绑定目标为必须达成的性质，并输出最小代价和证据。"
+      ],
+      "innovation_reason": "将原本的判定结果直接作为设计目标，迫使算法围绕如何满足目标来反推状态，而非计算状态。",
+      "difficulty_reason": "解法不能直接沿用比较，必须搜索能够满足目标的编辑序列，增加了优化难度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "规则必需的 helper，用于定义可操作的修改空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中引入编辑操作集（替换数字、移动/增删括号），并定义操作成本；",
+        "在 invariant 中增加 ‘format_closed_under_edits’，保证操作不破坏输入格式合法性。"
+      ],
+      "innovation_reason": "将反向设计落实到可枚举、可量化的操作集合，使模糊的“修改”成为算法可处理的形式化动作。",
+      "difficulty_reason": "要求算法理解操作如何改变数值并搜索代价最小的序列，引入组合爆炸和最优性证明需求。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "规则必需的 helper，用于强制最小代价和证据输出。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 类型变为 optimization，要求输出最小总代价和一组修改后的字符串作为证书；",
+        "invariant 新增 ‘cost_lower_bound’，说明如何从数值差异推导下界，支持最小性论证。"
+      ],
+      "innovation_reason": "让答案承担证明责任，不能只给出任意可行修改，必须证明无法用更少操作达成相同目标。",
+      "difficulty_reason": "需要算法不仅找到可行解，还要证明是最小代价，通常需要下界理论或穷举，显著提高难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_constructive_solution_object",
+      "selection_reason": "种子题是纯粹决策问题（输出布尔值），不存在任何构造性解对象或可恢复的方案，无法通过 canonical_witness 升级为带规范性构造输出的新题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "Seed schema 显示 objective.type = 'decision'，requires_solution = false，仅判断两个字符串表示的有理数是否相等。core_constraints 只涉及输入字符串格式，invariant 仅用于数值比较，均无构造性输出基础。规则 eligibility 明确要求‘原题本身有明确的解对象，或者答案可以恢复成方案’，本题不符合该前提。",
+        "feedback": "无法基于决策型种子题生成规范解输出。建议重新选择具有构造型解空间（如构造序列、路径、表示等）的种子题，或考虑其他不适合输出升级的规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "SOLID_OBSTRUCTION_EVIDENCE",
+      "selection_reason": "原题判定相等，当要求输出相等方案但两数不等时，可依据 bounded_prefix_uniqueness 不变量给出前17位内的第一个不同位置作为局部冲突证据，满足‘做不到的原因可用局部证据表示’的种子性质。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的不变量 bounded_prefix_uniqueness 明确指出：对于给定的输入长度限制，两个不同的有理数会在前17位内不同。该性质可直接支持输出一个可局部检查的冲突证据（如首个不同位），符合规则所需种子属性。",
+        "feedback": "规则将判定改为构造或冲突证据输出，变更了C、O、V轴，并非仅换背景或格式，且失败分支可严格落实为可检查的阻碍证据，无红线风险。建议进入规划阶段。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "missing_seed_properties",
+      "selection_reason": "种子题为决策问题，缺少可计数的解空间，无法满足规则要求解空间有限、去重规则清晰。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 decision（判断相等），无解集概念；规则 eligibility.required_seed_properties 要求解空间有限，但原题没有显式解空间定义。",
+        "feedback": "该种子题不适合直接 existence_to_counting 变换，强行改造会导致计数对象定义不清，建议选择存在性或枚举型种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题是判断两个有理数字符串相等的确定性问题，输入格式和等价关系已明确定义，无资源波动、顺序不确定或局部选择差异等原生扰动来源，无法自然构建最坏情况保底优化。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 core_constraints 定义固定格式，objective 为相等决策，invariant 基于确定性的展开和前缀比较；题目描述中字符串的多义表示（如 0.1(6) 与 0.1666(6)）属于等价转换，并非扰动。",
+        "feedback": "原题不存在可放大的原生扰动来源，强行引入扰动模型会与核心语义脱节，不符合规则的红线要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_natural_parameter",
+      "selection_reason": "原题是具体两个字符串的相等判定，可行性不随任何可调参数单调变化，输入格式固定，没有容量、长度等临界参数，无法自然扩展为阈值优化题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中目标为decision型，判断两数相等；core_constraints仅定义字符串格式和长度范围，无可变参数；invariant中bounded_prefix_uniqueness给出固定前缀长度17，但该值由输入范围导出，并非待优化阈值。整体缺少可行的单调参数。",
+        "feedback": "该种子题缺少可参数化的临界阈值，强行扩展将变成在原判定外包一层机械二分，违反规则红线。建议选择具有连续容量或数量参数的问题作为种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "unsuitable_seed_problem",
+      "selection_reason": "原题为相等性判定问题，非单目标最优问题，不存在自然的冲突第二评价指标。强行引入权衡会改变核心问题本质，不符合规则要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为布尔决策（判断两字符串表示的有理数是否相等），无任何可优化指标。规则要求‘原题目标附近存在自然的第二评价指标’且‘两个指标之间存在真实冲突’，但种子题不具有量化目标，无法自然衍生第二冲突指标。",
+        "feedback": "种子题不适配该变换规则，建议更换为有明确优化目标的题目（如最大/最小、最短路径等）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "CLEAR_INVERSE_TARGET_AND_EDIT_SPACE",
+      "selection_reason": "原题输出为布尔相等判定，可自然地作为反向目标；输入字符串的格式规则和数值语义提供了明确的编辑操作空间（如修改数字、调整括号），修改操作与原核心规律紧密相关，且可定义最小修改代价或构造要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题 schema 显示 objective 是 decision 型，输出为 equality 判定；core_constraints 定义了字符串的三种格式模式和长度限制；invariant 揭示了 0.9(9) 与 1. 等价的语义；原题描述已包含通过调整重复部分改变表示但保持数值相等的例子，说明存在自然的修改自由度。反向目标可直接绑定为“达成相等/不等”，编辑操作集可基于格式规则和数字位定义。",
+        "feedback": "规则完全适用，原题正向求解结果（布尔值）可转为设计目标，字符串的自然结构提供了合法且可验证的操作集合，满足所有 required_seed_properties，无违规点。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_coupling_units",
+      "selection_reason": "原题判断两个字符串是否表示相同有理数，解析过程各自独立，不存在可分解的局部单元通过共享资源或全局约束自然耦合的基础。强行添加全局约束会变成硬加无关限制。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Schema 输入为两个独立字符串，core_constraints 均针对单个字符串格式，objective 为分别解析后比较相等，invariant 仅描述单个字符串展开性质，无任何跨组件依赖或共享资源。",
+        "feedback": "原题的结构使得任何全局耦合尝试都难以自然融入核心证明任务，建议选择其他具有明确子问题或可分解决策维度的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_natural_adversarial_action",
+      "selection_reason": "原题是判断两个表示有理数的字符串是否相等，没有任何可供轮流选择、改变状态的自然操作，不存在将单人操作过程转化为双方博弈的基础。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为两个字符串，目标为布尔值相等判断，核心约束仅限于字符串格式和长度限制，不涉及任何操作或状态转移。原 schema 的 invariant 是关于十进制展开前缀的比较性质，而非过程性状态。",
+        "feedback": "原题完全不具备可对抗化的选择过程，强行引入玩家将脱离数学本质，应拒绝。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "no_local_objects",
+      "selection_reason": "原题‘equal rational numbers’的核心是字符串比较，不包含任何路径、区间、子树或可组合为覆盖/割的局部对象族，无法满足该规则的准入条件。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目描述仅涉及两个有理数字符串的相等性判断，输入为两个字符串，约束为格式和长度，目标为布尔值，不变量为前缀比较和特殊规则处理，无任何路径、区间、子树等局部结构（参见original_problem.description与seed_schema.core_constraints）。",
+        "feedback": "该规则要求原题存在局部对象族并能自然形成覆盖或割关系，但当前问题没有此类结构，即使强制附加也无意义，应拒绝。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题是判定等式是否成立的决策问题，输出 True/False，不存在任何计数对象，无法实施权重或分布统计。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type 为 'decision'，描述为 '判断两个字符串表示的有理数是否相等'，输入输出均为字符串比较逻辑，核心约束围绕字符串格式解析，不存在计数元素。规则 eligibility.required_seed_properties 要求 '原题已经有明确有限的计数对象'，此处完全缺失。",
+        "feedback": "此规则要求原题具备可枚举的离散方案集合，当前种子为判断性问题，无法引入权重或分类计数概念。建议选择具有组合计数本质的题目作为种子。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "no_constructive_solution_object",
+      "message": "种子题是纯粹决策问题（输出布尔值），不存在任何构造性解对象或可恢复的方案，无法通过 canonical_witness 升级为带规范性构造输出的新题。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "Seed schema 显示 objective.type = 'decision'，requires_solution = false，仅判断两个字符串表示的有理数是否相等。core_constraints 只涉及输入字符串格式，invariant 仅用于数值比较，均无构造性输出基础。规则 eligibility 明确要求‘原题本身有明确的解对象，或者答案可以恢复成方案’，本题不符合该前提。",
+        "feedback": "无法基于决策型种子题生成规范解输出。建议重新选择具有构造型解空间（如构造序列、路径、表示等）的种子题，或考虑其他不适合输出升级的规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "SOLID_OBSTRUCTION_EVIDENCE",
+      "message": "原题判定相等，当要求输出相等方案但两数不等时，可依据 bounded_prefix_uniqueness 不变量给出前17位内的第一个不同位置作为局部冲突证据，满足‘做不到的原因可用局部证据表示’的种子性质。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题的不变量 bounded_prefix_uniqueness 明确指出：对于给定的输入长度限制，两个不同的有理数会在前17位内不同。该性质可直接支持输出一个可局部检查的冲突证据（如首个不同位），符合规则所需种子属性。",
+        "feedback": "规则将判定改为构造或冲突证据输出，变更了C、O、V轴，并非仅换背景或格式，且失败分支可严格落实为可检查的阻碍证据，无红线风险。建议进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "missing_seed_properties",
+      "message": "种子题为决策问题，缺少可计数的解空间，无法满足规则要求解空间有限、去重规则清晰。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 decision（判断相等），无解集概念；规则 eligibility.required_seed_properties 要求解空间有限，但原题没有显式解空间定义。",
+        "feedback": "该种子题不适合直接 existence_to_counting 变换，强行改造会导致计数对象定义不清，建议选择存在性或枚举型种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题是判断两个有理数字符串相等的确定性问题，输入格式和等价关系已明确定义，无资源波动、顺序不确定或局部选择差异等原生扰动来源，无法自然构建最坏情况保底优化。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 core_constraints 定义固定格式，objective 为相等决策，invariant 基于确定性的展开和前缀比较；题目描述中字符串的多义表示（如 0.1(6) 与 0.1666(6)）属于等价转换，并非扰动。",
+        "feedback": "原题不存在可放大的原生扰动来源，强行引入扰动模型会与核心语义脱节，不符合规则的红线要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_natural_parameter",
+      "message": "原题是具体两个字符串的相等判定，可行性不随任何可调参数单调变化，输入格式固定，没有容量、长度等临界参数，无法自然扩展为阈值优化题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中目标为decision型，判断两数相等；core_constraints仅定义字符串格式和长度范围，无可变参数；invariant中bounded_prefix_uniqueness给出固定前缀长度17，但该值由输入范围导出，并非待优化阈值。整体缺少可行的单调参数。",
+        "feedback": "该种子题缺少可参数化的临界阈值，强行扩展将变成在原判定外包一层机械二分，违反规则红线。建议选择具有连续容量或数量参数的问题作为种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "unsuitable_seed_problem",
+      "message": "原题为相等性判定问题，非单目标最优问题，不存在自然的冲突第二评价指标。强行引入权衡会改变核心问题本质，不符合规则要求。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为布尔决策（判断两字符串表示的有理数是否相等），无任何可优化指标。规则要求‘原题目标附近存在自然的第二评价指标’且‘两个指标之间存在真实冲突’，但种子题不具有量化目标，无法自然衍生第二冲突指标。",
+        "feedback": "种子题不适配该变换规则，建议更换为有明确优化目标的题目（如最大/最小、最短路径等）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "CLEAR_INVERSE_TARGET_AND_EDIT_SPACE",
+      "message": "原题输出为布尔相等判定，可自然地作为反向目标；输入字符串的格式规则和数值语义提供了明确的编辑操作空间（如修改数字、调整括号），修改操作与原核心规律紧密相关，且可定义最小修改代价或构造要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.07,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题 schema 显示 objective 是 decision 型，输出为 equality 判定；core_constraints 定义了字符串的三种格式模式和长度限制；invariant 揭示了 0.9(9) 与 1. 等价的语义；原题描述已包含通过调整重复部分改变表示但保持数值相等的例子，说明存在自然的修改自由度。反向目标可直接绑定为“达成相等/不等”，编辑操作集可基于格式规则和数字位定义。",
+        "feedback": "规则完全适用，原题正向求解结果（布尔值）可转为设计目标，字符串的自然结构提供了合法且可验证的操作集合，满足所有 required_seed_properties，无违规点。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_natural_coupling_units",
+      "message": "原题判断两个字符串是否表示相同有理数，解析过程各自独立，不存在可分解的局部单元通过共享资源或全局约束自然耦合的基础。强行添加全局约束会变成硬加无关限制。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Schema 输入为两个独立字符串，core_constraints 均针对单个字符串格式，objective 为分别解析后比较相等，invariant 仅描述单个字符串展开性质，无任何跨组件依赖或共享资源。",
+        "feedback": "原题的结构使得任何全局耦合尝试都难以自然融入核心证明任务，建议选择其他具有明确子问题或可分解决策维度的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_action",
+      "message": "原题是判断两个表示有理数的字符串是否相等，没有任何可供轮流选择、改变状态的自然操作，不存在将单人操作过程转化为双方博弈的基础。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为两个字符串，目标为布尔值相等判断，核心约束仅限于字符串格式和长度限制，不涉及任何操作或状态转移。原 schema 的 invariant 是关于十进制展开前缀的比较性质，而非过程性状态。",
+        "feedback": "原题完全不具备可对抗化的选择过程，强行引入玩家将脱离数学本质，应拒绝。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_local_objects",
+      "message": "原题‘equal rational numbers’的核心是字符串比较，不包含任何路径、区间、子树或可组合为覆盖/割的局部对象族，无法满足该规则的准入条件。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目描述仅涉及两个有理数字符串的相等性判断，输入为两个字符串，约束为格式和长度，目标为布尔值，不变量为前缀比较和特殊规则处理，无任何路径、区间、子树等局部结构（参见original_problem.description与seed_schema.core_constraints）。",
+        "feedback": "该规则要求原题存在局部对象族并能自然形成覆盖或割关系，但当前问题没有此类结构，即使强制附加也无意义，应拒绝。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题是判定等式是否成立的决策问题，输出 True/False，不存在任何计数对象，无法实施权重或分布统计。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type 为 'decision'，描述为 '判断两个字符串表示的有理数是否相等'，输入输出均为字符串比较逻辑，核心约束围绕字符串格式解析，不存在计数元素。规则 eligibility.required_seed_properties 要求 '原题已经有明确有限的计数对象'，此处完全缺失。",
+        "feedback": "此规则要求原题具备可枚举的离散方案集合，当前种子为判断性问题，无法引入权重或分类计数概念。建议选择具有组合计数本质的题目作为种子。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "ok",
+      "message": "规划成功将正向判定问题转化为带最小编辑代价的反向设计问题，目标与操作均与原始核心紧密相关，并承担最小性证明责任。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "core_constraints 中定义了编辑操作集（替换数字、移动/增删括号），并保持原始格式约束；objective 要求最小总代价并输出修改后字符串作为证书；invariant 中包含 format_closed_under_edits 和 cost_lower_bound 支持下界论证；applied_helpers 完整应用了 target_result_binding（目标绑定相等）、edit_operation_contract（基于字符串结构的操作定义）和 minimality_or_certificate_lock（最小代价与证书输出）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_satisfied",
+      "message": "题面明确将原题相等判定结果绑定为逆向设计目标，定义了基于原题结构（数字、括号）的编辑操作集，并要求输出最小总代价及修改证据，完整兑现了target_result_binding、edit_operation_contract和minimality_or_certificate_lock三个helper的语义承诺。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中“使两个清单的编码变得相同，并且总调整代价最小”将目标绑定为原题结果语义；编辑操作（替换数字、插入/删除/移动括号）均直接操作原题字符串结构，且要求保持格式合法性；输出要求“第一行输出一个整数，表示最小总代价”以及输出修改后的编码，强制承担了最小性证明责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_fulfilled",
+      "message": "题面已明确反向目标为数值相等，修改操作基于原字符串结构，并要求最小代价和方案输出，完全兑现规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中“使两个清单最终对应完全相同的物品序列”将原题结果绑定为反向目标；“允许的操作类型如下：1.替换...2.插入括号...3.删除括号...4.移动括号...”定义了基于原字符串格式的编辑操作；“计算使两个清单编码相同所需的最小总代价，并输出一组达到该最小代价的修改后的清单编码”要求最小代价及证籍输出。三个 helper（目标绑定、操作合约、最小性锁定）的关键语义均已写实。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.07,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "家庭收纳清单调整",
+    "description": "小明家里有两个大柜子，每个柜子里分成了许多小格子，每个格子里存放了一件物品。为了管理方便，小明给每个柜子里的物品都编制了一个“物品编码清单”，清单上的每个编码都是一个由数字、小数点和括号组成的特殊字符串。\n\n一个合法的物品编码字符串必须符合以下三种格式之一：\n- <整数部分> （例如 0, 12, 123）\n- <整数部分>.<非重复部分> （例如 0.5, 1., 2.12, 2.0001）\n- <整数部分>.<非重复部分>(<重复部分>) （例如 0.1(6), 0.9(9), 0.00(1212)）\n\n各部分的含义和限制：\n- 整数部分：长度在 1 到 4 之间，不能以两个或更多的零开头（如 \"00\" 不允许）。\n- 非重复部分：长度在 0 到 4 之间。\n- 重复部分：用圆括号括起来，括号内至少有一个数字，长度为 1 到 4。\n- 所有数字均为 '0'~'9'。\n- 括号只能用于标记重复部分，且必须成对出现。\n\n两个物品编码表示同一个物品序列当且仅当它们代表的数值相等。具体来说，将每个编码字符串按重复部分无限拼接展开成无限小数，如果从某一位开始两个无限小数的数字序列完全相同，则它们相等。在实际判断时，由于总长度有限，只需将两个字符串分别展开到小数点后至少 17 位（循环节重复至足够长度），比较前 17 位小数即可得出正确结论。\n\n现在小明发现两个柜子的物品清单可能代表不同的物品序列，他希望通过调整清单上的编码，使两个清单最终对应完全相同的物品序列。由于格子中的物品不能随意更改，他只能通过修改编码字符串本身来达到目的。每次对字符串的修改称为一步操作，每一步操作需要付出 1 点代价。允许的操作类型如下：\n\n1. 替换：将某个数字字符改为另一个数字字符（例如将 '3' 改成 '5'）。\n2. 插入括号：在符合格式要求的位置插入一对圆括号，将一段原本属于非重复部分或重复部分的数字标记为新的重复部分。插入后必须满足格式约束（非重复部分长度不超过 4，且括号不能出现在整数部分等）。\n3. 删除括号：删除一对已有的圆括号，将原重复部分变为非重复部分。删除后不能违反格式约束（例如非重复部分长度不能超过 4）。\n4. 移动括号：将左括号向左或向右移动一个字符位置，从而改变重复部分的起始位置。移动后必须仍然是合法的编码字符串。\n\n任何操作过程中以及最终得到的字符串都必须严格遵守上述编码格式约束。如果原始两个清单的编码已经对应相同的物品序列，则不需要任何调整，总代价为 0。\n\n请你帮助小明计算使两个清单编码相同（即表示同一个数值）所需的最小总代价，并输出一组达到该最小代价的修改后的清单编码。如果存在多组最优方案，输出任意一组即可。",
+    "input_format": "输入共两行，每行一个字符串，分别表示第一个柜子和第二个柜子的原始物品编码。",
+    "output_format": "第一行输出一个整数，表示最小总代价。\n第二行输出第一个柜子调整后的物品编码。\n第三行输出第二个柜子调整后的物品编码。\n如果存在多组最小代价方案，输出任意一组即可。",
+    "constraints": [
+      "每个输入字符串总长度不超过 15 个字符（包括数字、小数点和括号）。",
+      "字符串严格遵循描述中给出的三种格式之一。",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "0.0\n0.1",
+        "output": "1\n0.1\n0.1",
+        "explanation": "将第一个字符串末尾的数字 '0' 替换为 '1'，即可使两个字符串相同，总代价为 1。"
+      },
+      {
+        "input": "0.(123)\n0.(124)",
+        "output": "1\n0.(124)\n0.(124",
+        "explanation": "将第一个字符串重复部分中的 '3' 替换为 '4'，得到与第二个字符串完全相同的编码，总代价为 1。"
+      },
+      {
+        "input": "0.1(6)\n0.1666(6)",
+        "output": "0\n0.1(6)\n0.1666(6)",
+        "explanation": "两个编码原本就表示相同的物品序列（无限小数均为 0.1666...），无需任何调整，代价为 0。输出原字符串即可。"
+      },
+      {
+        "input": "0.1\n0.(1)",
+        "output": "1\n0.(1)\n0.(1)",
+        "explanation": "将第一个字符串插入一对括号，使 '1' 变成重复部分，得到 '0.(1)' 后与第二个字符串相等。也可以删除第二个字符串的括号得到 '0.1'，代价相同。输出其中一种方案。"
+      },
+      {
+        "input": "0.1(23)\n0.12(3)",
+        "output": "1\n0.12(3)\n0.12(3)",
+        "explanation": "将第一个字符串的左括号向右移动一位，重复部分由 '23' 变为 '3'，得到 '0.12(3)'，与第二个字符串相等。总代价为 1。"
+      }
+    ],
+    "notes": "两个编码相等性的判断依据是它们展开成无限小数后数值相同。实际实现时，将字符串展开到小数点后 17 位进行比较即可。如果有多组最小代价方案，输出任意一组均算正确。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_leetcode_180d25df7224_campus_ops_20260609_193718",
+    "round_index": 4,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 1,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\artifacts\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224_campus_ops_20260609_193718_round3.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\reports\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224_campus_ops_20260609_193718_round3_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "pass",
+      "generated_status": "ok",
+      "quality_score": 84.0,
+      "divergence_score": 76.4,
+      "non_full_dimensions": [
+        {
+          "dimension": "spec_completeness",
+          "score": 3.0,
+          "rationale": "题面对编辑操作和格式约束描述详尽，但缺少一个关键信息：如何判定两个编码字符串表示的数相等。虽然面向熟悉原题的选手可能知道通过无限展开比较，但题面自身未给出明确的相等性判断规则（如展开到17位小数后比较），这会导致解题者无法准确实现目标验证，需要自行猜测。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "generated_problem.samples[2].explanation"
+          ]
+        },
+        {
+          "dimension": "sample_quality",
+          "score": 3.0,
+          "rationale": "样例数量为3，但仅覆盖了替换操作和原始相等的情况，缺少对插入括号、删除括号、移动括号操作的示范，不利于选手理解这些操作的具体效果和合法形式。",
+          "evidence_refs": [
+            "generated_problem.samples",
+            "hard_checks[13].message"
+          ]
+        }
+      ],
+      "suggested_revisions": [
+        "增加更精确的算法描述或提供额外的边界样例（如 0, 1.0, 0.9(9) 的处理），减少歧义。",
+        "增加 1-2 个样例，例如输入 '0' 和 '0.0' 的 equal 情况，或 '1.0' 和 '1' 的 equal 情况，以覆盖边缘情形。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "增加一个规范表示的边缘样例（如 0, 1.0, 0.9(9) 等的处理）",
+        "明确规范表示的确定算法或提供更形式化的定义，减少实现歧义",
+        "优先改写核心任务定义，而不是继续替换故事背景。",
+        "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。",
+        "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。",
+        "在描述中明确给出两个编码数值相等的判定条件（如展开至17位后逐位比较）。",
+        "补充至少一个涵盖括号插入/删除/移动的样例，以帮助理解操作语义。",
+        "（可选）在constraints中增加对字符串长度上下界的简要说明（已在描述中体现，可保留现状）。"
+      ],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "规范表示定义可能存在歧义",
+          "detail": "描述中规范表示的定义使用自然语言（如“优先选择非重复部分最短的表示”、“尽量使得循环部分不会以0开始”），解题者可能需要自行推断边界实现，容易产生理解偏差。",
+          "evidence_refs": [
+            "snapshots.generated_problem.description"
+          ],
+          "fix_hint": "增加更精确的算法描述或提供额外的边界样例（如 0, 1.0, 0.9(9) 的处理），减少歧义。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例数量偏少，边缘覆盖不足",
+          "detail": "仅有两个样例，虽然覆盖了两种分支，但缺乏整数、有限小数、零等常见边界情况，可能影响解题者调试和信心。",
+          "evidence_refs": [
+            "snapshots.generated_problem.samples"
+          ],
+          "fix_hint": "增加 1-2 个样例，例如输入 '0' 和 '0.0' 的 equal 情况，或 '1.0' 和 '1' 的 equal 情况，以覆盖边缘情形。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "The underlying task of determining equality of two strings representing rational numbers with repeating decimals is unchanged. The input format constraints, core comparison logic, and mathematical structure are identical. The new problem only adds an output wrapper (canonical representation or conflict evidence) and rebrands the setting as classroom scheduling. The original solution's parsing, expansion, and comparison routines can be directly reused with minimal augmentation, and the conflict evidence is a trivial byproduct of the existing comparison. The narrative and samples are transparently mapped from the original, confirming it is a surface retheme.",
+          "evidence_refs": [
+            "original_problem.description",
+            "generated_problem.description",
+            "original_schema.core_constraints",
+            "new_schema.core_constraints",
+            "hard_checks.source_leakage",
+            "hard_checks.schema_distance_threshold",
+            "generated_problem.samples",
+            "review_context.algorithmic_delta_claim"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "缺少编码数值相等性的明确定义",
+          "detail": "题面只描述了编码的格式和操作，但未说明如何判断两个编码字符串表示的数是否相等。例如样例“0.1(6)”与“0.1666(6)”被认为相等，但没有给出判定规则（如展开到多少位后比较）。解题者需要自行猜测，可能导致实现偏差。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "generated_problem.samples[2].explanation"
+          ],
+          "fix_hint": "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例未覆盖全部编辑操作类型",
+          "detail": "目前样例只展示了替换操作和无需操作的情形，没有给出插入括号、删除括号、移动括号的示例，降低了这些操作的可理解性。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。"
+        }
+      ],
+      "strengths_to_keep": [
+        "描述清晰，校园主题贴切，易于代入",
+        "冲突证据设计精巧，解释充分，突出了 O(1) 可验证性",
+        "输出格式严格遵循 new_schema 的双分支要求，无遗漏",
+        "Accurately translates new_schema constraints and objective into a well-defined problem.",
+        "Samples are informative and illustrate key aspects like 0.(9) = 1 case.",
+        "Clear and concise language suitable for an OJ problem.",
+        "任务背景转换自然，将原题抽象映射为家庭收纳场景，易读且无违和感。",
+        "编辑操作集合定义清晰，四种操作及代价描述详细，形式化程度高。",
+        "输入输出格式严格对齐，样例解释简明，整体结构符合OJ题面规范。",
+        "保留了原题格式约束并扩展了编辑操作，不存在信息泄露或原题痕迹。"
+      ],
+      "previous_generated_problem": {
+        "title": "家庭收纳清单调整",
+        "description": "小明有两个柜子，每个柜子里存放的物品都有一个唯一的编码。这些编码遵循特定的格式：一个整数部分，可选的小数点，可选的 non-repeating 部分，以及可能由一对圆括号括起来的 repeating 部分。具体来说，一个合法的编码字符串必须符合以下三种形式之一：\n- <整数部分> (例如 0, 12, 123)\n- <整数部分>.< non-repeating 部分> (例如 0.5, 1., 2.12, 2.0001)\n- <整数部分>.< non-repeating 部分>(<repeating 部分>) (例如 0.1(6), 0.9(9), 0.00(1212))\n\n其中，整数部分的长度在 1 到 4 之间，non-repeating 部分的长度在 0 到 4 之间，repeating 部分的长度在 1 到 4 之间。整数部分不能以两个或更多的零开头（例如 \"00\" 开头是不允许的）。每个部分只包含数字字符 '0'-'9'。括号仅用于标记 repeating 部分，且必须成对出现，括号内至少有一个数字。\n\n现在，小明发现两个柜子的物品编码清单不一致，他希望通过一系列调整操作，使两个清单的编码变得相同，并且总调整代价最小。每次调整操作称为一步，每一步的代价为 1。允许的调整操作包括：\n\n1. 替换：将清单中的某一个数字字符改为另一个数字字符（例如将 '3' 改为 '5'）。\n2. 插入括号：在符合格式的位置插入一对括号，将原本不循环的部分变为新的 repeating 部分。插入后必须满足格式约束（non-repeating 部分长度不能超过 4，且括号不能出现在整数部分等）。\n3. 删除括号：删除一对已有的括号，将原来的 repeating 部分变为 non-repeating 部分。删除后不能违反格式约束（例如 non-repeating 部分长度不能超过 4）。\n4. 移动括号：将一个左括号向左或向右移动一个字符位置，从而改变 repeating 部分的长度。移动后必须仍然是一个合法的编码字符串。\n\n任何操作过程中及结束后的字符串都必须严格遵守编码格式约束。如果原始两个清单的编码已经相同，则不需要任何调整，总代价为 0。\n\n请你帮助小明计算使两个清单编码相同所需的最小总代价，并输出一组达到该最小代价的修改后的清单编码（任意一组即可）。",
+        "input_format": "输入包含两行，每行一个字符串，分别表示第一个柜子和第二个柜子的原始物品编码。",
+        "output_format": "第一行输出一个整数，表示最小总代价。\n第二行输出第一个柜子调整后的物品编码。\n第三行输出第二个柜子调整后的物品编码。\n如果存在多组最小代价方案，输出任意一组即可。",
+        "constraints": [
+          "1 ≤ 每个字符串长度 ≤ 13（包括数字、小数点、括号）",
+          "时间限制：2 秒",
+          "空间限制：256 MB"
+        ],
+        "samples": [
+          {
+            "input": "0.0\n0.1",
+            "output": "1\n0.1\n0.1",
+            "explanation": "将第一个编码的最后一个 '0' 替换为 '1'，总代价为 1。"
+          },
+          {
+            "input": "0.(123)\n0.(124)",
+            "output": "1\n0.(124)\n0.(124)",
+            "explanation": "将第一个编码 repeating 部分中的 '3' 替换为 '4'，得到与第二个编码相同的字符串。总代价为 1。"
+          },
+          {
+            "input": "0.1(6)\n0.1666(6)",
+            "output": "0\n0.1(6)\n0.1666(6)",
+            "explanation": "两个编码本质上表示相同的物品序列，无需修改。输出原字符串即可。"
+          }
+        ],
+        "notes": "",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": ""
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 92.0,
+            "divergence_score": 41.6,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "规范表示定义可能存在歧义",
+                "detail": "描述中规范表示的定义使用自然语言（如“优先选择非重复部分最短的表示”、“尽量使得循环部分不会以0开始”），解题者可能需要自行推断边界实现，容易产生理解偏差。",
+                "evidence_refs": [
+                  "snapshots.generated_problem.description"
+                ],
+                "fix_hint": "增加更精确的算法描述或提供额外的边界样例（如 0, 1.0, 0.9(9) 的处理），减少歧义。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例数量偏少，边缘覆盖不足",
+                "detail": "仅有两个样例，虽然覆盖了两种分支，但缺乏整数、有限小数、零等常见边界情况，可能影响解题者调试和信心。",
+                "evidence_refs": [
+                  "snapshots.generated_problem.samples"
+                ],
+                "fix_hint": "增加 1-2 个样例，例如输入 '0' 和 '0.0' 的 equal 情况，或 '1.0' 和 '1' 的 equal 情况，以覆盖边缘情形。"
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "The underlying task of determining equality of two strings representing rational numbers with repeating decimals is unchanged. The input format constraints, core comparison logic, and mathematical structure are identical. The new problem only adds an output wrapper (canonical representation or conflict evidence) and rebrands the setting as classroom scheduling. The original solution's parsing, expansion, and comparison routines can be directly reused with minimal augmentation, and the conflict evidence is a trivial byproduct of the existing comparison. The narrative and samples are transparently mapped from the original, confirming it is a surface retheme.",
+                "evidence_refs": [
+                  "original_problem.description",
+                  "generated_problem.description",
+                  "original_schema.core_constraints",
+                  "new_schema.core_constraints",
+                  "hard_checks.source_leakage",
+                  "hard_checks.schema_distance_threshold",
+                  "generated_problem.samples",
+                  "review_context.algorithmic_delta_claim"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加更精确的算法描述或提供额外的边界样例（如 0, 1.0, 0.9(9) 的处理），减少歧义。",
+              "增加 1-2 个样例，例如输入 '0' 和 '0.0' 的 equal 情况，或 '1.0' 和 '1' 的 equal 情况，以覆盖边缘情形。",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "增加一个规范表示的边缘样例（如 0, 1.0, 0.9(9) 等的处理）",
+              "明确规范表示的确定算法或提供更形式化的定义，减少实现歧义",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "描述清晰，校园主题贴切，易于代入",
+              "冲突证据设计精巧，解释充分，突出了 O(1) 可验证性",
+              "输出格式严格遵循 new_schema 的双分支要求，无遗漏"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 61.8,
+            "failed_hard_checks": [],
+            "issues": [],
+            "suggested_revisions": [],
+            "strengths_to_keep": [
+              "Accurately translates new_schema constraints and objective into a well-defined problem.",
+              "Samples are informative and illustrate key aspects like 0.(9) = 1 case.",
+              "Clear and concise language suitable for an OJ problem."
+            ]
+          }
+        },
+        {
+          "round_index": 3,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 3,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 84.0,
+            "divergence_score": 76.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "缺少编码数值相等性的明确定义",
+                "detail": "题面只描述了编码的格式和操作，但未说明如何判断两个编码字符串表示的数是否相等。例如样例“0.1(6)”与“0.1666(6)”被认为相等，但没有给出判定规则（如展开到多少位后比较）。解题者需要自行猜测，可能导致实现偏差。",
+                "evidence_refs": [
+                  "generated_problem.description",
+                  "generated_problem.samples[2].explanation"
+                ],
+                "fix_hint": "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例未覆盖全部编辑操作类型",
+                "detail": "目前样例只展示了替换操作和无需操作的情形，没有给出插入括号、删除括号、移动括号的示例，降低了这些操作的可理解性。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。"
+              }
+            ],
+            "suggested_revisions": [
+              "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。",
+              "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。",
+              "在描述中明确给出两个编码数值相等的判定条件（如展开至17位后逐位比较）。",
+              "补充至少一个涵盖括号插入/删除/移动的样例，以帮助理解操作语义。",
+              "（可选）在constraints中增加对字符串长度上下界的简要说明（已在描述中体现，可保留现状）。"
+            ],
+            "strengths_to_keep": [
+              "任务背景转换自然，将原题抽象映射为家庭收纳场景，易读且无违和感。",
+              "编辑操作集合定义清晰，四种操作及代价描述详细，形式化程度高。",
+              "输入输出格式严格对齐，样例解释简明，整体结构符合OJ题面规范。",
+              "保留了原题格式约束并扩展了编辑操作，不存在信息泄露或原题痕迹。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 3,
+        "latest_round_index": 3,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "pass",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 84.0,
+        "latest_divergence_score": 76.4,
+        "suggested_revisions": [
+          "增加更精确的算法描述或提供额外的边界样例（如 0, 1.0, 0.9(9) 的处理），减少歧义。",
+          "增加 1-2 个样例，例如输入 '0' 和 '0.0' 的 equal 情况，或 '1.0' 和 '1' 的 equal 情况，以覆盖边缘情形。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "增加一个规范表示的边缘样例（如 0, 1.0, 0.9(9) 等的处理）",
+          "明确规范表示的确定算法或提供更形式化的定义，减少实现歧义",
+          "优先改写核心任务定义，而不是继续替换故事背景。",
+          "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。",
+          "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。",
+          "在描述中明确给出两个编码数值相等的判定条件（如展开至17位后逐位比较）。",
+          "补充至少一个涵盖括号插入/删除/移动的样例，以帮助理解操作语义。",
+          "（可选）在constraints中增加对字符串长度上下界的简要说明（已在描述中体现，可保留现状）。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "规范表示定义可能存在歧义",
+            "detail": "描述中规范表示的定义使用自然语言（如“优先选择非重复部分最短的表示”、“尽量使得循环部分不会以0开始”），解题者可能需要自行推断边界实现，容易产生理解偏差。",
+            "evidence_refs": [
+              "snapshots.generated_problem.description"
+            ],
+            "fix_hint": "增加更精确的算法描述或提供额外的边界样例（如 0, 1.0, 0.9(9) 的处理），减少歧义。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例数量偏少，边缘覆盖不足",
+            "detail": "仅有两个样例，虽然覆盖了两种分支，但缺乏整数、有限小数、零等常见边界情况，可能影响解题者调试和信心。",
+            "evidence_refs": [
+              "snapshots.generated_problem.samples"
+            ],
+            "fix_hint": "增加 1-2 个样例，例如输入 '0' 和 '0.0' 的 equal 情况，或 '1.0' 和 '1' 的 equal 情况，以覆盖边缘情形。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "The underlying task of determining equality of two strings representing rational numbers with repeating decimals is unchanged. The input format constraints, core comparison logic, and mathematical structure are identical. The new problem only adds an output wrapper (canonical representation or conflict evidence) and rebrands the setting as classroom scheduling. The original solution's parsing, expansion, and comparison routines can be directly reused with minimal augmentation, and the conflict evidence is a trivial byproduct of the existing comparison. The narrative and samples are transparently mapped from the original, confirming it is a surface retheme.",
+            "evidence_refs": [
+              "original_problem.description",
+              "generated_problem.description",
+              "original_schema.core_constraints",
+              "new_schema.core_constraints",
+              "hard_checks.source_leakage",
+              "hard_checks.schema_distance_threshold",
+              "generated_problem.samples",
+              "review_context.algorithmic_delta_claim"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "缺少编码数值相等性的明确定义",
+            "detail": "题面只描述了编码的格式和操作，但未说明如何判断两个编码字符串表示的数是否相等。例如样例“0.1(6)”与“0.1666(6)”被认为相等，但没有给出判定规则（如展开到多少位后比较）。解题者需要自行猜测，可能导致实现偏差。",
+            "evidence_refs": [
+              "generated_problem.description",
+              "generated_problem.samples[2].explanation"
+            ],
+            "fix_hint": "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例未覆盖全部编辑操作类型",
+            "detail": "目前样例只展示了替换操作和无需操作的情形，没有给出插入括号、删除括号、移动括号的示例，降低了这些操作的可理解性。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。"
+          }
+        ],
+        "strengths_to_keep": [
+          "描述清晰，校园主题贴切，易于代入",
+          "冲突证据设计精巧，解释充分，突出了 O(1) 可验证性",
+          "输出格式严格遵循 new_schema 的双分支要求，无遗漏",
+          "Accurately translates new_schema constraints and objective into a well-defined problem.",
+          "Samples are informative and illustrate key aspects like 0.(9) = 1 case.",
+          "Clear and concise language suitable for an OJ problem.",
+          "任务背景转换自然，将原题抽象映射为家庭收纳场景，易读且无违和感。",
+          "编辑操作集合定义清晰，四种操作及代价描述详细，形式化程度高。",
+          "输入输出格式严格对齐，样例解释简明，整体结构符合OJ题面规范。",
+          "保留了原题格式约束并扩展了编辑操作，不存在信息泄露或原题痕迹。"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

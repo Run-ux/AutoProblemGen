@@ -1,0 +1,116 @@
+{
+  "problem_id": "taco_codeforces_5df2ccdb37df",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "dimensions",
+        "role_description": "row and column dimensions of the grid",
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": 3,
+          "max": 1000
+        },
+        "properties": {}
+      },
+      {
+        "role": "grid",
+        "role_description": "character grid consisting of '*' and '.'",
+        "type": "matrix",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "star_structure",
+        "description": "A star consists of a center asterisk '*' and four rays (left, right, top, bottom) of the same positive integer length s. That is, for a center (x,y) and size s ≥ 1, the star covers cells (x, y), (x-i, y), (x+i, y), (x, y-i), (x, y+i) for all i=1…s.",
+        "formal": "∀ star (x,y,s): covered = {(x,y)} ∪ {(x±i,y), (x,y±i) | i=1..s}, s ∈ ℤ⁺",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "grid_coverage",
+        "description": "The placed stars must together exactly draw the given grid: every cell containing '*' in the grid must be covered by at least one star, and no star may cover any cell that contains '.' in the grid.",
+        "formal": "Let grid G. Stars S. ∀(i,j): G[i][j]='*' ⇒ ∃ star ∈ S covering (i,j); ∀ star ∈ S, ∀ covered cell (i,j): G[i][j]='*'.",
+        "source_sections": [
+          "description",
+          "output"
+        ]
+      },
+      {
+        "name": "star_inside_grid",
+        "description": "Each star must be completely inside the rectangular grid of size n × m.",
+        "formal": "For each star with center (x, y) and size s: 1 ≤ x-s, x+s ≤ n and 1 ≤ y-s, y+s ≤ m.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "star_count_upper_bound",
+        "description": "The number k of stars used in the output must satisfy 0 ≤ k ≤ n·m.",
+        "formal": "0 ≤ k ≤ n·m",
+        "source_sections": [
+          "description",
+          "output"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "construction",
+    "description": "construct a set of stars covering all '*' cells, or determine impossibility",
+    "target": "stars",
+    "requires_solution": true
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "directional_contiguous_length_accumulation",
+        "description": "沿每个方向扫描,连续目标格子的长度通过递推累积:若当前格子是目标字符,则长度等于前一个格子的长度加一,否则重置为零。该性质在四个方向上独立维护,为后续判断最大延伸范围提供稳定依据。",
+        "properties": {},
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "difference_array_range_coverage",
+        "description": "使用差分数组记录区间更新,通过前缀和恢复每个位置的覆盖次数。任何一次星星放置的水平覆盖区间与垂直覆盖区间分别以常数时间更新对应差分数组,最终通过扫描求得每个格子是否被至少一条射线覆盖。",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_5df2ccdb37df",
+    "title": "E2",
+    "description": "A star is a figure of the following type: an asterisk character '*' in the center of the figure and four rays (to the left, right, top, bottom) of the same positive length. The size of a star is the length of its rays. The size of a star must be a positive number (i.e. rays of length $0$ are not allowed).\n\nLet's consider empty cells are denoted by '.', then the following figures are stars:\n\n [Image] The leftmost figure is a star of size $1$, the middle figure is a star of size $2$ and the rightmost figure is a star of size $3$. \n\nYou are given a rectangular grid of size $n \\times m$ consisting only of asterisks '*' and periods (dots) '.'. Rows are numbered from $1$ to $n$, columns are numbered from $1$ to $m$. Your task is to draw this grid using any number of stars or find out that it is impossible. Stars can intersect, overlap or even coincide with each other. The number of stars in the output can't exceed $n \\cdot m$. Each star should be completely inside the grid. You can use stars of same and arbitrary sizes.\n\nIn this problem, you do not need to minimize the number of stars. Just find any way to draw the given grid with at most $n \\cdot m$ stars.\n\n\n-----Input-----\n\nThe first line of the input contains two integers $n$ and $m$ ($3 \\le n, m \\le 1000$) — the sizes of the given grid.\n\nThe next $n$ lines contains $m$ characters each, the $i$-th line describes the $i$-th row of the grid. It is guaranteed that grid consists of characters '*' and '.' only.\n\n\n-----Output-----\n\nIf it is impossible to draw the given grid using stars only, print \"-1\".\n\nOtherwise in the first line print one integer $k$ ($0 \\le k \\le n \\cdot m$) — the number of stars needed to draw the given grid. The next $k$ lines should contain three integers each — $x_j$, $y_j$ and $s_j$, where $x_j$ is the row index of the central star character, $y_j$ is the column index of the central star character and $s_j$ is the size of the star. Each star should be completely inside the grid.\n\n\n-----Examples-----\nInput\n6 8\n....*...\n...**...\n..*****.\n...**...\n....*...\n........\n\nOutput\n3\n3 4 1\n3 5 2\n3 5 1\n\nInput\n5 5\n.*...\n****.\n.****\n..**.\n.....\n\nOutput\n3\n2 2 1\n3 3 1\n3 4 1\n\nInput\n5 5\n.*...\n***..\n.*...\n.*...\n.....\n\nOutput\n-1\n\nInput\n3 3\n*.*\n.*.\n*.*\n\nOutput\n-1\n\n\n\n-----Note-----\n\nIn the first example the output 2\n\n3 4 1\n\n3 5 2\n\n\n\nis also correct.",
+    "input": "6 8\n....*...\n...**...\n..*****.\n...**...\n....*...\n........\n\n5 5\n.*...\n****.\n.****\n..**.\n.....\n\n5 5\n.*...\n***..\n.*...\n.*...\n.....\n\n3 3\n*.*\n.*.\n*.*",
+    "output": "3\n3 4 1\n3 5 2\n3 5 1\n\n3\n2 2 1\n3 3 1\n3 4 1\n\n-1\n\n-1\n\n\n\n-----Note-----\n\nIn the first example the output 2\n\n3 4 1\n\n3 5 2\n\n\n\nis also correct.",
+    "constraints": "expected time complexity: O(N^2)",
+    "source": "codeforces",
+    "standard_solution_code": "import sys\nfrom itertools import accumulate\n\ndef input():\n\treturn sys.stdin.readline().strip()\n\ndef list2d(a, b, c):\n\treturn [[c] * b for i in range(a)]\n\ndef list3d(a, b, c, d):\n\treturn [[[d] * c for j in range(b)] for i in range(a)]\n\ndef list4d(a, b, c, d, e):\n\treturn [[[[e] * d for j in range(c)] for j in range(b)] for i in range(a)]\n\ndef ceil(x, y=1):\n\treturn int(-(-x // y))\n\ndef INT():\n\treturn int(input())\n\ndef MAP():\n\treturn map(int, input().split())\n\ndef LIST(N=None):\n\treturn list(MAP()) if N is None else [INT() for i in range(N)]\n\ndef Yes():\n\tprint('Yes')\n\ndef No():\n\tprint('No')\n\ndef YES():\n\tprint('YES')\n\ndef NO():\n\tprint('NO')\nINF = 10 ** 18\nMOD = 10 ** 9 + 7\n\ndef build_grid(H, W, intv, _type, space=True, padding=False):\n\tif space:\n\t\t_input = lambda : input().split()\n\telse:\n\t\t_input = lambda : input()\n\t_list = lambda : list(map(_type, _input()))\n\tif padding:\n\t\toffset = 1\n\telse:\n\t\toffset = 0\n\tgrid = list2d(H + offset * 2, W + offset * 2, intv)\n\tfor i in range(offset, H + offset):\n\t\trow = _list()\n\t\tfor j in range(offset, W + offset):\n\t\t\tgrid[i][j] = row[j - offset]\n\treturn grid\n(H, W) = MAP()\ngrid = build_grid(H, W, '#', str, space=0, padding=1)\nans = []\nimosw = list2d(H + 2, W + 2, 0)\nimosh = list2d(H + 2, W + 2, 0)\n\ndef check(i, j):\n\tsz = min(L[i][j], R[i][j], U[i][j], D[i][j])\n\tif sz > 1:\n\t\timosw[i][j - sz + 1] += 1\n\t\timosw[i][j + sz] -= 1\n\t\timosh[i - sz + 1][j] += 1\n\t\timosh[i + sz][j] -= 1\n\t\tans.append((i, j, sz - 1))\n\ndef check2():\n\tfor i in range(1, H + 1):\n\t\tfor j in range(1, W + 1):\n\t\t\tif grid[i][j] == '*' and (not imosw[i][j]) and (not imosh[i][j]):\n\t\t\t\treturn False\n\treturn True\nL = list2d(H + 2, W + 2, 0)\nR = list2d(H + 2, W + 2, 0)\nU = list2d(H + 2, W + 2, 0)\nD = list2d(H + 2, W + 2, 0)\nfor i in range(1, H + 1):\n\tfor j in range(1, W + 1):\n\t\tif grid[i][j] == '.':\n\t\t\tL[i][j] = 0\n\t\telse:\n\t\t\tL[i][j] = L[i][j - 1] + 1\nfor i in range(1, H + 1):\n\tfor j in range(W, 0, -1):\n\t\tif grid[i][j] == '.':\n\t\t\tR[i][j] = 0\n\t\telse:\n\t\t\tR[i][j] = R[i][j + 1] + 1\nfor j in range(1, W + 1):\n\tfor i in range(1, H + 1):\n\t\tif grid[i][j] == '.':\n\t\t\tU[i][j] = 0\n\t\telse:\n\t\t\tU[i][j] = U[i - 1][j] + 1\nfor j in range(1, W + 1):\n\tfor i in range(H, 0, -1):\n\t\tif grid[i][j] == '.':\n\t\t\tD[i][j] = 0\n\t\telse:\n\t\t\tD[i][j] = D[i + 1][j] + 1\nfor i in range(1, H + 1):\n\tfor j in range(1, W + 1):\n\t\tif grid[i][j] == '*':\n\t\t\tcheck(i, j)\nfor i in range(1, H + 1):\n\tfor j in range(W + 1):\n\t\timosw[i][j + 1] += imosw[i][j]\nfor j in range(1, W + 1):\n\tfor i in range(H + 1):\n\t\timosh[i + 1][j] += imosh[i][j]\nif check2():\n\tprint(len(ans))\n\t[print(h, w, sz) for (h, w, sz) in ans]\nelse:\n\tprint(-1)"
+  }
+}

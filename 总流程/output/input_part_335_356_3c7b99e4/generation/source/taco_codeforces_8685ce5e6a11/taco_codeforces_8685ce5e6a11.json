@@ -1,0 +1,163 @@
+{
+  "problem_id": "taco_codeforces_8685ce5e6a11",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "array",
+    "length": {
+      "min": 1,
+      "max": 100
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    },
+    "components": [
+      {
+        "role": "test_case",
+        "role_description": "A single test case containing n and a 2n x 2n matrix of costs",
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "n",
+            "role_description": "Half the grid dimension",
+            "type": "integer",
+            "length": null,
+            "value_range": {
+              "min": 1,
+              "max": 250
+            },
+            "properties": {}
+          },
+          {
+            "role": "cost_matrix",
+            "role_description": "2n x 2n matrix of snow removal costs",
+            "type": "matrix",
+            "length": null,
+            "value_range": {
+              "min": 0,
+              "max": 1000000000
+            },
+            "properties": {}
+          }
+        ]
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "initial_configuration",
+        "description": "Exactly n^2 friends start in the top-left n×n region, one per cell.",
+        "formal": "∀x,y ∈ [1,n] : cell (x,y) contains exactly one friend; all other cells are empty.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "target_configuration",
+        "description": "After all moves, the bottom-right n×n region must contain exactly one friend per cell.",
+        "formal": "∀x,y ∈ [n+1,2n] : cell (x,y) contains exactly one friend.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "move_operations",
+        "description": "Allowed moves are cyclic row shifts (all friends in a row move left or right with wrapping) and cyclic column shifts (up or down with wrapping).",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "obstacle_constraint",
+        "description": "At no point during the sequence of moves may any friend occupy a cell that still contains snow; becoming ill is forbidden.",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "obstacle_removal",
+        "description": "Before any move, you may pay c_{x,y} to permanently remove snow from cell (x,y); any number of cells can be cleared.",
+        "formal": "Choose set S of cells; total cost = Σ_{(x,y)∈S} c_{x,y}.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "start_no_snow",
+        "description": "The entire initial n×n top-left region is guaranteed to have no snow.",
+        "formal": "c_{i,j}=0 for all 1 ≤ i,j ≤ n.",
+        "source_sections": [
+          "input"
+        ]
+      },
+      {
+        "name": "objective_min_removal_cost",
+        "description": "Minimize the total coin cost of snow removals such that there exists a sequence of moves driving all friends to the target region without ever occupying an unsnowed cell.",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimal total cost to remove snow such that all friends can be moved to the target cells without ever occupying snow-covered cells",
+    "target": "cost",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "mandatory_region_cost_sum",
+        "description": "The total clearing cost of all snow cells in the bottom-right n×n target region is a lower bound on the total cost because all friends must end up in those cells without falling ill. The accumulated sum of costs in that region is maintained during input processing.",
+        "properties": {
+          "region": "rows n to 2n-1, columns n to 2n-1"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "bridge_cell_minimum",
+        "description": "Any valid sequence of moves forces at least one friend to occupy one of eight specific boundary cells bridging the top-left and bottom-right regions. Thus the minimum snow-clearing cost among those eight cells is a necessary extra cost, and the optimal extra cost equals that minimum.",
+        "properties": {
+          "cells": [
+            "(0,n)",
+            "(0,2n-1)",
+            "(n-1,n)",
+            "(n-1,2n-1)",
+            "(n,0)",
+            "(n,n-1)",
+            "(2n-1,0)",
+            "(2n-1,n-1)"
+          ]
+        },
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_8685ce5e6a11",
+    "title": "D",
+    "description": "Circular land is an $2n \\times 2n$ grid. Rows of this grid are numbered by integers from $1$ to $2n$ from top to bottom and columns of this grid are numbered by integers from $1$ to $2n$ from left to right. The cell $(x, y)$ is the cell on the intersection of row $x$ and column $y$ for $1 \\leq x \\leq 2n$ and $1 \\leq y \\leq 2n$.\n\nThere are $n^2$ of your friends in the top left corner of the grid. That is, in each cell $(x, y)$ with $1 \\leq x, y \\leq n$ there is exactly one friend. Some of the other cells are covered with snow.\n\nYour friends want to get to the bottom right corner of the grid. For this in each cell $(x, y)$ with $n+1 \\leq x, y \\leq 2n$ there should be exactly one friend. It doesn't matter in what cell each of friends will be.\n\nYou have decided to help your friends to get to the bottom right corner of the grid.\n\nFor this, you can give instructions of the following types:\n\nYou select a row $x$. All friends in this row should move to the next cell in this row. That is, friend from the cell $(x, y)$ with $1 \\leq y < 2n$ will move to the cell $(x, y + 1)$ and friend from the cell $(x, 2n)$ will move to the cell $(x, 1)$.\n\nYou select a row $x$. All friends in this row should move to the previous cell in this row. That is, friend from the cell $(x, y)$ with $1 < y \\leq 2n$ will move to the cell $(x, y - 1)$ and friend from the cell $(x, 1)$ will move to the cell $(x, 2n)$.\n\nYou select a column $y$. All friends in this column should move to the next cell in this column. That is, friend from the cell $(x, y)$ with $1 \\leq x < 2n$ will move to the cell $(x + 1, y)$ and friend from the cell $(2n, y)$ will move to the cell $(1, y)$.\n\nYou select a column $y$. All friends in this column should move to the previous cell in this column. That is, friend from the cell $(x, y)$ with $1 < x \\leq 2n$ will move to the cell $(x - 1, y)$ and friend from the cell $(1, y)$ will move to the cell $(2n, y)$.\n\nNote how friends on the grid border behave in these instructions.\n\nExample of applying the third operation to the second column. Here, colorful circles denote your friends and blue cells are covered with snow.\n\nYou can give such instructions any number of times. You can give instructions of different types. If after any instruction one of your friends is in the cell covered with snow he becomes ill.\n\nIn order to save your friends you can remove snow from some cells before giving the first instruction:\n\nYou can select the cell $(x, y)$ that is covered with snow now and remove snow from this cell for $c_{x, y}$ coins.\n\nYou can do this operation any number of times.\n\nYou want to spend the minimal number of coins and give some instructions to your friends. After this, all your friends should be in the bottom right corner of the grid and none of them should be ill.\n\nPlease, find how many coins you will spend.\n\n\n-----Input-----\n\nThe first line contains a single integer $t$ ($1 \\leq t \\leq 100$) — the number of test cases.\n\nThe first line of each test case contains the single integer $n$ ($1 \\leq n \\leq 250$).\n\nEach of the next $2n$ lines contains $2n$ integers $c_{i, 1}, c_{i, 2}, \\ldots, c_{i, 2n}$ ($0 \\leq c_{i, j} \\leq 10^9$) — costs of removing snow from cells. If $c_{i, j} = 0$ for some $i, j$ than there is no snow in cell $(i, j)$. Otherwise, cell $(i, j)$ is covered with snow.\n\nIt is guaranteed that $c_{i, j} = 0$ for $1 \\leq i, j \\leq n$.\n\nIt is guaranteed that the sum of $n$ over all test cases doesn't exceed $250$.\n\n\n-----Output-----\n\nFor each test case output one integer — the minimal number of coins you should spend.\n\n\n-----Examples-----\n\nInput\n4\n1\n0 8\n1 99\n2\n0 0 0 0\n0 0 0 0\n9 9 2 2\n9 9 9 9\n2\n0 0 4 2\n0 0 2 4\n4 2 4 2\n2 4 2 4\n4\n0 0 0 0 0 0 0 2\n0 0 0 0 0 0 2 0\n0 0 0 0 0 2 0 0\n0 0 0 0 2 0 0 0\n0 0 0 2 2 0 2 2\n0 0 2 0 1 6 2 1\n0 2 0 0 2 4 7 4\n2 0 0 0 2 0 1 6\nOutput\n100\n22\n14\n42\n\n\n-----Note-----\n\nIn the first test case you can remove snow from the cells $(2, 1)$ and $(2, 2)$ for $100$ coins. Then you can give instructions\n\nAll friends in the first collum should move to the previous cell. After this, your friend will be in the cell $(2, 1)$.\n\nAll friends in the second row should move to the next cell. After this, your friend will be in the cell $(2, 2)$.\n\nIn the second test case you can remove all snow from the columns $3$ and $4$ for $22$ coins. Then you can give instructions\n\nAll friends in the first row should move to the next cell.\n\nAll friends in the first row should move to the next cell.\n\nAll friends in the second row should move to the next cell.\n\nAll friends in the second row should move to the next cell.\n\nAll friends in the third column should move to the next cell.\n\nAll friends in the third column should move to the next cell.\n\nAll friends in the fourth column should move to the next cell.\n\nAll friends in the fourth column should move to the next cell.\n\nIt can be shown that none of the friends will become ill and that it is impossible to spend less coins.",
+    "input": "4\n1\n0 8\n1 99\n2\n0 0 0 0\n0 0 0 0\n9 9 2 2\n9 9 9 9\n2\n0 0 4 2\n0 0 2 4\n4 2 4 2\n2 4 2 4\n4\n0 0 0 0 0 0 0 2\n0 0 0 0 0 0 2 0\n0 0 0 0 0 2 0 0\n0 0 0 0 2 0 0 0\n0 0 0 2 2 0 2 2\n0 0 2 0 1 6 2 1\n0 2 0 0 2 4 7 4\n2 0 0 0 2 0 1 6",
+    "output": "100\n22\n14\n42\n\n\n-----Note-----\n\nIn the first test case you can remove snow from the cells $(2, 1)$ and $(2, 2)$ for $100$ coins. Then you can give instructions\n\nAll friends in the first collum should move to the previous cell. After this, your friend will be in the cell $(2, 1)$.\n\nAll friends in the second row should move to the next cell. After this, your friend will be in the cell $(2, 2)$.\n\nIn the second test case you can remove all snow from the columns $3$ and $4$ for $22$ coins. Then you can give instructions\n\nAll friends in the first row should move to the next cell.\n\nAll friends in the first row should move to the next cell.\n\nAll friends in the second row should move to the next cell.\n\nAll friends in the second row should move to the next cell.\n\nAll friends in the third column should move to the next cell.\n\nAll friends in the third column should move to the next cell.\n\nAll friends in the fourth column should move to the next cell.\n\nAll friends in the fourth column should move to the next cell.\n\nIt can be shown that none of the friends will become ill and that it is impossible to spend less coins.",
+    "constraints": "time limit: 1 second\nmemory limit: 256 megabytes",
+    "source": "codeforces",
+    "standard_solution_code": "for _ in range(int(input())):\n\tn = int(input())\n\tc = []\n\tcoins = 0\n\tfor i in range(2 * n):\n\t\tif i < n:\n\t\t\tc.append(list(map(int, input().split())))\n\t\telse:\n\t\t\tk = list(map(int, input().split()))\n\t\t\tcoins = coins + sum(k[n:])\n\t\t\tc.append(k)\n\tadd = min(c[0][n], c[0][-1], c[n - 1][n], c[n - 1][-1])\n\tadd = min(add, c[n][0], c[n][n - 1], c[-1][0], c[-1][n - 1])\n\tprint(coins + add)"
+  }
+}

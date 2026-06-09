@@ -1,0 +1,653 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 74.8,
+    "schema_distance": 0.4079,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中的所有关键要素（输入字段、目标函数、核心约束、结构选项）都准确落地到 generated_problem 的描述、输入/输出格式、约束和样例中，未发现遗漏或扭曲。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "new_schema.objective",
+          "generated_problem.constraints",
+          "hard_checks.objective_alignment"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立解题所需的全部关键信息：任务说明、输入格式、输出格式、约束条件、模数、容量范围以及无解处理，且额外说明了排序可行性。缺失信息（如不可达性样例）不影响基本理解。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间相互一致，字段数量、目标定义、解释与样例对应，无矛盾。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "两个样例覆盖了基本操作和最小次数推理，解释详细，有助于理解任务。hard_checks 中 sample_count 通过，未发现格式或逻辑错误。",
+        "evidence_refs": [
+          "hard_checks.sample_count",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，语言直白，无来源污染，符合 OJ 题面习惯。主题接地气，易于理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "题意转换自然，将抽象算法条件包装为贴近生活的校园场景。",
+      "样例解释清晰，逐步展示修改策略和最少性论证。",
+      "关键约束（模数、值域、排序无关性）在描述和注释中明确强调。",
+      "输入/输出格式简洁，便于选手解析。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4079,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.6072,
+        "O": 0.5431,
+        "V": 0.4498
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.6072,
+        "objective_type_distance": 0.5075,
+        "objective_text_distance": 0.5965,
+        "invariant_match_distance": 0.4498
+      }
+    },
+    "schema_distance": 0.4079,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.25,
+    "surface_retheme_risk": 0.15,
+    "verdict": "pass",
+    "rationale": "原题是正向计算所有子序列的 beauty 之和，新题将问题反转为给定目标和求最小修改次数，目标从 value_computation 变为 minimization 并引入 edit 约束，核心求解必须设计外层搜索与验证逻辑，原 DP 仅为内部可复用子程序，无法直接迁移整体解法。叙事、样例、标题均无复用，表层换皮风险极低。虽然核心 DP 仍可复用，但问题建模与求解方向发生本质变化，语义差异明显。",
+    "evidence_refs": [
+      "review_context.difference_plan",
+      "review_context.algorithmic_delta_claim",
+      "hard_checks[?(@.check_id=='source_leakage')]",
+      "hard_checks[?(@.check_id=='title_overlap')]",
+      "new_schema.objective",
+      "generated_problem.description"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.41，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "缺少无解情况的样例",
+      "detail": "输出格式说明若无法达成则输出 -1，但样例没有展示此情况。初学者可能对 -1 的输出时机缺乏直观感受。",
+      "evidence_refs": [
+        "generated_problem.samples",
+        "generated_problem.output_format"
+      ],
+      "fix_hint": "增加一个样例，如 n=2, k=2, S=0, a=[1,2]，显示无论如何调整都无法使公平度之和为 0，输出 -1。"
+    }
+  ],
+  "suggested_revisions": [
+    "增加一个样例，如 n=2, k=2, S=0, a=[1,2]，显示无论如何调整都无法使公平度之和为 0，输出 -1。",
+    "补充一个输出 -1 的样例，提升覆盖度。",
+    "在描述或注释中简要说明公平度之和可能很大，但只需关注模 998244353 后的值，进一步强化模运算意识。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 74.8,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "缺少无解情况的样例",
+        "detail": "输出格式说明若无法达成则输出 -1，但样例没有展示此情况。初学者可能对 -1 的输出时机缺乏直观感受。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "generated_problem.output_format"
+        ],
+        "fix_hint": "增加一个样例，如 n=2, k=2, S=0, a=[1,2]，显示无论如何调整都无法使公平度之和为 0，输出 -1。"
+      }
+    ],
+    "suggested_revisions": [
+      "增加一个样例，如 n=2, k=2, S=0, a=[1,2]，显示无论如何调整都无法使公平度之和为 0，输出 -1。",
+      "补充一个输出 -1 的样例，提升覆盖度。",
+      "在描述或注释中简要说明公平度之和可能很大，但只需关注模 998244353 后的值，进一步强化模运算意识。"
+    ],
+    "strengths_to_keep": [
+      "题意转换自然，将抽象算法条件包装为贴近生活的校园场景。",
+      "样例解释清晰，逐步展示修改策略和最少性论证。",
+      "关键约束（模数、值域、排序无关性）在描述和注释中明确强调。",
+      "输入/输出格式简洁，便于选手解析。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\source\\taco_codeforces_4ec6381cf56a\\taco_codeforces_4ec6381cf56a.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\artifacts\\taco_codeforces_4ec6381cf56a\\taco_codeforces_4ec6381cf56a_campus_ops_20260609_191448_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\output\\taco_codeforces_4ec6381cf56a\\taco_codeforces_4ec6381cf56a_campus_ops_20260609_191448_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_4ec6381cf56a",
+      "title": "F",
+      "description": "Let's call beauty of an array $b_1, b_2, \\ldots, b_n$ ($n > 1$)  — $\\min\\limits_{1 \\leq i < j \\leq n} |b_i - b_j|$.\n\nYou're given an array $a_1, a_2, \\ldots a_n$ and a number $k$. Calculate the sum of beauty over all subsequences of the array of length exactly $k$. As this number can be very large, output it modulo $998244353$.\n\nA sequence $a$ is a subsequence of an array $b$ if $a$ can be obtained from $b$ by deletion of several (possibly, zero or all) elements.\n\n\n-----Input-----\n\nThe first line contains integers $n, k$ ($2 \\le k \\le n \\le 1000$).\n\nThe second line contains $n$ integers $a_1, a_2, \\ldots, a_n$ ($0 \\le a_i \\le 10^5$).\n\n\n-----Output-----\n\nOutput one integer — the sum of beauty over all subsequences of the array of length exactly $k$. As this number can be very large, output it modulo $998244353$.\n\n\n-----Examples-----\nInput\n4 3\n1 7 3 5\n\nOutput\n8\nInput\n5 5\n1 10 100 1000 10000\n\nOutput\n9\n\n\n-----Note-----\n\nIn the first example, there are $4$ subsequences of length $3$ — $[1, 7, 3]$, $[1, 3, 5]$, $[7, 3, 5]$, $[1, 7, 5]$, each of which has beauty $2$, so answer is $8$.\n\nIn the second example, there is only one subsequence of length $5$ — the whole array, which has the beauty equal to $|10-1| = 9$.",
+      "input": "4 3\n1 7 3 5\n\n5 5\n1 10 100 1000 10000",
+      "output": "8\n9\n\n\n-----Note-----\n\nIn the first example, there are $4$ subsequences of length $3$ — $[1, 7, 3]$, $[1, 3, 5]$, $[7, 3, 5]$, $[1, 7, 5]$, each of which has beauty $2$, so answer is $8$.\n\nIn the second example, there is only one subsequence of length $5$ — the whole array, which has the beauty equal to $|10-1| = 9$.",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "from collections import defaultdict\nimport sys\ninput = sys.stdin.readline\ninf = 100000000000000000\nmod = 998244353\n(n, m) = list(map(int, input().split()))\nA = [0] + sorted(list(map(int, input().split())))\nans = 0\nf = [[0] * (n + 10) for _ in range(m + 10)]\nfor x in range(1, (A[n] - A[1]) // (m - 1) + 1):\n\tfor i in range(1, n + 1):\n\t\tf[1][i] = 1\n\tfor i in range(2, m + 1):\n\t\tsum = 0\n\t\tpre = 1\n\t\tfor j in range(1, n + 1):\n\t\t\twhile pre <= n and A[pre] + x <= A[j]:\n\t\t\t\tsum += f[i - 1][pre]\n\t\t\t\tsum %= mod\n\t\t\t\tpre += 1\n\t\t\tf[i][j] = sum\n\tfor i in range(1, n + 1):\n\t\tans += f[m][i]\n\t\tans %= mod\nprint(ans)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_4ec6381cf56a",
+        "codeforces",
+        "Let's call beauty of an array $b_1, b_2, \\ldots, b_n$ ($n > 1$) — $\\min\\limits_{1 \\leq i < j \\leq n} |b_i - b_j|$. You're given an array $a_1, a_2, \\ldots a_n$ and a number $k$. Calculate the sum of beauty over all su...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "引入目标结果约束（C），将目标从计算改为最小修改（O），同时引入编辑操作与单调性等新不变量（V）。",
+      "summary": "问题从“计算给定输入的结果”变为“设计输入（通过最小修改）使结果等于指定目标”。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "campus_ops_equity_modify",
+      "source": "codeforces",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "n",
+            "role_description": "教室总数",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 2,
+              "max": 1000
+            },
+            "properties": {}
+          },
+          {
+            "role": "k",
+            "role_description": "选取的教室数量",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 2,
+              "max": 1000
+            },
+            "properties": {
+              "note": "k ≤ n"
+            }
+          },
+          {
+            "role": "target_mod_sum",
+            "role_description": "目标美丽值之和模 998244353",
+            "type": "integer",
+            "length": {},
+            "value_range": {
+              "min": 0,
+              "max": 998244352
+            },
+            "properties": {
+              "modulus": 998244353
+            }
+          },
+          {
+            "role": "capacities",
+            "role_description": "每个教室的初始容量",
+            "type": "array",
+            "length": {
+              "min": 2,
+              "max": 1000
+            },
+            "value_range": {
+              "min": 0,
+              "max": 100000
+            },
+            "properties": {
+              "ordered": false,
+              "note": "输入不保证有序，算法内部会排序处理"
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "target_modular_equality",
+            "description": "最终容量配置 a' 的所有长度为 k 的子序列的美丽值之和模 998244353 必须等于 target_mod_sum。",
+            "formal": "∑_{subseq S of length k} min_{i<j} |S_i - S_j| ≡ target_mod_sum (mod 998244353)",
+            "source_sections": []
+          },
+          {
+            "name": "edit_operation_definition",
+            "description": "一次操作可以选择一个教室，将其容量修改为任意非负整数，且修改后的值仍需在 [0, 100000] 范围内。",
+            "formal": "∀ i, 0 ≤ a'_i ≤ 100000; operation: change a_i to any integer in range",
+            "source_sections": []
+          },
+          {
+            "name": "input_domain",
+            "description": "n, k, 目标值及数组的取值范围限制与原题保持一致。",
+            "formal": "2 ≤ k ≤ n ≤ 1000; 0 ≤ a_i ≤ 100000; 0 ≤ target_mod_sum < 998244353",
+            "source_sections": []
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization",
+        "description": "求最少的修改元素次数，使得存在修改后的数组满足目标模等式。",
+        "target": "min_edit_count",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "array_resortable",
+            "description": "美丽值计算只依赖元素多重集，与顺序无关，因此修改后的数组可任意重排（例如排序）以应用原 DP 计算。",
+            "properties": {
+              "order_independent": true
+            },
+            "evidence_source": "derived_from_definition"
+          },
+          {
+            "name": "edit_monotonicity",
+            "description": "若修改 t 个元素可以达成目标，则修改 t+1 个元素也一定可以达成（通过额外一次无影响的修改，例如改回原值）。",
+            "properties": {
+              "monotonic": true
+            },
+            "evidence_source": "construction"
+          },
+          {
+            "name": "beauty_sum_formula",
+            "description": "数组 A 的美丽值之和可通过原题 DP 计算：对每个可能的阈值 x，统计相邻差至少为 x 的长度为 k 的子序列个数，求和。该公式适用于任意多重集。",
+            "properties": {},
+            "evidence_source": "reuse_from_seed"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "社团教室公平度调整",
+      "description": "某大学有 n 间教室，每间教室有一个容纳人数（容量）。校学生会需要从中选出 k 间教室用于社团活动日，希望所选教室的容量尽可能接近，以避免资源分配不均。定义一组教室的公平度为：这组教室中任意两间容量差的最小绝对值。\n学生会关心所有可能选出 k 间教室的组合，并想知道这些组合的公平度之和。由于社团发展，他们希望这个和值达到一个特定的目标 S（模 998244353）。\n为此，学校可以调整某些教室的容量，每次调整可以将一间教室的容量修改为任意 0 到 100000 之间的整数。调整不需要连续，可以一次把一个教室的容量直接改为新值。\n给定初始容量和目标 S，请你计算最少需要调整多少间教室的容量，才能使得最终所有 k 元教室组合的公平度之和模 998244353 恰好等于 S。\n注意公平度计算只与容量值的多重集有关，与教室顺序无关。你可以内部对容量进行排序以便计算。",
+      "input_format": "第一行包含三个整数 n, k, S，分别表示教室数量、需要选出的教室数量、以及目标公平度之和模 998244353 后的值。\n第二行包含 n 个整数 a_1, a_2, ..., a_n，表示每间教室的初始容量。",
+      "output_format": "输出一个整数，表示最少需要调整的教室数量。如果无论怎么调整都无法使公平度之和模 998244353 等于 S，则输出 -1。",
+      "constraints": [
+        "2 ≤ k ≤ n ≤ 1000",
+        "0 ≤ a_i ≤ 100000",
+        "0 ≤ S < 998244353",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3 2 2\n1 2 3",
+          "output": "1",
+          "explanation": "初始容量 [1,2,3]，所有 2 间教室组合的公平度之和为 4（组合与公平度：{1,2}→1, {1,3}→2, {2,3}→1）。目标 S=2。可以将容量 3 调整为 1，得到 [1,1,2]，此时组合与公平度：{1,1}→0, {1,2}→1, {1,2}→1，和为 2（模 998244353 仍为 2），达成目标。只调整了 1 间教室，可以证明这是最少的。"
+        },
+        {
+          "input": "4 2 10\n1 2 5 6",
+          "output": "2",
+          "explanation": "初始容量 [1,2,5,6]，所有 2 间教室组合的公平度之和为 18。目标 S=10。可以将 5 调整为 3，6 调整为 4，得到 [1,2,3,4]，此时组合与公平度：{1,2}→1, {1,3}→2, {1,4}→3, {2,3}→1, {2,4}→2, {3,4}→1，和为 10，达成目标。至少需要调整 2 间教室，因为没有只调整 1 间就可得到和 10 的方案。"
+        }
+      ],
+      "notes": "公平度之和可能很大，需要模 998244353。调整后的容量仍须在 [0, 100000] 范围内。如果目标不可能达成，请输出 -1。\n你可以将容量数组排序后计算公平度之和，因为公平度只与值有关，与原始顺序无关。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "问题从“计算给定输入的结果”变为“设计输入（通过最小修改）使结果等于指定目标”。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4079,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.6072,
+          "O": 0.5431,
+          "V": 0.4498
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.6072,
+          "objective_type_distance": 0.5075,
+          "objective_text_distance": 0.5965,
+          "invariant_match_distance": 0.4498
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "将原题输出的美丽值之和绑定为新题需要达成的目标结果，实现方向反转。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 增加 target_modular_equality 约束，明确目标模等式",
+            "objective 从 value_computation 变为 minimization 且目标值作为输入参数"
+          ],
+          "innovation_reason": "要求算法不再从输入推导输出，而是围绕已知输出反过来搜索输入，提升了问题建模的创造性。",
+          "difficulty_reason": "增加目标约束后，算法必须处理可达性判定和优化，而不仅仅是计算，显著抬高了难度。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "定义修改教室容量的操作集合，让反向设计落实到具体的编辑自由度上。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 增加 edit_operation_definition，明确允许的操作和值域",
+            "invariant 增加 array_resortable 和 edit_monotonicity，解释操作对状态的影响"
+          ],
+          "innovation_reason": "从无操作到引入可枚举的编辑动作，使问题从计算变为交互式设计。",
+          "difficulty_reason": "操作的影响是全局且耦合的，验证一个修改序列的效果需要重复运行原 DP，增加了搜索和优化的复杂度。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "要求输出最小修改次数，强制答案附带最小性证明。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确定义为最小化修改次数",
+            "invariant 增加 edit_monotonicity，支撑二分/枚举的正确性"
+          ],
+          "innovation_reason": "答案不再是任意可行解，而是经过优化的最小解，提升了问题的严谨性。",
+          "difficulty_reason": "需要证明不存在更小的修改方案，这通常要求下界论证或穷举完备性，极大增加了证明负担。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "对每个可能的阈值 x，通过动态规划计算以排序后每个位置结尾的长度为 k 的子序列个数，这些子序列满足相邻元素差值至少为 x，然后对所有 x 求和得到总美丽值。",
+        "reusable_subroutines": "计算给定数组美丽值之和的 DP 过程（包括排序、枚举 x、维护前缀和等）可直接作为新题的验证子程序，用于判定某个数组配置是否满足目标模等式。",
+        "new_solver_core": "采用二分答案或枚举最小修改次数 t，然后检查是否存在不超过 t 次修改达到目标。检查时需枚举保留哪些元素不变，并为修改的元素选择合适的值，使最终 F 值等于 target_mod_sum。可能需要预处理部分子集贡献、利用 DP 状态搜索或贪心构造。",
+        "new_proof_obligation": "需要证明：（1）检查算法的正确性，即对于给定保留集合和修改额度，能够准确判断目标的可达性；（2）最小 t 的单调性使得二分搜索有效；（3）当声称无解时，不存在任何修改方案（包括非枚举的正确性论证）。",
+        "why_direct_reuse_fails": "原解仅输出一个确定数组的单一答案，不能直接回答“最小修改多少次才能让结果等于指定值”，因为后者是一个搜索/优化问题，需要反复尝试不同配置并评估结果，原 DP 只是一个内部计算工具。"
+      },
+      "anti_shallow_rationale": "新问题不仅变换了叙事，更将整个求解方向从正向计数翻转为逆向设计，并引入了编辑操作空间和最小性证明要求。算法结构从一次 DP 累加变为基于搜索和验证的迭代优化，核心决策从‘计算已定输入的结果’变为‘寻找达成目标的最优输入’，这是质的改变而非表面改装。"
+    }
+  }
+}

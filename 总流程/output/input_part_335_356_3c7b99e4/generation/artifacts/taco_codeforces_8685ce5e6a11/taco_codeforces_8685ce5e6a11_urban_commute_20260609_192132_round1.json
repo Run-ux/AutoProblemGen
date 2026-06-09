@@ -1,0 +1,1014 @@
+{
+  "problem_id": "taco_codeforces_8685ce5e6a11",
+  "source_problem_ids": [
+    "taco_codeforces_8685ce5e6a11"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_8685ce5e6a11",
+      "codeforces",
+      "Circular land is an $2n \\times 2n$ grid. Rows of this grid are numbered by integers from $1$ to $2n$ from top to bottom and columns of this grid are numbered by integers from $1$ to $2n$ from left to right. The cell $...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimal total cost to remove snow such that all friends can be moved to the target cells without ever occupying snow-covered cells",
+    "target": "cost",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "选择 forward_solution_to_inverse_design 是因为它能够将原题的正向最小成本求解彻底翻转为目标驱动的输入设计问题，完全改变主求解方向，且编辑操作（修改 c 值）直接依托原对象结构，易于落地。相比之下，existence_to_counting 容易退化为在原最优解基础上附加计数步骤的后处理，无法产生真正的结构差异，违背了反串联红线。；创新度判断：该规则会把主责任从“给定矩阵，计算最小成本”拉离为“给定目标成本，求最小修改代价”，迫使算法围绕目标约束反推状态，必须定义允许的修改操作并论证最小性，核心义务从数值计算转向构造性优化与证明。；难度判断：难度抬高点在于：新题要求同时处理修改代价与原始清除成本的交互，证明修改方案的最优性可能需要利用原题的不变量（如桥接单元格最小值）并推导新的下界，主求解责任从直观贪心升级为更复杂的参数调整优化。；风险判断：主要风险是反向设计若仅套用原算法作为判定 oracle 则沦为串接，必须确保编辑操作空间和解法独立于原正向计算；缓解方式是通过 helper 显式要求操作空间基于原对象自然结构，并禁止直接调用原算法求解。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_8685ce5e6a11",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 100
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case",
+          "role_description": "A single test case containing n and a 2n x 2n matrix of costs",
+          "type": "composite",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {},
+          "components": [
+            {
+              "role": "n",
+              "role_description": "Half the grid dimension",
+              "type": "integer",
+              "length": null,
+              "value_range": {
+                "min": 1,
+                "max": 250
+              },
+              "properties": {}
+            },
+            {
+              "role": "cost_matrix",
+              "role_description": "2n x 2n matrix of snow removal costs",
+              "type": "matrix",
+              "length": null,
+              "value_range": {
+                "min": 0,
+                "max": 1000000000
+              },
+              "properties": {}
+            }
+          ]
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "initial_configuration",
+          "description": "Exactly n^2 friends start in the top-left n×n region, one per cell.",
+          "formal": "∀x,y ∈ [1,n] : cell (x,y) contains exactly one friend; all other cells are empty.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "target_configuration",
+          "description": "After all moves, the bottom-right n×n region must contain exactly one friend per cell.",
+          "formal": "∀x,y ∈ [n+1,2n] : cell (x,y) contains exactly one friend.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "move_operations",
+          "description": "Allowed moves are cyclic row shifts (all friends in a row move left or right with wrapping) and cyclic column shifts (up or down with wrapping).",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "obstacle_constraint",
+          "description": "At no point during the sequence of moves may any friend occupy a cell that still contains snow; becoming ill is forbidden.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "obstacle_removal",
+          "description": "Before any move, you may pay c_{x,y} to permanently remove snow from cell (x,y); any number of cells can be cleared.",
+          "formal": "Choose set S of cells; total cost = Σ_{(x,y)∈S} c_{x,y}.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "start_no_snow",
+          "description": "The entire initial n×n top-left region is guaranteed to have no snow.",
+          "formal": "c_{i,j}=0 for all 1 ≤ i,j ≤ n.",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "objective_min_removal_cost",
+          "description": "Minimize the total coin cost of snow removals such that there exists a sequence of moves driving all friends to the target region without ever occupying an unsnowed cell.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "minimal total cost to remove snow such that all friends can be moved to the target cells without ever occupying snow-covered cells",
+      "target": "cost",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "mandatory_region_cost_sum",
+          "description": "The total clearing cost of all snow cells in the bottom-right n×n target region is a lower bound on the total cost because all friends must end up in those cells without falling ill. The accumulated sum of costs in that region is maintained during input processing.",
+          "properties": {
+            "region": "rows n to 2n-1, columns n to 2n-1"
+          },
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "bridge_cell_minimum",
+          "description": "Any valid sequence of moves forces at least one friend to occupy one of eight specific boundary cells bridging the top-left and bottom-right regions. Thus the minimum snow-clearing cost among those eight cells is a necessary extra cost, and the optimal extra cost equals that minimum.",
+          "properties": {
+            "cells": [
+              "(0,n)",
+              "(0,2n-1)",
+              "(n-1,n)",
+              "(n-1,2n-1)",
+              "(n,0)",
+              "(n,n-1)",
+              "(2n-1,0)",
+              "(2n-1,n-1)"
+            ]
+          },
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "将最小化问题直接转为计数最小成本方案数，由于原题的最小成本方案结构过于简单（必须清除的目标区域和唯一的桥接格子选择），导致计数只会是乘法常数（最小桥接的重复次数），没有引入新的算法责任，核心动态规划或组合计数需求缺失。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 2 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题的核心解法仅需计算目标区域成本总和与边界单元格最小值，转换为要求输出规范解（如字典序最小清除方案或移动序列）只会添加表面构造，不会实质改变状态转移或约束优先级，主要算法几乎不变，属于表面修改。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束中，障碍清除成本与移动规则共同决定了最小成本仅由目标区域总成本与8个边界单元格的最小值构成（见 invariant 部分）。标准解法直接输出该计算值，无需构造具体清除集或移动序列。附加规范解要求时，只需从最小边界单元格中任选一个或按字典序选取，并按固定模式生成移动序列，这些步骤均为后处理，不触及核心约束重组或状态转移设计。",
+        "feedback": "该种子题的最小成本方案构造极其简单，强加规范性输出无法产生需要新算法设计的核心变化，建议寻找解对象选择空间更大或构造复杂度更高的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "no_failure_semantics",
+      "selection_reason": "原题是成本最小化问题，总是存在平凡可行解（清除所有雪），没有无解情形，无法生成局部冲突证据。强行引入无解条件将违反 global_redlines（额外约束）。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 core_constraints 包含 obstacle_removal 允许任意清除；objective 为 minimize cost；没有约束强制可达性失败。原题标准解法仅计算下界，不涉及不可解性。",
+        "feedback": "建议替换为具有明确无解语义的判定/搜索类种子题，其中失败原因可表示为可局部验证的障碍集。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.04,
+      "reason_code": "clear_counting_mapping",
+      "selection_reason": "种子题具有明确且有限的解空间（达到最小成本的雪清除集合），不同解由清除的单元格集合区分，去重规则清晰（集合相等即同一解），可自然拆分为两个独立单元：强制清除的右下角区域和必须从中选取一个的桥接细胞，最终计数对象为桥接细胞最小成本频数。转化后新目标为计数而非最小化，约束和不变量均可重定义以支持计数，符合规则对O、C、V轴改变的要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints 中的 obstacle_removal 允许选择任意雪单元格清除，solution_code 中的不变量 bridge_cell_minimum 将解拆分为右下角区域总和与八个桥接细胞的最小值，计数去重依靠清除集合不同； seed_schema.objective 为 minimize_value，满足规则所需 “单一最优值” 前提；global_constraints.allow_helper_moves 为真，且不违反 global_redlines。",
+        "feedback": "转换时需注意：明确计数对象为 ‘达到最小成本的清除雪方案数’，可在 objective 中直接定义为 count；定义去重规则：两个清除方案相同当且仅当所选单元格集合相同；将不变量改为计数形式：右下角区域贡献为 1（必须清除），桥接细胞贡献为具有最小成本的细胞数；可进一步要求答案对某模数取余以控制规模，但不能仅加模数而不定义计数对象。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题中所有移动操作由决策者完全控制，不存在原生顺序不确定、资源波动或局部选择差异；唯一不确定性来源是清除雪的成本选择，但这是优化目标的一部分，并非扰动。强行引入对手或不确定移动顺序会脱离原题语义，属于硬造对手，违反规则红线。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema中core_constraints的move_operations描述为“Allowed moves are cyclic row shifts and cyclic column shifts”，没有提及任何随机性或对抗性；objective为“Minimize the total coin cost of snow removals such that there exists a sequence of moves...”，是确定性的存在性优化；规则eligibility.required_seed_properties明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，而此种子题不满足；forbidden_seed_properties禁止“只能靠故事背景硬造对手”，若强制添加扰动则落入该禁区。",
+        "feedback": "该题目不具备可放大的原生扰动来源，不适合此条规则。若强行应用，扰动模型将完全依赖人为添加，无法落地于原题语义，导致保底阈值与核心约束脱节，形成浅层二分包装。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "种子题本身已经是求解最小化除雪成本的优化问题，等价于求允许合法移动序列的最小花费阈值。若强行应用 feasibility_to_extremal_threshold 规则，只会将原优化目标重新表述为‘判定是否存在 ≤K 的方案’后再求最小 K，构成机械二分包装，不改变主约束或证明义务，违反红线。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 已为 minimize_value 类型，核心约束包含单调参数（清除成本），标准解法直接输出最小成本。schema 中 invariants 已提供临界值结构（mandatory_region_cost_sum + bridge_cell_minimum）。规则 eligibility 明确禁止“阈值只是在原判定外层做机械二分”，且 required_axis_changes 要求必须改变 C/O/V，而此变换会保持 C, O, V 实质不变，无法产生有意义的算法差异。",
+        "feedback": "种子题缺少从纯判定到极值求解的自然升级空间，因为其本身已处于极值形式。建议寻找仅有可行性判定（无自然阈值）或具有额外参数结构的题目，避免将规则降级为二分答案的语法变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_second_objective",
+      "selection_reason": "原题只有一个明确的单目标：最小化除雪总成本。所有约束和状态都仅为该目标服务，不存在任何可量化的、与成本自然冲突的第二评价属性（如清除格数、移动步数等不属于题目设计要求）。标准解法为固定下界加边界最小值，无法衍生出有意义的帕累托前沿。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type 为 minimize_value，描述为“minimal total cost to remove snow”，无任何多指标暗示。约束中仅规定合法移动和障碍移除，不包含可独立优化的副指标。invariant 仅涉及必要的下界和边界格最小值，无权衡结构。",
+        "feedback": "该规则要求种子题存在自然冲突的第二指标，但当前题目仅追求最小化除雪花费，无匹配属性，强行引入第二目标会变成生造指标，违反规则红线。建议在规划阶段前驳回。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "inverse_target_natural",
+      "selection_reason": "原题输出是最小清除费用，可以直接作为反向目标（如要求最小清除费用恰好为给定值），且成本矩阵作为核心对象允许自然的修改操作（修改某些成本值），符合正向求解到反向设计的翻转要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为minimize_value，输出为cost（schema中的objective.type和objective.target）；核心约束包含obstacle_removal和cost_matrix，允许修改成本值并与原题移动规则紧密关联；helpers要求的目标绑定、修改操作和最小性证明均可在此框架下实现。",
+        "feedback": "该规则与种子题高度契合，可以进入下一阶段规划具体四元组变化。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "原题是一个整体网格上的全局移动规划问题，没有可自然分解的局部独立单元，因此不符合规则要求的“原题存在可分解的局部单元”基础条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中朋友集体通过整行整列移动，不存在可独立处理的分量或位置（如区间选点）。核心约束和目标均为整体消除雪费的最小化，标准解法直接计算右下区域必清费用与桥接单元格最小值的和，没有表现出局部独立求解再组合的结构。",
+        "feedback": "建议为规则选择具有明显独立子问题（如多个区间、多个物品）且它们能通过共享资源/全局约束耦合的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_choice",
+      "selection_reason": "原题核心操作是单人选择清除雪单元格并执行预设移动，不存在两人轮流选择、干扰或争夺的自然语义，硬性扩展为双方博弈将违背“操作顺序固定且没有选择自由度”或“对抗方只能靠故事背景硬造”的禁止条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题操作必须可转化为双方轮流选择（required_seed_properties: 原题存在可轮流选择、拿取、移动或改变状态的自然操作）。但种子题的操作是玩家单方面决定哪些单元格除雪并给出指令移动所有朋友，没有对手参与；移动类型（行循环左移/右移、列循环上移/下移）也是确定性群组操作，不存在双方轮流、对抗性选择或状态争夺。直接将此改为两人轮流清除雪或轮流移动会落入 for bidden_seed_properties: “操作顺序固定且没有选择自由度”或“对抗方只能靠故事背景硬造”，因为必须虚构一个对抗方（如对手也在移除雪或设置障碍）才能形成博弈，而原题完全没有此类机制。",
+        "feedback": "种子题缺少可自然博弈化的交互结构，强行转化会破坏题目逻辑连贯性，建议寻找具有天然对手（如两人轮流取物、轮流移动棋子等）的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题核心结构不满足规则要求的局部路径、区间或子树对象族。移动操作是整行整列循环移位，没有显式的单条路径或可组合的局部对象。桥接单元格是最小值观测量，并非规则所需的覆盖或割基础。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints.move_operations 描述为整行整列的循环移位，不区分单个朋友的独立路径；invariant.bridge_cell_minimum 仅识别八个边界单元格作为必须通过的点，但整个问题没有可扩展为对象族的局部路径或区间结构；required_seed_properties 第一条要求“核心对象具有路径、区间、子树、集合等局部结构”，此处未见满足。",
+        "feedback": "建议更换种子题，寻找具有明确单条路径、区间或子树性质的问题（如网格最短路径、树上路径查询等），再尝试扩展为全局覆盖或割。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "种子题求最小扫雪成本，是优化问题，不是计数题，无法扩展为带权计数或分布计数。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "seed_not_counting"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题description要求'find the minimal number of coins'，objective类型为minimize_value，并不涉及计数对象或方案总数。",
+        "feedback": "规则要求种子题已有明确有限的计数对象且存在自然权重或统计量，但本题为优化问题，不具备计数基础。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题的核心解法仅需计算目标区域成本总和与边界单元格最小值，转换为要求输出规范解（如字典序最小清除方案或移动序列）只会添加表面构造，不会实质改变状态转移或约束优先级，主要算法几乎不变，属于表面修改。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束中，障碍清除成本与移动规则共同决定了最小成本仅由目标区域总成本与8个边界单元格的最小值构成（见 invariant 部分）。标准解法直接输出该计算值，无需构造具体清除集或移动序列。附加规范解要求时，只需从最小边界单元格中任选一个或按字典序选取，并按固定模式生成移动序列，这些步骤均为后处理，不触及核心约束重组或状态转移设计。",
+        "feedback": "该种子题的最小成本方案构造极其简单，强加规范性输出无法产生需要新算法设计的核心变化，建议寻找解对象选择空间更大或构造复杂度更高的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_failure_semantics",
+      "message": "原题是成本最小化问题，总是存在平凡可行解（清除所有雪），没有无解情形，无法生成局部冲突证据。强行引入无解条件将违反 global_redlines（额外约束）。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schema 中 core_constraints 包含 obstacle_removal 允许任意清除；objective 为 minimize cost；没有约束强制可达性失败。原题标准解法仅计算下界，不涉及不可解性。",
+        "feedback": "建议替换为具有明确无解语义的判定/搜索类种子题，其中失败原因可表示为可局部验证的障碍集。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_mapping",
+      "message": "种子题具有明确且有限的解空间（达到最小成本的雪清除集合），不同解由清除的单元格集合区分，去重规则清晰（集合相等即同一解），可自然拆分为两个独立单元：强制清除的右下角区域和必须从中选取一个的桥接细胞，最终计数对象为桥接细胞最小成本频数。转化后新目标为计数而非最小化，约束和不变量均可重定义以支持计数，符合规则对O、C、V轴改变的要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.04,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints 中的 obstacle_removal 允许选择任意雪单元格清除，solution_code 中的不变量 bridge_cell_minimum 将解拆分为右下角区域总和与八个桥接细胞的最小值，计数去重依靠清除集合不同； seed_schema.objective 为 minimize_value，满足规则所需 “单一最优值” 前提；global_constraints.allow_helper_moves 为真，且不违反 global_redlines。",
+        "feedback": "转换时需注意：明确计数对象为 ‘达到最小成本的清除雪方案数’，可在 objective 中直接定义为 count；定义去重规则：两个清除方案相同当且仅当所选单元格集合相同；将不变量改为计数形式：右下角区域贡献为 1（必须清除），桥接细胞贡献为具有最小成本的细胞数；可进一步要求答案对某模数取余以控制规模，但不能仅加模数而不定义计数对象。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题中所有移动操作由决策者完全控制，不存在原生顺序不确定、资源波动或局部选择差异；唯一不确定性来源是清除雪的成本选择，但这是优化目标的一部分，并非扰动。强行引入对手或不确定移动顺序会脱离原题语义，属于硬造对手，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题schema中core_constraints的move_operations描述为“Allowed moves are cyclic row shifts and cyclic column shifts”，没有提及任何随机性或对抗性；objective为“Minimize the total coin cost of snow removals such that there exists a sequence of moves...”，是确定性的存在性优化；规则eligibility.required_seed_properties明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，而此种子题不满足；forbidden_seed_properties禁止“只能靠故事背景硬造对手”，若强制添加扰动则落入该禁区。",
+        "feedback": "该题目不具备可放大的原生扰动来源，不适合此条规则。若强行应用，扰动模型将完全依赖人为添加，无法落地于原题语义，导致保底阈值与核心约束脱节，形成浅层二分包装。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "种子题本身已经是求解最小化除雪成本的优化问题，等价于求允许合法移动序列的最小花费阈值。若强行应用 feasibility_to_extremal_threshold 规则，只会将原优化目标重新表述为‘判定是否存在 ≤K 的方案’后再求最小 K，构成机械二分包装，不改变主约束或证明义务，违反红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.15,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 已为 minimize_value 类型，核心约束包含单调参数（清除成本），标准解法直接输出最小成本。schema 中 invariants 已提供临界值结构（mandatory_region_cost_sum + bridge_cell_minimum）。规则 eligibility 明确禁止“阈值只是在原判定外层做机械二分”，且 required_axis_changes 要求必须改变 C/O/V，而此变换会保持 C, O, V 实质不变，无法产生有意义的算法差异。",
+        "feedback": "种子题缺少从纯判定到极值求解的自然升级空间，因为其本身已处于极值形式。建议寻找仅有可行性判定（无自然阈值）或具有额外参数结构的题目，避免将规则降级为二分答案的语法变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_objective",
+      "message": "原题只有一个明确的单目标：最小化除雪总成本。所有约束和状态都仅为该目标服务，不存在任何可量化的、与成本自然冲突的第二评价属性（如清除格数、移动步数等不属于题目设计要求）。标准解法为固定下界加边界最小值，无法衍生出有意义的帕累托前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type 为 minimize_value，描述为“minimal total cost to remove snow”，无任何多指标暗示。约束中仅规定合法移动和障碍移除，不包含可独立优化的副指标。invariant 仅涉及必要的下界和边界格最小值，无权衡结构。",
+        "feedback": "该规则要求种子题存在自然冲突的第二指标，但当前题目仅追求最小化除雪花费，无匹配属性，强行引入第二目标会变成生造指标，违反规则红线。建议在规划阶段前驳回。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_target_natural",
+      "message": "原题输出是最小清除费用，可以直接作为反向目标（如要求最小清除费用恰好为给定值），且成本矩阵作为核心对象允许自然的修改操作（修改某些成本值），符合正向求解到反向设计的翻转要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题objective为minimize_value，输出为cost（schema中的objective.type和objective.target）；核心约束包含obstacle_removal和cost_matrix，允许修改成本值并与原题移动规则紧密关联；helpers要求的目标绑定、修改操作和最小性证明均可在此框架下实现。",
+        "feedback": "该规则与种子题高度契合，可以进入下一阶段规划具体四元组变化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "原题是一个整体网格上的全局移动规划问题，没有可自然分解的局部独立单元，因此不符合规则要求的“原题存在可分解的局部单元”基础条件。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中朋友集体通过整行整列移动，不存在可独立处理的分量或位置（如区间选点）。核心约束和目标均为整体消除雪费的最小化，标准解法直接计算右下区域必清费用与桥接单元格最小值的和，没有表现出局部独立求解再组合的结构。",
+        "feedback": "建议为规则选择具有明显独立子问题（如多个区间、多个物品）且它们能通过共享资源/全局约束耦合的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_choice",
+      "message": "原题核心操作是单人选择清除雪单元格并执行预设移动，不存在两人轮流选择、干扰或争夺的自然语义，硬性扩展为双方博弈将违背“操作顺序固定且没有选择自由度”或“对抗方只能靠故事背景硬造”的禁止条件。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题操作必须可转化为双方轮流选择（required_seed_properties: 原题存在可轮流选择、拿取、移动或改变状态的自然操作）。但种子题的操作是玩家单方面决定哪些单元格除雪并给出指令移动所有朋友，没有对手参与；移动类型（行循环左移/右移、列循环上移/下移）也是确定性群组操作，不存在双方轮流、对抗性选择或状态争夺。直接将此改为两人轮流清除雪或轮流移动会落入 for bidden_seed_properties: “操作顺序固定且没有选择自由度”或“对抗方只能靠故事背景硬造”，因为必须虚构一个对抗方（如对手也在移除雪或设置障碍）才能形成博弈，而原题完全没有此类机制。",
+        "feedback": "种子题缺少可自然博弈化的交互结构，强行转化会破坏题目逻辑连贯性，建议寻找具有天然对手（如两人轮流取物、轮流移动棋子等）的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题核心结构不满足规则要求的局部路径、区间或子树对象族。移动操作是整行整列循环移位，没有显式的单条路径或可组合的局部对象。桥接单元格是最小值观测量，并非规则所需的覆盖或割基础。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints.move_operations 描述为整行整列的循环移位，不区分单个朋友的独立路径；invariant.bridge_cell_minimum 仅识别八个边界单元格作为必须通过的点，但整个问题没有可扩展为对象族的局部路径或区间结构；required_seed_properties 第一条要求“核心对象具有路径、区间、子树、集合等局部结构”，此处未见满足。",
+        "feedback": "建议更换种子题，寻找具有明确单条路径、区间或子树性质的问题（如网格最短路径、树上路径查询等），再尝试扩展为全局覆盖或割。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "种子题求最小扫雪成本，是优化问题，不是计数题，无法扩展为带权计数或分布计数。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "seed_not_counting"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题description要求'find the minimal number of coins'，objective类型为minimize_value，并不涉及计数对象或方案总数。",
+        "feedback": "规则要求种子题已有明确有限的计数对象且存在自然权重或统计量，但本题为优化问题，不具备计数基础。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.318,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.3986,
+            "O": 0.4326,
+            "V": 0.4512
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.3986,
+            "objective_type_distance": 0.4549,
+            "objective_text_distance": 0.3991,
+            "invariant_match_distance": 0.4512
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "planner_rejected",
+      "message": "将最小化问题直接转为计数最小成本方案数，由于原题的最小成本方案结构过于简单（必须清除的目标区域和唯一的桥接格子选择），导致计数只会是乘法常数（最小桥接的重复次数），没有引入新的算法责任，核心动态规划或组合计数需求缺失。",
+      "details": {
+        "planner_status": "difference_insufficient"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "contract_retry_count": 2,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "C",
+                  "V"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "reason_code": "distance_gate_failed",
+          "reason": "规划结果未达到硬门槛，预测距离=0.3180，落地轴=C, O, V。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "distance_gate_failed",
+              "message": "规划结果未达到差异度或变化轴硬门槛。",
+              "details": {
+                "distance": {
+                  "distance_version": "v2",
+                  "backend": "embedding",
+                  "total": 0.318,
+                  "axis_scores": {
+                    "I": 0.0,
+                    "C": 0.3986,
+                    "O": 0.4326,
+                    "V": 0.4512
+                  },
+                  "components": {
+                    "input_tree_distance": 0.0,
+                    "constraint_match_distance": 0.3986,
+                    "objective_type_distance": 0.4549,
+                    "objective_text_distance": 0.3991,
+                    "invariant_match_distance": 0.4512
+                  }
+                },
+                "changed_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.04,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "将最小化问题直接转为计数最小成本方案数，由于原题的最小成本方案结构过于简单（必须清除的目标区域和唯一的桥接格子选择），导致计数只会是乘法常数（最小桥接的重复次数），没有引入新的算法责任，核心动态规划或组合计数需求缺失。",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 2 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_8685ce5e6a11_urban_commute_20260609_192132",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

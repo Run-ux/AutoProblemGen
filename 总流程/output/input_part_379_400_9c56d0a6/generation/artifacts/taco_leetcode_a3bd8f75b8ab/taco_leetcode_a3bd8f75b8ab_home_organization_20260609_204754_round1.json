@@ -1,0 +1,895 @@
+{
+  "problem_id": "inverse_maxgap_minops",
+  "source_problem_ids": [
+    "taco_leetcode_a3bd8f75b8ab"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_leetcode_a3bd8f75b8ab",
+      "maximum gap",
+      "leetcode",
+      "Given an unsorted array, find the maximum difference between the successive elements in its sorted form. Return 0 if the array contains less than 2 elements. Example 1: Input: [3,6,9,1] Output: 3 Explanation: The sort...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "输入增加目标差值参数；核心约束引入操作模型和目标绑定；目标从求值变为最小化操作代价；不变量转向下界和可行性证明。",
+    "summary": "通过增加目标参数、定义修改操作和最小化要求，实现正向求解到反向设计的转变。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4716,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4716,
+    "axis_scores": {
+      "I": 0.2897,
+      "C": 0.7156,
+      "O": 0.4107,
+      "V": 0.4091
+    },
+    "components": {
+      "input_tree_distance": 0.2897,
+      "constraint_match_distance": 0.7156,
+      "objective_type_distance": 0.5075,
+      "objective_text_distance": 0.2654,
+      "invariant_match_distance": 0.4091
+    }
+  },
+  "changed_axes_realized": [
+    "I",
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "求最小的操作次数，使得修改后的数组满足目标最大差值条件",
+    "target": "minimum_operations"
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（排序后相邻元素的最大差值）可以明确定义为反向目标，修改数组元素值是一种自然操作且直接作用于核心规律，能够构造最小修改或参数反推问题。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_maxgap_minops",
+    "source": "generated",
+    "input_structure": {
+      "type": "object",
+      "properties": {
+        "nums": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "minItems": 2
+        },
+        "target_gap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "nums",
+        "target_gap"
+      ],
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "element_value_range",
+          "description": "原始数组元素均为非负 32 位整数",
+          "formal": "∀ i, 0 ≤ nums[i] ≤ 2^31 - 1",
+          "source_sections": [
+            "seed_adapted"
+          ]
+        },
+        {
+          "name": "operation_model",
+          "description": "一次操作可将一个数组元素改为任意非负整数，代价为 1",
+          "formal": "An operation selects index i and sets nums[i] to any value v with 0 ≤ v ≤ 2^31-1, costing 1."
+        },
+        {
+          "name": "target_gap_condition",
+          "description": "修改后的数组排序后，相邻元素的最大差值必须恰好等于 target_gap",
+          "formal": "Let sorted_nums be the modified array in non-decreasing order. max_{i=1..len-1} (sorted_nums[i] - sorted_nums[i-1]) == target_gap"
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "求最小的操作次数，使得修改后的数组满足目标最大差值条件",
+      "target": "minimum_operations"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "feasibility_bounds",
+          "description": "若 target_gap 为 0 则所有元素相等时可达成；否则需要足够元素个数和分布，最小操作次数的下界可由原始排序间隙与 G 的差异给出。",
+          "properties": {
+            "common_lower_bound": "sum over gaps of max(0, gap - G) 或其变体"
+          },
+          "evidence_source": "设计推导"
+        },
+        {
+          "name": "modified_monotonicity",
+          "description": "排序后非降，任何解中相邻差值都必须 ≤ G 且最大差值恰好为 G，保证操作序列的正确性。",
+          "properties": {},
+          "evidence_source": "solution_structure"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "排序后线性扫描计算相邻最大差值",
+    "reusable_subroutines": "排序算法、计算给定数组最大差值的函数可用于验证候选解",
+    "new_solver_core": "通过分析原始排序间距与目标 G 的关系，利用动态规划或贪心确定最小修改次数",
+    "new_proof_obligation": "证明输出操作次数是最小的，并且存在一个修改方案使得排序后最大差值恰好等于 target_gap",
+    "why_direct_reuse_fails": "正向算法只计算静态最大差值，不涉及元素修改与优化决策，无法直接输出最小操作序列。"
+  },
+  "anti_shallow_rationale": "虽然新题仍然需要计算最大差值，但核心任务已从一次扫描转变为寻求满足目标的最小修改，求解方向完全反转，且增加了优化层面，并非仅换背景或问法。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "将原题最大间隙计算结果作为必须达成的目标，迫使求解方向翻转。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 增加 target_gap_condition 约束",
+        "objective 变为最小化操作次数而非计算值"
+      ],
+      "innovation_reason": "驱动力从计算给定输入的结果，变为在目标约束下设计输入，引入了构造与验证的新角度。",
+      "difficulty_reason": "算法需要围绕目标约束反推状态，比单纯扫描更复杂。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "定义允许的修改操作，使反向设计有明确可操作空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 添加 operation_model 约束",
+        "invariant 中的 feasibility_bounds 依赖操作模型定义代价下界"
+      ],
+      "innovation_reason": "将抽象的反推落实到具体操作计数，创造了新的优化维度。",
+      "difficulty_reason": "操作与目标结果的对应关系需要严格证明，且影响优化策略。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小操作次数，而非任意可行解，提升问题深度。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确为 minimization 且描述输出最小操作数",
+        "invariant 增加 common_lower_bound 类型，支持最小性证明"
+      ],
+      "innovation_reason": "答案必须承担最小性责任，避免简单输出可行改法，增强了证明难度。",
+      "difficulty_reason": "算法需证明不存在更少操作的方案，常需构造下界或最优子结构。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "insufficient_base",
+      "selection_reason": "种子题是纯数值计算，无解对象构造要求，且标准解法中获取相邻元素对是顺手回溯，不符合种子题需具备可规范化解空间的前提。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为value_computation，只要求输出最大差值；标准解法代码排序后单次遍历，记录最大gap时即可附属记录相应元素对（例如gap > sorted_gap时更新对），升级为规范解输出仅需微调，违反forbidden中“原解只要顺手回溯就能拿到方案”。",
+        "feedback": "建议选择已有解对象构造基础的种子题，例如原题输出序列、排列或显式选择子集，才有可能通过canonical_witness规则产生有实质差异的升级。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_failure_semantics",
+      "selection_reason": "原题“Maximum Gap”为纯值计算问题，目标明确且总是可解（包括长度不足时返回0），不存在任何“做不到”或“无解”情形，无法应用construct_or_obstruction规则要求的输出冲突证据。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“计算数组排序后相邻元素的最大差值”，输入任意非负整数数组，算法总是能返回一个确定数值（解存在且唯一），无构造要求，无不可行分支。规则声明要求种子具备“做不到的原因可以用局部证据表示”和“冲突证据可以从输出直接检查”，但本题中无法定义任何“做不到”的场景，即使强行改造也会退化为无意义的解释，违反多条redlines。",
+        "feedback": "若想启用此类规则，应选择本身包含组合可行性判断或构造要求且存在明显无解情形的种子题，例如调度、分配、图着色等问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是单一最优值问题，解空间明确但计数对象未定义，直接改为计数易沦为后处理，违反计数责任锁定要求，差异不足。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中objective为value_computation类型，无任何计数相关结构；helper redline禁止'不能继续由原题判定过程主导'，验证合同要求说明计数对象、有限性和去重，但原题未提供计数单元定义。",
+        "feedback": "种子题的核心是计算最大差值，若改为计数最大差值的出现次数，则仍需先求出最大差值，属于后处理计数，不符合主目标替换的红线。除非重新设计算法使计数与判定融合，但缺少证据表明这可行且带来新难度。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题语义为确定性计算，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则要求的‘原题里本来就有’条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要显示：给定未排序数组，计算排序后相邻元素最大差值，输入结构为固定数组，objective 为确定性的最大值计算，invariant 基于排序后的单调性。无任何不确定性因素。seed_schema 中 core_constraints 仅为元素值域约束，未描述任何可扰动资源或选择。",
+        "feedback": "规则要求种子题自带扰动来源，而 MaximumGap 是完全确定性问题，强行引入扰动会脱离原题语义，属于硬造对手，规则红线明确禁止。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_lacks_feasibility_structure",
+      "selection_reason": "原题“Maximum Gap”是直接计算排序后相邻元素的最大差值，属于极值求解问题，不存在判定/可行性结构，也没有随某个参数单调变化的可行区域，无法按规则从可行性升级为临界阈值优化。required_seed_properties中的“原题可行性随某个参数具有清晰的单调性或分层结构”完全缺失，且forbidden_seed_properties中的“没有自然参数可优化”恰好命中，故规则不适用。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "1) 种子题schema中objective.type为'value_computation'，目标是求最大差值，而非判定可行性。2) 原题描述及约束仅给出元素范围和非负整数，无任何参数与可行性绑定。3) 规则required_seed_properties明确要求“可行性随参数具有单调性或分层结构”，但原题无可行性概念。4) 规则forbidden_seed_properties明确禁止“没有自然参数可优化”，原题正是如此。",
+        "feedback": "此规则要求种子题具备判定/可行性骨架，当前种子题为直接优化求值问题，无法应用该变换。建议选择如“是否存在差值大于K”这类判定子问题作为种子才可能触发阈值扩展。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_natural_conflicting_metric",
+      "selection_reason": "原题 Maximum Gap 只涉及排序后相邻元素的最大差值，不存在与其自然冲突的第二评价指标。最大与最小差值可独立计算，无权衡前沿；其他潜在指标（如范围、元素数量）也形不成真实冲突。规则要求两个指标不能同时独立最优，但原题目标空间天然一维，扩展为多目标权衡将退化为独立子问题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "规则eligibility.required_seed_properties明确要求“原题目标附近存在自然的第二评价指标”和“两个指标之间存在真实冲突，不能同时独立最优”。原题summary显示目标为“计算数组排序后相邻元素的最大差值”，原题描述中无第二维度暗示。辅助分析示例（positive）引用预算与收益权衡，而本题无此类自然属性。",
+        "feedback": "该规则不适用于此种子题。若强行引入双指标（如最小差值），将形成两个独立最优值，违背“不能退化成两个独立最优值”的红线，且无法定义有意义的支配关系或预算约束。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "valid_target_and_edit_ops",
+      "selection_reason": "原题输出（排序后相邻元素的最大差值）可以明确定义为反向目标，修改数组元素值是一种自然操作且直接作用于核心规律，能够构造最小修改或参数反推问题。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中的输出为数值，可作为反向目标；输入为整数数组，修改元素值直接影响排序和差值计算，符合‘修改操作与原核心规律相关’的要求。",
+        "feedback": "题目结构清晰，只需将目标值作为约束，并引入最少修改变动次数等度量，即可生成有难度且符合规则精神的逆向设计题。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "原题“Maximum Gap”要求计算整个数组排序后相邻元素的最大差值，是一个整体求解问题，不存在多个可独立处理的局部单元，无法满足规则所要求的“原题存在可分解的局部单元”这一前提。强行引入共享资源或跨组件依赖只会变成与原始核心规律无关的额外约束，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中无任何组件或子结构描述，original_problem描述为“Given an unsorted array, find the maximum difference between the successive elements in its sorted form”，标准解仅需一次扫描或线性排序，没有独立的分量或位置可作为耦合起点。",
+        "feedback": "该种子题不适合“independent_components_to_global_coupling”变化，因为缺少可分解的局部单元，无法自然构造共享资源约束或跨组件依赖。建议选择本身包含多个决策点或子问题且这些子问题间存在潜在共享变量的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_operations",
+      "selection_reason": "原题是计算排序后相邻最大差值，没有可轮流选择的自然操作，无法形成双方博弈，强行转化只会变成故事背景硬造。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "schema的objective是value_computation，输入是数组，核心约束是元素非负，没有任何状态改变或选择操作。规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但原题完全不具备。",
+        "feedback": "建议选择具有自然选择或决策过程的原题，例如取石子、棋盘游戏等。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题核心对象是无序数组，不存在可自然形成覆盖关系的路径、区间或子树结构。排序后的相邻对虽然可视为局部，但原题已全局处理所有相邻对，没有从单局部向全局覆盖升级的合理语义，强行扩展将变为无关问题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘给定未排序数组，求排序后相邻元素的最大差值’，输入为数组，无路径或区间定义。规则要求‘原题核心对象具有路径、区间、子树等局部结构’，但数组元素本身不构成此类结构。eligible的required_seed_properties第一条不满足。规则正例‘把求一条路径的性质改成选择最少点覆盖所有给定路径’与原题差距过大。",
+        "feedback": "该题不适合扩展为覆盖/割/支配问题。建议选择本身涉及路径、树或区间查询的种子题，例如最短路径、区间最大子段等，其局部对象族能自然引出覆盖语义。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_missing_required_property",
+      "selection_reason": "原题是求最大差值（maximum gap）的优化问题，不包含任何显式计数对象，根本不符合规则要求的“原题已经有明确有限的计数对象”，无法进行带权计数扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.description: '计算数组排序后相邻元素的最大差值'；original_problem.description: 'find the maximum difference between the successive elements in its sorted form'。整题结构始终围绕极值计算，无计数语义。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 严格依赖种子题为计数问题，当前种子题为排序后相邻最大差值，完全不属于计数类，建议更换种子或直接放弃该规则扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "insufficient_base",
+      "message": "种子题是纯数值计算，无解对象构造要求，且标准解法中获取相邻元素对是顺手回溯，不符合种子题需具备可规范化解空间的前提。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为value_computation，只要求输出最大差值；标准解法代码排序后单次遍历，记录最大gap时即可附属记录相应元素对（例如gap > sorted_gap时更新对），升级为规范解输出仅需微调，违反forbidden中“原解只要顺手回溯就能拿到方案”。",
+        "feedback": "建议选择已有解对象构造基础的种子题，例如原题输出序列、排列或显式选择子集，才有可能通过canonical_witness规则产生有实质差异的升级。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_failure_semantics",
+      "message": "原题“Maximum Gap”为纯值计算问题，目标明确且总是可解（包括长度不足时返回0），不存在任何“做不到”或“无解”情形，无法应用construct_or_obstruction规则要求的输出冲突证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“计算数组排序后相邻元素的最大差值”，输入任意非负整数数组，算法总是能返回一个确定数值（解存在且唯一），无构造要求，无不可行分支。规则声明要求种子具备“做不到的原因可以用局部证据表示”和“冲突证据可以从输出直接检查”，但本题中无法定义任何“做不到”的场景，即使强行改造也会退化为无意义的解释，违反多条redlines。",
+        "feedback": "若想启用此类规则，应选择本身包含组合可行性判断或构造要求且存在明显无解情形的种子题，例如调度、分配、图着色等问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是单一最优值问题，解空间明确但计数对象未定义，直接改为计数易沦为后处理，违反计数责任锁定要求，差异不足。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中objective为value_computation类型，无任何计数相关结构；helper redline禁止'不能继续由原题判定过程主导'，验证合同要求说明计数对象、有限性和去重，但原题未提供计数单元定义。",
+        "feedback": "种子题的核心是计算最大差值，若改为计数最大差值的出现次数，则仍需先求出最大差值，属于后处理计数，不符合主目标替换的红线。除非重新设计算法使计数与判定融合，但缺少证据表明这可行且带来新难度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题语义为确定性计算，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则要求的‘原题里本来就有’条件。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题摘要显示：给定未排序数组，计算排序后相邻元素最大差值，输入结构为固定数组，objective 为确定性的最大值计算，invariant 基于排序后的单调性。无任何不确定性因素。seed_schema 中 core_constraints 仅为元素值域约束，未描述任何可扰动资源或选择。",
+        "feedback": "规则要求种子题自带扰动来源，而 MaximumGap 是完全确定性问题，强行引入扰动会脱离原题语义，属于硬造对手，规则红线明确禁止。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_feasibility_structure",
+      "message": "原题“Maximum Gap”是直接计算排序后相邻元素的最大差值，属于极值求解问题，不存在判定/可行性结构，也没有随某个参数单调变化的可行区域，无法按规则从可行性升级为临界阈值优化。required_seed_properties中的“原题可行性随某个参数具有清晰的单调性或分层结构”完全缺失，且forbidden_seed_properties中的“没有自然参数可优化”恰好命中，故规则不适用。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "1) 种子题schema中objective.type为'value_computation'，目标是求最大差值，而非判定可行性。2) 原题描述及约束仅给出元素范围和非负整数，无任何参数与可行性绑定。3) 规则required_seed_properties明确要求“可行性随参数具有单调性或分层结构”，但原题无可行性概念。4) 规则forbidden_seed_properties明确禁止“没有自然参数可优化”，原题正是如此。",
+        "feedback": "此规则要求种子题具备判定/可行性骨架，当前种子题为直接优化求值问题，无法应用该变换。建议选择如“是否存在差值大于K”这类判定子问题作为种子才可能触发阈值扩展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_natural_conflicting_metric",
+      "message": "原题 Maximum Gap 只涉及排序后相邻元素的最大差值，不存在与其自然冲突的第二评价指标。最大与最小差值可独立计算，无权衡前沿；其他潜在指标（如范围、元素数量）也形不成真实冲突。规则要求两个指标不能同时独立最优，但原题目标空间天然一维，扩展为多目标权衡将退化为独立子问题。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "规则eligibility.required_seed_properties明确要求“原题目标附近存在自然的第二评价指标”和“两个指标之间存在真实冲突，不能同时独立最优”。原题summary显示目标为“计算数组排序后相邻元素的最大差值”，原题描述中无第二维度暗示。辅助分析示例（positive）引用预算与收益权衡，而本题无此类自然属性。",
+        "feedback": "该规则不适用于此种子题。若强行引入双指标（如最小差值），将形成两个独立最优值，违背“不能退化成两个独立最优值”的红线，且无法定义有意义的支配关系或预算约束。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_target_and_edit_ops",
+      "message": "原题输出（排序后相邻元素的最大差值）可以明确定义为反向目标，修改数组元素值是一种自然操作且直接作用于核心规律，能够构造最小修改或参数反推问题。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中的输出为数值，可作为反向目标；输入为整数数组，修改元素值直接影响排序和差值计算，符合‘修改操作与原核心规律相关’的要求。",
+        "feedback": "题目结构清晰，只需将目标值作为约束，并引入最少修改变动次数等度量，即可生成有难度且符合规则精神的逆向设计题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "原题“Maximum Gap”要求计算整个数组排序后相邻元素的最大差值，是一个整体求解问题，不存在多个可独立处理的局部单元，无法满足规则所要求的“原题存在可分解的局部单元”这一前提。强行引入共享资源或跨组件依赖只会变成与原始核心规律无关的额外约束，违反红线。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema中无任何组件或子结构描述，original_problem描述为“Given an unsorted array, find the maximum difference between the successive elements in its sorted form”，标准解仅需一次扫描或线性排序，没有独立的分量或位置可作为耦合起点。",
+        "feedback": "该种子题不适合“independent_components_to_global_coupling”变化，因为缺少可分解的局部单元，无法自然构造共享资源约束或跨组件依赖。建议选择本身包含多个决策点或子问题且这些子问题间存在潜在共享变量的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_operations",
+      "message": "原题是计算排序后相邻最大差值，没有可轮流选择的自然操作，无法形成双方博弈，强行转化只会变成故事背景硬造。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "schema的objective是value_computation，输入是数组，核心约束是元素非负，没有任何状态改变或选择操作。规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但原题完全不具备。",
+        "feedback": "建议选择具有自然选择或决策过程的原题，例如取石子、棋盘游戏等。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题核心对象是无序数组，不存在可自然形成覆盖关系的路径、区间或子树结构。排序后的相邻对虽然可视为局部，但原题已全局处理所有相邻对，没有从单局部向全局覆盖升级的合理语义，强行扩展将变为无关问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘给定未排序数组，求排序后相邻元素的最大差值’，输入为数组，无路径或区间定义。规则要求‘原题核心对象具有路径、区间、子树等局部结构’，但数组元素本身不构成此类结构。eligible的required_seed_properties第一条不满足。规则正例‘把求一条路径的性质改成选择最少点覆盖所有给定路径’与原题差距过大。",
+        "feedback": "该题不适合扩展为覆盖/割/支配问题。建议选择本身涉及路径、树或区间查询的种子题，例如最短路径、区间最大子段等，其局部对象族能自然引出覆盖语义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_missing_required_property",
+      "message": "原题是求最大差值（maximum gap）的优化问题，不包含任何显式计数对象，根本不符合规则要求的“原题已经有明确有限的计数对象”，无法进行带权计数扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.description: '计算数组排序后相邻元素的最大差值'；original_problem.description: 'find the maximum difference between the successive elements in its sorted form'。整题结构始终围绕极值计算，无计数语义。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 严格依赖种子题为计数问题，当前种子题为排序后相邻最大差值，完全不属于计数类，建议更换种子或直接放弃该规则扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_design_contract_fulfilled",
+      "message": "规划定义了目标结果、允许操作和最小性证明，将正向计算最大差值翻转为给定目标间隙的最小修改问题，符合规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "candidate_schema 中 core_constraints 的 target_gap_condition 和 operation_model 分别对应目标绑定与操作契约；objective 为最小化操作次数；invariant 提供下界证明；applied_helpers 中三个 helper 的 schema_changes 直接对应轴变更：target_result_binding 在 C 和 O，edit_operation_contract 在 C 和 V，minimality_or_certificate_lock 在 O 和 V。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_compliant",
+      "message": "题面完整实现了反向设计合同：将原最大差值转化为目标参数，定义了基于原题对象的修改操作（移动物品到任意柜子），并要求最小操作次数，满足 target_result_binding、edit_operation_contract 和 minimality_or_certificate_lock 三个关键助手的语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中明确目标：“相邻两个物品所在柜子编号的最大差值恰好等于一个给定的目标值 target_gap”；操作定义：“每次操作他可以选择任意一个物品，将其移动到任意一个柜子中”；输出目标：“最少需要进行多少次移动操作”。样例解释证明了最小性（如示例2说明‘可以证明无法用0次操作达成目标’）。notes 补充了 target_gap=0 时的下界思路，巩固最小性责任。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "储物柜整理",
+    "description": "小杰的家中有很多储物柜，每个柜子都有一个独一无二的编号。他有一张物品清单，记录了每个物品当前所在的柜子编号。现在他想要重新整理物品，使得所有物品按照柜子编号从小到大排序后，相邻两个物品所在柜子编号的最大差值恰好等于一个给定的目标值 target_gap。\n\n每次操作他可以选择任意一个物品，将其移动到任意一个柜子中（编号可以是任意非负整数）。\n\n请你帮小杰计算：最少需要进行多少次移动操作，才能达成目标。",
+    "input_format": "第一行包含两个整数 n 和 target_gap，分别表示物品数量和目标最大差值。\n第二行包含 n 个整数，表示每个物品当前所在的柜子编号。",
+    "output_format": "输出一个整数，表示最少需要的操作次数。",
+    "constraints": [
+      "2 ≤ n ≤ 10^5",
+      "0 ≤ 柜子编号 ≤ 2^31 - 1",
+      "0 ≤ target_gap ≤ 2^31 - 1",
+      "时间限制：1 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "4 3\n1 3 6 9",
+        "output": "0",
+        "explanation": "当前柜子编号排序后为 [1, 3, 6, 9]，相邻差最大值为 3，已经等于 target_gap，无需移动任何物品。"
+      },
+      {
+        "input": "4 3\n1 3 7 9",
+        "output": "1",
+        "explanation": "将位于柜子 7 的物品移动到柜子 6，得到编号序列 [1, 3, 6, 9]，排序后相邻差最大值为 3。可以证明无法用 0 次操作达成目标，因此最少操作次数为 1。"
+      },
+      {
+        "input": "2 5\n1 10",
+        "output": "1",
+        "explanation": "可以将柜子 10 的物品移动到柜子 6，得到 [1, 6] 差值为 5；或者将柜子 1 的物品移动到柜子 5，得到 [5, 10] 差值也为 5。至少需要 1 次操作。"
+      },
+      {
+        "input": "5 0\n1 2 1 3 1",
+        "output": "2",
+        "explanation": "target_gap 为 0 意味着所有物品必须移至同一个柜子。柜子编号 1 已经出现了 3 次，只需将编号为 2 和 3 的两个物品移动到柜子 1，操作次数为 2。"
+      }
+    ],
+    "notes": "如果 target_gap 为 0，则最终所有物品必须在同一个柜子中，操作次数等于总物品数减去出现次数最多的编号的频数。对于一般情况，题目保证一定存在某种移动方案满足条件，只需输出最小操作次数，无需输出具体方案。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_leetcode_a3bd8f75b8ab_home_organization_20260609_204754",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

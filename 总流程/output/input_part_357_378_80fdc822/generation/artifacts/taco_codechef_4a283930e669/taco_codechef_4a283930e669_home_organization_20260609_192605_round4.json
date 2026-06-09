@@ -1,0 +1,1480 @@
+{
+  "problem_id": "inverse_design_urban_commute_002",
+  "source_problem_ids": [
+    "taco_codechef_4a283930e669"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_4a283930e669",
+      "ENGLISH",
+      "codechef",
+      "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well. Chef is learning English. So far, he knows $N$ words, and he wants to write a verse. Let's call a pair of English...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束新增带代价的编辑操作与目标 beauty 阈值；目标从最大化翻转为最小化代价；不变量从单纯 LCP 分治转为代价感知的 beauty 提升界限与最小性证明。输入结构增加编辑代价和阈值参数，但整体结构仍为多测试用例与字符串序列，因此 I 轴未发生根本改变。",
+    "summary": "从计算最大 beauty 的优化问题转为在给定编辑代价矩阵下求最小总代价使 beauty ≥ K 的逆设计问题，核心约束、目标与不变量发生实质扭转。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3856,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3856,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5969,
+      "O": 0.4334,
+      "V": 0.491
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5969,
+      "objective_type_distance": 0.5072,
+      "objective_text_distance": 0.3227,
+      "invariant_match_distance": 0.491
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_cost",
+    "description": "最小化总编辑代价，使得编辑后的字符串集合存在一种合法配对（verse），其总 beauty 至少为 K。若无法达到 K，输出 -1。",
+    "target": "total_edit_cost",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "上一轮使用 existence_to_counting 被拒，因解法迁移性过高。canonical_witness 易退化为后处理输出规范解，仍高度依赖原分治框架。forward_solution_to_inverse_design 创新度极高，但反向修改操作与最小性证明可能导致问题难以设计出有效解法，落地风险大。单目标到前沿规则在保证可落地的同时，通过引入第二冲突指标（如配对数量约束）实质改写目标结构，迫使算法重新设计状态与优化过程，有效降低对原变换和分治的直接复用，平衡了创新度、难度与可行性。；创新度判断：将原题从单一最大化总美观度拉离到双指标权衡，要求定义并输出帕累托前沿（如对不同配对数目给出最大美观度），核心义务新增支配关系、预算约束与耦合状态证明，使输出语义从单个最优值变为可比较的前沿结构。；难度判断：主求解责任从一次全局最优提升为维护二维不可支配解集，需要扩维状态（如同时跟踪美观度和配对数量），证明前沿的完整性与剪枝正确性，原相邻最小LCP分治框架难以直接移植，必须设计新的多目标DP或分治扩展，分析复杂度显著增大。；风险判断：主要风险是第二指标可能被误判为协同而非冲突，需明确定义冲突（如总美观度最大化与剩余单词数最小化不可兼得），并确保前沿计算可通过多项式时间算法完成；若定义不当可能导致解法不可行或变相换皮，通过选用自然且不可后处理的指标可控制风险。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_design_urban_commute_002",
+    "source": "codechef_adapted",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "test_case_count",
+          "role_description": "测试用例数量 T",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000
+          },
+          "properties": {}
+        },
+        {
+          "role": "test_cases",
+          "role_description": "每个测试用例包含整数 N、整数 K，以及 N 行数据，每行包含一个由小写字母组成的字符串 W_i 和 |W_i| 个整数 c_{i,1}...c_{i,|W_i|}，表示将该位置字符替换为任意小写字母的代价。所有字符串总长 ≤ 10^5，代价均为正整数且不超过 10^9。",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "element_usage_limit",
+          "description": "每个原始字符串（经过编辑后）最多在配对中使用一次；若输入中某个字符串出现多次，每个副本独立计数。",
+          "formal": "For each i, the (possibly edited) string derived from W_i can be used at most once in the whole verse.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "stanza_pair_structure",
+          "description": "一个 stanza 由两个字符串组成；一个 verse 是零个或多个 stanza 的序列。",
+          "formal": "A verse is a sequence of pairs {(a_1, b_1), ..., (a_m, b_m)} where each a_i, b_i are chosen from the edited strings.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "allow_unused_elements",
+          "description": "不必使用所有原始字符串（或其编辑后版本），可选择任意子集构成 verse。",
+          "formal": "The number of strings used in the verse is ≤ N.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "alphabet_restriction",
+          "description": "所有原始及编辑后的字符串仅由小写英文字母组成。",
+          "formal": "Each W_i ∈ [a-z]+, and each edited string ∈ [a-z]+.",
+          "source_sections": [
+            "constraints"
+          ]
+        },
+        {
+          "name": "edit_operation_definition",
+          "description": "一次编辑定义为选择一个字符串的某个位置 p，将其字符替换为任意小写字母，并支付该位置对应的代价 c_{i,p}。可对同一字符串的不同位置进行多次编辑，总编辑次数无上限，总代价为各编辑代价之和。",
+          "formal": "An edit on string i at position p changes the character to any lowercase letter and incurs cost c_{i,p}. The total edit cost is the sum of costs of all performed edits.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "target_beauty_threshold",
+          "description": "必须存在一个编辑方案和一个合法配对方案，使得总 beauty 至少为 K。若不存在，输出 -1。",
+          "formal": "∃ edit plan and selection of stanzas such that ∑ min(l_p, l_s)^2 ≥ K. If impossible, output -1.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "beauty_definition",
+          "description": "两个字符串的 beauty 定义为 min(最长公共前缀长度, 最长公共后缀长度) 的平方。",
+          "formal": "beauty(a,b) = min(|lcp(a,b)|, |lcs(a,b)|)^2",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "cost_range",
+          "description": "所有代价 c_{i,p} 均为正整数，且不超过 10^9。",
+          "formal": "1 ≤ c_{i,p} ≤ 10^9",
+          "source_sections": [
+            "constraints"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_cost",
+      "description": "最小化总编辑代价，使得编辑后的字符串集合存在一种合法配对（verse），其总 beauty 至少为 K。若无法达到 K，输出 -1。",
+      "target": "total_edit_cost",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "transformed_lcp_correspondence",
+          "description": "将每个字符串与其反转交错合并形成新字符串后，任意两个字符串的原始 beauty 值 min(lp,ls)^2 等于新字符串间最长公共前缀长度一半的平方，从而可通过交错字符串的 LCP 计算 beauty。",
+          "properties": {
+            "formula": "for any strings w1,w2, let t1=interleave(w1,reverse(w1)), t2=interleave(w2,reverse(w2)). Then min(lcp(w1,w2), lcs(w1,w2)) = lcp(t1,t2) // 2"
+          },
+          "evidence_source": "both"
+        },
+        {
+          "name": "edit_monotonicity_with_cost",
+          "description": "对于任一字符串的任意单次编辑，其引起的总 beauty 增量 Δ 受到编辑代价 c 的约束，即 Δ ≤ h(c)，其中 h 是预定义的单调非减函数。此函数基于字符改变对 LCP 的局部影响上限推导得出，保证代价与 beauty 增益之间的定量关系。",
+          "properties": {
+            "condition": "For any single edit with cost c, the increase in total beauty of the optimal verse is at most h(c), where h is a non-decreasing function derived from the LCP structure."
+          },
+          "evidence_source": "deduced from edit definition and cost structure"
+        },
+        {
+          "name": "minimal_edit_cost_lower_bound",
+          "description": "为达到至少 K 的总 beauty，所需的最小总编辑代价 Cost_min 满足 Cost_min ≥ 某个基于当前未编辑状态下最大 beauty B_max 和最佳代价效率的下界。该下界由 h(c) 函数和未编辑状态下的 beauty 分布计算得到。",
+          "properties": {
+            "formula": "Cost_min ≥ min total cost of edits such that the beauty increase is at least max(0, K - B_max), where each edit's contribution is bounded by its cost-specific efficiency."
+          },
+          "evidence_source": "problem-specific reasoning"
+        },
+        {
+          "name": "edited_string_ordering_lemma",
+          "description": "尽管编辑操作可能扰乱交错字符串的字典序排列，但在任何总代价严格小于理论下界的解中，编辑操作引起的排序变化范围可被限定，且最优解中可以通过预排序和局部调整来保持算法的效率，无需考虑全局重排。",
+          "properties": {
+            "condition": "If total edit cost < some threshold, the relative order of edited strings in the sorted sequence of interleaved strings does not deviate beyond a narrow window, allowing divide-and-conquer adaptations."
+          },
+          "evidence_source": "analysis of edit cost and LCP changes"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "status": "schema_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题的原目标（max总美丽度）缺乏自然存在的第二评价指标来形成真实冲突。在原题中，最大化总美丽度通常倾向于使用更多单词进行配对，若引入换乘次数或单词使用率等指标，它们与总美丽度呈正相关或可由原答案直接后处理得到（如使用全部单词时换乘次数固定），不能形成无法同时独立最优的权衡关系，违反规则要求的“两个指标之间存在真实冲突”。若强行定义惩罚指标（如非匹配字符数），则只是原目标的同义改写。因此种子题不适合扩展为双目标权衡前沿题。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "将每个单词与其反转交错生成新字符串，按字典序排序，利用相邻最小 LCP 分割进行分治递归，最大化配对 beauty 总和。",
+    "reusable_subroutines": "字符串交错变换、字符串反转、字符串排序、相邻 LCP 计算、分治递归框架（左右子问题合并时计算未配对单词间的 beauty）。",
+    "new_solver_core": "在排序后交错序列的基础上，需要设计状态搜索或动态规划，为每个字符串选择编辑位置和编辑结果，使得总代价最小且总 beauty ≥ K。可能的方法包括：预处理每个字符串在不编辑和各位置编辑下的潜在 LCP 提升量，建立二分图或最小代价流模型，在约束下选择编辑决策并保证配对的最大 beauty 达到阈值。需开发全新的代价感知优化算法。",
+    "new_proof_obligation": "必须证明编辑操作对总 beauty 提升的上界关于其代价的函数关系 h(c)，并利用此关系推导最小编辑代价下界，证明算法所得代价为最小。同时需证明在代价非均匀时，任何总代价更小的方案均无法达到 K，且算法在考虑多字符串协同编辑时保持了最优性。另外，需证明在搜索空间极大的情况下，编辑后的字符串仍能有效维持排序窗口引理，保证算法复杂度可接受。",
+    "why_direct_reuse_fails": "原算法直接最大化 beauty，完全未涉及编辑操作与代价，也无法回答“为达到指定 beauty 最少需要多少代价”。直接调用原解法只能获取未编辑时的最大 beauty，但无法指导如何分配编辑预算，也无法保证编辑后的字符串序列仍能套用原递归框架的最优性，因为编辑可能改变字符串间的 LCP 关系及排序。"
+  },
+  "anti_shallow_rationale": "新题在翻转正向优化为反向设计的基础上，进一步引入位置相关编辑代价，使输入结构、核心约束和优化目标发生了实质性改变。原题的核心算法（交错变换、排序、分治）虽可部分复用，但必须与全新的代价感知决策机制结合，无法直接套用，避免了换皮风险。同时，invariant 彻底重写，以代价-增益函数和排序窗口引理取代原题的分治相邻最小 LCP 性质，确保问题核心推理路径与原题隔离。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题输出 beauty 值，可绑定为新题的达成目标 K，驱动反向设计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 增加 target_beauty_threshold，要求总 beauty ≥ K",
+        "objective 描述改为最小化代价以满足 K"
+      ],
+      "innovation_reason": "迫使求解器围绕外生目标反推状态，彻底翻转优化方向。",
+      "difficulty_reason": "算法需处理目标可行性分析及代价与 beauty 的权衡，增加证明负担。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "字符串是核心对象，字符替换是自然操作，而引入位置代价使编辑操作空间更丰富且更贴合现实约束。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 新增 edit_operation_definition，包含代价定义",
+        "invariant 新增 edit_monotonicity_with_cost，描述编辑代价与 beauty 变化的关系"
+      ],
+      "innovation_reason": "将反向设计落实到带代价的可操作编辑空间，要求算法显式建模编辑代价对匹配度的影响。",
+      "difficulty_reason": "需要分析不同位置的编辑代价对 LCP 的局部影响，并建立代价-增益效率模型，提升组合优化复杂度和证明难度。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "目标明确为最小化编辑代价，需要提供下界与最优性证明。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 类型为 minimize_cost，目标为 total_edit_cost",
+        "invariant 新增 minimal_edit_cost_lower_bound，给出基于代价效率的下界"
+      ],
+      "innovation_reason": "强制算法承担最小性证明责任，需要论证更小代价的不可能性。",
+      "difficulty_reason": "下界证明需精确定量编辑代价对总 beauty 的最大可能贡献，并构造紧致分析，大幅提高理论要求。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "seed_has_constructible_object_and_no_trivial_backtrack",
+      "selection_reason": "种子题原输出仅为整数 beauty 值，不包含诗节配对方案；标准解法递归函数只返回总 beauty 与剩余索引，未建立配对回溯，要求输出规范解（如字典序最小方案）必须修改核心状态转移以纳入顺序比较，而不是简单后处理，符合 canonical witness 对输出升级和主解法影响的要求。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 类型为 maximize_value，目标为计算 beauty，不输出方案；solution_code 中 my 函数仅返回 (rem, idx, total_beauty)，无配对记录；规则 required_seed_properties 中“原题本身有明确解对象”成立（诗节配对集合），“方案有自然顺序或能定义清楚规范”可通过字典序定义规范；forbidden_seed_properties 不触发，因为原题不要求输出方案且解法未顺手回溯；原题约束 element_usage_limit 和 stanza_pair_structure 为构造输出提供了基础。",
+        "feedback": "建议规划阶段利用 canonical_order_pressure 和 proof_bearing_output 确保规范性顺序进入分治配对决策，避免仅在回溯后对方案排序的表面修改。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_infeasibility",
+      "selection_reason": "原题始终存在可行解（至少空方案），不存在無解情形，因此无法应用构造或障碍规则。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "Seed schema objective 是最大化美丽度，允许使用单词的任意子集，且没有禁止空方案的约束，因此任何输入都有解，不存在 '做不到' 的场景。",
+        "feedback": "建议选择具有明确无解可能性的种子题，或考虑引入额外的可行性限制以使无解情形出现。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "seed_has_finite_well_defined_space",
+      "selection_reason": "原题解空间由有限单词的有限配对方案构成，去重规则可通过定义计数对象（如配对多重集）清晰界定；不变式中的分治结构天然支持拆分与汇总，适合转化为计数题。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "Core constraints: 'Each element of the given word sequence may be used at most once' → 解空间有限。 Invariant: 'adjacent_min_lcp_upper_bound' 与分治合并策略提供单元拆分与汇总基础。 目标原为maximize beauty，可改为统计达到最大值的verse数量，且verse组成元素可区分，去重规则可设计为基于无序配对集合。",
+        "feedback": "种子题具备清晰的可数性和分解结构，但需在规划阶段明确定义什么算不同verse（如顺序是否敏感），并确保计数目标主导状态转移。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "native_perturbation_absent",
+      "selection_reason": "原题中不存在可放大的原生扰动来源。题目要求从给定单词集合中选取配対以最大化总优美度，整个过程是静态、确定性的组合优化，没有顺序不确定、资源波动或局部选择差异等内在不确定性。规则依赖的原生扰动前提无法满足。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但原题 schema 的 core_constraints 仅包含 element_usage_limit、stanza_pair_structure 等静态约束，objective 为最大化 beauty，invariant 中的 transformed_lcp_correspondence 等方法依赖确定的字符串转换，未隐含任何不确定性来源。原始题面描述也只涉及最优挑选，不涉及对抗或变化条件。",
+        "feedback": "本题缺少将不确定性内嵌于题意的要素，强行引入扰动会偏离原题核心组合结构，且极可能退化为外部包装的分层阈值，违反红线。不推荐进入后续规划。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_threshold_parameter",
+      "selection_reason": "原题是最大化美丽值的组合优化问题，没有自然的可行性判定与单调阈值参数；若强行引入阈值 K 做判定（如‘是否存在美丽值 ≥ K 的方案’），属于外层机械二分，违反 negative example 和 forbidden_seed_properties，不满足规则要求。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 maximize_value，目标不是可行性；core_constraints 中没有随参数单调变化的可行区域；规则 eligibility.required_seed_properties 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，而此种子题不具备；negative example 明确指出‘原题判定外面简单套一层二分但约束语义不变’为负面案例，若将最大化转为判定则恰好落入此范畴。",
+        "feedback": "该种子题缺乏可参数化的阈值变量，最大化到最小阈值的变换没有自然语义支撑，强行改造只会产生浅层包装，无法形成有意义的临界性证明。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "natural_secondary_metric_exists",
+      "selection_reason": "The seed problem naturally contains the number of used words as a secondary metric, which conflicts with maximizing beauty: using more words can enable higher beauty but the goal of minimizing used words creates a trade-off, forming a clear Pareto frontier.",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "From the original problem: 'It is not necessary to use all the words, but each word may be used at most once...' The number of used words is an inherent property of a verse and directly competes with beauty maximization. The rule's helper 'secondary_metric_materialization' explicitly asks for a natural attribute with real conflict, satisfied here.",
+        "feedback": "The rule is applicable; the seed's natural constraint on word usage introduces a budget dimension that can be turned into a second objective without breaking the original structure."
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "eligible_forward_to_inverse",
+      "selection_reason": "原题输出为最大化后的美丽度整数值，可明确作为反向目标；单词编辑（修改字符、增删单词）是作用于核心对象的自然修改操作，设计自由度充足。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题输出为整数最大美丽度，可作为反向约束目标。输入为单词序列，对单词的编辑（例如字符级修改、添加或删除单词）与核心美丽度计算直接相关，提供了自然的修改操作空间。",
+        "feedback": "题目改为给定目标美丽度，求最少编辑字符数使得存在配对达到该目标，符合反向设计要求。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_property_mismatch",
+      "selection_reason": "原题ENGLISH是一个全局配对优化问题，单词无法作为独立求解的局部单元，所有单词必须通过跨单词的beauty函数和全局配对约束一起决定，不存在原可独立处理的局部组件，无法应用‘独立组件到全局耦合’规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最大化全局beauty，通过选择单词配对实现；规则要求原题存在可分解的局部单元，但英文单词间共享最长公共前缀/后缀使得任何配对都与其他单词关联，解题方案是全局分治而非局部独立求解。",
+        "feedback": "建议选择类似独立子问题求和（如多个连通块）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_turn_structure",
+      "selection_reason": "原题是一个静态的组合优化问题（最大化配对的美丽度总和），不存在轮流选择、拿取或移动等逐步改变状态的自然操作，无法自然扩展为双方轮流行动。强行引入玩家将只是硬造对抗方，违背 forbid_seed_properties。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为 Chef 选择单词配对形成 verse 以最大化总 beauty；objective 为 maximize total beauty；core_constraints 仅限制单词使用次数和字母范围；invariant 部分揭示的是通过字符串变换将问题转化为 LCP 最优配对，整个过程是全局优化而非逐步轮流决策。",
+        "feedback": "规则要求原题具备可轮流选择、拿取或改变状态的自然操作，但原题 ENLISH 没有这样的交互过程，转化为博弈需凭空构造玩家和行动顺序，已触碰 redlines。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是关于单词配对最大化 beauty 的最优化问题，核心对象是单词和配对，并不存在适合扩展为覆盖、割或支配关系的局部路径、区间或子树等结构。种子题的解法虽然利用了排序后的相邻 LCP 分治，但这并未在原始问题描述中形成明确的局部对象族，因此无法自然升级为全局覆盖语义。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 core_constraints 描述的是单词使用限制和 stanza 结构，objective 为最大化 beauty，invariant 涉及转换字符串和 LCP 分治。规则声明要求原题核心对象具有路径、区间、子树等局部结构，但原题没有任何这样的结构：输入是单词列表，配对是任意的，且问题目标是全局最优化而非局部对象扩展。规则中的 'local_path_to_global_cover' 操作无法映射到原题的语义上。",
+        "feedback": "原题更接近匹配或调度问题，而非覆盖/割/支配问题。若强行应用此规则，只会产生无关的附加限制或流于表面的改写，不符合审核要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题目标是最大化美观度总和（maximize_value），并非计数问题，不存在明确有限的计数对象，无法应用从普通计数到带权分布的扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 objective.type 为 'maximize_value'，描述为 'maximize the total beauty of a verse'；规则 eligibility.required_seed_properties 第一条要求 '原题已经有明确有限的计数对象'，本题不满足。",
+        "feedback": "只有计数类题目才有可能进行带权或分布计数扩展，最优化问题不适用此规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_has_constructible_object_and_no_trivial_backtrack",
+      "message": "种子题原输出仅为整数 beauty 值，不包含诗节配对方案；标准解法递归函数只返回总 beauty 与剩余索引，未建立配对回溯，要求输出规范解（如字典序最小方案）必须修改核心状态转移以纳入顺序比较，而不是简单后处理，符合 canonical witness 对输出升级和主解法影响的要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题 objective 类型为 maximize_value，目标为计算 beauty，不输出方案；solution_code 中 my 函数仅返回 (rem, idx, total_beauty)，无配对记录；规则 required_seed_properties 中“原题本身有明确解对象”成立（诗节配对集合），“方案有自然顺序或能定义清楚规范”可通过字典序定义规范；forbidden_seed_properties 不触发，因为原题不要求输出方案且解法未顺手回溯；原题约束 element_usage_limit 和 stanza_pair_structure 为构造输出提供了基础。",
+        "feedback": "建议规划阶段利用 canonical_order_pressure 和 proof_bearing_output 确保规范性顺序进入分治配对决策，避免仅在回溯后对方案排序的表面修改。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_infeasibility",
+      "message": "原题始终存在可行解（至少空方案），不存在無解情形，因此无法应用构造或障碍规则。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "Seed schema objective 是最大化美丽度，允许使用单词的任意子集，且没有禁止空方案的约束，因此任何输入都有解，不存在 '做不到' 的场景。",
+        "feedback": "建议选择具有明确无解可能性的种子题，或考虑引入额外的可行性限制以使无解情形出现。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "seed_has_finite_well_defined_space",
+      "message": "原题解空间由有限单词的有限配对方案构成，去重规则可通过定义计数对象（如配对多重集）清晰界定；不变式中的分治结构天然支持拆分与汇总，适合转化为计数题。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "Core constraints: 'Each element of the given word sequence may be used at most once' → 解空间有限。 Invariant: 'adjacent_min_lcp_upper_bound' 与分治合并策略提供单元拆分与汇总基础。 目标原为maximize beauty，可改为统计达到最大值的verse数量，且verse组成元素可区分，去重规则可设计为基于无序配对集合。",
+        "feedback": "种子题具备清晰的可数性和分解结构，但需在规划阶段明确定义什么算不同verse（如顺序是否敏感），并确保计数目标主导状态转移。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "native_perturbation_absent",
+      "message": "原题中不存在可放大的原生扰动来源。题目要求从给定单词集合中选取配対以最大化总优美度，整个过程是静态、确定性的组合优化，没有顺序不确定、资源波动或局部选择差异等内在不确定性。规则依赖的原生扰动前提无法满足。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 明确要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，但原题 schema 的 core_constraints 仅包含 element_usage_limit、stanza_pair_structure 等静态约束，objective 为最大化 beauty，invariant 中的 transformed_lcp_correspondence 等方法依赖确定的字符串转换，未隐含任何不确定性来源。原始题面描述也只涉及最优挑选，不涉及对抗或变化条件。",
+        "feedback": "本题缺少将不确定性内嵌于题意的要素，强行引入扰动会偏离原题核心组合结构，且极可能退化为外部包装的分层阈值，违反红线。不推荐进入后续规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold_parameter",
+      "message": "原题是最大化美丽值的组合优化问题，没有自然的可行性判定与单调阈值参数；若强行引入阈值 K 做判定（如‘是否存在美丽值 ≥ K 的方案’），属于外层机械二分，违反 negative example 和 forbidden_seed_properties，不满足规则要求。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 maximize_value，目标不是可行性；core_constraints 中没有随参数单调变化的可行区域；规则 eligibility.required_seed_properties 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，而此种子题不具备；negative example 明确指出‘原题判定外面简单套一层二分但约束语义不变’为负面案例，若将最大化转为判定则恰好落入此范畴。",
+        "feedback": "该种子题缺乏可参数化的阈值变量，最大化到最小阈值的变换没有自然语义支撑，强行改造只会产生浅层包装，无法形成有意义的临界性证明。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_secondary_metric_exists",
+      "message": "The seed problem naturally contains the number of used words as a secondary metric, which conflicts with maximizing beauty: using more words can enable higher beauty but the goal of minimizing used words creates a trade-off, forming a clear Pareto frontier.",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "From the original problem: 'It is not necessary to use all the words, but each word may be used at most once...' The number of used words is an inherent property of a verse and directly competes with beauty maximization. The rule's helper 'secondary_metric_materialization' explicitly asks for a natural attribute with real conflict, satisfied here.",
+        "feedback": "The rule is applicable; the seed's natural constraint on word usage introduces a budget dimension that can be turned into a second objective without breaking the original structure."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible_forward_to_inverse",
+      "message": "原题输出为最大化后的美丽度整数值，可明确作为反向目标；单词编辑（修改字符、增删单词）是作用于核心对象的自然修改操作，设计自由度充足。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题输出为整数最大美丽度，可作为反向约束目标。输入为单词序列，对单词的编辑（例如字符级修改、添加或删除单词）与核心美丽度计算直接相关，提供了自然的修改操作空间。",
+        "feedback": "题目改为给定目标美丽度，求最少编辑字符数使得存在配对达到该目标，符合反向设计要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_property_mismatch",
+      "message": "原题ENGLISH是一个全局配对优化问题，单词无法作为独立求解的局部单元，所有单词必须通过跨单词的beauty函数和全局配对约束一起决定，不存在原可独立处理的局部组件，无法应用‘独立组件到全局耦合’规则。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最大化全局beauty，通过选择单词配对实现；规则要求原题存在可分解的局部单元，但英文单词间共享最长公共前缀/后缀使得任何配对都与其他单词关联，解题方案是全局分治而非局部独立求解。",
+        "feedback": "建议选择类似独立子问题求和（如多个连通块）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_turn_structure",
+      "message": "原题是一个静态的组合优化问题（最大化配对的美丽度总和），不存在轮流选择、拿取或移动等逐步改变状态的自然操作，无法自然扩展为双方轮流行动。强行引入玩家将只是硬造对抗方，违背 forbid_seed_properties。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为 Chef 选择单词配对形成 verse 以最大化总 beauty；objective 为 maximize total beauty；core_constraints 仅限制单词使用次数和字母范围；invariant 部分揭示的是通过字符串变换将问题转化为 LCP 最优配对，整个过程是全局优化而非逐步轮流决策。",
+        "feedback": "规则要求原题具备可轮流选择、拿取或改变状态的自然操作，但原题 ENLISH 没有这样的交互过程，转化为博弈需凭空构造玩家和行动顺序，已触碰 redlines。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是关于单词配对最大化 beauty 的最优化问题，核心对象是单词和配对，并不存在适合扩展为覆盖、割或支配关系的局部路径、区间或子树等结构。种子题的解法虽然利用了排序后的相邻 LCP 分治，但这并未在原始问题描述中形成明确的局部对象族，因此无法自然升级为全局覆盖语义。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 core_constraints 描述的是单词使用限制和 stanza 结构，objective 为最大化 beauty，invariant 涉及转换字符串和 LCP 分治。规则声明要求原题核心对象具有路径、区间、子树等局部结构，但原题没有任何这样的结构：输入是单词列表，配对是任意的，且问题目标是全局最优化而非局部对象扩展。规则中的 'local_path_to_global_cover' 操作无法映射到原题的语义上。",
+        "feedback": "原题更接近匹配或调度问题，而非覆盖/割/支配问题。若强行应用此规则，只会产生无关的附加限制或流于表面的改写，不符合审核要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题目标是最大化美观度总和（maximize_value），并非计数问题，不存在明确有限的计数对象，无法应用从普通计数到带权分布的扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 objective.type 为 'maximize_value'，描述为 'maximize the total beauty of a verse'；规则 eligibility.required_seed_properties 第一条要求 '原题已经有明确有限的计数对象'，本题不满足。",
+        "feedback": "只有计数类题目才有可能进行带权或分布计数扩展，最优化问题不适用此规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "planner_rejected",
+      "message": "种子题的原目标（max总美丽度）缺乏自然存在的第二评价指标来形成真实冲突。在原题中，最大化总美丽度通常倾向于使用更多单词进行配对，若引入换乘次数或单词使用率等指标，它们与总美丽度呈正相关或可由原答案直接后处理得到（如使用全部单词时换乘次数固定），不能形成无法同时独立最优的权衡关系，违反规则要求的“两个指标之间存在真实冲突”。若强行定义惩罚指标（如非匹配字符数），则只是原目标的同义改写。因此种子题不适合扩展为双目标权衡前沿题。",
+      "details": {
+        "planner_status": "schema_insufficient"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.3452,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.5415,
+            "O": 0.468,
+            "V": 0.3288
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.5415,
+            "objective_type_distance": 0.5072,
+            "objective_text_distance": 0.4093,
+            "invariant_match_distance": 0.3288
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "ok",
+      "message": "规划成功将原题正向最大化 beauty 翻转为给定目标 beauty 阈值 K 下的最小编辑代价设计，核心约束新增编辑操作与目标阈值，优化目标变为最小化代价，不变量转向代价-增益函数与下界论证，完全兑现规则专属合同。三个 helper 均落地：target_result_binding 将原题 beauty 结果绑定为反向目标阈值，edit_operation_contract 定义了字符替换编辑操作及其代价，minimality_or_certificate_lock 强制最小代价输出与下界证明义务。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "规则声明要求改变 C、O、V 轴，规划 changed_axes 为 [\"C\", \"O\", \"V\"]。helper target_result_binding 通过 core_constraints 增加 target_beauty_threshold 和 objective 改为 minimize_cost 实现；helper edit_operation_contract 通过 core_constraints 新增 edit_operation_definition 和 invariant 新增 edit_monotonicity_with_cost 实现；helper minimality_or_certificate_lock 通过 objective 设为 minimize_cost 和 invariant 新增 minimal_edit_cost_lower_bound 实现。所有 redlines 未触犯。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确要求最小化编辑代价以达到目标匹配度K，编辑操作基于原字符串的字符替换，并来自原题对象，且目标源自原题结果语义，承担了最小性责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中写明了'小明希望通勤方案的总匹配度达到至少K'、'最少需要支付多少调整代价'，编辑操作定义为'选择某条线路的某个位置，将该位置的站点字符替换为任意小写字母，并支付相应代价'，输出要求'最小总调整代价'，示例解释说明了代价最小化逻辑。core_constraints中的edit_operation_definition和target_beauty_threshold将编辑操作与目标关联，objective明确最小化代价。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "helper_contracts_fulfilled",
+      "message": "题面明确要求通过编辑字符串达到目标匹配度阈值，并输出最小总代价，兑现了目标结果绑定、编辑操作合同和最小性锁定的核心语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中写道：“小明希望通勤方案的总匹配度达到至少 K。他想知道最少需要支付多少调整代价。如果无论如何调整都无法达到 K，请输出 -1。” 输出格式要求“对于每组测试用例，输出一行一个整数，表示达到匹配度阈值 K 所需的最小总调整代价”，并定义了编辑操作：“选择某条线路的某个位置，将该位置的站点字符替换为任意小写字母。每次调整需要支付相应的代价”。这些内容分别对应 new_schema 中 target_beauty_threshold、objective 的 minimize_cost 类型以及 edit_operation_definition 的具体实现，且样例的输出和解释也体现了最小代价的求解。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确反向目标为总匹配度至少为K，要求最小化调整代价，编辑操作直接基于原始线路的字符替换，承担了最小性输出责任，完全兑现规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题目描述：“小明希望通勤方案的总匹配度达到至少 K。他想知道最少需要支付多少调整代价。”编辑操作：“选择某条线路的某个位置，将该位置的站点字符替换为任意小写字母。每次调整需要支付相应的代价”。目标明确为最小化代价，输出要求最小代价或-1，匹配规则要求的最小性责任。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "schema_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题的原目标（max总美丽度）缺乏自然存在的第二评价指标来形成真实冲突。在原题中，最大化总美丽度通常倾向于使用更多单词进行配对，若引入换乘次数或单词使用率等指标，它们与总美丽度呈正相关或可由原答案直接后处理得到（如使用全部单词时换乘次数固定），不能形成无法同时独立最优的权衡关系，违反规则要求的“两个指标之间存在真实冲突”。若强行定义惩罚指标（如非匹配字符数），则只是原目标的同义改写。因此种子题不适合扩展为双目标权衡前沿题。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "contract_retry_count": 2,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "distance_gate_failed",
+          "reason": "规划结果未达到硬门槛，预测距离=0.3452，落地轴=C, O, V。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "distance_gate_failed",
+              "message": "规划结果未达到差异度或变化轴硬门槛。",
+              "details": {
+                "distance": {
+                  "distance_version": "v2",
+                  "backend": "embedding",
+                  "total": 0.3452,
+                  "axis_scores": {
+                    "I": 0.0,
+                    "C": 0.5415,
+                    "O": 0.468,
+                    "V": 0.3288
+                  },
+                  "components": {
+                    "input_tree_distance": 0.0,
+                    "constraint_match_distance": 0.5415,
+                    "objective_type_distance": 0.5072,
+                    "objective_text_distance": 0.4093,
+                    "invariant_match_distance": 0.3288
+                  }
+                },
+                "changed_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "I",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "城市通勤·线路匹配",
+    "description": "小明所在的城市正在推进公交线路优化。城市中有 N 条公交线路，每条线路用一个由小写字母组成的字符串表示，例如 \"ab\" 表示依次经过站点 a, b。\n\n小明可以将线路两两配对形成通勤组合。一对线路的匹配度定义为：它们的最长公共前缀长度与最长公共后缀长度的较小值的平方，即 min(lcp, lcs)^2。例如线路 \"abcd\" 与 \"abed\" 的 lcp = 2（共同前缀 \"ab\"），lcs = 1（共同后缀 \"d\"），匹配度 = 1^2 = 1。\n\n一个通勤方案的总匹配度是所有配对匹配度之和。小明可以从 N 条线路中任意选择若干条配对，每条线路最多使用一次。\n\n为了进一步提升匹配度，小明可以调整线路：选择某条线路的某个位置，将该位置的站点字符替换为任意小写字母。每次调整需要支付相应的代价，不同位置的代价不同。同一条线路的多个位置可以分别进行调整，总调整代价为各次调整代价之和。\n\n现在小明希望通勤方案的总匹配度达到至少 K。他想知道最少需要支付多少调整代价。如果无论如何调整都无法达到 K，请输出 -1。",
+    "input_format": "第一行包含一个整数 T，表示测试用例的数量。\n\n接下来是 T 组测试用例。每组测试用例的格式如下：\n第一行包含两个整数 N 和 K，分别表示线路数量和目标匹配度阈值。\n接下来 N 行，每行首先是一个由小写字母组成的字符串 Wi，表示线路 i 的原始站点序列；接着是 |Wi| 个整数 ci,1, ci,2, ..., ci,|Wi|，表示将线路 i 上第 1, 2, ..., |Wi| 个站点字符替换为任意小写字母所需的代价。\n\n所有整数均以空格分隔。",
+    "output_format": "对于每组测试用例，输出一行一个整数，表示达到匹配度阈值 K 所需的最小总调整代价。如果无论如何调整都无法达到 K，则输出 -1。",
+    "constraints": [
+      "1 ≤ T ≤ 10^5，所有测试用例的 N 之和不超过 10^5",
+      "1 ≤ N ≤ 10^5",
+      "1 ≤ |Wi| ≤ 10^5 ，所有测试用例的线路长度之和不超过 10^5",
+      "Wi 仅包含小写英文字母",
+      "1 ≤ ci,j ≤ 10^9",
+      "0 ≤ K ≤ 10^18",
+      "时间限制：3 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "3\n3 16\nab 1 1\nab 1 1\nab 1 1\n4 16\nabcd 1 2 3 4\nabcd 1 2 3 4\nabcd 1 2 3 4\nabcd 1 2 3 4\n2 1\na 1\nb 1",
+        "output": "-1\n0\n1",
+        "explanation": "第一个测试用例：三条线路长度均为2，任意两条配对的匹配度为 min(2,2)^2=4，总和最多为4，无法达到 K=16，因此输出 -1。\n第二个测试用例：四条相同的线路 \"abcd\"，直接取其中两条配对，匹配度 min(4,4)^2=16，达到 K=16，总代价为 0。\n第三个测试用例：原始两条线路 \"a\" 和 \"b\" 的匹配度为 0。将 \"a\" 改为 \"b\"，代价为 1，得到 \"b\"。编辑后的 \"b\" 与 \"b\" 配对，最长公共前缀和最长公共后缀长度均为 1，匹配度为 min(1,1)^2=1，达到 K=1，总代价为 1。"
+      },
+      {
+        "input": "2\n2 4\nab 1 100\nac 100 1\n2 4\nab 1 2\nba 3 4",
+        "output": "1\n3",
+        "explanation": "第一个测试用例：原始匹配度为 0。将 \"ac\" 的第二个字符改为 'b'，代价为 1，得到 \"ab\"。编辑后的 \"ab\" 与未编辑的 \"ab\" 配对，匹配度为 min(2,2)^2=4，达到 K=4，总代价为 1。\n第二个测试用例：原始匹配度为 0。将 \"ab\" 的第一个字符改为 'b'（代价 1），第二个字符改为 'a'（代价 2），总代价为 3，得到 \"ba\"。编辑后的 \"ba\" 与未编辑的 \"ba\" 配对，匹配度为 min(2,2)^2=4，达到 K=4。其他编辑方案代价均不小于 3，因此最小代价为 3。"
+      }
+    ],
+    "notes": "匹配度计算基于编辑后的字符串。编辑操作仅替换字符，不改变字符串长度。同一条线路的不同位置可以分别进行调整。不必使用所有线路，可选用任意子集进行配对，保证每条原始线路最多被使用一次。如果 K=0，可以不进行任何配对，总代价为 0。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_4a283930e669_home_organization_20260609_192605",
+    "round_index": 4,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 2,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\artifacts\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669_home_organization_20260609_192605_round3.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\reports\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669_home_organization_20260609_192605_round3_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "revise_quality",
+      "generated_status": "ok",
+      "quality_score": 72.0,
+      "divergence_score": 73.2,
+      "non_full_dimensions": [
+        {
+          "dimension": "cross_section_consistency",
+          "score": 1.0,
+          "rationale": "第一个样例的第三个测试用例解释声称 min(0,1)^2 = 1，与 description 中 min(lcp,lcs)^2 的定义严重矛盾（实际应为 0）。该解释错误导致样例与题意不符，且输入输出可能本身有误，严重影响各部分之间的一致性。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "generated_problem.samples[0].explanation",
+            "generated_problem.samples[0].input"
+          ]
+        },
+        {
+          "dimension": "sample_quality",
+          "score": 1.0,
+          "rationale": "样例数量尚可，但第一个样例的第三个测试用例的输入输出及解释存在严重错误：按照 beauty 定义，无法以代价 1 达到 K=1 的匹配度，解释中的计算过程错误，误导读者理解核心规则。该样例损坏了整体样例的质量和可信度。",
+          "evidence_refs": [
+            "generated_problem.samples[0].input",
+            "generated_problem.samples[0].explanation",
+            "generated_problem.description"
+          ]
+        }
+      ],
+      "suggested_revisions": [
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "优先改写核心任务定义，而不是继续替换故事背景。",
+        "修正该组样例的输入/输出或修改解释，确保编辑后的字符串对确实能达到 K=1，并正确计算 lcp 和 lcs。例如，可将 'aa' 改为 'ab'（代价 1），与 'bb' 的 lcp=0,lcs=1，匹配度=1。",
+        "移除所有开发残留文本，根据正确逻辑重新设计一个能清晰展示编辑与匹配度关系的样例，并提供准确的解释。",
+        "修正第一个样例的第三组解释，确保编辑操作后匹配度计算符合定义。",
+        "彻底重写第二个样例，移除所有开发笔记，提供一个逻辑清晰且覆盖编辑决策的示例。",
+        "考虑增加一个样例，专门展示多重编辑或更复杂的编辑组合，以更好地说明编辑代价与匹配度的关系。",
+        "重新设计该测试用例，确保编辑后 beauty 至少为 1 且最小代价为 1，例如将 'aa' 改为 'ab' 并配以另一个 'ab' 或以其他方式令 lcp 和 lcs 同时至少为 1。同时更正解释以符合 beauty 定义。",
+        "修正 samples[0] 中第三个测试用例的输入输出或解释，使其与 beauty 定义一致，并验证 K=1 时可达到。",
+        "在 description 中明确说明通勤组合可以包含 0 对（可选任意子集），以消除歧义。"
+      ],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "新题将原题的最优化目标改为计数最优方案数目，并引入模数，但核心优化结构和约束完全保留。字符串交错变换、排序、相邻最小 LCP 分治等关键算法均可直接复用，仅需在递归中增加方案数合并逻辑。对原题标准解的选手而言，迁移代价很低。虽有计数去重和 d=0 特殊处理，但整体仍高度依赖原题解法框架。表层叙事从英语单词转变为家庭收纳，但任务结构、输入输出模式、配对定义完全照搬，属于明显的换皮延伸。因此判定为拒绝。",
+          "evidence_refs": [
+            "hard_checks[?(@.check_id=='schema_distance_threshold')].message",
+            "review_context.difference_plan.summary",
+            "review_context.distance_breakdown",
+            "snapshots.new_schema.objective",
+            "snapshots.generated_problem.description"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例解释与匹配度定义矛盾",
+          "detail": "生成的第一个样例中，第三组数据（aa 1 1 与 bb 1 1）的解释声称编辑后得到 'ba' 与 'bb' 的 lcs=1，匹配度=1，但根据 beauty 定义 min(lcp,lcs)^2，'ba' 与 'bb' 的 lcs 实际为 0（末尾字符 'a' 与 'b' 不同），min(lcp,lcs)=0，匹配度为 0，无法达到 K=1。该解释直接与题面核心定义冲突。",
+          "evidence_refs": [
+            "generated_problem.samples[0].explanation",
+            "new_schema.core_constraints.beauty_definition"
+          ],
+          "fix_hint": "修正该组样例的输入/输出或修改解释，确保编辑后的字符串对确实能达到 K=1，并正确计算 lcp 和 lcs。例如，可将 'aa' 改为 'ab'（代价 1），与 'bb' 的 lcp=0,lcs=1，匹配度=1。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例解释包含开发残留文本",
+          "detail": "生成的第二个样例的解释中出现了“实际上需要将...但样例输出写的是 1？按照我的计算...需要重新设计样例”等文本，明显是题面生成过程中的中间笔记或问题标记，不应出现在最终题面中，严重影响专业性和可信度。",
+          "evidence_refs": [
+            "generated_problem.samples[1].explanation"
+          ],
+          "fix_hint": "移除所有开发残留文本，根据正确逻辑重新设计一个能清晰展示编辑与匹配度关系的样例，并提供准确的解释。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例解释与 beauty 定义矛盾",
+          "detail": "samples[0] 的第三个测试用例解释中，将 'aa' 改为 'ab' 后与 'bb' 的 lcp=0, lcs=1，然后得出 min(0,1)^2 = 1，而根据 beauty 定义，min(0,1)=0，故实际 beauty 为 0。该用例的输入和输出可能也不正确，因为代价 1 无法使总 beauty 达到 1。",
+          "evidence_refs": [
+            "generated_problem.samples[0].explanation",
+            "generated_problem.samples[0].input",
+            "generated_problem.description"
+          ],
+          "fix_hint": "重新设计该测试用例，确保编辑后 beauty 至少为 1 且最小代价为 1，例如将 'aa' 改为 'ab' 并配以另一个 'ab' 或以其他方式令 lcp 和 lcs 同时至少为 1。同时更正解释以符合 beauty 定义。"
+        }
+      ],
+      "strengths_to_keep": [
+        "new_schema 中的全部约束和计数规则均被精确落地，没有偏差",
+        "题面独立完整，无需外部知识即可理解并解题",
+        "各部分之间信息一致，无矛盾",
+        "样例有代表性且解释详尽，覆盖全零和非零匹配度及基本计数规则",
+        "语言清晰，无歧义，符合 OJ 题面风格",
+        "题面准确映射 new_schema 所有核心约束与目标，没有遗漏或扭曲。",
+        "描述、输入输出格式、约束与注释之间连贯一致，独立做题信息完备。",
+        "采用城市公交线路作为叙事背景，比喻自然，易于理解，阅读体验良好。",
+        "题面主题映射自然，将字符串编辑与公交线路优化结合，易于联想。",
+        "输入输出格式和约束描述详尽，时间空间限制明确，便于实现。",
+        "除错误用例外，多数样例有解释且覆盖未编辑达到阈值、编辑后达标等基本场景。"
+      ],
+      "previous_generated_problem": {
+        "title": "城市通勤·线路匹配",
+        "description": "小明所在的城市正在推进公交线路优化。城市中有 N 条公交线路，每条线路用一个由小写字母组成的字符串表示，例如 \"ab\" 表示依次经过站点 a, b。\n\n小明可以将线路两两配对形成通勤组合。一对线路的匹配度定义为：它们的最长公共前缀长度与最长公共后缀长度的较小值的平方，即 min(lcp, lcs)^2。例如线路 \"abcd\" 与 \"abed\" 的 lcp = 2（共同前缀 \"ab\"），lcs = 1（共同后缀 \"d\"），匹配度 = 1^2 = 1。\n\n一个通勤方案的总匹配度是所有配对匹配度之和。小明可以从 N 条线路中任意选择若干条配对，每条线路最多使用一次。\n\n为了进一步提升匹配度，小明可以调整线路：选择某条线路的某个位置，将该位置的站点字符替换为任意小写字母。每次调整需要支付相应的代价，不同位置的代价不同。同一条线路的多个位置可以分别进行调整，总调整代价为各次调整代价之和。\n\n现在小明希望通勤方案的总匹配度达到至少 K。他想知道最少需要支付多少调整代价。如果无论如何调整都无法达到 K，请输出 -1。",
+        "input_format": "第一行包含一个整数 T，表示测试用例的数量。\n\n接下来是 T 组测试用例。每组测试用例的格式如下：\n第一行包含两个整数 N 和 K，分别表示线路数量和目标匹配度阈值。\n接下来 N 行，每行首先是一个由小写字母组成的字符串 Wi，表示线路 i 的原始站点序列；接着是 |Wi| 个整数 ci,1, ci,2, ..., ci,|Wi|，表示将线路 i 上第 1, 2, ..., |Wi| 个站点字符替换为任意小写字母所需的代价。\n\n所有整数均以空格分隔。",
+        "output_format": "对于每组测试用例，输出一行一个整数，表示达到匹配度阈值 K 所需的最小总调整代价。如果无论如何调整都无法达到 K，则输出 -1。",
+        "constraints": [
+          "1 ≤ T ≤ 10^5，所有测试用例的 N 之和不超过 10^5",
+          "1 ≤ N ≤ 10^5",
+          "1 ≤ |Wi| ≤ 10^5 ，所有测试用例的线路长度之和不超过 10^5",
+          "Wi 仅包含小写英文字母",
+          "1 ≤ ci,j ≤ 10^9",
+          "0 ≤ K ≤ 10^18",
+          "时间限制：3 秒",
+          "空间限制：256 MB"
+        ],
+        "samples": [
+          {
+            "input": "3\n3 16\nab 1 1\nab 1 1\nab 1 1\n4 16\nabcd 1 2 3 4\nabcd 1 2 3 4\nabcd 1 2 3 4\nabcd 1 2 3 4\n2 1\naa 1 1\nbb 1 1",
+            "output": "-1\n0\n1",
+            "explanation": "第一个测试用例：三条线路长度均为2，即使全部使用并配对，最大匹配度 min(2,2)^2=4，无法达到 K=16，因此输出 -1。\n第二个测试用例：四条相同的线路 \"abcd\"，无需任何编辑，直接取其中两条配对，匹配度 min(4,4)^2=16，达到 K=16，总代价为 0。\n第三个测试用例：原始两条线路 \"aa\" 和 \"bb\" 的匹配度为 0。将 \"aa\" 的第二个字符 'a' 改为 'b'，代价为 1，得到 \"ab\"。编辑后的 \"ab\" 与 \"bb\" 的最长公共前缀长度为 0，最长公共后缀长度为 1（共同的 'b'），匹配度为 min(0,1)^2 = 1，达到 K=1，总代价为 1。"
+          },
+          {
+            "input": "2\n2 4\nab 1 100\nac 100 1\n2 4\nab 1 2\nba 3 4",
+            "output": "1\n3",
+            "explanation": "第一个测试用例：原始匹配度为 0。可以将 \"ac\" 的第二个字符 'c' 改为 'b'，代价为 1，得到 \"ab\"。修改后的 \"ab\" 与未修改的 \"ab\" 配对，最长公共前缀和最长公共后缀长度均为 2，匹配度为 min(2,2)^2 = 4，满足 K=4，总代价为 1。也可以修改 \"ab\"，但代价更高，不是最优。\n第二个测试用例：原始匹配度为 0。将 \"ab\" 的第一个字符 'a' 改为 'b'（代价 1），第二个字符 'b' 改为 'a'（代价 2），总代价为 3，得到 \"ba\"。修改后的 \"ba\" 与未修改的 \"ba\" 配对，匹配度为 min(2,2)^2 = 4，达到 K=4，总代价为 3。只修改 \"ba\" 需要更高的代价，因此最小代价为 3。"
+          }
+        ],
+        "notes": "匹配度计算基于编辑后的字符串。编辑操作仅替换字符，不改变字符串长度。同一条线路的不同位置可以分别进行调整。不必使用所有线路，可选用任意子集进行配对，保证每条原始线路最多被使用一次。如果存在多种方案能达到匹配度阈值，只需输出最小总代价。",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": ""
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 50.1,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "新题将原题的最优化目标改为计数最优方案数目，并引入模数，但核心优化结构和约束完全保留。字符串交错变换、排序、相邻最小 LCP 分治等关键算法均可直接复用，仅需在递归中增加方案数合并逻辑。对原题标准解的选手而言，迁移代价很低。虽有计数去重和 d=0 特殊处理，但整体仍高度依赖原题解法框架。表层叙事从英语单词转变为家庭收纳，但任务结构、输入输出模式、配对定义完全照搬，属于明显的换皮延伸。因此判定为拒绝。",
+                "evidence_refs": [
+                  "hard_checks[?(@.check_id=='schema_distance_threshold')].message",
+                  "review_context.difference_plan.summary",
+                  "review_context.distance_breakdown",
+                  "snapshots.new_schema.objective",
+                  "snapshots.generated_problem.description"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "new_schema 中的全部约束和计数规则均被精确落地，没有偏差",
+              "题面独立完整，无需外部知识即可理解并解题",
+              "各部分之间信息一致，无矛盾",
+              "样例有代表性且解释详尽，覆盖全零和非零匹配度及基本计数规则",
+              "语言清晰，无歧义，符合 OJ 题面风格"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 80.0,
+            "divergence_score": 72.9,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例解释与匹配度定义矛盾",
+                "detail": "生成的第一个样例中，第三组数据（aa 1 1 与 bb 1 1）的解释声称编辑后得到 'ba' 与 'bb' 的 lcs=1，匹配度=1，但根据 beauty 定义 min(lcp,lcs)^2，'ba' 与 'bb' 的 lcs 实际为 0（末尾字符 'a' 与 'b' 不同），min(lcp,lcs)=0，匹配度为 0，无法达到 K=1。该解释直接与题面核心定义冲突。",
+                "evidence_refs": [
+                  "generated_problem.samples[0].explanation",
+                  "new_schema.core_constraints.beauty_definition"
+                ],
+                "fix_hint": "修正该组样例的输入/输出或修改解释，确保编辑后的字符串对确实能达到 K=1，并正确计算 lcp 和 lcs。例如，可将 'aa' 改为 'ab'（代价 1），与 'bb' 的 lcp=0,lcs=1，匹配度=1。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例解释包含开发残留文本",
+                "detail": "生成的第二个样例的解释中出现了“实际上需要将...但样例输出写的是 1？按照我的计算...需要重新设计样例”等文本，明显是题面生成过程中的中间笔记或问题标记，不应出现在最终题面中，严重影响专业性和可信度。",
+                "evidence_refs": [
+                  "generated_problem.samples[1].explanation"
+                ],
+                "fix_hint": "移除所有开发残留文本，根据正确逻辑重新设计一个能清晰展示编辑与匹配度关系的样例，并提供准确的解释。"
+              }
+            ],
+            "suggested_revisions": [
+              "修正该组样例的输入/输出或修改解释，确保编辑后的字符串对确实能达到 K=1，并正确计算 lcp 和 lcs。例如，可将 'aa' 改为 'ab'（代价 1），与 'bb' 的 lcp=0,lcs=1，匹配度=1。",
+              "移除所有开发残留文本，根据正确逻辑重新设计一个能清晰展示编辑与匹配度关系的样例，并提供准确的解释。",
+              "修正第一个样例的第三组解释，确保编辑操作后匹配度计算符合定义。",
+              "彻底重写第二个样例，移除所有开发笔记，提供一个逻辑清晰且覆盖编辑决策的示例。",
+              "考虑增加一个样例，专门展示多重编辑或更复杂的编辑组合，以更好地说明编辑代价与匹配度的关系。"
+            ],
+            "strengths_to_keep": [
+              "题面准确映射 new_schema 所有核心约束与目标，没有遗漏或扭曲。",
+              "描述、输入输出格式、约束与注释之间连贯一致，独立做题信息完备。",
+              "采用城市公交线路作为叙事背景，比喻自然，易于理解，阅读体验良好。"
+            ]
+          }
+        },
+        {
+          "round_index": 3,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 3,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 72.0,
+            "divergence_score": 73.2,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例解释与 beauty 定义矛盾",
+                "detail": "samples[0] 的第三个测试用例解释中，将 'aa' 改为 'ab' 后与 'bb' 的 lcp=0, lcs=1，然后得出 min(0,1)^2 = 1，而根据 beauty 定义，min(0,1)=0，故实际 beauty 为 0。该用例的输入和输出可能也不正确，因为代价 1 无法使总 beauty 达到 1。",
+                "evidence_refs": [
+                  "generated_problem.samples[0].explanation",
+                  "generated_problem.samples[0].input",
+                  "generated_problem.description"
+                ],
+                "fix_hint": "重新设计该测试用例，确保编辑后 beauty 至少为 1 且最小代价为 1，例如将 'aa' 改为 'ab' 并配以另一个 'ab' 或以其他方式令 lcp 和 lcs 同时至少为 1。同时更正解释以符合 beauty 定义。"
+              }
+            ],
+            "suggested_revisions": [
+              "重新设计该测试用例，确保编辑后 beauty 至少为 1 且最小代价为 1，例如将 'aa' 改为 'ab' 并配以另一个 'ab' 或以其他方式令 lcp 和 lcs 同时至少为 1。同时更正解释以符合 beauty 定义。",
+              "修正 samples[0] 中第三个测试用例的输入输出或解释，使其与 beauty 定义一致，并验证 K=1 时可达到。",
+              "在 description 中明确说明通勤组合可以包含 0 对（可选任意子集），以消除歧义。"
+            ],
+            "strengths_to_keep": [
+              "题面主题映射自然，将字符串编辑与公交线路优化结合，易于联想。",
+              "输入输出格式和约束描述详尽，时间空间限制明确，便于实现。",
+              "除错误用例外，多数样例有解释且覆盖未编辑达到阈值、编辑后达标等基本场景。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 3,
+        "latest_round_index": 3,
+        "latest_iteration_phase": "full_score_polish",
+        "latest_overall_status": "revise_quality",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 72.0,
+        "latest_divergence_score": 73.2,
+        "suggested_revisions": [
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "优先改写核心任务定义，而不是继续替换故事背景。",
+          "修正该组样例的输入/输出或修改解释，确保编辑后的字符串对确实能达到 K=1，并正确计算 lcp 和 lcs。例如，可将 'aa' 改为 'ab'（代价 1），与 'bb' 的 lcp=0,lcs=1，匹配度=1。",
+          "移除所有开发残留文本，根据正确逻辑重新设计一个能清晰展示编辑与匹配度关系的样例，并提供准确的解释。",
+          "修正第一个样例的第三组解释，确保编辑操作后匹配度计算符合定义。",
+          "彻底重写第二个样例，移除所有开发笔记，提供一个逻辑清晰且覆盖编辑决策的示例。",
+          "考虑增加一个样例，专门展示多重编辑或更复杂的编辑组合，以更好地说明编辑代价与匹配度的关系。",
+          "重新设计该测试用例，确保编辑后 beauty 至少为 1 且最小代价为 1，例如将 'aa' 改为 'ab' 并配以另一个 'ab' 或以其他方式令 lcp 和 lcs 同时至少为 1。同时更正解释以符合 beauty 定义。",
+          "修正 samples[0] 中第三个测试用例的输入输出或解释，使其与 beauty 定义一致，并验证 K=1 时可达到。",
+          "在 description 中明确说明通勤组合可以包含 0 对（可选任意子集），以消除歧义。"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "新题将原题的最优化目标改为计数最优方案数目，并引入模数，但核心优化结构和约束完全保留。字符串交错变换、排序、相邻最小 LCP 分治等关键算法均可直接复用，仅需在递归中增加方案数合并逻辑。对原题标准解的选手而言，迁移代价很低。虽有计数去重和 d=0 特殊处理，但整体仍高度依赖原题解法框架。表层叙事从英语单词转变为家庭收纳，但任务结构、输入输出模式、配对定义完全照搬，属于明显的换皮延伸。因此判定为拒绝。",
+            "evidence_refs": [
+              "hard_checks[?(@.check_id=='schema_distance_threshold')].message",
+              "review_context.difference_plan.summary",
+              "review_context.distance_breakdown",
+              "snapshots.new_schema.objective",
+              "snapshots.generated_problem.description"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例解释与匹配度定义矛盾",
+            "detail": "生成的第一个样例中，第三组数据（aa 1 1 与 bb 1 1）的解释声称编辑后得到 'ba' 与 'bb' 的 lcs=1，匹配度=1，但根据 beauty 定义 min(lcp,lcs)^2，'ba' 与 'bb' 的 lcs 实际为 0（末尾字符 'a' 与 'b' 不同），min(lcp,lcs)=0，匹配度为 0，无法达到 K=1。该解释直接与题面核心定义冲突。",
+            "evidence_refs": [
+              "generated_problem.samples[0].explanation",
+              "new_schema.core_constraints.beauty_definition"
+            ],
+            "fix_hint": "修正该组样例的输入/输出或修改解释，确保编辑后的字符串对确实能达到 K=1，并正确计算 lcp 和 lcs。例如，可将 'aa' 改为 'ab'（代价 1），与 'bb' 的 lcp=0,lcs=1，匹配度=1。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例解释包含开发残留文本",
+            "detail": "生成的第二个样例的解释中出现了“实际上需要将...但样例输出写的是 1？按照我的计算...需要重新设计样例”等文本，明显是题面生成过程中的中间笔记或问题标记，不应出现在最终题面中，严重影响专业性和可信度。",
+            "evidence_refs": [
+              "generated_problem.samples[1].explanation"
+            ],
+            "fix_hint": "移除所有开发残留文本，根据正确逻辑重新设计一个能清晰展示编辑与匹配度关系的样例，并提供准确的解释。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例解释与 beauty 定义矛盾",
+            "detail": "samples[0] 的第三个测试用例解释中，将 'aa' 改为 'ab' 后与 'bb' 的 lcp=0, lcs=1，然后得出 min(0,1)^2 = 1，而根据 beauty 定义，min(0,1)=0，故实际 beauty 为 0。该用例的输入和输出可能也不正确，因为代价 1 无法使总 beauty 达到 1。",
+            "evidence_refs": [
+              "generated_problem.samples[0].explanation",
+              "generated_problem.samples[0].input",
+              "generated_problem.description"
+            ],
+            "fix_hint": "重新设计该测试用例，确保编辑后 beauty 至少为 1 且最小代价为 1，例如将 'aa' 改为 'ab' 并配以另一个 'ab' 或以其他方式令 lcp 和 lcs 同时至少为 1。同时更正解释以符合 beauty 定义。"
+          }
+        ],
+        "strengths_to_keep": [
+          "new_schema 中的全部约束和计数规则均被精确落地，没有偏差",
+          "题面独立完整，无需外部知识即可理解并解题",
+          "各部分之间信息一致，无矛盾",
+          "样例有代表性且解释详尽，覆盖全零和非零匹配度及基本计数规则",
+          "语言清晰，无歧义，符合 OJ 题面风格",
+          "题面准确映射 new_schema 所有核心约束与目标，没有遗漏或扭曲。",
+          "描述、输入输出格式、约束与注释之间连贯一致，独立做题信息完备。",
+          "采用城市公交线路作为叙事背景，比喻自然，易于理解，阅读体验良好。",
+          "题面主题映射自然，将字符串编辑与公交线路优化结合，易于联想。",
+          "输入输出格式和约束描述详尽，时间空间限制明确，便于实现。",
+          "除错误用例外，多数样例有解释且覆盖未编辑达到阈值、编辑后达标等基本场景。"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

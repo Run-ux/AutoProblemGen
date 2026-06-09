@@ -1,0 +1,675 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 94.0,
+    "divergence_score": 44.4,
+    "schema_distance": 0.4022,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 4.0,
+        "rationale": "new_schema 中 d 的 value_range.max 为 null，未设置明确上界，但 generated_problem 的约束和输入格式中增加了 d < p 的限制，这缩小了输入空间，与 new_schema 略有偏差。其他核心部分（输入结构、输出类型、目标函数、计数定义）均已准确落地。",
+        "evidence_refs": [
+          "new_schema.input_structure.components[1].value_range.max",
+          "generated_problem.input_format",
+          "generated_problem.constraints[2]"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面完整提供了独立做题所需的所有信息：任务说明详细定义了幸运度、区间、最大值和计数规则；输入输出格式明确；约束列出了 p, d 的范围和时间/空间限制；样例丰富并附带解释。没有遗漏关键规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间均无矛盾：区间定义一致，幸运度定义与样例解释相符，输出为整数计数，约束中声明的范围与输入格式和样例吻合。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "包含 3 个样例，分别覆盖了无尾随 9（全区间计数）、多解（不同最高阶尾 9）和单解的情况，每个样例都有清晰的解释，足以帮助理解规则。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面采用标准 OJ 结构，标题、描述、格式说明、约束、样例和注释划分清楚，语言简洁直白，无原题来源泄漏或无关噪声，便于参赛者快速理解题意。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面完整迁移了目标函数为计数，明确给出了 t_max 的计算和计数对象，无歧义。",
+      "样例设计多样且有解释，覆盖了不同尾 9 情况，便于验证理解。",
+      "整体表达符合 OJ 标准，叙事化主题自然融入而不过度干扰数学定义。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4022,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.7252,
+        "O": 0.5044,
+        "V": 0.2925
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.7252,
+        "objective_type_distance": 0.6704,
+        "objective_text_distance": 0.2554,
+        "invariant_match_distance": 0.2925
+      }
+    },
+    "schema_distance": 0.4022,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.35,
+    "solution_transfer_risk": 0.85,
+    "surface_retheme_risk": 0.9,
+    "verdict": "reject_as_retheme",
+    "rationale": "新题将原题的“找最大末尾9个数且最大价格”改为统计达到最大末尾9个数的所有票号个数，输入区间和核心约束完全不变。原题解法通过扫描10的幂，寻找最大可行k（即t_max）的框架可直接复用，只需在最后增加计数逻辑：对已确定的t_max，计算区间内末尾t_max个9的整数个数。计数部分仅为简单数学公式，无需重新建模或选择关键算法。此外，新题样例（如1029 102→1）与原题样例（1029 102→999）高度对应，故事虽改，但叙述结构和任务映射明显，属于表层换皮。因此，语义差异有限，解法迁移风险极高，应拒绝为新题。",
+    "evidence_refs": [
+      "original_problem.description",
+      "generated_problem.samples",
+      "new_schema.objective",
+      "new_schema.core_constraints",
+      "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+      "review_context.distance_breakdown.axis_scores",
+      "hard_checks[9].check_id=schema_distance_threshold"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.40，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "d 的范围与 new_schema 不一致",
+      "detail": "new_schema 中 d 的 value_range.max 为 null，未设上限，而 generated_problem 在 input_format 和 constraints 中添加了 d < p 的限制，这缩小了输入域，未完全忠实于原始 schema。",
+      "evidence_refs": [
+        "new_schema.input_structure.components[1].value_range.max",
+        "generated_problem.input_format",
+        "generated_problem.constraints[2]"
+      ],
+      "fix_hint": "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。"
+    },
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "新题将原题的“找最大末尾9个数且最大价格”改为统计达到最大末尾9个数的所有票号个数，输入区间和核心约束完全不变。原题解法通过扫描10的幂，寻找最大可行k（即t_max）的框架可直接复用，只需在最后增加计数逻辑：对已确定的t_max，计算区间内末尾t_max个9的整数个数。计数部分仅为简单数学公式，无需重新建模或选择关键算法。此外，新题样例（如1029 102→1）与原题样例（1029 102→999）高度对应，故事虽改，但叙述结构和任务映射明显，属于表层换皮。因此，语义差异有限，解法迁移风险极高，应拒绝为新题。",
+      "evidence_refs": [
+        "original_problem.description",
+        "generated_problem.samples",
+        "new_schema.objective",
+        "new_schema.core_constraints",
+        "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+        "review_context.distance_breakdown.axis_scores",
+        "hard_checks[9].check_id=schema_distance_threshold"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。",
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "建议将 d < p 的约束回写到 new_schema 的 input_structure 中，使 schema 与题面保持一致，避免后续衍生混淆。",
+    "可在 notes 或约束中补充 d 可能接近 10^18 时的最大输入规模说明，帮助参赛者预估算法复杂度。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 94.0,
+    "divergence_score": 44.4,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "d 的范围与 new_schema 不一致",
+        "detail": "new_schema 中 d 的 value_range.max 为 null，未设上限，而 generated_problem 在 input_format 和 constraints 中添加了 d < p 的限制，这缩小了输入域，未完全忠实于原始 schema。",
+        "evidence_refs": [
+          "new_schema.input_structure.components[1].value_range.max",
+          "generated_problem.input_format",
+          "generated_problem.constraints[2]"
+        ],
+        "fix_hint": "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。"
+      },
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "新题将原题的“找最大末尾9个数且最大价格”改为统计达到最大末尾9个数的所有票号个数，输入区间和核心约束完全不变。原题解法通过扫描10的幂，寻找最大可行k（即t_max）的框架可直接复用，只需在最后增加计数逻辑：对已确定的t_max，计算区间内末尾t_max个9的整数个数。计数部分仅为简单数学公式，无需重新建模或选择关键算法。此外，新题样例（如1029 102→1）与原题样例（1029 102→999）高度对应，故事虽改，但叙述结构和任务映射明显，属于表层换皮。因此，语义差异有限，解法迁移风险极高，应拒绝为新题。",
+        "evidence_refs": [
+          "original_problem.description",
+          "generated_problem.samples",
+          "new_schema.objective",
+          "new_schema.core_constraints",
+          "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+          "review_context.distance_breakdown.axis_scores",
+          "hard_checks[9].check_id=schema_distance_threshold"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。",
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "建议将 d < p 的约束回写到 new_schema 的 input_structure 中，使 schema 与题面保持一致，避免后续衍生混淆。",
+      "可在 notes 或约束中补充 d 可能接近 10^18 时的最大输入规模说明，帮助参赛者预估算法复杂度。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "题面完整迁移了目标函数为计数，明确给出了 t_max 的计算和计数对象，无歧义。",
+      "样例设计多样且有解释，覆盖了不同尾 9 情况，便于验证理解。",
+      "整体表达符合 OJ 标准，叙事化主题自然融入而不过度干扰数学定义。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\source\\taco_codeforces_2311f27edf21\\taco_codeforces_2311f27edf21.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\artifacts\\taco_codeforces_2311f27edf21\\taco_codeforces_2311f27edf21_urban_commute_20260609_223842_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\output\\taco_codeforces_2311f27edf21\\taco_codeforces_2311f27edf21_urban_commute_20260609_223842_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_2311f27edf21",
+      "title": "B",
+      "description": "Polycarpus is an amateur businessman. Recently he was surprised to find out that the market for paper scissors is completely free! Without further ado, Polycarpus decided to start producing and selling such scissors.\n\nPolycaprus calculated that the optimal celling price for such scissors would be p bourles. However, he read somewhere that customers are attracted by prices that say something like \"Special Offer! Super price 999 bourles!\". So Polycarpus decided to lower the price a little if it leads to the desired effect.\n\nPolycarpus agrees to lower the price by no more than d bourles so that the number of nines at the end of the resulting price is maximum. If there are several ways to do it, he chooses the maximum possible price.\n\nNote, Polycarpus counts only the trailing nines in a price.\n\nInput\n\nThe first line contains two integers p and d (1 ≤ p ≤ 1018; 0 ≤ d < p) — the initial price of scissors and the maximum possible price reduction.\n\nPlease, do not use the %lld specifier to read or write 64-bit integers in С++. It is preferred to use cin, cout streams or the %I64d specifier.\n\nOutput\n\nPrint the required price — the maximum price that ends with the largest number of nines and that is less than p by no more than d.\n\nThe required number shouldn't have leading zeroes.\n\nExamples\n\nInput\n\n1029 102\n\n\nOutput\n\n999\n\n\nInput\n\n27191 17\n\n\nOutput\n\n27189",
+      "input": "The first line contains two integers p and d (1 ≤ p ≤ 1018; 0 ≤ d < p) — the initial price of scissors and the maximum possible price reduction.\n\nPlease, do not use the %lld specifier to read or write 64-bit integers in С++. It is preferred to use cin, cout streams or the %I64d specifier.",
+      "output": "Print the required price — the maximum price that ends with the largest number of nines and that is less than p by no more than d.\n\nThe required number shouldn't have leading zeroes.",
+      "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "(p, d) = input().split()\np = int(p)\nd = int(d)\nans = p = p + 1\ni = 10\nwhile i <= 1000000000000000000:\n\tif p % i <= d:\n\t\tans = p - p % i\n\ti *= 10\nprint(ans - 1)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_2311f27edf21",
+        "codeforces",
+        "Polycarpus is an amateur businessman. Recently he was surprised to find out that the market for paper scissors is completely free! Without further ado, Polycarpus decided to start producing and selling such scissors....",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "目标从 lexicographic 优化变为计数，约束必须定义计数对象和去重规则，不变量需支持分解计数。输入结构不变。",
+      "summary": "O 改为计数，C 增加计数对象定义和去重，V 新增基于模幂的计数分解不变量。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "ext_counting_trailing_nines",
+      "source": "extension",
+      "input_structure": {
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "p",
+            "role_description": "原始价格",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000000000000000000
+            },
+            "properties": {}
+          },
+          {
+            "role": "d",
+            "role_description": "最大降幅",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 0,
+              "max": null
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "price_range",
+            "description": "考虑的候选价格 x 必须在区间 [p-d, p] 内。",
+            "formal": "p - d <= x <= p",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "trailing_nines_definition",
+            "description": "定义 trailing_nines_count(x) 为 x 的十进制表示中末尾连续 9 的个数。",
+            "formal": "trailing_nines_count(x) = max{ k | x mod 10^k == 10^k - 1 }",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "max_trailing_nines",
+            "description": "令 t_max = max{ trailing_nines_count(x) | p-d <= x <= p }。",
+            "formal": "t_max = argmax_{k} ...",
+            "source_sections": [
+              "objective"
+            ]
+          },
+          {
+            "name": "counting_definition",
+            "description": "统计区间内所有满足 trailing_nines_count(x) = t_max 的不同整数 x 的个数。不同整数视为不同解。",
+            "formal": "answer = |{ x in [p-d, p] | trailing_nines_count(x) = t_max }|",
+            "source_sections": [
+              "output"
+            ]
+          },
+          {
+            "name": "no_modulo",
+            "description": "由于区间长度不超过 10^18，计数结果不会超过 10^18，可以使用 64 位无符号整数输出，无需取模。",
+            "formal": "answer fits in unsigned 64-bit",
+            "source_sections": [
+              "output"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count",
+        "description": "统计满足价格区间约束且 trailing_nines_count 达到最大值的所有不同整数的个数。",
+        "target": "count",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "suffix_modular_monotonicity",
+            "description": "对于原始价格 p，随着 10 的幂 k 增加，p mod 10^k 单调不降。这保证如果某个 k 使得 p mod 10^k > d，则更大的 k 也不可行。同时，对于每个 k，可以推导区间内后 k 位为全 9 的数的个数，从而分解计数。",
+            "formal": "对于所有 k，区间内满足 x mod 10^k == 10^k - 1 的 x 的个数等于 floor((p - (10^k - 1))/10^k) - floor((p-d-1 - (10^k - 1))/10^k)，且这些集合互不相交。",
+            "properties": {},
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "最受欢迎的票号",
+      "description": "小张是某市公交系统的站务员，每天早上他都要在闸机旁发放标有编号的纸质单程票。最近公司推出“幸运票”活动：票号末尾连续的数字 9 越多，乘客就越喜欢。为了合理分配各站点的票卷，小张需要统计某一批次中“最幸运”的票有多少张。\n\n具体来说，每个票号是一个正整数。给定两个整数 p 和 d，表示该批次票号的区间为 [p-d, p]（包含两端）。我们定义一张票的“幸运度”为其十进制表示中末尾连续 9 的个数，记作 t(x)。令该区间内所有票号幸运度的最大值为 t_max。小张的任务是统计区间内所有幸运度恰好等于 t_max 的不同票号的个数。不同票号即使幸运度相同也视为不同。",
+      "input_format": "一行包含两个整数 p 和 d（1 ≤ p ≤ 10^18，0 ≤ d < p），分别表示票号区间的上界以及相对于上界下界减少的数值。即考虑的票号区间为 [p-d, p]。",
+      "output_format": "输出一行一个整数，表示区间内幸运度等于 t_max 的不同票号的数量。",
+      "constraints": [
+        "时间限制：1 秒",
+        "空间限制：256 MB",
+        "1 ≤ p ≤ 10^18",
+        "0 ≤ d < p"
+      ],
+      "samples": [
+        {
+          "input": "18 8",
+          "output": "9",
+          "explanation": "区间为 [10,18]，所有票号末尾均无 9，因此最大幸运度为 0。区间内 9 个票号全部满足，故答案为 9。"
+        },
+        {
+          "input": "30000 20000",
+          "output": "2",
+          "explanation": "区间为 [10000,30000]。幸运度最大为 4，分别是票号 19999 和 29999。只有这两张票满足条件，答案为 2。"
+        },
+        {
+          "input": "1029 102",
+          "output": "1",
+          "explanation": "区间为 [927,1029]。幸运度最大为 3，只有票号 999 满足。答案为 1。"
+        }
+      ],
+      "notes": "答案保证在 64 位无符号整数范围内，无需对任何数取模。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "O 改为计数，C 增加计数对象定义和去重，V 新增基于模幂的计数分解不变量。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4022,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.7252,
+          "O": 0.5044,
+          "V": 0.2925
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.7252,
+          "objective_type_distance": 0.6704,
+          "objective_text_distance": 0.2554,
+          "invariant_match_distance": 0.2925
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确定义计数对象：区间内具有最大 trailing nines 的整数。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 新增 max_trailing_nines 和 counting_definition",
+            "objective 从 lexicographic_optimize 改为 count",
+            "invariant 加入计数分解公式"
+          ],
+          "innovation_reason": "将原题答案从单一数值改为计数结果，解决了多个最优解的歧义，并引入了去重逻辑。",
+          "difficulty_reason": "要求解题者处理等价类统计，而非简单贪心。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "需要将解空间按 trailing nines 数量分解为可计数单元。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 包含 max_trailing_nines 定义",
+            "invariant 用模运算公式分解每个 k 对应的区间交集"
+          ],
+          "innovation_reason": "计数过程依赖主状态按 k 分解，而非仅靠单点检查。",
+          "difficulty_reason": "增加了组合数学和区间交集计算，提升了分析与实现复杂度。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "计数必须作为主求解目标，不能保留原优化目标并顺手计数。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective 明确替换为计数，不再保留 lexicographic 优化",
+            "core_constraints 锁定计数定义为核心"
+          ],
+          "innovation_reason": "完全取代原目标，使解题思路必须围绕计数重新设计。",
+          "difficulty_reason": "强制算法承担计数正确性，杜绝取巧保留原思路的可能。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "原题利用 p mod 10^k 判定能否构造后 k 位全 9，贪心选取最大可行 k 并生成答案。",
+        "reusable_subroutines": "检查 p mod 10^k 逻辑，幂乘 10^k 计算。",
+        "new_solver_core": "首先计算 t_max，然后对于每个可能的 k（从大到小），利用模运算统计区间内后 k 位全 9 的数的个数，累加得到总计数。关键是根据后缀为 10^k-1 的剩余类与区间交的个数。",
+        "new_proof_obligation": "证明 t_max 的计算正确（沿用原题，但需注意多个 x 取得 max trailing nines 时的条件）。证明计数公式中不同 k 的集合无重叠且覆盖所有 t_max 的解。证明区间交计数公式的正确性及整数运算边界。",
+        "why_direct_reuse_fails": "原题只输出一个最优价格，不处理存在多个达到最大 trailing nines 的解的情况。改用计数需要系统统计这些解，包括可能分布在多个 k_max 值（当 t_max 相同时，但 t_max 唯一），或者在同一 k 下多个连续区间。原解题框架无法直接给出计数。"
+      },
+      "anti_shallow_rationale": "不仅换了故事或加模数，而是根本改变了目标函数：从单一最优变为计数多个最优解，去掉了价格次优的 tie-breaking，迫使算法从贪心单点选择切换到按结构分解计数。输入输出范围不变但本质不同，不能视为浅层修改。"
+    }
+  }
+}

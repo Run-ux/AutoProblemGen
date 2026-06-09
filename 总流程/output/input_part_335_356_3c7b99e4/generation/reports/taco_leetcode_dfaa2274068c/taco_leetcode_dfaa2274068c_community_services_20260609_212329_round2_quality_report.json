@@ -1,0 +1,614 @@
+{
+  "overall": {
+    "status": "revise_quality",
+    "quality_score": 68.0,
+    "divergence_score": 77.5,
+    "schema_distance": 0.5262,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中的输入结构（数组 A 和整数 K）、核心约束（相邻平方和、目标计数绑定、修改操作契约）以及最小化目标（最少修改次数，不可行输出 -1）均准确落地在 generated_problem 的 description、input_format、output_format、constraints 和 notes 中。输入格式将 A 的长度隐式给出，符合 OJ 惯例。所有差异轴 I、C、O、V 均已实现。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立解题所需的全部关键信息：任务描述清晰，输入/输出格式明确，约束包含 n、K、A[i] 范围与时空限制，notes 补充了 n=1 特殊情形、重复元素排列计数规则及修改操作细节，无需读者自行猜测核心规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 1.0,
+        "rationale": "样例 2 的解释与题目 notes 中明确的排列不同定义严重冲突：notes 规定‘两个排列被视为不同当且仅当存在某个位置上的标签值不同’，对于数组 [1,8] 应有 [1,8] 和 [8,1] 两个不同的排列，且均满足相邻平方和条件，因此初始和谐排列数应为 2，但样例解释称‘唯一的排列 [1,8] 满足…和谐排列数为 1’，导致规则与样例直接矛盾，使参赛者无法信赖题面信息。",
+        "evidence_refs": [
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].explanation",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 1.0,
+        "rationale": "样例 2 的解释存在根本性计数错误，将两个不同排列误判为一个，导致样例输出与正确逻辑不符的解释，无法帮助理解任务，反而严重误导。尽管样例数量为 2 符合基本要求，但关键错误使样例质量极低。",
+        "evidence_refs": [
+          "generated_problem.samples[1].explanation",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 3.0,
+        "rationale": "题面整体结构清晰，叙述流畅，符合 OJ 题面习惯，但样例 2 的解释错误会严重阻碍参赛者快速准确地理解正确行为，削弱了可读性。若无此错误，可读性可评 5 分。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples[1].explanation"
+        ]
+      }
+    ],
+    "strengths": [
+      "家庭收纳主题映射自然，物品标签与完全平方数的结合不突兀。",
+      "任务描述完整，包含所有关键约束和边界说明（如 n=1 的特殊处理）。",
+      "目标驱动明确，最小操作次数与不可行标记符合常见 OJ 优化题习惯。",
+      "样例 1 简洁且解释清晰，能帮助理解基本规则。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5262,
+      "axis_scores": {
+        "I": 0.3806,
+        "C": 0.572,
+        "O": 0.4844,
+        "V": 0.6915
+      },
+      "components": {
+        "input_tree_distance": 0.3806,
+        "constraint_match_distance": 0.572,
+        "objective_type_distance": 0.5664,
+        "objective_text_distance": 0.3613,
+        "invariant_match_distance": 0.6915
+      }
+    },
+    "schema_distance": 0.5262,
+    "changed_axes_planned": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.5,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "新题将问题从计数完全平方排列数量反转成通过修改数组达到目标排列数的最小操作次数，输入增加 K，约束增加目标绑定与修改操作契约，目标变为最小化，不变量转向搜索完备性。语义差异显著：原题是直接计数，新题是带黑盒子程序的优化搜索。原解法中的核心计数函数可复用为子程序，但整体算法需要重新设计搜索与最优性论证，解法迁移风险中等。标题、背景故事、样例均全面重写，表层换皮风险低。因此不是换皮题。",
+    "evidence_refs": [
+      "new_schema.input_structure",
+      "new_schema.core_constraints.constraints",
+      "new_schema.objective",
+      "new_schema.invariant.invariants",
+      "review_context.algorithmic_delta_claim",
+      "review_context.anti_shallow_rationale"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.53，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：I, C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例 2 解释中排列计数错误",
+      "detail": "对于数组 [1,8]，根据 notes 中排列不同的定义，应有 [1,8] 和 [8,1] 两个不同的排列，且均满足相邻和为完全平方数，因此初始和谐排列数应为 2，而非解释中的 1。该错误导致样例与规则矛盾，并使样例输出 1 的推导路径失效。",
+      "evidence_refs": [
+        "generated_problem.samples[1].input",
+        "generated_problem.samples[1].explanation",
+        "generated_problem.notes"
+      ],
+      "fix_hint": "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。"
+    }
+  ],
+  "suggested_revisions": [
+    "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。",
+    "修正样例 2 的解释，使其与排列计数规则一致，可考虑更换数组或调整目标值以简化示例。",
+    "增加一个 n=1 或重复元素较多的样例，以覆盖边界和去重逻辑。",
+    "在 notes 中更正式地定义排列不同性的判定依据（如引用位置上的值），目前 notes 已有类似说明，可加强呼应。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "revise_quality",
+    "generated_status": "ok",
+    "quality_score": 68.0,
+    "divergence_score": 77.5,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例 2 解释中排列计数错误",
+        "detail": "对于数组 [1,8]，根据 notes 中排列不同的定义，应有 [1,8] 和 [8,1] 两个不同的排列，且均满足相邻和为完全平方数，因此初始和谐排列数应为 2，而非解释中的 1。该错误导致样例与规则矛盾，并使样例输出 1 的推导路径失效。",
+        "evidence_refs": [
+          "generated_problem.samples[1].input",
+          "generated_problem.samples[1].explanation",
+          "generated_problem.notes"
+        ],
+        "fix_hint": "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。"
+      }
+    ],
+    "suggested_revisions": [
+      "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。",
+      "修正样例 2 的解释，使其与排列计数规则一致，可考虑更换数组或调整目标值以简化示例。",
+      "增加一个 n=1 或重复元素较多的样例，以覆盖边界和去重逻辑。",
+      "在 notes 中更正式地定义排列不同性的判定依据（如引用位置上的值），目前 notes 已有类似说明，可加强呼应。"
+    ],
+    "strengths_to_keep": [
+      "家庭收纳主题映射自然，物品标签与完全平方数的结合不突兀。",
+      "任务描述完整，包含所有关键约束和边界说明（如 n=1 的特殊处理）。",
+      "目标驱动明确，最小操作次数与不可行标记符合常见 OJ 优化题习惯。",
+      "样例 1 简洁且解释清晰，能帮助理解基本规则。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\source\\taco_leetcode_dfaa2274068c\\taco_leetcode_dfaa2274068c.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_leetcode_dfaa2274068c\\taco_leetcode_dfaa2274068c_community_services_20260609_212329_round2.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\output\\taco_leetcode_dfaa2274068c\\taco_leetcode_dfaa2274068c_community_services_20260609_212329_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_leetcode_dfaa2274068c",
+      "title": "number of squareful arrays",
+      "description": "Given an array A of non-negative integers, the array is squareful if for every pair of adjacent elements, their sum is a perfect square.\nReturn the number of permutations of A that are squareful.  Two permutations A1 and A2 differ if and only if there is some index i such that A1[i] != A2[i].\n \nExample 1:\nInput: [1,17,8]\nOutput: 2\nExplanation: \n[1,8,17] and [17,8,1] are the valid permutations.\n\nExample 2:\nInput: [2,2,2]\nOutput: 1\n\n \nNote:\n\n1 <= A.length <= 12\n0 <= A[i] <= 1e9",
+      "input": "",
+      "output": "",
+      "constraints": "",
+      "source": "leetcode",
+      "standard_solution_code": "class Solution:\n\n\tdef numSquarefulPerms(self, A: List[int]) -> int:\n\t\tA.sort()\n\t\tself.ans = 0\n\n\t\tdef check(A, i, path):\n\t\t\treturn int((A[i] + path[-1]) ** 0.5 + 0.0) ** 2 == A[i] + path[-1]\n\n\t\tdef dfs(A, path):\n\t\t\tif not A:\n\t\t\t\tself.ans += 1\n\t\t\t\treturn\n\t\t\tfor i in range(len(A)):\n\t\t\t\tif i > 0 and A[i] == A[i - 1]:\n\t\t\t\t\tcontinue\n\t\t\t\tif not path or (path and check(A, i, path)):\n\t\t\t\t\tdfs(A[:i] + A[i + 1:], path + [A[i]])\n\t\tdfs(A, [])\n\t\treturn self.ans"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "I",
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_leetcode_dfaa2274068c",
+        "number of squareful arrays",
+        "leetcode",
+        "Given an array A of non-negative integers, the array is squareful if for every pair of adjacent elements, their sum is a perfect square. Return the number of permutations of A that are squareful. Two permutations A1 a...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "输入结构 I 新增目标参数 K；核心约束 C 新增目标绑定与修改操作契约；目标 O 从计数变为最小化修改次数；不变量 V 调整为覆盖修改序列正确性与最小性。",
+      "summary": "保持相邻平方和作为排列合法判据，但在外层叠加修改决策空间，形成目标驱动的反向设计，而非简单改变问法。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_leetcode_dfaa2274068_inverse_mod",
+      "source": "leetcode_extended",
+      "input_structure": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 12
+            },
+            "value_range": {
+              "min": 0,
+              "max": 1000000000
+            },
+            "description": "初始物品编号列表（家庭收纳中的物品标签）"
+          },
+          "K": {
+            "type": "integer",
+            "value_range": {
+              "min": 0,
+              "max": 1000000000
+            },
+            "description": "期望的和谐排列数量"
+          }
+        },
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "adjacent_sum_perfect_square",
+            "description": "任意排列中相邻两元素的和必须为完全平方数。当数组长度为 1 时，不存在相邻对，排列自动视为和谐。",
+            "formal": "∀ permutation p of length n, if n > 1 then ∀i in [0,n-2] : p[i]+p[i+1] ∈ {k² | k ∈ ℕ₀}"
+          },
+          {
+            "name": "target_count_binding",
+            "description": "修改后的数组 A' 的所有可能排列中，满足相邻和平方条件的排列数量必须恰好等于 K。",
+            "formal": "countSquarefulPerms(A') == K"
+          },
+          {
+            "name": "modify_operation_contract",
+            "description": "每次操作可以选择数组的一个索引 i 和任意非负整数 v，将 A[i] 改为 v。操作后数组长度不变。",
+            "formal": "Each operation: select i ∈ [0,n-1] and v ∈ ℕ₀, set A[i] := v"
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization",
+        "description": "求使得 countSquarefulPerms(A') == K 所需的最小操作次数。若无法达成，输出 -1。",
+        "target": "modification_count",
+        "impossible_value": -1
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "modification_effect_consistency",
+            "description": "每次修改后，相邻和性质及排列数量由标准计数算法重新计算；计数结果仅依赖于当前数组内容，与历史修改顺序无关。"
+          },
+          {
+            "name": "search_completeness",
+            "description": "通过系统枚举修改组合（例如按修改次数递增的 BFS 或 DFS），可以保证找到的修改方案（若存在）具有全局最小操作次数。"
+          },
+          {
+            "name": "infeasibility_detection",
+            "description": "若在可接受的搜索边界内（例如最多 n 次修改）未找到可行方案，则判定为不可能，输出 -1。"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "和谐整理的最小修改次数",
+      "description": "乐乐正在整理收纳柜，柜子里有 n 个物品，每个物品上写着一个非负整数作为标签。他要把这些物品排成一排，要求任意相邻两个物品的标签之和是一个完全平方数（即可以写成某个非负整数的平方）。满足该条件的排列称为“和谐排列”。特别地，如果 n = 1，唯一的排列自动视为和谐排列。\n\n乐乐可以修改物品的标签：每次操作可以选择任意一个物品，将其标签改为任意非负整数。他希望通过若干次修改，使得修改后的物品标签数组的和谐排列总数恰好等于给定的目标值 K。由于修改操作比较麻烦，乐乐希望操作次数尽可能少。\n\n请你帮助乐乐计算：最少需要进行多少次修改操作才能让和谐排列总数恰好为 K；如果无法做到，请输出 -1。",
+      "input_format": "第一行包含两个整数 n 和 K，以空格分隔，分别表示物品数量和目标和谐排列数。\n第二行包含 n 个非负整数，以空格分隔，表示初始时每个物品的标签。",
+      "output_format": "一个整数，表示最少修改次数；若无法达成目标，则输出 -1。",
+      "constraints": [
+        "1 ≤ n ≤ 12",
+        "0 ≤ K ≤ 10^9",
+        "0 ≤ A[i] ≤ 10^9",
+        "时间限制：2秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "2 1\n2 2",
+          "output": "0",
+          "explanation": "初始标签为 [2,2]，2+2=4 是完全平方数，唯一的排列 [2,2] 是和谐排列，和谐排列数为 1，恰好等于目标 K=1，无需修改。"
+        },
+        {
+          "input": "2 0\n1 8",
+          "output": "1",
+          "explanation": "初始标签为 [1,8]，唯一的排列 [1,8] 满足 1+8=9（完全平方数），因此和谐排列数为 1。将第一个物品的标签修改为 2，得到 [2,8]，此时相邻和为 2+8=10，不是完全平方数，没有任何和谐排列，排列数为 0，等于目标 K=0。修改 1 次即可达到目标。"
+        }
+      ],
+      "notes": "如果 n = 1，唯一的排列被视为和谐排列，和谐排列数始终为 1。因此当 K 不等于 1 时（例如 K=0 或 K>1），答案必为 -1。\n\n当数组中有重复元素时，交换完全相同的数值不视为不同的排列；两个排列被视为不同当且仅当存在某个位置上的标签值不同。\n\n修改操作可以直接选择某个物品的初始标签值，也可以选择任意非负整数。算法需要保证输出的操作次数在所有可行方案中是最小的。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "保持相邻平方和作为排列合法判据，但在外层叠加修改决策空间，形成目标驱动的反向设计，而非简单改变问法。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "I",
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5262,
+        "axis_scores": {
+          "I": 0.3806,
+          "C": 0.572,
+          "O": 0.4844,
+          "V": 0.6915
+        },
+        "components": {
+          "input_tree_distance": 0.3806,
+          "constraint_match_distance": 0.572,
+          "objective_type_distance": 0.5664,
+          "objective_text_distance": 0.3613,
+          "invariant_match_distance": 0.6915
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "必须将原题输出（排列数）绑定为反向目标 K，构成新题核心驱动力。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "新增约束 target_count_binding 要求最终数组排列数等于 K",
+            "目标 O 从计数改为达到该绑定目标"
+          ],
+          "innovation_reason": "方向从“给定输入算结果”翻转为“给定结果反推修改”，迫使算法围绕目标倒推修改。",
+          "difficulty_reason": "目标绑定引入外部约束，搜索必须与计数子程序交互，增加组合复杂度。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "需要正式定义可操作的修改空间，让反向设计落到实处。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "新增 modify_operation_contract 规范每次操作可改变任意元素为任意非负整数",
+            "不变量增加 modification_effect_consistency 及搜索完备性描述"
+          ],
+          "innovation_reason": "把抽象的修改需求转化成可枚举/可优化的操作集合，使问题有具体的搜索分支。",
+          "difficulty_reason": "操作空间巨大（指数种修改组合），要求算法设计有效的剪枝或启发式策略。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "题目必须承担最小性责任，避免输出任意可行修改。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "目标 O 明确要求最小化修改次数，不可行时输出 -1",
+            "不变量承诺搜索策略保证全局最小性"
+          ],
+          "innovation_reason": "强制答案不仅是可行性，还要携带最优化证明，将问题从判定性推向优化性。",
+          "difficulty_reason": "最小性要求额外的下界论证或确保搜索策略（如 BFS 按层）的完备性，增加正确性证明负担。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "基于排序去重的回溯计数，递归构造排列并剪枝不满足相邻平方和的路径，最终统计不同排列数量。",
+        "reusable_subroutines": "核心计数函数 `countSquarefulPerms(A)` 可直接复用，输入数组返回合法排列数。",
+        "new_solver_core": "对修改组合进行搜索（例如按操作次数从小到大枚举或 BFS），每次生成一个修改后的数组后调用 `countSquarefulPerms()`，若结果等于 K 则记录当前修改次数并输出最小者。搜索空间可能限制为只将元素改为原数组中出现的值或与某些值构成平方和的候选值。",
+        "new_proof_obligation": "需证明：1）修改候选与搜索策略的完备性（在有限时间内必能覆盖所有可达计数状态）；2）调用原正确性不变量传递；3）按操作次数递增搜索自然保证最小性。",
+        "why_direct_reuse_fails": "原解单向计算给定数组的排列数，不具有修改自由度或目标驱动的搜索能力，无法直接输出达到特定 K 所需的最小修改次数。"
+      },
+      "anti_shallow_rationale": "新题不是简单询问‘是否存在 K 个排列’或‘判定排列数是否等于 K’（后者仅需一次计数调用），而是要求改变数组元素并以最小操作次数锁定目标值，这引入了新的状态空间（修改决策）、优化维度（最小化）和证明义务（最小性与可行性），远远超出原计数问题的结构，不可能通过换皮或调整输出格式实现。"
+    }
+  }
+}

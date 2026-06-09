@@ -1,0 +1,602 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 100.0,
+    "divergence_score": 78.0,
+    "schema_distance": 0.4504,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的所有核心变体要素（固定半径 R、允许移动寺庙至任意整数坐标、最少移动次数+坐标输出、K < N 等）均在 generated_problem 的 description、input_format、output_format、constraints 中得到了准确、完整的体现。",
+        "evidence_refs": [
+          "new_schema.core_constraints.constraints.fixed_enlightenment",
+          "new_schema.core_constraints.constraints.move_operation",
+          "new_schema.core_constraints.constraints.complete_coverage_after_moves",
+          "new_schema.core_constraints.constraints.monks_less_than_temples",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立求解所需的全部关键信息：问题背景、操作定义、输入输出格式、数据范围、时间空间限制、样例及解释、以及最优解不唯一的说明，不存在需要选手自行猜测的规则或边界。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 之间互恰：输入输出字段数量、搬家操作的含义、半径与覆盖条件、数据范围、样例格式均无矛盾，且样例的解释与题意完全吻合。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "包含三个样例，分别覆盖了需要搬家、无需搬家、以及搬家后多段覆盖的情况，每个样例均给出清晰的解释，足以帮助选手理解任务与验证要求。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰、措辞明确，符合 OJ 题面的常见表达风格，无来源污染或干扰信息，便于选手快速准确理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "题面将原数学规划问题自然地转化为生活化场景，降低了理解门槛。",
+      "样例覆盖了多种典型情况，解释直观，有助于选手掌握题意。",
+      "约束明确列出 K<N，避免了平凡情况，且最大数据规模与常用评测环境匹配。",
+      "明确输出顺序与方案不唯一，减少了判题的潜在模糊。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4504,
+      "axis_scores": {
+        "I": 0.3199,
+        "C": 0.4356,
+        "O": 0.4175,
+        "V": 0.677
+      },
+      "components": {
+        "input_tree_distance": 0.3199,
+        "constraint_match_distance": 0.4356,
+        "objective_type_distance": 0.4249,
+        "objective_text_distance": 0.4063,
+        "invariant_match_distance": 0.677
+      }
+    },
+    "schema_distance": 0.4504,
+    "changed_axes_planned": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.25,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "原题求解最小覆盖半径，新题固定半径并要求最小移动点集。输入结构（增加固定 R）、约束（移动操作代替可调半径）、目标（最小移动次数＋构造方案）均发生根本改变。原题核心二分搜索框架无法直接适用，仅贪心检验子程序可复用，求解必须转向最大保留子集的组合优化（如区间 DP），整体算法思路显著不同。叙事背景、标题、样例完全更换，无文本复用痕迹。",
+    "evidence_refs": [
+      "review_context.changed_axes_realized",
+      "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+      "hard_checks.changed_axes_threshold",
+      "hard_checks.source_leakage",
+      "new_schema.core_constraints.constraints",
+      "new_schema.objective",
+      "generated_problem.description"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.45，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：I, C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 78.0,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "题面将原数学规划问题自然地转化为生活化场景，降低了理解门槛。",
+      "样例覆盖了多种典型情况，解释直观，有助于选手掌握题意。",
+      "约束明确列出 K<N，避免了平凡情况，且最大数据规模与常用评测环境匹配。",
+      "明确输出顺序与方案不唯一，减少了判题的潜在模糊。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\source\\taco_hackerearth_91589eed1567\\taco_hackerearth_91589eed1567.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\artifacts\\taco_hackerearth_91589eed1567\\taco_hackerearth_91589eed1567_community_services_20260609_212343_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\output\\taco_hackerearth_91589eed1567\\taco_hackerearth_91589eed1567_community_services_20260609_212343_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_hackerearth_91589eed1567",
+      "title": "the-enlightened-ones",
+      "description": "There are N temples in a straight line and K monks who want to spread  their enlightening power to the entire road of temples. All the monks have an enlightenment value, which denotes the range of enlightenment which they can spread in both the directions. Since, they do not want to waste their efficiency on trivial things of the world, they want to keep their range minimum.\n\nAlso, when we say that the N temples are in a straight line, we mean that that all the temples lie on something like an X-axis in a graph.\n\nFind the minimum enlightenment value such that all the temples can receive it. \n\nInput Format:\nThe first line contains two integers, N and K - denoting the number of temples and number of monks.  The next line contains N integers denoting the position of the temples in the straight line.\n\nOutput format:\nPrint the answer in a new line.\n\nConstraints:\n1 ≤ N  ≤ 10^5\n1 ≤ K < N \n1 ≤ Positioni ≤ 10^7\n\nUpdate: \nThe enlightenment value is an integer.\n\nSAMPLE INPUT\n3 2\n1 5 20\n\nSAMPLE OUTPUT\n2\n\nExplanation\n\nThe optimal answer is 2.\nA monk positioned at 3, can serve temples at 1 and 5.\nThe other monk can be placed at 18, to serve temple at 20.",
+      "input": "The first line contains two integers, N and K - denoting the number of temples and number of monks.  The next line contains N integers denoting the position of the temples in the straight line.",
+      "output": "Print the answer in a new line.",
+      "constraints": "1 ≤ N  ≤ 10^5\n1 ≤ K < N \n1 ≤ Positioni ≤ 10^7\n\nUpdate: \nThe enlightenment value is an integer.",
+      "source": "hackerearth",
+      "standard_solution_code": "def is_enlightenment_possible(ar, n, k, dist):\n\t#Checks if all n temples in list ar is possible to be enlightened by k monks with range dist\n\tpos = ar[0] + dist\n\tfor i in ar:\n\t\tif abs(pos - i) > dist:\n\t\t\tk = k - 1\n\t\t\tpos = i + dist\n\tk = k - 1\n\tif k >= 0:\treturn True\n\treturn False\n\n\nN, K = list(map(int, input().split()))\nar = list(map(int, input().split()))\nar.sort()\nlo, hi = 1, 10000000\nans = 0\nwhile lo<=hi:\n\tmid = (lo + hi) >> 1\n\t#print '%d .. %d .. %d' %(lo, mid, hi)\n\tif is_enlightenment_possible(ar, N, K, mid):\n\t\tans = mid\n\t\thi = mid - 1\n\telse:\n\t\tlo = mid + 1\nprint(ans)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "I",
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_hackerearth_91589eed1567",
+        "the-enlightened-ones",
+        "hackerearth",
+        "There are N temples in a straight line and K monks who want to spread their enlightening power to the entire road of temples. All the monks have an enlightenment value, which denotes the range of enlightenment which t...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "输入增加固定半径 R，且整体结构从 tuple 组合改为具名对象，使约束更独立（I）；核心约束新增固定 enlightenment 与移动操作（C）；目标从最小半径转为最小移动次数并输出新方案（O）；不变量新增移动等价性与最优子结构支撑最小性证明（V）。",
+      "summary": "原题：给定点集，求最小半径 R 使 K 个僧侣覆盖所有点。新题：给定半径 R，允许移动点，求最少移动次数使 K 个僧侣仍能覆盖，并输出移动后坐标。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "proj_inv_design_temples_move",
+      "source": "derived",
+      "input_structure": {
+        "type": "object",
+        "properties": {
+          "N": {
+            "type": "integer",
+            "description": "寺庙数量，1 ≤ N ≤ 10^5"
+          },
+          "K": {
+            "type": "integer",
+            "description": "僧侣数量，1 ≤ K < N"
+          },
+          "R": {
+            "type": "integer",
+            "description": "给定的 enlightenment 半径，1 ≤ R ≤ 10^7"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            },
+            "description": "N 座寺庙的整数位置"
+          }
+        },
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "fixed_enlightenment",
+            "description": "所有僧侣的 enlightenment 值（覆盖半径）固定为给定整数 R，不可改变。",
+            "formal": "r_j = R for all j=1..K"
+          },
+          {
+            "name": "num_monks",
+            "description": "恰好有 K 个僧侣可用，每个僧侣可放置在数轴上任一实数坐标。",
+            "formal": "|monks| = K, c_j ∈ ℝ"
+          },
+          {
+            "name": "move_operation",
+            "description": "允许将任意寺庙从其原始整数位置 p_i 移动到任意整数位置 p_i'，1 ≤ p_i' ≤ 10^7。每次移动代价为 1。",
+            "formal": "For each i, choose p_i' ∈ ℤ, 1 ≤ p_i' ≤ 1e7; cost = Σ [p_i' ≠ p_i]"
+          },
+          {
+            "name": "complete_coverage_after_moves",
+            "description": "移动后，所有寺庙的最终位置必须能被 K 个僧侣的半径为 R 的 enlightenment 范围完全覆盖。",
+            "formal": "∀i ∃j: |p_i' - c_j| ≤ R"
+          },
+          {
+            "name": "monks_less_than_temples",
+            "description": "僧侣数量严格少于寺庙数量，避免平凡零移动情况。",
+            "formal": "K < N"
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize_and_construct",
+        "description": "最小化移动寺庙的次数，并输出移动后的寺庙位置方案（移动后的完整坐标列表）。",
+        "target": "minimum moves and resulting positions",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "feasibility_preservation",
+            "description": "若一组寺庙位置可被 K 个半径为 R 的僧侣覆盖，则将其扩展为同一覆盖区域内的任何超集仍可被覆盖。这保证移动进入已覆盖区域不会破坏可行性。",
+            "properties": {},
+            "evidence_source": "deduction"
+          },
+          {
+            "name": "greedy_min_monks",
+            "description": "对于任意点集 S，覆盖它们所需的最小僧侣数可由贪心算法得到：从左向右扫描，在 (第一个未覆盖点 + R) 处放置僧侣。该性质可用于可行性检验。",
+            "properties": {},
+            "evidence_source": "known"
+          },
+          {
+            "name": "move_equivalence",
+            "description": "最小移动次数等于 N 减去最大可保留点集的大小；未保留的点可统一移动到某个僧侣中心，每次代价 1。因此问题归约为求最大可保留子集。",
+            "properties": {},
+            "evidence_source": "deduction"
+          },
+          {
+            "name": "optimal_substructure",
+            "description": "在排序后的点上，一个可保留子集可划分为最多 K 个连续段，每段跨度 ≤ 2R。可利用动态规划按区间划分计算最大保留点数。",
+            "properties": {},
+            "evidence_source": "deduction"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "便民服务点布局",
+      "description": "在一个线形社区，有 N 户居民，他们的地址用整数坐标表示。社区计划部署 K 个移动便民服务点，每个服务点有固定的服务半径 R（即它可以覆盖距离它半径 R 范围内的所有住户）。由于服务点数量有限，无法直接覆盖所有住户。社区工作者可以事先与部分住户协调，让他们临时在指定日期搬家到其他地点（搬家是指将该住户的地址改为任意整数坐标），每次搬家计入一次调整。服务点可以放置在数轴上的任意实数坐标。\n\n你的任务是计算最少需要多少次搬家，并给出一个能实现最少搬家的最终住户地址列表（按居民编号顺序输出），使得所有居民最终都能被 K 个服务点覆盖。",
+      "input_format": "第一行包含三个整数 N, K, R，分别表示住户数量、服务点数量和固定的服务半径。\n第二行包含 N 个整数，表示每个住户的初始地址，整数之间用空格分隔。",
+      "output_format": "第一行输出一个整数 M，表示最少搬家次数。\n接下来 N 行，每行输出一个整数，表示最终每个住户的地址。输出顺序必须与输入中住户的顺序一致。如果存在多种最优方案，输出任意一种即可。",
+      "constraints": [
+        "1 ≤ N ≤ 10^5",
+        "1 ≤ K ≤ 10^5",
+        "K < N",
+        "1 ≤ R ≤ 10^7",
+        "1 ≤ 初始地址 ≤ 10^7",
+        "时间限制：1 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3 2 3\n1 5 20",
+          "output": "1\n1\n5\n5",
+          "explanation": "将第三户的地址从 20 移动到 5，移动次数为 1。服务点可以放置在坐标 3（覆盖用户 1 和 2）和坐标 5（覆盖用户 3）。所有住户均被覆盖，且无法用 0 次移动满足要求，故最小移动次数为 1。"
+        },
+        {
+          "input": "4 2 1\n1 2 4 5",
+          "output": "0\n1\n2\n4\n5",
+          "explanation": "初始位置已可直接部署服务点覆盖：设置服务点在 1.5 和 4.5，覆盖半径 1 恰好覆盖所有住户。无需搬家，最少移动次数 0。"
+        },
+        {
+          "input": "5 2 3\n1 2 10 11 20",
+          "output": "1\n1\n2\n10\n11\n11",
+          "explanation": "将第五户的地址从 20 移动到 11，移动次数为 1。然后可将服务点放置在中心 1.5（覆盖用户 1 和 2）和中心 10.5（覆盖用户 3、4、5）。所有住户均被覆盖，且无法通过少于 1 次移动满足要求。"
+        }
+      ],
+      "notes": "保证存在至少一种方案使得通过若干次搬家后所有住户均可被覆盖。输出方案不唯一，任意最优解均可接受。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "原题：给定点集，求最小半径 R 使 K 个僧侣覆盖所有点。新题：给定半径 R，允许移动点，求最少移动次数使 K 个僧侣仍能覆盖，并输出移动后坐标。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "I",
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4504,
+        "axis_scores": {
+          "I": 0.3199,
+          "C": 0.4356,
+          "O": 0.4175,
+          "V": 0.677
+        },
+        "components": {
+          "input_tree_distance": 0.3199,
+          "constraint_match_distance": 0.4356,
+          "objective_type_distance": 0.4249,
+          "objective_text_distance": 0.4063,
+          "invariant_match_distance": 0.677
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "将原题的结果最小半径绑定为新题的固定约束，从而实现逆向设计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "将问题从‘给定点集求最小半径’翻转为‘给定半径求最小修改点集’，带来从优化输出到优化输入的根本转变。",
+          "difficulty_reason": "引入组合覆盖优化，要求新算法处理选择性覆盖，增加问题难度。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "定义修改操作集合——移动寺庙，将反向设计落实为具体操作。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "通过允许移动操作，将点集变为设计变量，从而将问题转化为优化输入，带来全新设计空间。",
+          "difficulty_reason": "要求算法不仅要决定移动哪些点，还要确保移动后整体覆盖，增加了状态空间复杂度。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "锁定输出为最小移动次数，并要求提供最小性证明或构造。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "强制答案承担最小性责任，防止输出任意可行解，保证问题深度。",
+          "difficulty_reason": "需要证明算法解确实最小，可能涉及下界论证，增加理论难度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "二分搜索最小半径 R，对每个候选 R 调用贪心检验 is_enlightenment_possible(positions, N, K, R) 判断是否可行。",
+        "reusable_subroutines": "贪心检验函数 is_enlightenment_possible 可直接复用，判定一个保留点集 S 是否可被 K 个半径为 R 的僧侣覆盖。",
+        "new_solver_core": "将问题转化为：选择最大子集 S，使得 is_enlightenment_possible(S, K, R) = true，最少移动次数 = N - |S|。求解 S 可对排序点进行动态规划：dp[i][k] 表示前 i 个点用 k 个区间最多覆盖点数，每个区间跨度 ≤ 2R。利用双指针预处理每个 i 的最左可达点，并通过前缀最大值或线段树优化转移，复杂度 O(NK) 可优化至 O(N log N) 或 O(N)。",
+        "new_proof_obligation": "证明最少移动次数 = N - 最大保留点数；证明贪心检验正确判定保留点集可行性；证明 DP 算法正确计算最大保留点集并满足区间划分的合法性；证明移动操作可统一将未保留点移至僧侣中心而保持覆盖。",
+        "why_direct_reuse_fails": "原题算法（二分 + 贪心检验）直接假设所有点必须覆盖且不可移动，无法处理选择性保留和移动代价优化。新题的优化目标要求从点集中选出最大可覆盖子集，这超出原题判定框架。"
+      },
+      "anti_shallow_rationale": "虽然原题贪心检验可作为子程序直接复用，但新题求解核心从二分半径变为最大保留点集优化，引入了全新的组合优化结构（区间覆盖 DP），输出从数值半径变为最小移动次数并附带构造证明，问题本质已翻转，绝非仅换背景或参数。"
+    }
+  }
+}

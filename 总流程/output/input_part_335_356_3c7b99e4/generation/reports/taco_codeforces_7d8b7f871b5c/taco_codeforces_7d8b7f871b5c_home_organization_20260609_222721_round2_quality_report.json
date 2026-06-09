@@ -1,0 +1,776 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 60.0,
+    "divergence_score": 72.4,
+    "schema_distance": 0.4306,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 3.0,
+        "rationale": "new_schema的核心结构、输入输出组件总体准确映射到了题面描述、输入输出格式和约束中。但样例1的输出未能正确体现字典序最大的目标，与描述的目标和解释矛盾，导致实际样例不符合new_schema对输出格式和字典序最大的要求。",
+        "evidence_refs": [
+          "new_schema.objective",
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含了独立做题所需的全部信息：任务说明、输入格式、输出格式、约束条件、样例和注释，没有遗漏关键规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 1.0,
+        "rationale": "样例1的输出（0 及序列 [100,300,400,200]）与同一样例的解释严重矛盾：解释最终证明能达到目标的序列是 [300,500,400,200] 且无需修改，但输出却不匹配。这导致样例与题意、输出格式之间冲突，参赛者无法根据样例理解正确输出。",
+        "evidence_refs": [
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 1.0,
+        "rationale": "样例1存在明显的输出与解释矛盾，解释冗长且混乱，无法帮助理解题目，反而产生误导。样例2正确但数量有限，整体样例质量很低。",
+        "evidence_refs": [
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，描述语言流畅，背景故事自然，符合中文OJ题面习惯，没有来源污染或无关噪声。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      }
+    ],
+    "strengths": [
+      "故事背景亲切，将抽象问题映射为校园跳蚤市场场景，易于理解。",
+      "题目描述逐步展开，覆盖了修改操作、捐赠规则、优化目标等关键要素。",
+      "输入输出格式、约束和注释详细完整，有助于选手正确实现。",
+      "样例2提供了一个清晰且可验证的修改场景。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4306,
+      "axis_scores": {
+        "I": 0.0984,
+        "C": 0.683,
+        "O": 0.2928,
+        "V": 0.6393
+      },
+      "components": {
+        "input_tree_distance": 0.0984,
+        "constraint_match_distance": 0.683,
+        "objective_type_distance": 0.3402,
+        "objective_text_distance": 0.2216,
+        "invariant_match_distance": 0.6393
+      }
+    },
+    "schema_distance": 0.4306,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.82,
+    "solution_transfer_risk": 0.38,
+    "surface_retheme_risk": 0.28,
+    "verdict": "pass",
+    "rationale": "原题目标是最小化售出票数以达捐款阈值，新题目标是最小化票价修改次数并输出给定票数下的字典序最大价格序列。约束增加了目标票数 M、允许任意修改票价的操作，以及双重最优性要求。语义从正向优化前缀长度变为逆向设计票价集合，改变显著。解法层面，原题标准解法（排序后贪心分配权重并二分搜前缀）无法直接迁移，新题需对修改次数二分，内层用修改版贪心验证可行性，再回溯构造字典序最大序列，核心框架发生了根本性调整。题目文本仅保留周期性捐赠计算这一表层元素，故事与目标完全不同，非简单换皮。",
+    "evidence_refs": [
+      "original_schema.objective",
+      "new_schema.objective",
+      "original_schema.invariant",
+      "new_schema.invariant",
+      "generated_problem.description",
+      "hard_checks[9].evidence_refs",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.43，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：a",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：a",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例1输出与解释严重矛盾",
+      "detail": "样例1的输出为'0\\n100 300 400 200'，但解释中详细推导了[100,300,400,200]无法达到捐赠目标，并最终确定[300,500,400,200]是满足条件且字典序最大的序列（修改次数为0）。输出和解释的不一致会直接导致参赛者误解题目要求或认为题目有误。",
+      "evidence_refs": [
+        "generated_problem.samples[0].output",
+        "generated_problem.samples[0].explanation"
+      ],
+      "fix_hint": "将样例1的输出修改为'0\\n300 500 400 200'，并重写解释，用简洁步骤说明为何该序列是最优且字典序最大。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例1解释不够简洁明了",
+      "detail": "解释中包含大量尝试性描述和无效排列的讨论，行文杂乱，不易快速理解。建议用更简洁的方式呈现构造思路和验证过程。",
+      "evidence_refs": [
+        "generated_problem.samples[0].explanation"
+      ],
+      "fix_hint": "精简解释，直接说明选出票价为500、400、300、200，排列为300、500、400、200可满足捐赠，并论证字典序最大。"
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "将样例1的输出修改为'0\\n300 500 400 200'，并重写解释，用简洁步骤说明为何该序列是最优且字典序最大。",
+    "精简解释，直接说明选出票价为500、400、300、200，排列为300、500、400、200可满足捐赠，并论证字典序最大。",
+    "紧急修复样例1的输出与解释的不一致，确保输出序列为'300 500 400 200'，并更新解释。",
+    "简化样例1的解释，用更清晰的步骤展示构造思路。",
+    "考虑在题面Notes或Constraints中强调字典序比较规则（虽然已有说明，但可稍加强调）。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 60.0,
+    "divergence_score": 72.4,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：a",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：a",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例1输出与解释严重矛盾",
+        "detail": "样例1的输出为'0\\n100 300 400 200'，但解释中详细推导了[100,300,400,200]无法达到捐赠目标，并最终确定[300,500,400,200]是满足条件且字典序最大的序列（修改次数为0）。输出和解释的不一致会直接导致参赛者误解题目要求或认为题目有误。",
+        "evidence_refs": [
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation"
+        ],
+        "fix_hint": "将样例1的输出修改为'0\\n300 500 400 200'，并重写解释，用简洁步骤说明为何该序列是最优且字典序最大。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例1解释不够简洁明了",
+        "detail": "解释中包含大量尝试性描述和无效排列的讨论，行文杂乱，不易快速理解。建议用更简洁的方式呈现构造思路和验证过程。",
+        "evidence_refs": [
+          "generated_problem.samples[0].explanation"
+        ],
+        "fix_hint": "精简解释，直接说明选出票价为500、400、300、200，排列为300、500、400、200可满足捐赠，并论证字典序最大。"
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "将样例1的输出修改为'0\\n300 500 400 200'，并重写解释，用简洁步骤说明为何该序列是最优且字典序最大。",
+      "精简解释，直接说明选出票价为500、400、300、200，排列为300、500、400、200可满足捐赠，并论证字典序最大。",
+      "紧急修复样例1的输出与解释的不一致，确保输出序列为'300 500 400 200'，并更新解释。",
+      "简化样例1的解释，用更清晰的步骤展示构造思路。",
+      "考虑在题面Notes或Constraints中强调字典序比较规则（虽然已有说明，但可稍加强调）。"
+    ],
+    "strengths_to_keep": [
+      "故事背景亲切，将抽象问题映射为校园跳蚤市场场景，易于理解。",
+      "题目描述逐步展开，覆盖了修改操作、捐赠规则、优化目标等关键要素。",
+      "输入输出格式、约束和注释详细完整，有助于选手正确实现。",
+      "样例2提供了一个清晰且可验证的修改场景。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\source\\taco_codeforces_7d8b7f871b5c\\taco_codeforces_7d8b7f871b5c.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_codeforces_7d8b7f871b5c\\taco_codeforces_7d8b7f871b5c_home_organization_20260609_222721_round2.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\output\\taco_codeforces_7d8b7f871b5c\\taco_codeforces_7d8b7f871b5c_home_organization_20260609_222721_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_7d8b7f871b5c",
+      "title": "A",
+      "description": "You are an environmental activist at heart but the reality is harsh and you are just a cashier in a cinema. But you can still do something!\n\nYou have n tickets to sell. The price of the i-th ticket is p_i. As a teller, you have a possibility to select the order in which the tickets will be sold (i.e. a permutation of the tickets). You know that the cinema participates in two ecological restoration programs applying them to the order you chose:\n\n  * The x\\% of the price of each the a-th sold ticket (a-th, 2a-th, 3a-th and so on) in the order you chose is aimed for research and spreading of renewable energy sources. \n  * The y\\% of the price of each the b-th sold ticket (b-th, 2b-th, 3b-th and so on) in the order you chose is aimed for pollution abatement. \n\n\n\nIf the ticket is in both programs then the (x + y) \\% are used for environmental activities. Also, it's known that all prices are multiples of 100, so there is no need in any rounding.\n\nFor example, if you'd like to sell tickets with prices [400, 100, 300, 200] and the cinema pays 10\\% of each 2-nd sold ticket and 20\\% of each 3-rd sold ticket, then arranging them in order [100, 200, 300, 400] will lead to contribution equal to 100 ⋅ 0 + 200 ⋅ 0.1 + 300 ⋅ 0.2 + 400 ⋅ 0.1 = 120. But arranging them in order [100, 300, 400, 200] will lead to 100 ⋅ 0 + 300 ⋅ 0.1 + 400 ⋅ 0.2 + 200 ⋅ 0.1 = 130.\n\nNature can't wait, so you decided to change the order of tickets in such a way, so that the total contribution to programs will reach at least k in minimum number of sold tickets. Or say that it's impossible to do so. In other words, find the minimum number of tickets which are needed to be sold in order to earn at least k.\n\nInput\n\nThe first line contains a single integer q (1 ≤ q ≤ 100) — the number of independent queries. Each query consists of 5 lines.\n\nThe first line of each query contains a single integer n (1 ≤ n ≤ 2 ⋅ 10^5) — the number of tickets.\n\nThe second line contains n integers p_1, p_2, ..., p_n (100 ≤ p_i ≤ 10^9, p_i mod 100 = 0) — the corresponding prices of tickets.\n\nThe third line contains two integers x and a (1 ≤ x ≤ 100, x + y ≤ 100, 1 ≤ a ≤ n) — the parameters of the first program.\n\nThe fourth line contains two integers y and b (1 ≤ y ≤ 100, x + y ≤ 100, 1 ≤ b ≤ n) — the parameters of the second program.\n\nThe fifth line contains single integer k (1 ≤ k ≤ 10^{14}) — the required total contribution.\n\nIt's guaranteed that the total number of tickets per test doesn't exceed 2 ⋅ 10^5.\n\nOutput\n\nPrint q integers — one per query. \n\nFor each query, print the minimum number of tickets you need to sell to make the total ecological contribution of at least k if you can sell tickets in any order.\n\nIf the total contribution can not be achieved selling all the tickets, print -1.\n\nExample\n\nInput\n\n\n4\n1\n100\n50 1\n49 1\n100\n8\n100 200 100 200 100 200 100 100\n10 2\n15 3\n107\n3\n1000000000 1000000000 1000000000\n50 1\n50 1\n3000000000\n5\n200 100 100 100 100\n69 5\n31 2\n90\n\n\nOutput\n\n\n-1\n6\n3\n4\n\nNote\n\nIn the first query the total contribution is equal to 50 + 49 = 99 < 100, so it's impossible to gather enough money.\n\nIn the second query you can rearrange tickets in a following way: [100, 100, 200, 200, 100, 200, 100, 100] and the total contribution from the first 6 tickets is equal to 100 ⋅ 0 + 100 ⋅ 0.1 + 200 ⋅ 0.15 + 200 ⋅ 0.1 + 100 ⋅ 0 + 200 ⋅ 0.25 = 10 + 30 + 20 + 50 = 110.\n\nIn the third query the full price of each ticket goes to the environmental activities.\n\nIn the fourth query you can rearrange tickets as [100, 200, 100, 100, 100] and the total contribution from the first 4 tickets is 100 ⋅ 0 + 200 ⋅ 0.31 + 100 ⋅ 0 + 100 ⋅ 0.31 = 62 + 31 = 93.",
+      "input": "The first line contains a single integer q (1 ≤ q ≤ 100) — the number of independent queries. Each query consists of 5 lines.\n\nThe first line of each query contains a single integer n (1 ≤ n ≤ 2 ⋅ 10^5) — the number of tickets.\n\nThe second line contains n integers p_1, p_2, ..., p_n (100 ≤ p_i ≤ 10^9, p_i mod 100 = 0) — the corresponding prices of tickets.\n\nThe third line contains two integers x and a (1 ≤ x ≤ 100, x + y ≤ 100, 1 ≤ a ≤ n) — the parameters of the first program.\n\nThe fourth line contains two integers y and b (1 ≤ y ≤ 100, x + y ≤ 100, 1 ≤ b ≤ n) — the parameters of the second program.\n\nThe fifth line contains single integer k (1 ≤ k ≤ 10^{14}) — the required total contribution.\n\nIt's guaranteed that the total number of tickets per test doesn't exceed 2 ⋅ 10^5.",
+      "output": "Print q integers — one per query. \n\nFor each query, print the minimum number of tickets you need to sell to make the total ecological contribution of at least k if you can sell tickets in any order.\n\nIf the total contribution can not be achieved selling all the tickets, print -1.",
+      "constraints": "time limit: 2.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "t = int(input())\nfor case_num in range(t):\n\tn = int(input())\n\tp = list(map(int, input().split(' ')))\n\t(x, a) = map(int, input().split(' '))\n\t(y, b) = map(int, input().split(' '))\n\tk = int(input())\n\tp.sort()\n\tp.reverse()\n\tsum = [0]\n\tfor i in range(n):\n\t\tsum.append(sum[-1] + p[i])\n\tif x < y:\n\t\t(x, y) = (y, x)\n\t\t(a, b) = (b, a)\n\tnab = 0\n\tna = 0\n\tnb = 0\n\tans = -1\n\tfor i in range(1, n + 1):\n\t\tif i % a != 0 and i % b != 0:\n\t\t\tcontinue\n\t\tif i % a == 0 and i % b == 0:\n\t\t\tnab += 1\n\t\tif i % a == 0 and i % b != 0:\n\t\t\tna += 1\n\t\tif i % a != 0 and i % b == 0:\n\t\t\tnb += 1\n\t\tcurrent = (sum[nab] * (x + y) + (sum[nab + na] - sum[nab]) * x + (sum[nab + na + nb] - sum[nab + na]) * y) // 100\n\t\tif current >= k:\n\t\t\tans = i\n\t\t\tbreak\n\tprint(ans)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_7d8b7f871b5c",
+        "codeforces",
+        "You are an environmental activist at heart but the reality is harsh and you are just a cashier in a cinema. But you can still do something! You have n tickets to sell. The price of the i-th ticket is p_i. As a teller,...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "C 新增修改操作定义及目标票数 M 的约束；O 从最小化票数改为最小化修改张数，并引入同修改数下的字典序最优子目标；V 需要刻画修改对贡献的影响、最小修改数的单调性以及字典序最优构造的正确性。",
+      "summary": "题目从‘求最小票数’变为‘给定期望票数，求最少修改票价，使得该票数可行，并在修改数相同的方案中选择字典序最大的价格序列’。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inv_design_tickets_min_modify_lex",
+      "source": "original",
+      "input_structure": {
+        "type": "multiple_test_cases",
+        "properties": {
+          "multiple_test_cases": true,
+          "ordered": true
+        },
+        "components": [
+          {
+            "role": "q",
+            "role_description": "number of test cases",
+            "type": "integer",
+            "length": {
+              "min": 1,
+              "max": 100
+            },
+            "value_range": {
+              "min": 1,
+              "max": 100
+            }
+          },
+          {
+            "role": "n",
+            "role_description": "number of tickets",
+            "type": "integer",
+            "length": {
+              "min": 1,
+              "max": 200000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 200000
+            }
+          },
+          {
+            "role": "prices",
+            "role_description": "original ticket prices, all multiples of 100",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 200000
+            },
+            "value_range": {
+              "min": 100,
+              "max": 1000000000
+            }
+          },
+          {
+            "role": "program1_params",
+            "role_description": "parameters of first ecological program: percentage x and period a",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "x",
+                "type": "integer",
+                "value_range": {
+                  "min": 1,
+                  "max": 100
+                }
+              },
+              {
+                "name": "a",
+                "type": "integer",
+                "value_range": {
+                  "min": 1,
+                  "max": 200000
+                }
+              }
+            ]
+          },
+          {
+            "role": "program2_params",
+            "role_description": "parameters of second ecological program: percentage y and period b",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "y",
+                "type": "integer",
+                "value_range": {
+                  "min": 1,
+                  "max": 100
+                }
+              },
+              {
+                "name": "b",
+                "type": "integer",
+                "value_range": {
+                  "min": 1,
+                  "max": 200000
+                }
+              }
+            ]
+          },
+          {
+            "role": "k",
+            "role_description": "required total contribution",
+            "type": "integer",
+            "value_range": {
+              "min": 1,
+              "max": 100000000000000
+            }
+          },
+          {
+            "role": "M",
+            "role_description": "target minimum number of tickets to sell",
+            "type": "integer",
+            "value_range": {
+              "min": 1,
+              "max": 200000
+            }
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "price_multiple_of_100",
+            "description": "每张票的价格都是100的倍数，使得百分比计算不会产生小数",
+            "formal": "p_i ≡ 0 (mod 100)"
+          },
+          {
+            "name": "percentage_sum_limit",
+            "description": "两个环保项目的百分比之和不超过100，保证同时覆盖时贡献不超过票价",
+            "formal": "x + y ≤ 100"
+          },
+          {
+            "name": "modification_operation",
+            "description": "允许选择任意张票，将其价格改为任一100的倍数，且新价格必须在 [100, 10^9] 范围内。每修改一张票计为一次操作，修改次数记为 c。",
+            "formal": "∀ selected i, p'_i ∈ [100, 10^9], p'_i ≡ 0 (mod 100)"
+          },
+          {
+            "name": "M_range",
+            "description": "目标票数 M 必须在 1 到 n 之间",
+            "formal": "1 ≤ M ≤ n"
+          },
+          {
+            "name": "contribution_with_modification",
+            "description": "总贡献基于修改后的票价，按选择的 M 张票及排列顺序计算，其中第 j 个位置若为 a 的倍数贡献 x% 票价，若为 b 的倍数贡献 y% 票价，同时满足则贡献 (x+y)% 票价。",
+            "formal": "contribution = Σ_{j=1..M} (price_π(j) * weight_j / 100), where weight_j = (x if a|j else 0) + (y if b|j else 0)"
+          },
+          {
+            "name": "feasibility_requirement",
+            "description": "需要决定修改方案（选择修改哪些票及目标价格）以及最终选取的 M 张票的排列，使得总贡献 ≥ k。若无论怎么修改都无法达到，则输出 -1。",
+            "formal": "∃ modification & arrangement s.t. contribution ≥ k → output min c; else -1"
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize_then_lexicographically_maximize",
+        "description": "第一目标：最小化修改张数 c。第二目标：在所有达到最小修改数的方案中，选择一种使得最终用于售出的 M 张票的排列（按位置顺序 1..M）上的价格序列 p'_1, ..., p'_M 字典序最大，并输出该序列。如果无法达到 k，输出 -1。",
+        "target": "c and price_sequence",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "descending_weight_optimal",
+            "description": "在给定修改后的票集合中，总贡献最大的排列总是将价格最高的票放在权重最高的位置，以此类推。因此，字典序最大的价格序列也必然符合降序排列价格到权重降序的匹配。",
+            "properties": {
+              "largest_prices_to_highest_weights": true
+            }
+          },
+          {
+            "name": "monotonicity_of_modifications",
+            "description": "若存在一个方案使用 c 次修改达到目标，则使用 c+1 次修改也能达到目标（因为可以额外修改一张票为最大价格，增加贡献）。",
+            "properties": {
+              "modification_count_monotonic": true
+            }
+          },
+          {
+            "name": "greedy_verification_for_fixed_c",
+            "description": "对于固定的修改次数 c，验证可行性（是否可获得总贡献 ≥ k）可通过贪心算法完成：将未修改的票按原价降序，修改的票视为价格 10^9；按权重从高到低，每次选择当前最大可用价格，若总贡献达标则可行。此贪心策略能获得最大贡献。",
+            "properties": {
+              "greedy_optimal": true,
+              "max_price_binding": true
+            }
+          },
+          {
+            "name": "lexicographically_max_invariant",
+            "description": "在最小修改数 c 固定的前提下，字典序最大的最终价格序列可以通过如下方式构造：依照贪心验证的顺序，对于每个权重位置，优先尝试不修改且选择最大未被使用的原价；当必须使用修改票时，选择能恰好满足后续需求的最小价格（或最大可能价格？需具体分析）。该构造保证了字典序最大。",
+            "properties": {
+              "construction_exists": true
+            }
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "跳蚤市场的公益角落",
+      "description": "学校的跳蚤市场开张啦！有 n 个摊位一字排开，每个摊位都有一个标价 p_i（100 的倍数）。为了让活动更有意义，市场方联合了两个公益项目：「绿色校园」和「爱心助困」。\n购买者会依次在 1,2,…,M 个摊位上选购商品。在第 a 的倍数摊位（第 a,2a,3a,… 个）上，成交价的 x% 将捐赠给绿色校园；在第 b 的倍数摊位（第 b,2b,3b,… 个）上，成交价的 y% 将捐赠给爱心助困。若某个摊位同时是两个项目的倍数，则捐赠 (x+y)%。\n作为市场管理员，你发现原定的标价序列可能让总捐赠额无法达到目标 k。但你有一个特权：可以调整任意物品的标价（改为另一个 100 的倍数，且必须在 [100,10^9] 内），每调整一次计为一次修改。同时，你还可以任意选择最终出售的 M 件商品，并决定它们的排列顺序。\n你希望调整的次数尽可能少，因为频繁改价会惹恼摊主。如果不得不修改，在所有修改次数最少的方案里，你还希望最终展出的 M 个价格序列（按排列顺序）字典序尽可能地大（即从左往右比较，第一个不同的位置数值大者胜出），这样看起来更“诱人”。\n请你计算：对于每组查询，最少需要修改几次标价？并在最少修改次数下，输出字典序最大的最终价格序列。如果无论如何都无法让捐赠总额达到 k，请输出 -1。",
+      "input_format": "第一行一个整数 q (1≤q≤100)，表示查询组数。\n接下来依次描述 q 组查询，每组查询格式如下：\n第一行一个整数 n (1≤n≤2×10^5)，表示摊位数量。\n第二行 n 个整数 p_1,p_2,…,p_n (100≤p_i≤10^9, p_i mod 100=0)，各摊位的初始标价。\n第三行两个整数 x 和 a (1≤x≤100, x+y≤100, 1≤a≤n)，第一个公益项目的参数。\n第四行两个整数 y 和 b (1≤y≤100, x+y≤100, 1≤b≤n)，第二个公益项目的参数。\n第五行一个整数 k (1≤k≤10^14)，目标总捐赠额。\n第六行一个整数 M (1≤M≤n)，计划出售的商品数量。\n保证所有查询的 n 之和不超过 2×10^5。",
+      "output_format": "对于每组查询：\n若无法达成 k，输出一行 -1。\n否则，输出两行：第一行一个整数 c，表示最少修改次数；第二行 M 个整数，表示最终售出商品的标价序列（按购买顺序）。该序列应当保证在修改 c 次后总捐赠额 ≥k，并且字典序最大。",
+      "constraints": [
+        "时间限制：2.0 秒",
+        "空间限制：256 兆字节",
+        "所有价格均为 100 的倍数，计算捐赠额时不会产生小数",
+        "x+y ≤ 100，保证单件商品最大捐赠比例不超过 100%",
+        "1 ≤ M ≤ n ≤ 2×10^5，所有查询的 n 总和 ≤ 2×10^5",
+        "1 ≤ k ≤ 10^14，使用 64 位整数计算总捐赠额"
+      ],
+      "samples": [
+        {
+          "input": "1\n5\n500 100 400 200 300\n10 2\n20 3\n150\n4",
+          "output": "0\n100 300 400 200",
+          "explanation": "不用修改任何标价（c=0）。需要售出 M=4 件，捐赠计划：第2、4个摊位捐10%，第3个摊位捐20%。最大捐赠序列为 [100,300,400,200]：100×0% + 300×10% + 400×20% + 200×10% = 0+30+80+20=130 <150，不能满足。但重新排列为 [100,400,200,300] 仍不足。唯一满足的序列是 [100,300,400,200]？尝试将400放第2位得40，300放第3位得60，200放第4位得20，100放第1位得0，合计120。实际上要把最大的400放在权重最高的第3位，300放在第2位，200放在第4位，100放第1位，得到 0+30+80+20=130。还是达不到150。需要寻找满足的排列：若把500放第2位（捐10%得50），400放第3位（捐20%得80），300放第1位（0），200放第4位（捐10%得20），总计150，可行！序列为 [300,500,400,200] 总捐赠10%+20%+10%: 500×0.1=50, 400×0.2=80, 200×0.1=20，共150。字典序比较：[300,500,400,200] 和 [500,300,400,200]？若将500放第1位，第1位权重0，浪费，需用下面位置补，不可能达到150。所以 [300,500,400,200] 是可行的且字典序可能已最大？还有 [400,500,300,200] 第一位置400>300，但若400放第1，后面需用500和300补，最大贡献：第2位放500得50，第3位放300得60，第4位200得20，总130不够。所以 [300,500,400,200] 是字典序最大的可行序列，且无需修改。"
+        },
+        {
+          "input": "1\n3\n100 100 100\n50 1\n50 2\n400\n3",
+          "output": "1\n1000 100 100",
+          "explanation": "初始价格全为100，权重：位置1（50%），位置2（100%），位置3（50%）。最大可能捐赠：选三个100，排列为[100,100,100]得 50+100+50=200 <400，必须修改。可以修改一张票为1000，若放在位置2可得1000，位置1和3仍用100，总捐赠 100×50% + 1000×100% + 100×50% = 50+1000+50=1100 ≥400，仅修改1次。是否存在序列让修改1次时字典序更大？尝试把1000放在最前面：序列[1000,100,100] 位置1得500，位置2得100，位置3得50，总650≥400，且第一位置1000 > 100（其他方案第一位置最多100），故字典序最大。最少修改次数为1。输出方案。"
+        }
+      ],
+      "notes": "字典序比较：将价格序列 p'_1...p'_M 按位置顺序看作 M 位数，从左到右扫描，第一次出现数字不同的位置，数字大的序列字典序更大。总捐赠额计算可能超过 32 位整数范围，请使用 64 位整数。所有价格均为整百，捐赠额计算时直接除以 100 即可，不存在浮点误差。修改操作仅改变摊位上的商品标价，不改变商品本身，且修改后必须在 [100,10^9] 且是 100 的倍数。若一组查询无解，只输出一行 -1。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "题目从‘求最小票数’变为‘给定期望票数，求最少修改票价，使得该票数可行，并在修改数相同的方案中选择字典序最大的价格序列’。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4306,
+        "axis_scores": {
+          "I": 0.0984,
+          "C": 0.683,
+          "O": 0.2928,
+          "V": 0.6393
+        },
+        "components": {
+          "input_tree_distance": 0.0984,
+          "constraint_match_distance": 0.683,
+          "objective_type_distance": 0.3402,
+          "objective_text_distance": 0.2216,
+          "invariant_match_distance": 0.6393
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "原题结果是最小票数，可自然地绑定为反向目标 M。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 增加目标票数 M 的约束",
+            "objective 变为围绕 M 驱动修改，最小化修改张数"
+          ],
+          "innovation_reason": "让求解方向从‘计算最佳票数’翻转为‘为特定票数设计票价’，问题结构发生根本变化。",
+          "difficulty_reason": "算法必须围绕目标 M 反推所需修改，增加了一层间接性。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "需要定义合法的票价修改操作，这是实现反向设计的必备要素。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 明确修改操作：可改任意张票为 100 倍数，价格有界",
+            "invariant 增加修改对贡献影响的描述和贪心验证不变量"
+          ],
+          "innovation_reason": "引入离散设计空间（修改票作为决策变量），将问题从纯计算变为组合优化。",
+          "difficulty_reason": "需要证明修改次数与可行性的关系，并设计验证算法。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "题目不仅要求任一可行修改，还要最小化修改次数并输出字典序最大的方案，符合‘证书锁’要求。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 明确最小化修改张数为主目标，字典序最大为次目标",
+            "invariant 要求提供最小修改数的下界证明及字典序构造正确性"
+          ],
+          "innovation_reason": "多重最优性要求（最小修改、字典序最大）显著增加了算法设计的复杂度，远超原题的单目标。",
+          "difficulty_reason": "必须证明算法找到的确实是修改次数最少的方案，且字典序在所有最少修改方案中最大，通常需要更精细的构造或缩减。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "对票价降序，预计算不同位置权重，二分搜索最小售出票数，每次判断用贪心分配权重。",
+        "reusable_subroutines": "计算位置权重的函数（根据 a, b, x, y）、贡献计算函数（给定价格序列和权重）、排序函数均可复用。",
+        "new_solver_core": "对修改次数 c 进行二分搜索。对于每个 c，判断可行性：先按权重降序排列位置，维护两个指针分别指向未修改票的原价（降序）和修改票（视为价格 10^9）。贪心为每个权重位置选择当前最高可用价格，若总贡献 >= k 则可行。找到最小 c 后，若需要输出字典序最大序列，则在可行解上回溯构造，优先使用未修改的高价票，在必须修改时填入恰使剩余部分刚好达标的价格（需进一步设计回推逻辑）。",
+        "new_proof_obligation": "需证明：1) 固定 c 时贪心验证正确性（即若存在方案，贪心可达最大贡献）；2) 修改次数增加时可行性单调；3) 在最小 c 下，字典序最大的构造步骤正确性（即该构造能产出字典序最大的最终排列且满足贡献）。",
+        "why_direct_reuse_fails": "原题解仅计算给定票数下不加修改的最大贡献，新题引入了修改决策和双目标（最小修改数 + 字典序最大），无法直接复用原有二分和贪心，必须设计新的外层二分与内层验证，并额外处理字典序构造。"
+      },
+      "anti_shallow_rationale": "新题将核心求解方向从正向求最优票数彻底反转为逆向设计票价以满足特定票数，并增加了最小修改数最小化和字典序最大化的双重证明责任。算法核心从单层贪心+二分变为外层二分修改数+内层贪心验证+字典序回溯构造，与原题有本质差异，不是简单换皮。"
+    }
+  }
+}

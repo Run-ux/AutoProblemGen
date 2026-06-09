@@ -1,0 +1,593 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 61.8,
+    "schema_distance": 0.377,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema's input structure, core constraints, edit operations, cost model, and objective are all accurately and completely reflected in the generated problem's description, input/output format, constraints, and samples.",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "Problem provides full task description, input format, output format, constraints, time/space limits, and three samples with explanations. No essential information is missing for a solver to implement a solution.",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "All sections are internally consistent: description matches input/output, edit rules are respected in samples, constraints align with format description, and samples' costs match the edit rule.",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "Three diverse samples cover no-change, single-digit change with corner case (0.0(9)), and two-digit change, each with clear explanations. Sufficient for understanding.",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "Clear structured problem statement with title, sections, and natural language. No source leakage or confusing text. Easy to understand for contestants.",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "Accurately translates new_schema constraints and objective into a well-defined problem.",
+      "Samples are informative and illustrate key aspects like 0.(9) = 1 case.",
+      "Clear and concise language suitable for an OJ problem."
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.377,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5223,
+        "O": 0.5231,
+        "V": 0.4479
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5223,
+        "objective_type_distance": 0.6251,
+        "objective_text_distance": 0.3702,
+        "invariant_match_distance": 0.4479
+      }
+    },
+    "schema_distance": 0.377,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.7,
+    "solution_transfer_risk": 0.5,
+    "surface_retheme_risk": 0.8,
+    "verdict": "pass",
+    "rationale": "原题要求判定两个有理数字符串是否等价，新题则转为在允许修改数字、保持分隔符不变的约束下，求最小编辑代价使两者等价并输出方案。目标函数从简单布尔决策变为带证书的组合优化，核心求解必须引入搜索与最优性论证，语义差异显著。然而，原题的解析与相等性检查可整体复用为黑盒 oracle，且输入格式、约束和前缀比较性质完全保留，因此解法迁移风险中等。表面叙事换为社区预约，但样例设置（如0.(52) vs 0.5(25)、0.0(9) vs 1.0）及题目结构均高度对应原题，存在明显表层复用痕迹。综合看，核心任务已从验证转为设计，真实差异成立，解法不可直接迁移，故予通过。",
+    "evidence_refs": [
+      "hard_checks[9].evidence_refs",
+      "hard_checks[10].evidence_refs",
+      "generated_problem.samples",
+      "new_schema.objective",
+      "original_problem.description"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.38，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 61.8,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "Accurately translates new_schema constraints and objective into a well-defined problem.",
+      "Samples are informative and illustrate key aspects like 0.(9) = 1 case.",
+      "Clear and concise language suitable for an OJ problem."
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\source\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\artifacts\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224_campus_ops_20260609_193718_round2.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\output\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224_campus_ops_20260609_193718_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_leetcode_180d25df7224",
+      "title": "equal rational numbers",
+      "description": "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the rational number.\nIn general a rational number can be represented using up to three parts: an integer part, a non-repeating part, and a repeating part. The number will be represented in one of the following three ways:\n\n<IntegerPart> (e.g. 0, 12, 123)\n<IntegerPart><.><NonRepeatingPart>  (e.g. 0.5, 1., 2.12, 2.0001)\n<IntegerPart><.><NonRepeatingPart><(><RepeatingPart><)> (e.g. 0.1(6), 0.9(9), 0.00(1212))\n\nThe repeating portion of a decimal expansion is conventionally denoted within a pair of round brackets.  For example:\n1 / 6 = 0.16666666... = 0.1(6) = 0.1666(6) = 0.166(66)\nBoth 0.1(6) or 0.1666(6) or 0.166(66) are correct representations of 1 / 6.\n \nExample 1:\nInput: S = \"0.(52)\", T = \"0.5(25)\"\nOutput: true\nExplanation:\nBecause \"0.(52)\" represents 0.52525252..., and \"0.5(25)\" represents 0.52525252525..... , the strings represent the same number.\n\n\nExample 2:\nInput: S = \"0.1666(6)\", T = \"0.166(66)\"\nOutput: true\n\n\nExample 3:\nInput: S = \"0.9(9)\", T = \"1.\"\nOutput: true\nExplanation: \n\"0.9(9)\" represents 0.999999999... repeated forever, which equals 1.  [See this link for an explanation.]\n\"1.\" represents the number 1, which is formed correctly: (IntegerPart) = \"1\" and (NonRepeatingPart) = \"\".\n \n\n\nNote:\n\nEach part consists only of digits.\nThe <IntegerPart> will not begin with 2 or more zeros.  (There is no other restriction on the digits of each part.)\n1 <= <IntegerPart>.length <= 4 \n0 <= <NonRepeatingPart>.length <= 4 \n1 <= <RepeatingPart>.length <= 4",
+      "input": "",
+      "output": "",
+      "constraints": "",
+      "source": "leetcode",
+      "standard_solution_code": "import math\n\nclass Solution:\n\n\tdef isRationalEqual(self, S: str, T: str) -> bool:\n\t\tif len(S) == 0 or len(T) == 0:\n\t\t\treturn False\n\n\t\tdef process(s):\n\t\t\tif s[-1] == '.':\n\t\t\t\ts = s[:-1]\n\t\t\t(stack, repeat_9) = ([], False)\n\t\t\tfor (i, x) in enumerate(s):\n\t\t\t\tif x != ')':\n\t\t\t\t\tstack.append(x)\n\t\t\t\telse:\n\t\t\t\t\ttmp = ''\n\t\t\t\t\twhile stack[-1] != '(':\n\t\t\t\t\t\ttmp += stack.pop()\n\t\t\t\t\tif len(tmp) == tmp.count('9'):\n\t\t\t\t\t\trepeat_9 = True\n\t\t\t\t\tstack.pop()\n\t\t\t\t\treturn (''.join(stack) + tmp[::-1] * (24 // len(tmp)), repeat_9)\n\t\t\treturn (''.join(stack), repeat_9)\n\t\t(x, y) = (process(S), process(T))\n\t\tif x[0].count('.') == 0 or y[0].count('.') == 0:\n\t\t\treturn float(x[0]) == float(y[0])\n\t\tl = max(len(x[0]), len(y[0]))\n\t\tif x[0][:17] == y[0][:17]:\n\t\t\treturn True\n\t\tif x[1] or y[1]:\n\t\t\tm = min(len(x[0].split('.')[1]), len(y[0].split('.')[1]))\n\t\t\tif round(float(x[0]), m) == round(float(y[0]), m):\n\t\t\t\treturn True\n\t\treturn False"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_leetcode_180d25df7224",
+        "equal rational numbers",
+        "leetcode",
+        "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the ration...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "Must fully materialise the inverse‑design helpers: target binding changes objective to a minimum‑modification goal, edit‑operation contract hardens core constraints into allowed operations and preservation rules, minimality lock elevates the invariant to enforce optimality proof.",
+      "summary": "Core constraints now code edit rules and structure preservation; objective becomes min‑cost design with certificate; invariant subsumes original comparison logic together with new lower‑bound and equality‑under‑modifications statements.",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_community_001",
+      "source": "leetcode_derived",
+      "input_structure": {
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "first_string",
+            "role_description": "First string representing a non‑negative rational number with optional repeating part in parentheses, following the same format as original problem.",
+            "type": "string",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {},
+            "properties": {}
+          },
+          {
+            "role": "second_string",
+            "role_description": "Second string, analogous to first string.",
+            "type": "string",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {},
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "original_string_format",
+            "description": "Both input strings must satisfy the three‑part format: <IntegerPart> [.<NonRepeatingPart> [(<RepeatingPart>)]] with all constraints on part lengths and characters.",
+            "formal": "1 ≤ |IntegerPart| ≤ 4, 0 ≤ |NonRepeatingPart| ≤ 4, 1 ≤ |RepeatingPart| ≤ 4; all characters digits except '.' and parentheses; no leading multi‑zero in integer part.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "allowed_edit_operations",
+            "description": "Only decimal digit characters ('0'-'9') may be changed. The characters '.', '(' and ')' are frozen and must stay at their original positions. No insertion, deletion or movement of any character is allowed.",
+            "formal": "For each position i in S (resp. T), if the original character is a digit, it may be replaced by any digit; otherwise it must remain identical. |S'| = |S| and |T'| = |T|.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "edit_cost",
+            "description": "Every changed digit adds 1 to the total cost. Digits left unchanged cost 0.",
+            "formal": "Cost = number of positions i in S and T where original digit ≠ modified digit.",
+            "source_sections": [
+              "description"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "min_design_with_certificate",
+        "description": "Find the minimum total number of digit substitutions (as defined by allowed operations) such that after the changes the two strings represent the same rational number. Output the minimum cost and one pair (S', T') that attains it.",
+        "target": "minimize cost, achieve equality",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "structure_preservation",
+            "description": "The dot, parentheses and all non‑digit characters remain at the same indices. Lengths of S' and T' equal those of S and T.",
+            "properties": {},
+            "evidence_source": "problem_statement"
+          },
+          {
+            "name": "numeric_equivalence_under_modification",
+            "description": "S' and T' must represent the same rational number. The equality test can be performed by expanding repeating parts and comparing prefixes of length 17, as the original bounded‑prefix uniqueness still holds.",
+            "properties": {
+              "prefix_length": 17
+            },
+            "evidence_source": "both"
+          },
+          {
+            "name": "minimality_proof_obligation",
+            "description": "Any correct algorithm must guarantee that the returned cost is minimal. A runtime argument (e.g., exploration of all valid completions or a proven lower bound) is required.",
+            "properties": {},
+            "evidence_source": "problem_statement"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "协调社区预约时间",
+      "description": "在智慧社区中，两个住户 A 和 B 分别提交了一个公共设施（如共享厨房）的预约编码，用来表示他们希望使用的无限重复的时间序列。\n每个预约编码是一个字符串，格式为：\n<日期部分> [ . <非循环部分> [ ( <循环部分> ) ] ]\n其中：\n- <日期部分>：长度 1 到 4 的数字串，表示起始日期，不能有两个及以上的连续前导零；\n- <非循环部分>：长度 0 到 4 的数字串，可以省略；\n- <循环部分>：长度 1 到 4 的数字串，用一对圆括号括起来，也可以省略（若省略，表示有限小数）。\n编码代表的实际时间序列定义为：把日期部分当成整数，剩余部分按无限小数展开：先展开 .<非循环部分>，然后无限重复<循环部分>（如果存在）。例如 “3.14(159)” 表示从第 3 天开始，时间戳依次为 3.14159159159… 的无限序列。\n\n由于两个住户可能想占用同一个时间点，社区管理员希望通过修改预约编码中的数字（仅允许将数字字符 ‘0’-‘9’ 修改为其他数字），使修改后的两个编码代表完全相同的时间序列。小数点、左右括号必须保持原样，且任何字符都不能添加、删除或移动位置。每修改一个数字，协商成本增加 1。\n\n你的任务是：计算使两个编码达到数值相等所需的最小总修改次数，并输出一种达到该最小代价的修改方案（即修改后的字符串 S' 和 T'）。",
+      "input_format": "输入包含两行，每行一个字符串，分别表示住户 A 和住户 B 的原始预约编码。",
+      "output_format": "第一行输出一个整数，表示最小修改总代价。\n接下来两行分别输出修改后住户 A 的编码 S' 和住户 B 的编码 T'。如果存在多组达到最小代价的方案，输出任意一组即可。",
+      "constraints": [
+        "输入字符串满足题目所述的预约编码格式，且各部分长度满足：1 ≤ |日期部分| ≤ 4，0 ≤ |非循环部分| ≤ 4，1 ≤ |循环部分| ≤ 4（仅当包含循环部分时）。",
+        "所有数字字符均为 ‘0’-‘9’，分隔符为 ‘.’ 、 ‘(’ 、 ‘)’ 。",
+        "时间限制：2秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "0.(52)\n0.5(25)",
+          "output": "0\n0.(52)\n0.5(25)",
+          "explanation": "两个编码原本就表示相同的时间序列（0.525252…），无需修改任何数字。"
+        },
+        {
+          "input": "0.0(9)\n1.0",
+          "output": "1\n0.9(9)\n1.0",
+          "explanation": "原始编码 0.0(9) 表示 0.0999… = 0.1，而 1.0 表示 1，它们不相等。将第一个编码的非循环部分 ‘0’ 改为 ‘9’ 得到 0.9(9)，它表示 0.999… = 1，与 1.0 相等。仅修改 1 个数字，是最小代价。"
+        },
+        {
+          "input": "0.1(6)\n0.3",
+          "output": "2\n0.2(9)\n0.3",
+          "explanation": "0.1(6) 表示 0.1666…，0.3 表示 0.3，不相等。将第一个编码的数字 ‘1’ 改为 ‘2’，‘6’ 改为 ‘9’ 得到 0.2(9)，它表示 0.2999… = 0.3。修改 2 个数字，达到了最小代价。"
+        }
+      ],
+      "notes": "输出任意一组最小代价方案都被接受；如果原始编码已经相等，可以直接输出原串。本题保证至少存在一种修改方案（例如将所有数字改为合适的值）使得两个字符串相等。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "Core constraints now code edit rules and structure preservation; objective becomes min‑cost design with certificate; invariant subsumes original comparison logic together with new lower‑bound and equality‑under‑modifications statements.",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.377,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5223,
+          "O": 0.5231,
+          "V": 0.4479
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5223,
+          "objective_type_distance": 0.6251,
+          "objective_text_distance": 0.3702,
+          "invariant_match_distance": 0.4479
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "Mandatory helper; binds the forward equality result into the reverse target that must be achieved by modifications.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "Added equality‑target condition to core_constraints via edit‑operation contract.",
+            "Changed objective from boolean decision to minimum‑cost design achieving that target."
+          ],
+          "innovation_reason": "Flips the problem from ‘check’ to ‘design’, forcing an algorithmic search where none existed.",
+          "difficulty_reason": "The solver must now navigate the space of representations to achieve a prescribed property, not just verify it."
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "Mandatory helper; defines the allowed modifications (digit‑only substitutions, frozen separators) and cost model.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "New core_constraints entries specify exactly which characters may change and structure preservation.",
+            "Invariant explicitly codes that string lengths and separator positions stay identical."
+          ],
+          "innovation_reason": "Transforms a read‑only input into a mutable design object whose structure is partially fixed, introducing a new combinatorial layer.",
+          "difficulty_reason": "Requires handling structural invariants while exploring edit combinations, increasing the state space and correctness burden."
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "Mandatory helper; demands that the answer carry a minimal‑cost proof and concrete output pair.",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "Objective requires outputting a pair (S', T') achieving the minimum cost.",
+            "Invariant adds the obligation to prove minimality."
+          ],
+          "innovation_reason": "Elevates the task from ‘find a feasible edit’ to ‘certify optimality’, adding a proof layer absent in the seed.",
+          "difficulty_reason": "Forces the algorithm to either enumerate all possibilities (proving completeness) or construct a rigorous lower bound, which is significantly harder than a feasibility search."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Parsing both strings, expanding repeating decimals, and comparing prefixes of length 17 to decide equality.",
+        "reusable_subroutines": "The parsing routine (removing parentheses, repeating the repetend, detecting repeated 9's) and the 17‑digit comparison subroutine can be used as a black‑box equality oracle for any candidate pair (S', T').",
+        "new_solver_core": "An optimisation algorithm is needed: because string lengths are tiny, a complete search over all possible digit assignments can be performed, pruning with the equality oracle. The algorithm must compute the minimal Hamming distance over assignments that also respect the frozen‑character constraints.",
+        "new_proof_obligation": "Must prove that the enumerated space is sufficient (i.e., that all equivalent rational numbers can be reached by digit‑only edits) and that the returned cost is provably minimal. This requires an argument that no cheaper assignment exists, which goes beyond a single equality check.",
+        "why_direct_reuse_fails": "The original solver only returns a boolean and does not explore the space of allowed edits; it cannot compute or guarantee minimality of a modification, so it cannot solve the inverse design task."
+      },
+      "anti_shallow_rationale": "The change is not a retheme because the core solver obligation shifted from a single equality decision to a minimisation over a combinatorial edit space with a certificate. Original parse‑and‑compare routines become mere subroutines; the main algorithm must incorporate search and optimality reasoning. The three applied helpers concretely bind the result, define non‑trivial operations, and enforce a minimality promise, preventing a trivial wrapper around the original solution."
+    }
+  }
+}

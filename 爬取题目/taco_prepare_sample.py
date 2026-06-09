@@ -59,6 +59,8 @@ FULL_COLUMNS = [
 COVERAGE_FIELDS = ("difficulty", "raw_tags", "tags", "skill_types")
 EMPTY_LABEL = "<EMPTY>"
 KNOWN_DIFFICULTIES = {"EASY", "MEDIUM", "MEDIUM_HARD", "HARD", "VERY_HARD"}
+DEFAULT_COVERAGE_FIELDS = ("difficulty", "tags", "skill_types")
+ALLOWED_COVERAGE_FIELDS = {"difficulty", "raw_tags", "tags", "skill_types"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -85,6 +87,42 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="逗号分隔的难度黑名单，例如 EASY。",
     )
+    parser.add_argument(
+        "--exclude-sample-dir",
+        default="",
+        help="递归读取已有样本 JSON，并按 problem_id 从候选池中排除。",
+    )
+    parser.add_argument(
+        "--coverage-fields",
+        default=",".join(DEFAULT_COVERAGE_FIELDS),
+        help="逗号分隔的覆盖字段，可选 difficulty,raw_tags,tags,skill_types。",
+    )
+    parser.add_argument(
+        "--sample-dir-name",
+        default="sample_400_autoproblemgen",
+        help="输出题目目录名，路径相对于 output-root。",
+    )
+    parser.add_argument(
+        "--aggregate-name",
+        default="taco_sample_400.json",
+        help="聚合样本 JSON 文件名，路径相对于 output-root。",
+    )
+    parser.add_argument(
+        "--manifest-name",
+        default="manifest.json",
+        help="manifest JSON 文件名，路径相对于 output-root。",
+    )
+    parser.add_argument(
+        "--coverage-name",
+        default="coverage_report.json",
+        help="覆盖报告 JSON 文件名，路径相对于 output-root。",
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=0,
+        help="每个分片目录包含的题目数；0 表示不分片。",
+    )
     return parser.parse_args()
 
 
@@ -92,13 +130,17 @@ def main() -> int:
     args = parse_args()
     output_root = Path(args.output_root).resolve()
     raw_dir = output_root / "raw_parquet"
-    sample_dir = output_root / "sample_400_autoproblemgen"
-    aggregate_path = output_root / "taco_sample_400.json"
-    manifest_path = output_root / "manifest.json"
-    coverage_path = output_root / "coverage_report.json"
+    sample_dir = resolve_output_child(output_root, args.sample_dir_name, "样本输出目录")
+    aggregate_path = resolve_output_child(output_root, args.aggregate_name, "聚合样本 JSON")
+    manifest_path = resolve_output_child(output_root, args.manifest_name, "manifest JSON")
+    coverage_path = resolve_output_child(output_root, args.coverage_name, "覆盖报告 JSON")
+    coverage_fields = parse_coverage_fields(args.coverage_fields)
+    if args.chunk_size < 0:
+        raise ValueError("--chunk-size 不能为负数。")
 
     output_root.mkdir(parents=True, exist_ok=True)
     raw_dir.mkdir(parents=True, exist_ok=True)
+    ensure_output_targets_available(sample_dir, [aggregate_path, manifest_path, coverage_path])
     sample_dir.mkdir(parents=True, exist_ok=True)
 
     if not args.skip_download:
@@ -109,6 +151,7 @@ def main() -> int:
     print("[taco] 读取元数据并计算覆盖集合。", flush=True)
     metadata_rows = load_metadata_rows(parquet_paths)
     full_rows_for_filter: list[tuple[str, dict[str, Any]]] | None = None
+    exclude_report: dict[str, Any] = {}
     if args.unicode_filter:
         print("[taco] 按 UniCode 论文方法筛选候选池。", flush=True)
         full_rows_for_filter = load_all_records(parquet_paths)
@@ -132,11 +175,36 @@ def main() -> int:
     else:
         filter_report = {}
 
+    if args.exclude_sample_dir:
+        exclude_sample_dir = Path(args.exclude_sample_dir).resolve()
+        excluded_problem_ids, exclude_report = load_excluded_problem_ids(exclude_sample_dir)
+        if full_rows_for_filter is None:
+            print("[taco] 读取完整字段以匹配待排除 problem_id。", flush=True)
+            full_rows_for_filter = load_all_records(parquet_paths)
+        excluded_keys, match_report = match_excluded_problem_keys(
+            full_rows_for_filter,
+            excluded_problem_ids,
+        )
+        before_exclude = len(metadata_rows)
+        metadata_rows = [row for row in metadata_rows if row["key"] not in excluded_keys]
+        exclude_report.update(match_report)
+        exclude_report["candidate_rows_before_exclude"] = before_exclude
+        exclude_report["candidate_rows_after_exclude"] = len(metadata_rows)
+        print(
+            f"[taco] 已排除已有样本：ids={len(excluded_problem_ids)} rows={len(excluded_keys)}。",
+            flush=True,
+        )
+
+    if len(metadata_rows) < args.sample_size:
+        raise RuntimeError(
+            f"候选池不足：pool={len(metadata_rows)} sample_size={args.sample_size}"
+        )
+
     selected_keys, coverage_report = select_sample_keys(
         metadata_rows,
         sample_size=args.sample_size,
         seed=args.seed,
-        coverage_fields=("difficulty", "tags", "skill_types"),
+        coverage_fields=coverage_fields,
         stratify_field="difficulty",
     )
 
@@ -150,7 +218,7 @@ def main() -> int:
         for key, record in selected_records
     ]
 
-    write_problem_directory(sample_dir, prepared_records)
+    write_problem_directory(sample_dir, prepared_records, chunk_size=args.chunk_size)
     write_json_atomic(aggregate_path, prepared_records)
 
     manifest = {
@@ -161,8 +229,13 @@ def main() -> int:
         "aggregate_json": str(aggregate_path),
         "autoproblemgen_input_dir": str(sample_dir),
         "coverage_report": str(coverage_path),
+        "chunk_size": args.chunk_size,
         "coverage_fields": coverage_report.get("coverage_fields", []),
         "unicode_filter": bool(args.unicode_filter),
+        "exclude_sample_dir": str(Path(args.exclude_sample_dir).resolve())
+        if args.exclude_sample_dir
+        else "",
+        "excluded_sample_report": exclude_report,
     }
     if filter_report:
         manifest["unicode_filter_report"] = filter_report
@@ -217,6 +290,106 @@ def ensure_parquet_files(paths: list[Path]) -> None:
     missing = [str(path) for path in paths if not path.exists()]
     if missing:
         raise FileNotFoundError("缺少 TACO parquet 文件：\n" + "\n".join(missing))
+
+
+def resolve_output_child(output_root: Path, name: str, label: str) -> Path:
+    if not name.strip():
+        raise ValueError(f"{label}不能为空。")
+    child = Path(name)
+    if child.is_absolute():
+        raise ValueError(f"{label}必须是相对于 output-root 的路径：{name}")
+    resolved = (output_root / child).resolve()
+    if resolved != output_root and output_root not in resolved.parents:
+        raise ValueError(f"{label}不能指向 output-root 之外：{name}")
+    return resolved
+
+
+def ensure_output_targets_available(sample_dir: Path, output_files: list[Path]) -> None:
+    if sample_dir.exists() and not sample_dir.is_dir():
+        raise FileExistsError(f"样本输出路径已存在且不是目录：{sample_dir}")
+    if sample_dir.exists() and any(sample_dir.iterdir()):
+        raise FileExistsError(f"样本输出目录已存在且非空，请更换输出目录：{sample_dir}")
+
+    existing_files = [str(path) for path in output_files if path.exists()]
+    if existing_files:
+        raise FileExistsError(
+            "输出文件已存在，为避免覆盖请更换文件名：\n" + "\n".join(existing_files)
+        )
+
+
+def parse_coverage_fields(value: str) -> tuple[str, ...]:
+    fields = tuple(item.strip() for item in value.split(",") if item.strip())
+    if not fields:
+        raise ValueError("--coverage-fields 至少需要包含一个字段。")
+    unknown = sorted(set(fields) - ALLOWED_COVERAGE_FIELDS)
+    if unknown:
+        raise ValueError(
+            "--coverage-fields 包含未知字段："
+            + ",".join(unknown)
+            + f"；可选字段：{','.join(sorted(ALLOWED_COVERAGE_FIELDS))}"
+        )
+    if len(set(fields)) != len(fields):
+        raise ValueError("--coverage-fields 存在重复字段。")
+    return fields
+
+
+def load_excluded_problem_ids(sample_dir: Path) -> tuple[set[str], dict[str, Any]]:
+    if not sample_dir.exists():
+        raise FileNotFoundError(f"待排除样本目录不存在：{sample_dir}")
+    if not sample_dir.is_dir():
+        raise NotADirectoryError(f"待排除样本路径不是目录：{sample_dir}")
+
+    problem_ids: set[str] = set()
+    duplicate_count = 0
+    json_files = sorted(sample_dir.rglob("*.json"))
+    if not json_files:
+        raise RuntimeError(f"待排除样本目录下没有 JSON 文件：{sample_dir}")
+
+    for path in json_files:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"样本 JSON 解析失败：{path}") from exc
+        problem_id = normalize_scalar(payload.get("problem_id")) if isinstance(payload, dict) else ""
+        if not problem_id:
+            raise ValueError(f"样本 JSON 缺少 problem_id：{path}")
+        if problem_id in problem_ids:
+            duplicate_count += 1
+        problem_ids.add(problem_id)
+
+    return problem_ids, {
+        "sample_dir": str(sample_dir),
+        "json_file_count": len(json_files),
+        "unique_problem_id_count": len(problem_ids),
+        "duplicate_problem_id_count": duplicate_count,
+    }
+
+
+def match_excluded_problem_keys(
+    full_rows: list[tuple[str, dict[str, Any]]],
+    excluded_problem_ids: set[str],
+) -> tuple[set[str], dict[str, Any]]:
+    excluded_keys: set[str] = set()
+    matched_problem_ids: set[str] = set()
+
+    for key, record in full_rows:
+        problem_id = make_problem_id(record, key)
+        if problem_id in excluded_problem_ids:
+            excluded_keys.add(key)
+            matched_problem_ids.add(problem_id)
+
+    unmatched_ids = sorted(excluded_problem_ids - matched_problem_ids)
+    if unmatched_ids:
+        preview = "\n".join(unmatched_ids[:20])
+        raise RuntimeError(
+            "部分待排除 problem_id 无法映射回 raw parquet，已停止以避免漏排：\n"
+            + preview
+        )
+
+    return excluded_keys, {
+        "matched_problem_id_count": len(matched_problem_ids),
+        "matched_raw_row_count": len(excluded_keys),
+    }
 
 
 def load_metadata_rows(parquet_paths: list[Path]) -> list[dict[str, Any]]:
@@ -419,6 +592,8 @@ def build_coverage_report(
         "missing_labels": group_coverage_labels(missing),
         "difficulty_distribution_full": dict(Counter(row["difficulty"] for row in rows)),
         "difficulty_distribution_sample": dict(Counter(row["difficulty"] for row in selected_rows)),
+        "raw_tags_distribution_full": value_distribution(rows, "raw_tags"),
+        "raw_tags_distribution_sample": value_distribution(selected_rows, "raw_tags"),
         "tags_distribution_full": value_distribution(rows, "tags"),
         "tags_distribution_sample": value_distribution(selected_rows, "tags"),
         "skill_types_distribution_full": value_distribution(rows, "skill_types"),
@@ -707,17 +882,29 @@ def slugify(value: str) -> str:
     return slug or "unknown"
 
 
-def write_problem_directory(sample_dir: Path, records: list[dict[str, Any]]) -> None:
-    for stale in sample_dir.glob("*.json"):
-        stale.unlink()
+def write_problem_directory(
+    sample_dir: Path,
+    records: list[dict[str, Any]],
+    *,
+    chunk_size: int = 0,
+) -> None:
+    sample_dir.mkdir(parents=True, exist_ok=True)
     width = len(str(len(records)))
     for index, record in enumerate(records, start=1):
         item = dict(record)
         filename = f"{index:0{width}d}_{item['problem_id']}.json"
-        write_json_atomic(sample_dir / filename, item)
+        if chunk_size:
+            chunk_start = ((index - 1) // chunk_size) * chunk_size + 1
+            chunk_end = min(chunk_start + chunk_size - 1, len(records))
+            target_dir = sample_dir / f"part_{chunk_start:0{width}d}_{chunk_end:0{width}d}"
+        else:
+            target_dir = sample_dir
+        target_dir.mkdir(parents=True, exist_ok=True)
+        write_json_atomic(target_dir / filename, item)
 
 
 def write_json_atomic(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     tmp_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),

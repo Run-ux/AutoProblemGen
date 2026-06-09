@@ -1,0 +1,887 @@
+{
+  "problem_id": "campus_ops_inverse_bitrev",
+  "source_problem_ids": [
+    "taco_codechef_b0af65daba70"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_b0af65daba70",
+      "ARRANGE",
+      "codechef",
+      "The Chef has prepared the appetizers in the shapes of letters to spell a special message for the guests. There are n appetizers numbered from 0 to n-1 such that if the appetizers are arrayed in this order, they will d...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束新增目标字符串和修改操作；目标从值计算翻转为带最小性的构造设计；不变量从单纯位反转性质扩展为联系目标与修改操作的下界证明。",
+    "summary": "原题计算位反转输出，新题要求反向设计：给定目标和初始字符串，最小改动使输出符合目标。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4307,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4307,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.6229,
+      "O": 0.475,
+      "V": 0.6254
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.6229,
+      "objective_type_distance": 0.5256,
+      "objective_text_distance": 0.399,
+      "invariant_match_distance": 0.6254
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization_and_design",
+    "description": "输出最小需要替换的字符数，并输出修改后的字符串（或展示改动位置），使得修改后的字符串经位反转排列等于 T",
+    "target": "minimum_replacements, modified_string",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（位反转后的字符串）可明确作为反向目标（给定目标字符串），且输入字符串的字符修改是自然的操作，满足设计自由度，最小修改代价要求改变了求解方向并引入算法优化。",
+  "new_schema_snapshot": {
+    "problem_id": "campus_ops_inverse_bitrev",
+    "source": "codechef_inverse_adapt",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 25
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true
+      },
+      "components": [
+        {
+          "role": "k",
+          "role_description": "指数，字符串长度为 2^k",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 16
+          },
+          "properties": {}
+        },
+        {
+          "role": "original_string",
+          "role_description": "初始字符串 S0，长度 2^k，由小写字母组成",
+          "type": "string",
+          "length": {
+            "min": 2,
+            "max": 65536
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "ordered": true
+          }
+        },
+        {
+          "role": "target_string",
+          "role_description": "目标字符串 T，长度 2^k，由小写字母组成",
+          "type": "string",
+          "length": {
+            "min": 2,
+            "max": 65536
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "ordered": true
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "length_power_of_two",
+          "description": "original_string 和 target_string 的长度必须是 2^k",
+          "formal": "|S0| = |T| = 2^k",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "lowercase_only",
+          "description": "所有字符串仅由小写字母 a-z 构成",
+          "formal": "∀ c ∈ S0 ∪ T, c ∈ {a,…,z}",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "edit_operation_set",
+          "description": "允许的修改操作为替换 S0 中任意位置的字符为任意小写字母，次数不限",
+          "formal": "modification: replace any character of S0 by any a-z; cost = number of replacements",
+          "source_sections": [
+            "operations"
+          ]
+        },
+        {
+          "name": "target_achievement",
+          "description": "修改后的字符串 S 必须满足：对 S 应用位反转排列后得到 T",
+          "formal": "bit_reverse_permutation(S) = T",
+          "source_sections": [
+            "output requirement"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization_and_design",
+      "description": "输出最小需要替换的字符数，并输出修改后的字符串（或展示改动位置），使得修改后的字符串经位反转排列等于 T",
+      "target": "minimum_replacements, modified_string",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "bit_reverse_bijection",
+          "description": "位反转排列是长度为 2^k 的双射，每个目标位置 j 恰好由一个原始位置 i = revbits(j) 贡献。因此要使最终位置 j 的字符为 T[j]，原始位置 i 的字符必须等于 T[j]。",
+          "properties": {},
+          "evidence_source": "both"
+        },
+        {
+          "name": "minimality_lower_bound",
+          "description": "对于初始 S0，令 R = revbits(T)（即对 T 应用位反转），则所需最小修改次数为 |{i : S0[i] ≠ R[i]}|。任何有效修改方案必须至少修改这些位置，且逐一修改这些位置即可达成目标。",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "对输入字符串进行位反转排列",
+    "reusable_subroutines": "位反转函数（已知长度 k，通过反转二进制位计算目标索引）",
+    "new_solver_core": "计算 R = 对 T 进行位反转排列（即 T 的逆位反转），统计 S0 与 R 的不同字符数作为最小修改次数，并构造修改后的 S（将 S0 中不同位置替换为 R 对应字符）",
+    "new_proof_obligation": "证明替换最少字符数为 |{i: S0[i]≠R[i]}|。任何合法方案需要保证每个最终位置正确，而位反转双射确保每个最终位置由唯一原始位置决定，因此每个不匹配的原始位置必须被修改；同时仅修改这些位置即可，故下限可达。",
+    "why_direct_reuse_fails": "原题解仅输出位反转后的字符串，无法直接提供修改次数与方案，需要额外比较步骤和最小性论证。"
+  },
+  "anti_shallow_rationale": "新题不是仅换故事背景或调参数，而是翻转了求解方向，从正向计算变为目标驱动的逆向设计，要求算法承担最小性证明责任，改变了核心约束与输出目标。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "必须将原题结果语义绑定为反向目标，驱动逆向求解。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中引入 target_achievement 约束，要求修改后的字符串经位反转等于 T",
+        "在 objective 中指定输出需要达成该目标"
+      ],
+      "innovation_reason": "颠覆了原正向计算逻辑，使问题变为目标驱动设计。",
+      "difficulty_reason": "需要算法理解目标约束并反向映射，比单纯正向计算更考验建模。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "必须定义可执行的修改操作集合，使反向设计具备操作基础。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中添加 edit_operation_set 限制仅能替换字符",
+        "在 invariant 中关联修改操作对位反转结果的影响（每个位置独立）"
+      ],
+      "innovation_reason": "将逆向问题转化为可量化操作空间上的优化，增加设计约束。",
+      "difficulty_reason": "要求证明操作序列的正确性以及操作与目标间的对应关系。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "必须输出最小代价并提供可验证的设计证据，强化设计责任。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在 objective 中明确要求最小替换数，并输出修改后的字符串",
+        "在 invariant 中给出最小性下界证明"
+      ],
+      "innovation_reason": "从仅计算转为带证明义务的设计，提升问题层次。",
+      "difficulty_reason": "要求算法不仅找到可行解，还要论证其最优性，增加了正确性负担。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_incompatible",
+      "selection_reason": "原题只是一个确定性变换，输出唯一，没有多解空间或方案对象，无法定义规范解，不满足规则要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 为 value_computation，无 requires_solution；不变量仅描述 bit-reversal 双射，无多解可能。规则 required_seed_properties 要求“原题本身有明确的解对象，或者答案可以恢复成方案”，但此处无方案概念。",
+        "feedback": "该种子题不适合此规则，建议选择具有多解或构造空间的题目，例如组合优化或满足性构造问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_always_solvable",
+      "selection_reason": "原题“ARRANGE”总是有唯一确定的输出（bit-reversal permutation），不存在“做不到”的情形，因此无法引入规则要求的无解分支和冲突证据。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“Apply a bit-reversal permutation to the given string”，输入约束保证字符串长度恰为2^k，算法总可完成，无任何失败路径。规则 eligibility.required_seed_properties 要求“做不到的原因可以用局部证据表示”，而种子不存在做不到的原因。",
+        "feedback": "规则“construct_or_obstruction”需要种子存在天然无解情形，建议更换为能自然产生冲突的题目（如不总能满足约束的构造问题）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是确定性值计算，不存在多个解，无法定义解空间、去重规则和等价关系，不满足规则要求的‘存在性或单一最优值问题’前提。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type 为 value_computation，输出唯一变换字符串；core_constraints 仅限定位反转的确定性操作，无解空间或不同解；invariant 描述 bijective mapping，无等价类定义空间。",
+        "feedback": "该规则适用于存在性或最优值问题，但种子题是计算题，缺少生成计数所必需的候选解空间和去重需求。不建议强行改造。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是一个确定性比特翻转排列问题，输入字符串与排列规则完全固定，不存在任何顺序不确定、资源波动或局部选择差异等原生扰动来源。强行引入扰动将只能依赖故事背景硬造对手，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束：字符串长度严格等于2^k，排列规则由bit-reversal bijection定义（invariant: bit_reversal_permutation），整个过程是确定性的，没有提到任何不确定性、误差或可变条件。题目描述中的服务员颠倒阅读也是一个固定规则，并非扰动来源。因此无法提取原生扰动模型。",
+        "feedback": "该规则要求原题自带的不确定性可被建模为扰动，但此种子题核心变换是纯组合与确定性的，建议寻找具有固有波动或顺序不确定性的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_required_property",
+      "selection_reason": "种子题是一个确定性的位反转排列计算，不存在‘可行性’概念，也没有任何可调参数或单调性，无法定义临界阈值或可行区域，违反规则要求的‘可行性随参数单调/分层’的种子条件。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 明确要求‘原题可行性随某个参数具有清晰的单调性或分层结构’；种子题 core_constraints 仅包含字符串长度是2的幂和字符集约束，objective 是直接计算变换后的字符串，没有任何‘是否可行’的判定。原题描述和标准解法均基于固定 k 的位反转置换，无参数化空间。",
+        "feedback": "该题更适合‘置换/变换直接计算’类问题，建议寻找包含决策阶段且存在可调容量、成本或时限参数的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是确定性字符串变换，没有优化目标，不存在“原题目标”附近自然的第二评价指标，无法形成真实冲突的权衡关系。规则要求种子题为单目标最优题，本题不满足。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为value_computation，requires_solution=false；输入输出由位反转排列唯一确定，无优化空间；规则eligibility要求“原题目标附近存在自然的第二评价指标”，且“两个指标之间存在真实冲突”，但本题没有目标函数，无法构建第二指标冲突。",
+        "feedback": "建议选择具有明确最优化目标（如最大化收益、最小化代价）的种子题，且该目标附近存在自然的、无法同时独立优化的第二指标（如成本、风险）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "reverse_target_natural_modification",
+      "selection_reason": "原题输出（位反转后的字符串）可明确作为反向目标（给定目标字符串），且输入字符串的字符修改是自然的操作，满足设计自由度，最小修改代价要求改变了求解方向并引入算法优化。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为经过位反转置换的字符串（见bit_reversal_permutation invariant），可绑定为目标字符串；原题输入包含字符串，修改其字符是自然操作；helpers的target_result_binding和minimality_or_certificate_lock可应用于目标锁定和最小修改要求。",
+        "feedback": "规则契合度较高，建议下一步规划时明确指定修改操作的定义和最小性证明的期望。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_independent_components",
+      "selection_reason": "原题是一个确定的 bit-reversal 置换，每个字符的目标位置完全由索引决定，不存在任何可独立选择的局部单元，无法满足规则要求的存在可分解局部单元并通过共享资源自然耦合的条件。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中，输入字符串被直接根据索引的 bit-reversal 重新排列，标准解法中通过循环每个索引独立计算目标位置，无决策变量，无共享资源。规则 required_seed_properties 要求'原题存在可分解的局部单元'且'局部单元之间能通过共享资源、总量或全局选择自然耦合'，但原题并未提供任何独立可分解的单元（字符排列是确定性的）。",
+        "feedback": "建议选择其他存在多组独立决策子问题的题目，例如背包、调度等，才能应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_choice",
+      "selection_reason": "原题核心是一个确定性的位反转排列，输入字符串和k给定后输出被唯一确定。整个过程中不存在可被双方轮流选择、拿取、移动或改变状态的自然操作，也无任何状态分支或决策点。强行添加对抗方只能靠故事背景硬造，不符合规则要求的“原题存在可轮流选择、拿取、移动或改变状态的自然操作”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.core_constraints中包含string_length_power_of_two和character_set_lowercase，但无决策变量；objective.type为value_computation，计算位反转排列，属于确定性过程；invariant描述的是位反转排列的双射性质；原题描述中的“服务员根据颠倒的二进制数字放置”仍然是确定性的，没有选择自由度。规则eligibility.required_seed_properties明确要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，而该种子题无此类操作。",
+        "feedback": "建议放弃对抗化转换，因原问题缺乏可博弈化的核心操作。可考虑其他类型的转换规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是比特反转排列，核心对象为整个字符串的全局置换，不存在路径、区间、子树或集合等局部结构，无法形成覆盖或割关系。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束是字符串长度为2的幂且字符为小写字母，目标是计算比特反转后的字符串，不变量是索引位反转的双射映射。输入结构为单个k和字符串，无局部对象族。规则要求种子题具有路径、区间或子树等局部结构，且多对象可自然形成覆盖或割，但原题不满足。",
+        "feedback": "该种子题属于纯置换问题，缺乏可组合的局部对象族，无法扩展为覆盖、割或支配类问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "no_counting_seed",
+      "selection_reason": "种子题是字符串置换而非计数题，没有任何计数对象，无法定义权重或统计量。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 transformed_string，需要输出位反转后的字符串（见 schema objective.type: value_computation, target: transformed_string）。题目描述中无计数目标。",
+        "feedback": "规则要求原题有明确有限的计数对象和自然权重，但当前种子题是纯置换任务，不涉及计数，不满足 eligibility 条件。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "seed_incompatible",
+      "message": "原题只是一个确定性变换，输出唯一，没有多解空间或方案对象，无法定义规范解，不满足规则要求的种子属性。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 为 value_computation，无 requires_solution；不变量仅描述 bit-reversal 双射，无多解可能。规则 required_seed_properties 要求“原题本身有明确的解对象，或者答案可以恢复成方案”，但此处无方案概念。",
+        "feedback": "该种子题不适合此规则，建议选择具有多解或构造空间的题目，例如组合优化或满足性构造问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_always_solvable",
+      "message": "原题“ARRANGE”总是有唯一确定的输出（bit-reversal permutation），不存在“做不到”的情形，因此无法引入规则要求的无解分支和冲突证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“Apply a bit-reversal permutation to the given string”，输入约束保证字符串长度恰为2^k，算法总可完成，无任何失败路径。规则 eligibility.required_seed_properties 要求“做不到的原因可以用局部证据表示”，而种子不存在做不到的原因。",
+        "feedback": "规则“construct_or_obstruction”需要种子存在天然无解情形，建议更换为能自然产生冲突的题目（如不总能满足约束的构造问题）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是确定性值计算，不存在多个解，无法定义解空间、去重规则和等价关系，不满足规则要求的‘存在性或单一最优值问题’前提。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type 为 value_computation，输出唯一变换字符串；core_constraints 仅限定位反转的确定性操作，无解空间或不同解；invariant 描述 bijective mapping，无等价类定义空间。",
+        "feedback": "该规则适用于存在性或最优值问题，但种子题是计算题，缺少生成计数所必需的候选解空间和去重需求。不建议强行改造。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是一个确定性比特翻转排列问题，输入字符串与排列规则完全固定，不存在任何顺序不确定、资源波动或局部选择差异等原生扰动来源。强行引入扰动将只能依赖故事背景硬造对手，违反规则红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题约束：字符串长度严格等于2^k，排列规则由bit-reversal bijection定义（invariant: bit_reversal_permutation），整个过程是确定性的，没有提到任何不确定性、误差或可变条件。题目描述中的服务员颠倒阅读也是一个固定规则，并非扰动来源。因此无法提取原生扰动模型。",
+        "feedback": "该规则要求原题自带的不确定性可被建模为扰动，但此种子题核心变换是纯组合与确定性的，建议寻找具有固有波动或顺序不确定性的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "missing_required_property",
+      "message": "种子题是一个确定性的位反转排列计算，不存在‘可行性’概念，也没有任何可调参数或单调性，无法定义临界阈值或可行区域，违反规则要求的‘可行性随参数单调/分层’的种子条件。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 明确要求‘原题可行性随某个参数具有清晰的单调性或分层结构’；种子题 core_constraints 仅包含字符串长度是2的幂和字符集约束，objective 是直接计算变换后的字符串，没有任何‘是否可行’的判定。原题描述和标准解法均基于固定 k 的位反转置换，无参数化空间。",
+        "feedback": "该题更适合‘置换/变换直接计算’类问题，建议寻找包含决策阶段且存在可调容量、成本或时限参数的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是确定性字符串变换，没有优化目标，不存在“原题目标”附近自然的第二评价指标，无法形成真实冲突的权衡关系。规则要求种子题为单目标最优题，本题不满足。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为value_computation，requires_solution=false；输入输出由位反转排列唯一确定，无优化空间；规则eligibility要求“原题目标附近存在自然的第二评价指标”，且“两个指标之间存在真实冲突”，但本题没有目标函数，无法构建第二指标冲突。",
+        "feedback": "建议选择具有明确最优化目标（如最大化收益、最小化代价）的种子题，且该目标附近存在自然的、无法同时独立优化的第二指标（如成本、风险）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_target_natural_modification",
+      "message": "原题输出（位反转后的字符串）可明确作为反向目标（给定目标字符串），且输入字符串的字符修改是自然的操作，满足设计自由度，最小修改代价要求改变了求解方向并引入算法优化。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为经过位反转置换的字符串（见bit_reversal_permutation invariant），可绑定为目标字符串；原题输入包含字符串，修改其字符是自然操作；helpers的target_result_binding和minimality_or_certificate_lock可应用于目标锁定和最小修改要求。",
+        "feedback": "规则契合度较高，建议下一步规划时明确指定修改操作的定义和最小性证明的期望。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_independent_components",
+      "message": "原题是一个确定的 bit-reversal 置换，每个字符的目标位置完全由索引决定，不存在任何可独立选择的局部单元，无法满足规则要求的存在可分解局部单元并通过共享资源自然耦合的条件。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中，输入字符串被直接根据索引的 bit-reversal 重新排列，标准解法中通过循环每个索引独立计算目标位置，无决策变量，无共享资源。规则 required_seed_properties 要求'原题存在可分解的局部单元'且'局部单元之间能通过共享资源、总量或全局选择自然耦合'，但原题并未提供任何独立可分解的单元（字符排列是确定性的）。",
+        "feedback": "建议选择其他存在多组独立决策子问题的题目，例如背包、调度等，才能应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_choice",
+      "message": "原题核心是一个确定性的位反转排列，输入字符串和k给定后输出被唯一确定。整个过程中不存在可被双方轮流选择、拿取、移动或改变状态的自然操作，也无任何状态分支或决策点。强行添加对抗方只能靠故事背景硬造，不符合规则要求的“原题存在可轮流选择、拿取、移动或改变状态的自然操作”。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "schema_context.seed_schema.core_constraints中包含string_length_power_of_two和character_set_lowercase，但无决策变量；objective.type为value_computation，计算位反转排列，属于确定性过程；invariant描述的是位反转排列的双射性质；原题描述中的“服务员根据颠倒的二进制数字放置”仍然是确定性的，没有选择自由度。规则eligibility.required_seed_properties明确要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，而该种子题无此类操作。",
+        "feedback": "建议放弃对抗化转换，因原问题缺乏可博弈化的核心操作。可考虑其他类型的转换规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是比特反转排列，核心对象为整个字符串的全局置换，不存在路径、区间、子树或集合等局部结构，无法形成覆盖或割关系。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.0,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束是字符串长度为2的幂且字符为小写字母，目标是计算比特反转后的字符串，不变量是索引位反转的双射映射。输入结构为单个k和字符串，无局部对象族。规则要求种子题具有路径、区间或子树等局部结构，且多对象可自然形成覆盖或割，但原题不满足。",
+        "feedback": "该种子题属于纯置换问题，缺乏可组合的局部对象族，无法扩展为覆盖、割或支配类问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_seed",
+      "message": "种子题是字符串置换而非计数题，没有任何计数对象，无法定义权重或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 transformed_string，需要输出位反转后的字符串（见 schema objective.type: value_computation, target: transformed_string）。题目描述中无计数目标。",
+        "feedback": "规则要求原题有明确有限的计数对象和自然权重，但当前种子题是纯置换任务，不涉及计数，不满足 eligibility 条件。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_fulfilled",
+      "message": "规划成功将正向求解转换为目标驱动的最小修改构造题：定义目标字符串T，允许字符替换操作，要求最小修改次数并给出方案，所有helper合同均已落地至核心约束、目标和不变量的具体定义中。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "target_result_binding：candidate_schema.core_constraints.target_achievement 约束 'bit_reverse_permutation(S) = T'，objective 描述 '输出最小需要替换的字符数...使得修改后的字符串经位反转排列等于 T'；edit_operation_contract：core_constraints.edit_operation_set 定义 '替换 S0 中任意位置的字符为任意小写字母'，invariant.bit_reverse_bijection 关联操作影响；minimality_or_certificate_lock：objective.target 包含 'minimum_replacements, modified_string'，invariant.minimality_lower_bound 给出最小修改下界及可达性证明。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "熟悉原题的选手只需将原题位反转函数作用于目标字符串，再计算与初始字符串的汉明距离即可得到答案，对新题本质上是原解的直接变形，差异不足。",
+    "feedback": "建议增加更复杂的约束或更不显然的变换，使得不能仅靠逆映射和汉明距离解决。例如引入代价不同的操作或多步骤变换，或使排列非双射等。"
+  },
+  "iteration": {
+    "run_id": "taco_codechef_b0af65daba70_campus_ops_20260609_220625",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

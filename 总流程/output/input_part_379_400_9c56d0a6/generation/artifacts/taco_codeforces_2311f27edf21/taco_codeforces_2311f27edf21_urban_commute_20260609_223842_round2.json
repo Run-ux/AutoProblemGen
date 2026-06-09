@@ -1,0 +1,1058 @@
+{
+  "problem_id": "inv_min_d_campus",
+  "source_problem_ids": [
+    "taco_codeforces_2311f27edf21"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_2311f27edf21",
+      "codeforces",
+      "Polycarpus is an amateur businessman. Recently he was surprised to find out that the market for paper scissors is completely free! Without further ado, Polycarpus decided to start producing and selling such scissors....",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "输入去掉降价上限 d，新增目标尾9个数 t；核心约束从‘降价不超过 d 且最大化尾9个数’变为‘存在降价幅度 d 使价格尾9个数至少为 t，并最小化 d’；目标从最大化尾9个数和价格变为最小化 d 并输送最大证书价格；不变量从模的单调性变为可行性单调和最小 d 的构造规则。",
+    "summary": "通过将原题结果绑定为目标输入，翻转优化方向与主约束角色，增加最小性证明，创建实质不同的逆问题。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4411,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4411,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5661,
+      "O": 0.5142,
+      "V": 0.7135
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5661,
+      "objective_type_distance": 0.5625,
+      "objective_text_distance": 0.4418,
+      "invariant_match_distance": 0.7135
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_with_certificate",
+    "description": "最小化允许的最大降幅 d，并在相同 d 下选择使编号 x 最大的可行解，输出 d 和该最大 x。",
+    "target": "d",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "鉴于 revision_context 明确拒绝 existence_to_counting 因其解法迁移风险极高，且要求增加输入、约束与目标的实质变化，forward_solution_to_inverse_design 通过翻转求解方向、强制引入编辑操作与最小化责任，能够彻底重构问题结构，阻断原扫描算法直接复用，优于 feasibility_to_extremal_threshold（易退化为平凡算术解）和再次尝试 existence_to_counting。；创新度判断：将原题正向优化尾数9改为给定目标尾数要求，定义允许的数字编辑操作（如替换十进制位），求最小操作代价，核心义务从判定性优化变为构造性最小修改，根本改变了问题空间。；难度判断：原题主求解责任是扫描10的幂并做简单判定，新题要求建立操作代价模型，可能需要动态规划或图搜索探索编辑序列，并承担最小性证明，大幅提升算法设计与正确性论证难度。；风险判断：主要风险是反向设计可能超出目标难度或引入不自然的操作，但通过限定操作于十进制数字替换且绑定代价，并利用 helper 约束目标锁，可确保问题紧贴原题核心对象，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "inv_min_d_campus",
+    "source": "derived_from_codeforces_2311f27edf21",
+    "input_structure": {
+      "type": "tuple",
+      "length": {
+        "min": 2,
+        "max": 2
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "p",
+          "role_description": "当前最大活动编号，如校园排队号",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000000000000
+          },
+          "properties": {}
+        },
+        {
+          "role": "t",
+          "role_description": "目标末尾连续9的个数",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 0,
+            "max": 18
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "price_modification_operation",
+          "description": "允许从当前编号 p 开始，选择任意不超过 p 的非负整数作为新编号 x，且 x 必须满足 p - d ≤ x ≤ p，其中 d 是我们需要确定的最小允许降幅。",
+          "formal": "∃ d ≥ 0, ∃ x ∈ ℤ, 0 ≤ x ≤ p, p - d ≤ x ≤ p",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "trailing_nines_target",
+          "description": "最终选中的编号 x 必须具有至少 t 个末尾连续9，即 trailing_nines(x) ≥ t。",
+          "formal": "trailing_nines(x) ≥ t",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "minimal_d_requirement",
+          "description": "降幅 d 必须是满足以上两条约束的最小非负整数。若有多个 x 满足同一最小 d，则选取其中最大者作为输出证书。",
+          "formal": "d = min{ d' | ∃ x∈[p-d', p] . trailing_nines(x) ≥ t }，输出 (d, x_max)",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_with_certificate",
+      "description": "最小化允许的最大降幅 d，并在相同 d 下选择使编号 x 最大的可行解，输出 d 和该最大 x。",
+      "target": "d",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "feasibility_monotonicity",
+          "description": "若降幅 d₀ 可行（即区间内存在满足尾9要求的编号），则任意 d > d₀ 均可增加区间，故必定仍可行。因此最小可行 d 唯一。",
+          "properties": {},
+          "evidence_source": "construction"
+        },
+        {
+          "name": "min_d_construction",
+          "description": "最小 d 可通过扫描所有 k ≥ t 并计算 p mod 10^k + 1 的最小值得到。若 p 自身尾9个数已 ≥ t，则 d = 0。证明基于：x 末尾至少 t 个9 ⇔ x+1 可被 10^t 整除，结合区间约束导出充要条件。",
+          "properties": {},
+          "evidence_source": "proof"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "扫描 10 的幂 k，确定满足 p % 10^k ≤ d 的最大 k，输出 p - (p % 10^k) - 1。",
+    "reusable_subroutines": "计算 p mod 10^k、trailing_nines 的快速判定、利用模余数构造区间内候选编号。",
+    "new_solver_core": "扫描 k = t, t+1, ... 直至 10^k > p，对每个 k 计算候选降幅 d_k = p % 10^k + 1（若余数为 0 且 k=t 时需特殊处理 p 自身尾9个数），记录最小 d_k 及对应最大候选编号 x_k = p - (p % 10^k) - 1；特判 p 自身尾9 ≥ t 时 d=0。",
+    "new_proof_obligation": "1. 证明尾9个数 ≥ t 的充要条件及其与模余数的关系；2. 证明最小降幅 d 确为 min_{k≥t} (p%10^k+1)，且 d=0 的充要条件是 p 自身满足目标；3. 证明当多个 k 产生相同最小 d 时，选择最大 x 的规则正确。",
+    "why_direct_reuse_fails": "原题循环搜索最大 k，而新题需要搜索最小余数+1，遍历方向与判断逻辑不同；原题需降幅 d 作为输入，新题 d 为输出且必须证明最小性；直接复用原题代码只能判定给定 d 是否可行，无法自动给出最小 d。"
+  },
+  "anti_shallow_rationale": "反向目标改变了优化方向与主约束的角色，输入输出完全对调，算法必须基于新的不变量寻找最小降幅，而非简单在原解后添加统计。虽然底层的模运算子程式可复用，但算法主流程和正确性证明已根本不同，避免了‘只改问法’的浅层变化。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "需要把原题最大化尾9个数的结果绑定为显式输入目标，驱动反向设计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "新增输入参数 t，表示目标尾9个数。",
+        "核心约束加入尾9个数 ≥ t 的条件。",
+        "目标围绕 t 定义，而非从输入 d 导出最大尾9个数。"
+      ],
+      "innovation_reason": "将正向优化结果翻转为必须满足的硬性目标，使问题从‘给定预算求最佳效果’变为‘给定效果求最小预算’，变更了解题方向。",
+      "difficulty_reason": "要求算法在满足预设品质的前提下最小化资源，需要建立新的单调性与构造性证明，提升问题复杂度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "必须明确允许的价格修改操作，以规范反向设计空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "核心约束中明确定义了‘选择 x 且满足 p-d ≤ x ≤ p’作为允许操作。",
+        "不变量新增‘可行性单调性’，说明操作与 d 的关系。"
+      ],
+      "innovation_reason": "把模糊的‘降价’转化为精确的允许操作区间，并建立 d 与操作存在性的联系，奠定最小性证明的基础。",
+      "difficulty_reason": "强制要求证明操作存在性、单调性以及最小 d 的构造，增加正确性论证负担。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "反向问题天然需要证明最小性，否则可能退化为任意可行解。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "目标明确要求最小化 d，并输出证书 x 作为证据。",
+        "不变量给出了最小 d 的构造性公式，为算法和证明提供基础。"
+      ],
+      "innovation_reason": "将答案从简单报告可行解升级为必须附带最小性证明或可验证证书，提升问题深度。",
+      "difficulty_reason": "要求算法既能计算最小 d，又能证明不存在更小可行 d，并通过构造证书锁定答案，防止猜测策略。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是单一数值优化，输出已是规范解，不存在多方案或构造空间。升级为输出规范方案相当于要求输出后处理或证明，主要解法不会改变，违反差异不足红线。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 lexicographic_optimize，输出满足规范顺序的唯一整数，没有构造方案概念（输入输出均为标量）。标准解法通过数学性质直接取得答案，不存在回溯空间。规则要求的解对象方案无法定义，辅助操作（如规范顺序压力）无法实现实质性创新。",
+        "feedback": "不建议将此种子扩展为规范输出题，因为缺乏原始的构造复杂度。若尝试强行要求输出证明过程，只会增加表面输出，核心算法不变，属于差异不足。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_always_feasible",
+      "selection_reason": "种子题对于任意合法输入总存在解（至少 x=p 满足约束），不存在“做不到”的情形，无法构建局部冲突证据输出，不满足规则要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束 0 ≤ d < p，区间 [p-d, p] 非空，恒包含 p；目标为最大化尾数 9 和价格，始终可达。无解条件不存在。",
+        "feedback": "该规则要求题目存在无解可能，否则无法构造局部可检查证据。建议换个种子题，或允许引入额外约束制造无解分支。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "clear_counting_object",
+      "selection_reason": "种子题是单一最优值问题，解空间为有限整数区间，不同解的去重规则以数值不相同自然成立，等价关系清晰。将目标从‘选出最大尾随9个数且最大价格’改为‘计数全部满足最大尾随9个数的价格个数’，引入了新的计数义务，要求算法处理解的数量统计而非仅定位一个最优解，满足规则对计数对象定义、去重和有限性的要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题目标为 lexicographic_optimize，核心约束为 price_reduction_cap 和 trailing_nines_optimization，解空间为 [p-d, p] 内的有限整数。将目标改为计数后，新目标可明确为‘统计满足约束且尾随9个数等于区间内最大值的价格数量’，每个价格是一个明确解，去重由数值不同自然给出，解空间有限性由 d< p 和 p≤1e18 保证。",
+        "feedback": "规则匹配：种子题具备有限解空间和清晰的去重条件；通过将单一最优解转化为统计最优解的数量，可在不破坏原约束的前提下建立新的计数目标，且需要按尾随9个数拆分统计，满足 helper 要求。但缺乏更高阶的结构化等价类，创新度可能有限。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation_found",
+      "selection_reason": "原题是确定性价格优化问题，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则要求的扰动模型必须来自原题本身。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述仅涉及固定 p 和 d 寻找最优价格；核心约束 price_reduction_cap 和 trailing_nines_optimization 都是确定的；标准解法基于模运算扫描，没有不确定性；规则 required_seed_properties 要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但原题无此类元素。",
+        "feedback": "建议放弃此规则对该原题的适用，或寻找其他具有内在不确定性的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_threshold_parameter_exists",
+      "selection_reason": "原题中最大降价d呈现单调可行区域，可将可行性子问题转化为求达到特定尾9数的最小d阈值问题，阈值进入核心约束并改变目标为极值求解，不变量可支撑临界证明。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "原题core_constraints中的price_reduction_cap使用d界定可行区间，且invariant中的monotonicity可支撑阈值的最小性证明；规则要求must_change axes C, O, V，新题可将d从固定参数转为待求阈值，目标变为最小化d，符合helper的threshold_parameterization。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "already_multi_objective",
+      "selection_reason": "原题已经包含词典序双目标优化（trailing nines与price），两个指标存在自然冲突，扩展为前沿输出仅将词典序改为帕累托输出，核心状态与算法结构不变，且可由原解法直接后处理得到所有非支配解，变化程度不足以构成新题。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中objective.type为lexicographic_optimize，目标为(max trailing_nines, price)，已显式包含两个冲突指标；规则forbidden_seed_properties明确拒绝“权衡关系可以由原答案直接后处理得到”，而给定p,d后扫描不同k即可获得前沿，原算法扫描10的幂的过程已隐含所有可行解。",
+        "feedback": "该种子题不具备从单目标到多目标权衡的转换基础，建议选择纯单目标优化题应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "inverse_design_applicable",
+      "selection_reason": "原题输出末尾9的个数可作为反向目标，最大降价额度d是自然的可修改参数，可定义求最小d使目标成立的设计问题，满足反向设计核心要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束trailing_nines_optimization定义了最大化末尾9的个数，可作为目标性质绑定（参见helper target_result_binding）；输入参数d控制降价幅度，属于原题对象自然结构，可作为edit_operation_contract的修改操作；将d从固定输入变为被优化的变量改变了约束轴C与目标轴O（must_change要求）；方案可要求输出最小d而非任意可行解，符合minimality_or_certificate_lock。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_independent_components",
+      "selection_reason": "原题仅对单个整数 p 做末尾 9 最多且 ≤ d 的优化，不存在可分解的局部独立单元（如多个区间、位置或查询），因此无法引入共享资源或全局守恒耦合。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 的 input_structure 为单个元组 (p,d)，core_constraints 和 objective 均围绕单一价格 p 的约束优化，original_problem 描述中无任何可分量的组件。规则 required_seed_properties 明确要求“原题存在可分解的局部单元”，但原题不满足。",
+        "feedback": "若种子题本身缺乏多个独立决策单元，强行应用该规则将导致全局约束与原始核心无关，只能硬加背景，违反 global_redlines。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是单人约束优化问题，没有可轮流选择、拿取、移动或改变状态的自然操作，不存在转化为双方博弈的基础，硬造玩家会违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为(p,d)，目标是找到满足p-d≤x≤p且最大化trailing nines的x，这是一个静态优化，没有多步决策过程。核心约束只有价格下降上限和尾9优先，不存在可被分割为双方轮流行动的操作空间。规则要求的'存在可轮流选择、拿取、移动或改变状态的自然操作'不成立。",
+        "feedback": "该种子题缺乏博弈化所需的自然交互操作，建议挑选具有多步选择、状态转移的题目，如游戏、取石子等。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题核心是单一数字的尾数优化，不存在任何路径、区间、子树或可组合的局部对象族，无法形成覆盖或割的语义，强行扩展会引入与核心规律无关的约束，违反全局红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中核心约束为单个价格在降价范围内的最大尾数问题，输入仅为两个整数 p 和 d，没有任何局部结构（如路径、区间、子树）的定义；原题描述中未出现多个对象交互或覆盖关系；规则要求的 required_seed_properties 中“原题核心对象具有路径、区间、子树、集合等局部结构”和“多个局部对象之间可以自然形成覆盖或割关系”均不满足。",
+        "feedback": "该规则依赖明确的可扩展局部对象族，但原题仅涉及单一价格的选择，无法产出覆盖或割的全局语义，即使强行添加对象族也只会形成无关的附加限制，违反全局红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting",
+      "selection_reason": "原题是带约束的单点最优值搜索，而非任何对象的计数问题，不具备 seed 要求的「明确有限的计数对象」。",
+      "risk_tags": [
+        "unsuitable_seed_type",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为：在 p-d ≤ x ≤ p 范围内，最大化末尾 9 的个数，若并列则取最大价格。输出是一个整数，既不统计方案，也不枚举可能价格。核心约束与目标均未定义任何计数空间。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 仅适用于已有有限计数对象的题目，用于在计数基础上添加自然权重或统计量。当前种子题根本没有计数成分，无法升级为带权或分布计数，建议更换种子题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是单一数值优化，输出已是规范解，不存在多方案或构造空间。升级为输出规范方案相当于要求输出后处理或证明，主要解法不会改变，违反差异不足红线。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 lexicographic_optimize，输出满足规范顺序的唯一整数，没有构造方案概念（输入输出均为标量）。标准解法通过数学性质直接取得答案，不存在回溯空间。规则要求的解对象方案无法定义，辅助操作（如规范顺序压力）无法实现实质性创新。",
+        "feedback": "不建议将此种子扩展为规范输出题，因为缺乏原始的构造复杂度。若尝试强行要求输出证明过程，只会增加表面输出，核心算法不变，属于差异不足。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_always_feasible",
+      "message": "种子题对于任意合法输入总存在解（至少 x=p 满足约束），不存在“做不到”的情形，无法构建局部冲突证据输出，不满足规则要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.0,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束 0 ≤ d < p，区间 [p-d, p] 非空，恒包含 p；目标为最大化尾数 9 和价格，始终可达。无解条件不存在。",
+        "feedback": "该规则要求题目存在无解可能，否则无法构造局部可检查证据。建议换个种子题，或允许引入额外约束制造无解分支。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_object",
+      "message": "种子题是单一最优值问题，解空间为有限整数区间，不同解的去重规则以数值不相同自然成立，等价关系清晰。将目标从‘选出最大尾随9个数且最大价格’改为‘计数全部满足最大尾随9个数的价格个数’，引入了新的计数义务，要求算法处理解的数量统计而非仅定位一个最优解，满足规则对计数对象定义、去重和有限性的要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题目标为 lexicographic_optimize，核心约束为 price_reduction_cap 和 trailing_nines_optimization，解空间为 [p-d, p] 内的有限整数。将目标改为计数后，新目标可明确为‘统计满足约束且尾随9个数等于区间内最大值的价格数量’，每个价格是一个明确解，去重由数值不同自然给出，解空间有限性由 d< p 和 p≤1e18 保证。",
+        "feedback": "规则匹配：种子题具备有限解空间和清晰的去重条件；通过将单一最优解转化为统计最优解的数量，可在不破坏原约束的前提下建立新的计数目标，且需要按尾随9个数拆分统计，满足 helper 要求。但缺乏更高阶的结构化等价类，创新度可能有限。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_found",
+      "message": "原题是确定性价格优化问题，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法满足规则要求的扰动模型必须来自原题本身。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述仅涉及固定 p 和 d 寻找最优价格；核心约束 price_reduction_cap 和 trailing_nines_optimization 都是确定的；标准解法基于模运算扫描，没有不确定性；规则 required_seed_properties 要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但原题无此类元素。",
+        "feedback": "建议放弃此规则对该原题的适用，或寻找其他具有内在不确定性的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_threshold_parameter_exists",
+      "message": "原题中最大降价d呈现单调可行区域，可将可行性子问题转化为求达到特定尾9数的最小d阈值问题，阈值进入核心约束并改变目标为极值求解，不变量可支撑临界证明。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "原题core_constraints中的price_reduction_cap使用d界定可行区间，且invariant中的monotonicity可支撑阈值的最小性证明；规则要求must_change axes C, O, V，新题可将d从固定参数转为待求阈值，目标变为最小化d，符合helper的threshold_parameterization。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "already_multi_objective",
+      "message": "原题已经包含词典序双目标优化（trailing nines与price），两个指标存在自然冲突，扩展为前沿输出仅将词典序改为帕累托输出，核心状态与算法结构不变，且可由原解法直接后处理得到所有非支配解，变化程度不足以构成新题。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中objective.type为lexicographic_optimize，目标为(max trailing_nines, price)，已显式包含两个冲突指标；规则forbidden_seed_properties明确拒绝“权衡关系可以由原答案直接后处理得到”，而给定p,d后扫描不同k即可获得前沿，原算法扫描10的幂的过程已隐含所有可行解。",
+        "feedback": "该种子题不具备从单目标到多目标权衡的转换基础，建议选择纯单目标优化题应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "inverse_design_applicable",
+      "message": "原题输出末尾9的个数可作为反向目标，最大降价额度d是自然的可修改参数，可定义求最小d使目标成立的设计问题，满足反向设计核心要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束trailing_nines_optimization定义了最大化末尾9的个数，可作为目标性质绑定（参见helper target_result_binding）；输入参数d控制降价幅度，属于原题对象自然结构，可作为edit_operation_contract的修改操作；将d从固定输入变为被优化的变量改变了约束轴C与目标轴O（must_change要求）；方案可要求输出最小d而非任意可行解，符合minimality_or_certificate_lock。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_independent_components",
+      "message": "原题仅对单个整数 p 做末尾 9 最多且 ≤ d 的优化，不存在可分解的局部独立单元（如多个区间、位置或查询），因此无法引入共享资源或全局守恒耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 的 input_structure 为单个元组 (p,d)，core_constraints 和 objective 均围绕单一价格 p 的约束优化，original_problem 描述中无任何可分量的组件。规则 required_seed_properties 明确要求“原题存在可分解的局部单元”，但原题不满足。",
+        "feedback": "若种子题本身缺乏多个独立决策单元，强行应用该规则将导致全局约束与原始核心无关，只能硬加背景，违反 global_redlines。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是单人约束优化问题，没有可轮流选择、拿取、移动或改变状态的自然操作，不存在转化为双方博弈的基础，硬造玩家会违反红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为(p,d)，目标是找到满足p-d≤x≤p且最大化trailing nines的x，这是一个静态优化，没有多步决策过程。核心约束只有价格下降上限和尾9优先，不存在可被分割为双方轮流行动的操作空间。规则要求的'存在可轮流选择、拿取、移动或改变状态的自然操作'不成立。",
+        "feedback": "该种子题缺乏博弈化所需的自然交互操作，建议挑选具有多步选择、状态转移的题目，如游戏、取石子等。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题核心是单一数字的尾数优化，不存在任何路径、区间、子树或可组合的局部对象族，无法形成覆盖或割的语义，强行扩展会引入与核心规律无关的约束，违反全局红线。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中核心约束为单个价格在降价范围内的最大尾数问题，输入仅为两个整数 p 和 d，没有任何局部结构（如路径、区间、子树）的定义；原题描述中未出现多个对象交互或覆盖关系；规则要求的 required_seed_properties 中“原题核心对象具有路径、区间、子树、集合等局部结构”和“多个局部对象之间可以自然形成覆盖或割关系”均不满足。",
+        "feedback": "该规则依赖明确的可扩展局部对象族，但原题仅涉及单一价格的选择，无法产出覆盖或割的全局语义，即使强行添加对象族也只会形成无关的附加限制，违反全局红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting",
+      "message": "原题是带约束的单点最优值搜索，而非任何对象的计数问题，不具备 seed 要求的「明确有限的计数对象」。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "unsuitable_seed_type",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为：在 p-d ≤ x ≤ p 范围内，最大化末尾 9 的个数，若并列则取最大价格。输出是一个整数，既不统计方案，也不枚举可能价格。核心约束与目标均未定义任何计数空间。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 仅适用于已有有限计数对象的题目，用于在计数基础上添加自然权重或统计量。当前种子题根本没有计数成分，无法升级为带权或分布计数，建议更换种子题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将正向求解逆转为目标驱动的最小降幅设计，所有helper均兑现关键变化。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "Helper 'target_result_binding' 通过新增输入t将原题最大化尾9个数绑定为反向目标，核心约束加入尾9个数≥t，目标围绕t定义，而非简单判定原答案等同于给定值；Helper 'edit_operation_contract' 在核心约束中明确定义了降价操作x满足p-d≤x≤p，该操作来自原题对象的自然结构，不变量'feasibility_monotonicity'解释了操作与d的关系；Helper 'minimality_or_certificate_lock' 在目标中要求最小化d并输出证书x，不变量'min_d_construction'提供了最小d的构造性证明，规划承担了最小性证明责任。反向目标源于原题结果语义，修改操作与原核心对象相关，符合反向设计合同。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized",
+      "message": "题面完整实现了三个helper语义：通过输入t明确绑定反向目标；通过减少规则定义编辑操作；通过最小化d并输出证书x锁定最小性。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "target_result_binding：描述中“希望最终显示的号码末尾至少能有 t 个连续的 9”和约束trailing_nines_target实现目标绑定。edit_operation_contract：约束price_modification_operation定义允许的x选择区间，不变量说明操作与d的关系。minimality_or_certificate_lock：目标描述“让这个减少量 d 尽可能小……挑选最终号码 x 最大的那一个”，不变量给出最小d构造，满足硬检查。问题叙述与new_schema核心约束、目标及不变量一致，反向设计语义落实。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "校园幸运号",
+    "description": "校园活动中，当前已叫到的最大号码是 p。组织者希望最终显示的号码末尾至少能有 t 个连续的 9，显得格外幸运。\n但由于规则限制，最终号码 x 必须是之前叫过的号（即 x 不大于 p），且只能通过“停止叫号”来提前结束，也就是决定一个减少量 d = p - x，使得最终号码 x 满足条件。为了尽量不耽误大家，你需要让这个减少量 d 尽可能小；如果有多组解，则挑选最终号码 x 最大的那一个。\n你的任务是：给定 p 和 t，求出最小的 d 以及对应的最大合法最终号码 x。",
+    "input_format": "输入仅一行，包含两个整数 p 和 t（1≤p≤10^18，0≤t≤18），以空格分隔。",
+    "output_format": "输出一行两个整数，依次为最小的减少量 d 和对应的最大合法最终号码 x，以空格分隔。",
+    "constraints": [
+      "1 ≤ p ≤ 10^18",
+      "0 ≤ t ≤ 18",
+      "数据保证至少存在一个合法的最终号码 x，即存在非负整数 x ≤ p 且 x 的十进制表示末尾至少有 t 个 9。",
+      "时间限制：1.0 秒",
+      "空间限制：256.0 MB"
+    ],
+    "samples": [
+      {
+        "input": "1029 3",
+        "output": "30 999",
+        "explanation": "当前号码 1029，需要末尾至少 3 个 9。合法的号码有 999，减少量为 1029 - 999 = 30，且不存在更小的减少量，同时 999 是满足条件的最大号码。"
+      },
+      {
+        "input": "27191 2",
+        "output": "92 27099",
+        "explanation": "当前号码 27191，要求末尾至少 2 个 9。候选号码包括 27099（减少 92）、26999（减少 192）……其中 27099 的减少量 92 最小，也是相同减少量下最大的号码（注意 27199 大于 p，不可选）。"
+      },
+      {
+        "input": "1000 0",
+        "output": "0 1000",
+        "explanation": "t=0 表示对末尾 9 的个数没有要求。减少量 0 即可选择当前号码 1000，它也是最大的合法号码。"
+      },
+      {
+        "input": "1000 4",
+        "output": "1 999",
+        "explanation": "p=1000，末尾需要至少 4 个 9。唯一合法的号码是 999（末尾三个 9 不够，但 999 是小于等于 1000 的最大合法号码），减少量为 1。"
+      }
+    ],
+    "notes": "d 是非负整数，x 是介于 0 到 p 之间的整数。当多个 x 都能达到相同的最小 d 时，选择 x 最大的那一个。保证输入数据至少有一组可行解。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_2311f27edf21_urban_commute_20260609_223842",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\artifacts\\taco_codeforces_2311f27edf21\\taco_codeforces_2311f27edf21_urban_commute_20260609_223842_round1.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\reports\\taco_codeforces_2311f27edf21\\taco_codeforces_2311f27edf21_urban_commute_20260609_223842_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 94.0,
+      "divergence_score": 44.4,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "d 的范围与 new_schema 不一致",
+          "detail": "new_schema 中 d 的 value_range.max 为 null，未设上限，而 generated_problem 在 input_format 和 constraints 中添加了 d < p 的限制，这缩小了输入域，未完全忠实于原始 schema。",
+          "evidence_refs": [
+            "new_schema.input_structure.components[1].value_range.max",
+            "generated_problem.input_format",
+            "generated_problem.constraints[2]"
+          ],
+          "fix_hint": "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "新题将原题的“找最大末尾9个数且最大价格”改为统计达到最大末尾9个数的所有票号个数，输入区间和核心约束完全不变。原题解法通过扫描10的幂，寻找最大可行k（即t_max）的框架可直接复用，只需在最后增加计数逻辑：对已确定的t_max，计算区间内末尾t_max个9的整数个数。计数部分仅为简单数学公式，无需重新建模或选择关键算法。此外，新题样例（如1029 102→1）与原题样例（1029 102→999）高度对应，故事虽改，但叙述结构和任务映射明显，属于表层换皮。因此，语义差异有限，解法迁移风险极高，应拒绝为新题。",
+          "evidence_refs": [
+            "original_problem.description",
+            "generated_problem.samples",
+            "new_schema.objective",
+            "new_schema.core_constraints",
+            "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+            "review_context.distance_breakdown.axis_scores",
+            "hard_checks[9].check_id=schema_distance_threshold"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        }
+      ],
+      "suggested_revisions": [
+        "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "建议将 d < p 的约束回写到 new_schema 的 input_structure 中，使 schema 与题面保持一致，避免后续衍生混淆。",
+        "可在 notes 或约束中补充 d 可能接近 10^18 时的最大输入规模说明，帮助参赛者预估算法复杂度。",
+        "优先改写核心任务定义，而不是继续替换故事背景。"
+      ],
+      "strengths_to_keep": [
+        "题面完整迁移了目标函数为计数，明确给出了 t_max 的计算和计数对象，无歧义。",
+        "样例设计多样且有解释，覆盖了不同尾 9 情况，便于验证理解。",
+        "整体表达符合 OJ 标准，叙事化主题自然融入而不过度干扰数学定义。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 44.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "d 的范围与 new_schema 不一致",
+                "detail": "new_schema 中 d 的 value_range.max 为 null，未设上限，而 generated_problem 在 input_format 和 constraints 中添加了 d < p 的限制，这缩小了输入域，未完全忠实于原始 schema。",
+                "evidence_refs": [
+                  "new_schema.input_structure.components[1].value_range.max",
+                  "generated_problem.input_format",
+                  "generated_problem.constraints[2]"
+                ],
+                "fix_hint": "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。"
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "新题将原题的“找最大末尾9个数且最大价格”改为统计达到最大末尾9个数的所有票号个数，输入区间和核心约束完全不变。原题解法通过扫描10的幂，寻找最大可行k（即t_max）的框架可直接复用，只需在最后增加计数逻辑：对已确定的t_max，计算区间内末尾t_max个9的整数个数。计数部分仅为简单数学公式，无需重新建模或选择关键算法。此外，新题样例（如1029 102→1）与原题样例（1029 102→999）高度对应，故事虽改，但叙述结构和任务映射明显，属于表层换皮。因此，语义差异有限，解法迁移风险极高，应拒绝为新题。",
+                "evidence_refs": [
+                  "original_problem.description",
+                  "generated_problem.samples",
+                  "new_schema.objective",
+                  "new_schema.core_constraints",
+                  "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+                  "review_context.distance_breakdown.axis_scores",
+                  "hard_checks[9].check_id=schema_distance_threshold"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "建议将 d < p 的约束回写到 new_schema 的 input_structure 中，使 schema 与题面保持一致，避免后续衍生混淆。",
+              "可在 notes 或约束中补充 d 可能接近 10^18 时的最大输入规模说明，帮助参赛者预估算法复杂度。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "题面完整迁移了目标函数为计数，明确给出了 t_max 的计算和计数对象，无歧义。",
+              "样例设计多样且有解释，覆盖了不同尾 9 情况，便于验证理解。",
+              "整体表达符合 OJ 标准，叙事化主题自然融入而不过度干扰数学定义。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 94.0,
+        "latest_divergence_score": 44.4,
+        "suggested_revisions": [
+          "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "建议将 d < p 的约束回写到 new_schema 的 input_structure 中，使 schema 与题面保持一致，避免后续衍生混淆。",
+          "可在 notes 或约束中补充 d 可能接近 10^18 时的最大输入规模说明，帮助参赛者预估算法复杂度。",
+          "优先改写核心任务定义，而不是继续替换故事背景。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "d 的范围与 new_schema 不一致",
+            "detail": "new_schema 中 d 的 value_range.max 为 null，未设上限，而 generated_problem 在 input_format 和 constraints 中添加了 d < p 的限制，这缩小了输入域，未完全忠实于原始 schema。",
+            "evidence_refs": [
+              "new_schema.input_structure.components[1].value_range.max",
+              "generated_problem.input_format",
+              "generated_problem.constraints[2]"
+            ],
+            "fix_hint": "可将 new_schema 中的 d 上限修改为 d < p，或者在题面中明确说明当 d ≥ p 时区间含有非正数时的处理方式（如视为包含数字0或不允许），以消除不一致。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "新题将原题的“找最大末尾9个数且最大价格”改为统计达到最大末尾9个数的所有票号个数，输入区间和核心约束完全不变。原题解法通过扫描10的幂，寻找最大可行k（即t_max）的框架可直接复用，只需在最后增加计数逻辑：对已确定的t_max，计算区间内末尾t_max个9的整数个数。计数部分仅为简单数学公式，无需重新建模或选择关键算法。此外，新题样例（如1029 102→1）与原题样例（1029 102→999）高度对应，故事虽改，但叙述结构和任务映射明显，属于表层换皮。因此，语义差异有限，解法迁移风险极高，应拒绝为新题。",
+            "evidence_refs": [
+              "original_problem.description",
+              "generated_problem.samples",
+              "new_schema.objective",
+              "new_schema.core_constraints",
+              "review_context.algorithmic_delta_claim.why_direct_reuse_fails",
+              "review_context.distance_breakdown.axis_scores",
+              "hard_checks[9].check_id=schema_distance_threshold"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "题面完整迁移了目标函数为计数，明确给出了 t_max 的计算和计数对象，无歧义。",
+          "样例设计多样且有解释，覆盖了不同尾 9 情况，便于验证理解。",
+          "整体表达符合 OJ 标准，叙事化主题自然融入而不过度干扰数学定义。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

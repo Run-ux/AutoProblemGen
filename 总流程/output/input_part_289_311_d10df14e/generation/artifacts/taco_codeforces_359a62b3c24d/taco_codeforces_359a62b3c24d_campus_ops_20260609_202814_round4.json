@@ -1,0 +1,1404 @@
+{
+  "problem_id": "inv_home_organization_target_cost",
+  "source_problem_ids": [
+    "taco_codeforces_359a62b3c24d"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_359a62b3c24d",
+      "codeforces",
+      "Bob came to a cash & carry store, put n items into his trolley, and went to the checkout counter to pay. Each item is described by its price ci and time ti in seconds that a checkout assistant spends on this item. Whi...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "必须改变核心约束以引入修改操作和目标支付条件；目标从最小化支付转为最小化修改代价并输出方案；不变量从原 DP 最优子结构更新为逆向设计最优性的证明结构。",
+    "summary": "从正向求解变为反向设计，需要搜索数据修改空间而非解空间。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4419,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4419,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.7857,
+      "O": 0.5087,
+      "V": 0.3953
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.7857,
+      "objective_type_distance": 0.5269,
+      "objective_text_distance": 0.4814,
+      "invariant_match_distance": 0.3953
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "inverse_design_with_target",
+    "description": "Minimize the total modification cost under the condition that the modified item set achieves target minimum payment K. Output the minimum modification cost; if impossible, output -1. Additionally, if feasible, output one optimal modification scheme (new values of ti and ci for each item).",
+    "target": "optimal_modification_scheme",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "逆问题设计规则彻底翻转求解方向，将原题的最小费用正向计算改为给定目标值后的最小修改构造，从根本上改变核心任务，有效避免上一轮 output_upgrade 导致的换皮风险。相比之下，canonical_witness 易退化为输出回溯（与前次 retheme 类似），existence_to_counting 可能只做答案形式替换，single_objective_to_tradeoff_frontier 缺乏天然第二冲突指标而不适用。；创新度判断：核心义务从“计算最小付费额”偏移至“给定目标最小费用 M，定义并找出使原问题最优值变为 M 所需的最小修改”，解题者必须解构正向 DP 的性质，将修改代价与物品时间/费用参数关联，并证明最小性。这要求全新的建模与算法设计。；难度判断：主求解责任从标准背包 DP 升级为理解正向最优值关于参数敏感度的逆问题，通常需要分析价值函数、构造可行调整并证明最优性，算法复杂度可设计达到 n·logC 甚至更高，且涉及组合优化与参数扰动，难度显著提高。；风险判断：主要风险在于修改操作集合的定义需要确保问题非平凡、可解且与原题核心规律紧密关联，避免过于人为导致可行域不定或计算难处理。可通过限定修改类型（如只改时间、只改费用，或允许离散增减）并设定合理代价来管控风险。",
+  "new_schema_snapshot": {
+    "problem_id": "inv_home_organization_target_cost",
+    "source": "derived_from_codeforces_359a62b3c24d_home_organization",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": 1,
+        "max": 2000
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "item_count",
+          "role_description": "number of items to organize",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 2000
+          },
+          "properties": {}
+        },
+        {
+          "role": "original_items",
+          "role_description": "list of items, each given by its space occupation ti and organization cost ci",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 2000
+          },
+          "value_range": {
+            "ti": {
+              "min": 0,
+              "max": 2000
+            },
+            "ci": {
+              "min": 1,
+              "max": 1000000000
+            }
+          },
+          "properties": {}
+        },
+        {
+          "role": "target_total_cost",
+          "role_description": "the target minimum total organization cost K that must be achieved after modifications",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "original_coverage_after_modifications",
+          "description": "After modifications, there must exist a subset P of items so that if you pay to organize them, the total time spent (ti) is at least the number of items you can steal (i.e., n - |P|). Formally, ∑_{i∈P} ti ≥ n - |P|.",
+          "formal": "∃ P ⊆ {1..n} : ∑_{i∈P} ti ≥ n - |P|",
+          "source_sections": [
+            "derived from original problem"
+          ]
+        },
+        {
+          "name": "allowed_modifications",
+          "description": "For each item i, you may change its space ti to any non‑negative integer and its cost ci to any positive integer. The cost of modifying item i is |new_ti - old_ti| + |new_ci - old_ci|. The total modification cost is the sum over all items.",
+          "formal": "Let Δt_i = new_ti - ti, Δc_i = new_ci - ci. Modification cost = ∑_{i=1..n} (|Δt_i| + |Δc_i|). All new_ti ≥ 0, new_ci ≥ 1.",
+          "source_sections": [
+            "constructed"
+          ]
+        },
+        {
+          "name": "target_minimum_payment_condition",
+          "description": "The modified item set must satisfy: its minimum possible total organization cost (i.e., the optimal payment over all valid subsets P) is exactly K. That is, min_{P : ∑ti ≥ n - |P|} ∑_{i∈P} ci = K.",
+          "formal": "min_pay = min_{P : ∑ti ≥ n - |P|} ∑_{i∈P} ci == K",
+          "source_sections": [
+            "constructed"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "inverse_design_with_target",
+      "description": "Minimize the total modification cost under the condition that the modified item set achieves target minimum payment K. Output the minimum modification cost; if impossible, output -1. Additionally, if feasible, output one optimal modification scheme (new values of ti and ci for each item).",
+      "target": "optimal_modification_scheme",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "modification_dp_optimality",
+          "description": "During the algorithm, a dynamic programming state tracks (prefix of items, coverage volume, total payment) and the minimal modification cost to achieve it. The invariant guarantees that the found modification scheme makes the minimum payment exactly K, and no other modification with lower total cost can achieve the same. The DP optimal substructure is maintained by considering each possible combination of modification choices for each item and updating the minimal cost boundaries.",
+          "properties": {
+            "state": "dp[i][j][c] = minimal modification cost for first i items to reach coverage at least j and total payment exactly c under optimal selection of paid items",
+            "compression": "due to large c, the DP may compress payment dimensions using the property that only minimal payment for each coverage level matters in the original problem, or employ a branch‑and‑bound with bounding on modification cost."
+          },
+          "evidence_source": "newly designed algorithm"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Original DP: iterate items, maintain for each coverage volume j the minimum total payment ar[j]; transition ar[min(j+ti+1, n)] = min(ar[min(j+ti+1, n)], ar[j] + ci); answer is ar[n].",
+    "reusable_subroutines": "The original DP can be used as a subroutine to verify that a given modified item set yields minimum payment exactly K (by computing its min payment and comparing to K).",
+    "new_solver_core": "A new DP is designed that extends the state to incorporate modification cost. For each item, we iterate over all possible modifications of ti and ci within feasible ranges, and update a multi‑dimensional DP table that records the minimal modification cost to achieve every jointly reachable (coverage, payment) pair. The answer is the minimum modification cost among states that satisfy the target payment K.",
+    "new_proof_obligation": "Must prove: (1) the constructed modified instance satisfies the coverage constraint and has min payment equal to K; (2) no modification with strictly smaller total cost can achieve min payment exactly K. The proof relies on the optimal substructure of the extended DP, where each state stores the minimal modification cost for a given (coverage, payment) pair, and a contradiction argument that if a better modification existed it would have been found by the DP.",
+    "why_direct_reuse_fails": "The original DP only computes the minimum payment for a fixed input; it cannot search over modifications of the input items. Direct reuse would merely evaluate candidate modifications one by one, leading to an exponential search space without dynamic programming over the modification decisions."
+  },
+  "anti_shallow_rationale": "The problem reverses the causal direction: from 'given input, find minimal output' to 'given target output, find minimal input change to achieve that output'. This forces the algorithm to operate in the data‑editing space, not merely in the solution space. The original DP is demoted to a verification tool, while the dominant solving loop must decide how to adjust items to hit a prescribed optimal value. This goes far beyond thematic rewriting or shallow objective swapping.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "The original problem’s minimal payment naturally becomes the inverse design target. Binding it as the target K is the first essential step.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "Flips the direction from computing an optimal value to designing input that produces a prescribed optimal value, introducing a constructive feasibility challenge.",
+      "difficulty_reason": "Requires the algorithm to handle an external target constraint that couples the traditional DP state with a goal value, forcing search in a larger space."
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "Concrete modification operations are necessary to define the action space of the inverse design; otherwise the problem would be ill‑defined.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "Formalizes atomic actions on items, turning an open‑ended construction into an enumerable optimization over editing sequences.",
+      "difficulty_reason": "The trade‑off between operation cost and target payment creates a multi‑objective optimization that must be proven correct with respect to the original coverage rule."
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "Without requiring minimal modification cost, the problem reduces to finding any feasible modification, which is much easier and less interesting.",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "Imposes an optimality proof obligation, elevating the problem from mere existence to genuine optimization with a lower bound argument.",
+      "difficulty_reason": "The algorithm must not only meet the target constraint but also certify that no cheaper modification exists, which typically requires a DP with optimal substructure and a contradiction proof."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "canonical_witness_applies",
+      "selection_reason": "原题要求最小金额但未要求输出方案，答案可以通过DP恢复购买物品子集。可以定义规范顺序（例如按物品索引升序），在所有最小花费方案中选择规范解。增加此要求将改变核心约束（增加规范性条件）、目标（从输出数值变为输出规范方案）和验证方式（需检查方案合法性和规范性），并迫使DP在状态转移中记录和比较方案，避免浅层修改。符合规则对C、O、V轴的变革要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema中objective.type为'minimize_value'，输出仅一个数；input_structure描述了物品列表；core_constraints包含时间覆盖不等式；invariant描述了DP状态仅维护最小花费。原题描述未要求输出具体选择。规则要求将'给答案改成给规范解'，种子题满足'有明确的解对象可恢复方案'且'可定义规范'。",
+        "feedback": "需要注意规范性定义需明确且进入主约束，避免简单的回溯后处理。例如可要求输出字典序最小的支付物品索引序列，并在DP中直接维护最优规范方案，从而深入改变状态设计。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_lacks_required_properties",
+      "selection_reason": "原题是求最小花费的优化问题，输出一个数值，约束 ∑ t_i ≥ n - |P| 总是可满足（例如选取所有物品），不存在“做不到”的情形。规则要求种子题具备“做不到的原因可以用局部证据表示” 和 “冲突证据可以从输出直接检查”，但原题根本没有失败语义，无法提供此类基础。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schemacontext中core_constraints的唯一约束是 time_coverage_constraint：∑_{i∈P} t_i ≥ n - |P|，当选择所有物品时左边非负而右边为零，恒成立。objective为 minimize total_cost，输出为单一数值，不包含方案或证据结构。没有出现任何无解情形，不满足 required_seed_properties。",
+        "feedback": "建议更换种子题，选择自身包含可定义失败分支、且失败原因能结构化为局部证据的问题（如存在性判定或有明确不可行条件的构造题）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "clear_counting_extension",
+      "selection_reason": "原题解空间有限（物品数≤2000，解为支付子集），去重规则可通过支付物品的下标集合明确定义，不同下标集合即为不同解，按物品顺序可拆分为计数单元并 DP 汇总，因此规则要求清晰满足。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 中 objective 为 minimize total_cost，core_constraints 的条件是 ∑ t_i ≥ n - |P|，解空间为 2^n 子集，有限。invariant 中的 DP 状态 ar[k] 按体积单元 t_i+1 拆分，汇总求最小花费，改为计数后可类似构建计数 DP。",
+        "feedback": "规则明确，去重定义需在规划阶段显式写入下标集合比较，计数对象为达到最小 total_cost 的方案数，可实施。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "missing_native_perturbation",
+      "selection_reason": "原题中顺序是Bob的可控决策变量（题目明确说“it is Bob, who determines the order of items”），并非原生不确定性或扰动来源；将顺序改为对手选择属于硬造对手，违反规则禁止的‘只能靠故事背景硬造对手’。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'it is Bob, who determines the order of items for the checkout assistant.' 表明顺序完全由Bob控制，不存在资源波动或局部选择差异。规则required_seed_properties要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但这里的‘不确定’是决策自由而非扰动；forbidden_seed_properties明确禁止‘只能靠故事背景硬造对手’。《保底优化审查官》要求扰动模型必须来自原题本身，不能凭空构造。",
+        "feedback": "种子题本身已是确定型优化，没有可稳定放大的原生扰动来源。强行引入对抗顺序会脱离原题语义并触发红线。建议寻找具备真实不确定性的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题已经是直接优化最小花费的结构，不存在从可行性判定向临界阈值升级的自然单调性质；若强行引入阈值，只能是机械二分原判定，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 为 minimize total_cost，约束 sum(t_i+1) >= n 固定，无可调的参数使可行性单调变化；原题无‘可行性’概念，而是直接求最小解；规则 eligibility 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，本种子题不满足；forbidden_seed_properties 明确禁止‘没有自然参数可优化’和‘阈值只是在原判定外层做机械二分’；若将最小花费转化为判定 ≤ X 再求最小 X，正是机械二分，违反规则。",
+        "feedback": "该题不具备从判定到临界阈值的自然阶梯，不适合此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_secondary_objective_exists",
+      "selection_reason": "原题最小化支付金额，自然可引入支付物品数量（或偷窃物品数）作为第二指标，两者存在真实权衡：为减少支付金额可能需增加支付物品数，反之亦然，符合冲突要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标为最小化总支付金额，约束为 ∑ t_i ≥ n - |P|，等价于每个支付物品贡献体积 t_i+1 达到 n。支付物品数量 |P| 是自然衍生量，与总成本 c_i 无单调关系，形成真实冲突。原 DP 状态只记录最小成本，扩展后状态需同时承载成本与数量，满足耦合要求。原答案（单一最小值）无法直接后处理出前沿，需重新计算。",
+        "feedback": ""
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "反向目标明确且存在自然修改操作",
+      "selection_reason": "原题求解最小支付金额，输出为单一数值，可作为反向目标。修改操作可定义为对ti或ci的调整，属于原核心对象的自然结构。修改后重新计算DP可验证目标达成，且最小化修改次数符合反向设计要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出是一个数（最小支付金额），可以作为目标。输入组件ti、ci可被修改，这些是原题核心对象。反向设计可要求最小修改次数达到目标支付值，同时改变核心约束和目标。符合规则要求的轴变化和helpers。",
+        "feedback": "建议在规划阶段明确定义目标值的可能范围，以及允许的修改类型和代价，以增强问题的定义清晰度。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_lacks_required_properties",
+      "selection_reason": "种子题不存在可独立处理的局部单元。原题是一个背包问题，所有物品的选择通过全局容量约束 ∑(t_i+1) ≥ n 耦合，并未包含可分解的独立分量。规则要求原题存在可分解的局部单元，但原题描述、约束和DP解法均表明问题是一个整体优化，物品决策不能独立求解后组合。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 core_constraints 中 time_coverage_constraint 是全局约束，要求所选物品总处理时间 ≥ 偷走物品数。该约束使得物品之间相互耦合，不存在可独立处理的局部单元。invariant 进一步确认解法是全局 DP，其中每个物品的决策影响整体容量状态。",
+        "feedback": "建议换一个具有多个独立子任务的种子题，如多个区间或多个组件原可分别求解的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_adversary",
+      "selection_reason": "原题是单人优化问题（Bob 选择支付哪些物品），没有天然的对抗双方；强行引入第二玩家将违反规则“不能凭背景硬造玩家”，且无法从原操作中自然推导出轮流选择的过程。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中只涉及 Bob 一个决策主体，助理仅执行扫描无对抗意图（见 original_problem.description）；规则 eligibility.required_seed_properties 要求“存在可轮流选择、拿取、移动或改变状态的自然操作”，而原题只存在单方的物品选择操作；forbidden_seed_properties 禁止“对抗方只能靠故事背景硬造”，本题若引入对手将直接违反此条；helper redlines 也明确“不能凭背景硬造玩家”。",
+        "feedback": "种子题不具备可自然对抗化的操作结构，建议尝试其他变换规则（如参数扩展或约束变体）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是关于物品支付选择的背包优化问题，核心对象为离散物品，不存在路径、区间、子树等可组合的局部结构，无法自然形成覆盖或割关系，不满足规则要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为物品列表，每个物品由时间ti和价格ci描述，约束为选择支付物品集使得总处理时间不少于偷窃物品数，目标是最小化总金额。整个问题没有路径、区间或子树等局部对象，物品之间没有几何或顺序上的覆盖关系，原题核心对象是独立的选择变量，而非局部结构族。",
+        "feedback": "规则的适用前提是种子题存在可形成覆盖或割的局部对象族，但当前种子完全缺失此类结构，强行扩展会导致全局覆盖语义脱离原题核心，沦为无关附加限制。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是优化问题，目标是最小化总金额，而非对合法方案进行计数，因此不满足规则要求的“原题已经有明确有限的计数对象”这一必需种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题题目描述为“What is the minimum amount of money that Bob will have to pay?”，输出为单一最小金额；solution_code 为最小化花费的 DP，ar[k] 记录达到体积 k 的最小花费，而非方案数。该题从未要求统计方案总数，无任何计数对象。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 严格依赖种子题为普通计数题，但当前种子题属于组合优化类题目，不存在计数对象，无法在其上定义自然权重或统计量。建议选择明确的计数类种子题后再应用此规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_applies",
+      "message": "原题要求最小金额但未要求输出方案，答案可以通过DP恢复购买物品子集。可以定义规范顺序（例如按物品索引升序），在所有最小花费方案中选择规范解。增加此要求将改变核心约束（增加规范性条件）、目标（从输出数值变为输出规范方案）和验证方式（需检查方案合法性和规范性），并迫使DP在状态转移中记录和比较方案，避免浅层修改。符合规则对C、O、V轴的变革要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema中objective.type为'minimize_value'，输出仅一个数；input_structure描述了物品列表；core_constraints包含时间覆盖不等式；invariant描述了DP状态仅维护最小花费。原题描述未要求输出具体选择。规则要求将'给答案改成给规范解'，种子题满足'有明确的解对象可恢复方案'且'可定义规范'。",
+        "feedback": "需要注意规范性定义需明确且进入主约束，避免简单的回溯后处理。例如可要求输出字典序最小的支付物品索引序列，并在DP中直接维护最优规范方案，从而深入改变状态设计。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_required_properties",
+      "message": "原题是求最小花费的优化问题，输出一个数值，约束 ∑ t_i ≥ n - |P| 总是可满足（例如选取所有物品），不存在“做不到”的情形。规则要求种子题具备“做不到的原因可以用局部证据表示” 和 “冲突证据可以从输出直接检查”，但原题根本没有失败语义，无法提供此类基础。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "schemacontext中core_constraints的唯一约束是 time_coverage_constraint：∑_{i∈P} t_i ≥ n - |P|，当选择所有物品时左边非负而右边为零，恒成立。objective为 minimize total_cost，输出为单一数值，不包含方案或证据结构。没有出现任何无解情形，不满足 required_seed_properties。",
+        "feedback": "建议更换种子题，选择自身包含可定义失败分支、且失败原因能结构化为局部证据的问题（如存在性判定或有明确不可行条件的构造题）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_extension",
+      "message": "原题解空间有限（物品数≤2000，解为支付子集），去重规则可通过支付物品的下标集合明确定义，不同下标集合即为不同解，按物品顺序可拆分为计数单元并 DP 汇总，因此规则要求清晰满足。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 中 objective 为 minimize total_cost，core_constraints 的条件是 ∑ t_i ≥ n - |P|，解空间为 2^n 子集，有限。invariant 中的 DP 状态 ar[k] 按体积单元 t_i+1 拆分，汇总求最小花费，改为计数后可类似构建计数 DP。",
+        "feedback": "规则明确，去重定义需在规划阶段显式写入下标集合比较，计数对象为达到最小 total_cost 的方案数，可实施。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "missing_native_perturbation",
+      "message": "原题中顺序是Bob的可控决策变量（题目明确说“it is Bob, who determines the order of items”），并非原生不确定性或扰动来源；将顺序改为对手选择属于硬造对手，违反规则禁止的‘只能靠故事背景硬造对手’。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'it is Bob, who determines the order of items for the checkout assistant.' 表明顺序完全由Bob控制，不存在资源波动或局部选择差异。规则required_seed_properties要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但这里的‘不确定’是决策自由而非扰动；forbidden_seed_properties明确禁止‘只能靠故事背景硬造对手’。《保底优化审查官》要求扰动模型必须来自原题本身，不能凭空构造。",
+        "feedback": "种子题本身已是确定型优化，没有可稳定放大的原生扰动来源。强行引入对抗顺序会脱离原题语义并触发红线。建议寻找具备真实不确定性的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题已经是直接优化最小花费的结构，不存在从可行性判定向临界阈值升级的自然单调性质；若强行引入阈值，只能是机械二分原判定，违反规则红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective 为 minimize total_cost，约束 sum(t_i+1) >= n 固定，无可调的参数使可行性单调变化；原题无‘可行性’概念，而是直接求最小解；规则 eligibility 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，本种子题不满足；forbidden_seed_properties 明确禁止‘没有自然参数可优化’和‘阈值只是在原判定外层做机械二分’；若将最小花费转化为判定 ≤ X 再求最小 X，正是机械二分，违反规则。",
+        "feedback": "该题不具备从判定到临界阈值的自然阶梯，不适合此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_secondary_objective_exists",
+      "message": "原题最小化支付金额，自然可引入支付物品数量（或偷窃物品数）作为第二指标，两者存在真实权衡：为减少支付金额可能需增加支付物品数，反之亦然，符合冲突要求。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题目标为最小化总支付金额，约束为 ∑ t_i ≥ n - |P|，等价于每个支付物品贡献体积 t_i+1 达到 n。支付物品数量 |P| 是自然衍生量，与总成本 c_i 无单调关系，形成真实冲突。原 DP 状态只记录最小成本，扩展后状态需同时承载成本与数量，满足耦合要求。原答案（单一最小值）无法直接后处理出前沿，需重新计算。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "反向目标明确且存在自然修改操作",
+      "message": "原题求解最小支付金额，输出为单一数值，可作为反向目标。修改操作可定义为对ti或ci的调整，属于原核心对象的自然结构。修改后重新计算DP可验证目标达成，且最小化修改次数符合反向设计要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出是一个数（最小支付金额），可以作为目标。输入组件ti、ci可被修改，这些是原题核心对象。反向设计可要求最小修改次数达到目标支付值，同时改变核心约束和目标。符合规则要求的轴变化和helpers。",
+        "feedback": "建议在规划阶段明确定义目标值的可能范围，以及允许的修改类型和代价，以增强问题的定义清晰度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_required_properties",
+      "message": "种子题不存在可独立处理的局部单元。原题是一个背包问题，所有物品的选择通过全局容量约束 ∑(t_i+1) ≥ n 耦合，并未包含可分解的独立分量。规则要求原题存在可分解的局部单元，但原题描述、约束和DP解法均表明问题是一个整体优化，物品决策不能独立求解后组合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的 core_constraints 中 time_coverage_constraint 是全局约束，要求所选物品总处理时间 ≥ 偷走物品数。该约束使得物品之间相互耦合，不存在可独立处理的局部单元。invariant 进一步确认解法是全局 DP，其中每个物品的决策影响整体容量状态。",
+        "feedback": "建议换一个具有多个独立子任务的种子题，如多个区间或多个组件原可分别求解的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversary",
+      "message": "原题是单人优化问题（Bob 选择支付哪些物品），没有天然的对抗双方；强行引入第二玩家将违反规则“不能凭背景硬造玩家”，且无法从原操作中自然推导出轮流选择的过程。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中只涉及 Bob 一个决策主体，助理仅执行扫描无对抗意图（见 original_problem.description）；规则 eligibility.required_seed_properties 要求“存在可轮流选择、拿取、移动或改变状态的自然操作”，而原题只存在单方的物品选择操作；forbidden_seed_properties 禁止“对抗方只能靠故事背景硬造”，本题若引入对手将直接违反此条；helper redlines 也明确“不能凭背景硬造玩家”。",
+        "feedback": "种子题不具备可自然对抗化的操作结构，建议尝试其他变换规则（如参数扩展或约束变体）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是关于物品支付选择的背包优化问题，核心对象为离散物品，不存在路径、区间、子树等可组合的局部结构，无法自然形成覆盖或割关系，不满足规则要求的种子属性。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为物品列表，每个物品由时间ti和价格ci描述，约束为选择支付物品集使得总处理时间不少于偷窃物品数，目标是最小化总金额。整个问题没有路径、区间或子树等局部对象，物品之间没有几何或顺序上的覆盖关系，原题核心对象是独立的选择变量，而非局部结构族。",
+        "feedback": "规则的适用前提是种子题存在可形成覆盖或割的局部对象族，但当前种子完全缺失此类结构，强行扩展会导致全局覆盖语义脱离原题核心，沦为无关附加限制。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是优化问题，目标是最小化总金额，而非对合法方案进行计数，因此不满足规则要求的“原题已经有明确有限的计数对象”这一必需种子属性。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题题目描述为“What is the minimum amount of money that Bob will have to pay?”，输出为单一最小金额；solution_code 为最小化花费的 DP，ar[k] 记录达到体积 k 的最小花费，而非方案数。该题从未要求统计方案总数，无任何计数对象。",
+        "feedback": "规则 plain_counting_to_weighted_distribution 严格依赖种子题为普通计数题，但当前种子题属于组合优化类题目，不存在计数对象，无法在其上定义自然权重或统计量。建议选择明确的计数类种子题后再应用此规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "RULE_CONTRACT_FULFILLED",
+      "message": "规划成功将正向求解题转化为反向设计题：给定目标支付K，要求通过修改物品属性（ti, ci）使修改后物品集的最小支付恰好为K，并最小化修改代价，同时输出最优方案。所有必需helper均已应用并落地到对应轴变化，核心约束、目标和不变量的变更符合规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "在candidate schema中，core_constraints新增了allowed_modifications和target_minimum_payment_condition，objective改为minimize the total modification cost并输出方案，invariant维护了修改DP最优性。applied_helpers字段详细说明了target_result_binding将原题最小支付绑定为目标K，edit_operation_contract定义了基于原题属性的修改操作，minimality_or_certificate_lock要求输出最小代价并承担证明责任。原hard_checks均满足：反向目标来自原题结果语义，修改操作与原核心对象相关，承担了最小性责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helper_semantics_realized",
+      "message": "题面完整兑现了三个 helper 的专属语义：目标绑定为最小支付 K、修改操作作用于物品的 ti 和 ci 并明确代价、要求最小化修改总代价并输出方案，完全符合反向设计规则合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中明确要求“修改后的物品集合在最优整理策略下的最小总支付恰好等于 K”（target_result_binding），定义了“将其占用格子数修改为任意非负整数 new_ti，整理费用修改为任意正整数 new_ci，代价为 |new_ti - ti| + |new_ci - ci|”（edit_operation_contract），并输出“最小的总修改代价”和修改方案，样例解释中强调“可以证明不存在总代价更小的方案”（minimality_or_certificate_lock）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized",
+      "message": "题面成功将原题结果绑定为目标K，定义了基于物品属性的修改操作与代价公式，并明确要求最小化总修改代价、输出方案。三个helper的关键语义均已写实，反向目标、修改操作与最小性责任清晰完整。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中：“小明可以调整这些物品的属性，以便在后续的最佳整理方案中恰好需要支付K元”绑定目标；“修改第i件物品的总代价为|new_ti - ti| + |new_ci - ci|”定义修改操作；“小明希望知道：是否存在一种修改方案，...他想要最小化所有物品修改的总代价，并给出一种修改方案”承担最小性责任；样本解释说明最优修改方案与代价证明。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "helper_semantics_realized",
+      "message": "题面将原正向求解的最小支付绑定为反向设计目标 K，显式定义了基于原核心对象 ti、ci 的修改操作与代价，并明确要求输出最小总修改代价及方案，完整兑现了规则要求的三个 helper 语义与最小性责任。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述中指定目标为‘最小总支付恰好等于指定的目标 K’，对应 helper target_result_binding；修改操作限定为‘将占用格子数改为…将整理费用改为…代价为 |new_ti - ti| + |new_ci - ci|’，对应 edit_operation_contract；输出要求‘请输出最小的总修改代价…如果不可能，则输出 -1’，并在样例解释中强调‘可以证明不存在总代价更小的方案’，对应 minimality_or_certificate_lock。new_schema 中 core_constraints 包含 target_minimum_payment_condition 与 allowed_modifications，objective 描述为‘Minimize the total modification cost…Output the minimum modification cost; if impossible, output -1’，进一步佐证关键语义已完整落地。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "contract_retry_count": 2,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "I",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "C",
+                  "V"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "I",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "储物柜整理挑战",
+    "description": "小明正在整理他的储物柜，柜子里有 n 件物品。每件物品有两个属性：占用格子数 ti 和整理费用 ci。ti 是一个非负整数，ci 是一个正整数。\n\n小明可以选择一些物品并支付它们的整理费用。只要所有被支付物品的总占用格子数不少于未被支付物品的数量，他就能成功整理所有物品。换句话说，对于一个支付集合 P，必须满足 ∑_{i∈P} ti ≥ n - |P|，此时总支付为 ∑_{i∈P} ci。\n\n然而，今天小明希望先调整这些物品的属性，使得在后续的最优整理方案中，最小总支付恰好等于指定的目标 K。他可以对每件物品进行修改：将占用格子数改为 0 到 2000 之间的任意整数 new_ti，将整理费用改为 1 到 10^9 之间的任意整数 new_ci。每次修改的代价为 |new_ti - ti| + |new_ci - ci|。总修改代价是所有单件物品修改代价之和。\n\n请判断是否存在一种修改方案，使得修改后的物品集合在最优整理策略下（即满足覆盖约束并使总支付最小）的最小支付恰好等于 K。如果存在，请输出最小的总修改代价，并给出一种具体的修改方案；如果不可能，则输出 -1。",
+    "input_format": "第一行一个整数 n (1 ≤ n ≤ 2000)，表示物品的数量。\n接下来 n 行，每行两个整数 ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 10^9)，描述每件物品原始的占用格子数和整理费用。\n最后一行一个整数 K (1 ≤ K ≤ 10^9)，表示目标最小总支付。",
+    "output_format": "如果无法通过修改使得最小支付恰好为 K，只输出一个整数 -1。\n否则，第一行输出一个整数，表示最小的总修改代价。\n接下来 n 行，每行输出两个整数 new_ti, new_ci，表示第 i 件物品修改后的占用格子数和整理费用。若有多种最优修改方案，输出任意一种即可。",
+    "constraints": [
+      "时间限制：2 秒",
+      "空间限制：256 MB",
+      "1 ≤ n ≤ 2000",
+      "0 ≤ ti ≤ 2000，1 ≤ ci ≤ 10^9",
+      "1 ≤ K ≤ 10^9",
+      "修改后的 new_ti 必须满足 0 ≤ new_ti ≤ 2000，new_ci 必须满足 1 ≤ new_ci ≤ 10^9"
+    ],
+    "samples": [
+      {
+        "input": "1\n0 5\n5",
+        "output": "0\n0 5",
+        "explanation": "只有一件物品，占用格子数为 0，整理费用为 5。由于 n=1，覆盖条件为 ti ≥ 0，任意子集均满足，因此最小支付即为该物品的费用 5，恰好等于目标 K=5。不需要任何修改，总代价为 0，输出原始属性即可。"
+      },
+      {
+        "input": "2\n2 10\n0 20\n8",
+        "output": "24\n0 1\n0 7",
+        "explanation": "有两件物品，原始属性为 (2,10) 和 (0,20)，目标 K=8。若不做修改，第一件物品单独即可满足 ∑ti=2 ≥ 1，因此最小支付为 10，不为 8。为了让最小支付恰好为 8，必须使任何单件物品都不能单独满足条件，即 new_t1 和 new_t2 都必须为 0。这样，唯一满足覆盖条件的子集是全集 {1,2}，其总费用必须等于 8。一种代价最小的修改方案是将第一件改为 (0,1)，第二件改为 (0,7)，总修改代价为 |0-2|+|1-10| + |0-0|+|7-20| = 2+9+0+13 = 24。可以证明不存在总代价更小的方案。"
+      },
+      {
+        "input": "3\n3 5\n1 8\n0 2\n7",
+        "output": "2\n3 7\n1 8\n0 2",
+        "explanation": "有三件物品，原始属性为 (3,5), (1,8), (0,2)，目标 K=7。原始最小支付为 5（只支付第一件即可，因为 3 ≥ 3-1=2）。要使最小支付变为 7，最经济的做法是将第一件物品的费用提高到 7，其他属性不变。此时支付第一件的费用为 7，而其他子集（如仅支付第三件，需满足 0 ≥ 3-1=2，不成立）均不可行，因此最小支付恰好为 7。总修改代价为 |7-5| = 2。不存在比 2 更小的修改代价。"
+      }
+    ],
+    "notes": "请注意答案可能超出 32 位整数范围，建议使用 64 位整数类型。如果存在多种最优修改方案，输出任意一种即可。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_359a62b3c24d_campus_ops_20260609_202814",
+    "round_index": 4,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 2,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\artifacts\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d_campus_ops_20260609_202814_round3.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\reports\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d_campus_ops_20260609_202814_round3_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "pass",
+      "generated_status": "ok",
+      "quality_score": 97.0,
+      "divergence_score": 73.1,
+      "non_full_dimensions": [
+        {
+          "dimension": "sample_quality",
+          "score": 4.0,
+          "rationale": "样例数量仅为2，对于一道困难题略显不足，缺少不可能情况的示例和较大规模的示例，但现有样例格式正确、解释详尽，能帮助理解题意。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ]
+        }
+      ],
+      "suggested_revisions": [
+        "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。",
+        "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+        "简化description中与调度相关的类比，直接聚焦于约束的不等式。",
+        "可以考虑增加一个n较大的样例或边界测试，但当前两个样例已足够。",
+        "优先改写核心任务定义，而不是继续替换故事背景。",
+        "增加一个简单不可行样例，如 n=1, ti=0, ci=5, K=10，解释为何无法通过修改使得最小支付恰好为 10。",
+        "增加一个输出 -1 的样例，覆盖不可行情景。",
+        "可考虑将数据范围单独列为约束部分，提高可读性（非必须）。",
+        "在描述中直接写明 new_ti 的取值范围为 [0,2000]、new_ci 为 [1,10^9]，或者将备注信息移至输入格式处。",
+        "建议增加一个输出 -1 的样例，以及一个 n 稍大、修改方案多样的样例，以帮助验证算法正确性。",
+        "统一修改后属性的取值范围描述，避免前后口头矛盾",
+        "增加一个无法达成目标的样例和一个较大规模的样例",
+        "在约束部分可补充 n、ti、ci、K 的数值范围（当前仅在输入格式中提及，但通常也会在约束部分重复）"
+      ],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "描述中的类比可能引发误解",
+          "detail": "description中提到“管理员只能在赞助社团活动的时段内处理普通社团的事务”，这可能让读者误以为需要安排具体的时序调度，但实际约束只是简单的总数不等式。这种叙事虽不影响核心正确性，但可能增加理解负担。",
+          "evidence_refs": [
+            "generated_problem.description"
+          ],
+          "fix_hint": "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。"
+        },
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "solution transfer risk too high",
+          "detail": "核心约束（容量覆盖 ∑(t_i+1) ≥ n）完全一致，仅增加字典序最小化次要目标，且目标形式仍基于相同背包模型。状态设计从一维费用扩展为(费用, 掩码)对，但原 DP 框架和转移方程可直接沿用，熟悉原题的选手能快速迁移。新题叙事（社团赞助 vs 收银台偷窃）系统性地一对一映射了时间、费用、数量等关键实体，表层换皮痕迹明显。尽管输出方案和字典序比较引入了轻微实现复杂度，但未从根本上改变问题建模或求解策略，语义差异有限。",
+          "evidence_refs": [
+            "original_schema.core_constraints[0].formal",
+            "new_schema.core_constraints[0].formal",
+            "original_schema.objective",
+            "new_schema.objective",
+            "review_context.distance_breakdown.axis_scores",
+            "review_context.algorithmic_delta_claim.reusable_subroutines",
+            "hard_checks[0].evidence_refs",
+            "hard_checks[1].evidence_refs",
+            "hard_checks[11].evidence_refs",
+            "hard_checks[12].evidence_refs"
+          ],
+          "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "缺少不可行样例",
+          "detail": "题面仅包含两个可行样例，没有给出无法达成目标 K 从而输出 -1 的样例。参赛者可能不清楚 -1 的具体触发条件。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "增加一个简单不可行样例，如 n=1, ti=0, ci=5, K=10，解释为何无法通过修改使得最小支付恰好为 10。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "修改后属性范围描述不一致",
+          "detail": "题目描述中称 new_ti 可为任意非负整数、new_ci 可为任意正整数，但在备注中又限定 new_ti ≤ 2000、new_ci ≤ 10^9，两处说法可能有轻微的歧义，建议统一表述。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "generated_problem.notes"
+          ],
+          "fix_hint": "在描述中直接写明 new_ti 的取值范围为 [0,2000]、new_ci 为 [1,10^9]，或者将备注信息移至输入格式处。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "样例覆盖不足",
+          "detail": "当前仅有两个样例，无法展示不可能达成（输出 -1）的场景，也缺少较大 n 或特殊结构的示例，可能影响参赛者对边界条件的理解。",
+          "evidence_refs": [
+            "generated_problem.samples"
+          ],
+          "fix_hint": "建议增加一个输出 -1 的样例，以及一个 n 稍大、修改方案多样的样例，以帮助验证算法正确性。"
+        }
+      ],
+      "strengths_to_keep": [
+        "字典序最小的定义和比较规则解释清晰，样例中详细展示了比较过程。",
+        "输出格式明确，要求输出最小总费用和字典序最小的赞助集合，符合规范。",
+        "样例覆盖了t_i=0的情况，并演示了字典序选择。",
+        "提供了使用64位整数的提醒，避免溢出。",
+        "任务描述完整，修改操作和代价定义清晰，易于理解。",
+        "输入输出格式明确，数据范围在输入格式中直接给出。",
+        "样例解释详细，有助于理解题目逻辑。",
+        "无原题泄露， retheme 干净。",
+        "准确实现了新的逆向设计任务，修改代价、目标 K、可行性输出等要素均无遗漏",
+        "输入格式、输出格式、样例之间高度一致，解释充分",
+        "主题映射自然，没有原题信息泄露",
+        "备注中提示使用 64 位整数，考虑周到"
+      ],
+      "previous_generated_problem": {
+        "title": "储物柜整理挑战",
+        "description": "小明正在整理他的储物柜。柜子里有 n 件物品，每件物品用一个非负整数 ti 表示它占用的格子数，以及一个正整数 ci 表示整理它需要支付的费用。\n\n小明可以选定一些物品并支付它们的整理费用。只要所有被支付物品的总占用格子数不少于未被支付物品的数量，他就可以顺利地把所有物品都整理好。换句话说，如果被支付的物品集合为 P，那么必须满足 ∑_{i∈P} ti ≥ n - |P|。此时小明支付的总费用就是 ∑_{i∈P} ci。\n\n然而，今天小明想先调整这些物品的属性，以便在后续的最佳整理方案中恰好需要支付 K 元。对于第 i 件物品，他可以将其占用格子数修改为任意非负整数 new_ti，整理费用修改为任意正整数 new_ci，但每次修改都会产生代价：占用格子数每变化 1（取绝对值）产生 1 的代价，整理费用每变化 1 也产生 1 的代价。因此，修改第 i 件物品的总代价为 |new_ti - ti| + |new_ci - ci|。\n\n小明希望知道：是否存在一种修改方案，使得修改后的物品集合在最优整理策略下的最小总支付恰好等于 K？如果存在，他想要最小化所有物品修改的总代价，并给出一种修改方案；如果不可能，请告诉他无法达成。",
+        "input_format": "第一行一个整数 n (1 ≤ n ≤ 2000)，表示物品的数量。\n接下来 n 行，每行两个整数 ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 10^9)，描述每件物品原始的占用格子数和整理费用。\n最后一行一个整数 K (1 ≤ K ≤ 10^9)，表示目标最小总支付。",
+        "output_format": "如果无法通过修改使得最小支付恰好为 K，只输出一个整数 -1。\n否则，第一行输出一个整数，表示最小的总修改代价。\n接下来 n 行，每行输出两个整数 new_ti, new_ci，表示第 i 件物品修改后的占用格子数和整理费用。如果有多种最优修改方案，输出任意一种即可。",
+        "constraints": [
+          "时间限制：2 秒",
+          "空间限制：256 MB"
+        ],
+        "samples": [
+          {
+            "input": "1\n0 5\n5",
+            "output": "0\n0 5",
+            "explanation": "只有一件物品，占用格子数为 0，整理费用为 5。由于 n=1，必须满足 ∑ti ≥ 0，任何子集都满足，因此最小支付就是该物品的费用 5，恰好等于目标 K=5。不需要任何修改，总代价为 0，输出原属性即可。"
+          },
+          {
+            "input": "2\n2 10\n0 20\n8",
+            "output": "24\n0 1\n0 7",
+            "explanation": "有两件物品，原始属性为 (2,10) 和 (0,20)，目标 K=8。若不做修改，第一件物品单独即可满足 ∑ti=2≥1，因此最小支付为 10，不等于 8。为了让最小支付恰好为 8，必须使任何单件物品都不能单独满足条件，即 new_t1 和 new_t2 都必须为 0。这样，唯一满足条件的子集是全集 {1,2}，其总费用必须等于 8。一种代价最小的修改方案是将第一件改为 (0,1)，第二件改为 (0,7)，总修改代价为 |0-2|+|1-10| + |0-0|+|7-20| = 2+9+0+13 = 24。可以证明不存在总代价更小的方案。"
+          }
+        ],
+        "notes": "所有数据均为整数。修改后的占用格子数 new_ti 必须满足 0 ≤ new_ti ≤ 2000，整理费用 new_ci 必须满足 1 ≤ new_ci ≤ 10^9。若有多组最优修改方案，输出任意一组即可。请注意答案可能超出 32 位整数范围，建议使用 64 位整数类型。",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": ""
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 100.0,
+            "divergence_score": 51.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "描述中的类比可能引发误解",
+                "detail": "description中提到“管理员只能在赞助社团活动的时段内处理普通社团的事务”，这可能让读者误以为需要安排具体的时序调度，但实际约束只是简单的总数不等式。这种叙事虽不影响核心正确性，但可能增加理解负担。",
+                "evidence_refs": [
+                  "generated_problem.description"
+                ],
+                "fix_hint": "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。"
+              },
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "solution transfer risk too high",
+                "detail": "核心约束（容量覆盖 ∑(t_i+1) ≥ n）完全一致，仅增加字典序最小化次要目标，且目标形式仍基于相同背包模型。状态设计从一维费用扩展为(费用, 掩码)对，但原 DP 框架和转移方程可直接沿用，熟悉原题的选手能快速迁移。新题叙事（社团赞助 vs 收银台偷窃）系统性地一对一映射了时间、费用、数量等关键实体，表层换皮痕迹明显。尽管输出方案和字典序比较引入了轻微实现复杂度，但未从根本上改变问题建模或求解策略，语义差异有限。",
+                "evidence_refs": [
+                  "original_schema.core_constraints[0].formal",
+                  "new_schema.core_constraints[0].formal",
+                  "original_schema.objective",
+                  "new_schema.objective",
+                  "review_context.distance_breakdown.axis_scores",
+                  "review_context.algorithmic_delta_claim.reusable_subroutines",
+                  "hard_checks[0].evidence_refs",
+                  "hard_checks[1].evidence_refs",
+                  "hard_checks[11].evidence_refs",
+                  "hard_checks[12].evidence_refs"
+                ],
+                "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+              }
+            ],
+            "suggested_revisions": [
+              "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。",
+              "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+              "简化description中与调度相关的类比，直接聚焦于约束的不等式。",
+              "可以考虑增加一个n较大的样例或边界测试，但当前两个样例已足够。",
+              "优先改写核心任务定义，而不是继续替换故事背景。"
+            ],
+            "strengths_to_keep": [
+              "字典序最小的定义和比较规则解释清晰，样例中详细展示了比较过程。",
+              "输出格式明确，要求输出最小总费用和字典序最小的赞助集合，符合规范。",
+              "样例覆盖了t_i=0的情况，并演示了字典序选择。",
+              "提供了使用64位整数的提醒，避免溢出。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 82.6,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "缺少不可行样例",
+                "detail": "题面仅包含两个可行样例，没有给出无法达成目标 K 从而输出 -1 的样例。参赛者可能不清楚 -1 的具体触发条件。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "增加一个简单不可行样例，如 n=1, ti=0, ci=5, K=10，解释为何无法通过修改使得最小支付恰好为 10。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加一个简单不可行样例，如 n=1, ti=0, ci=5, K=10，解释为何无法通过修改使得最小支付恰好为 10。",
+              "增加一个输出 -1 的样例，覆盖不可行情景。",
+              "可考虑将数据范围单独列为约束部分，提高可读性（非必须）。"
+            ],
+            "strengths_to_keep": [
+              "任务描述完整，修改操作和代价定义清晰，易于理解。",
+              "输入输出格式明确，数据范围在输入格式中直接给出。",
+              "样例解释详细，有助于理解题目逻辑。",
+              "无原题泄露， retheme 干净。"
+            ]
+          }
+        },
+        {
+          "round_index": 3,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 3,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 97.0,
+            "divergence_score": 73.1,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "修改后属性范围描述不一致",
+                "detail": "题目描述中称 new_ti 可为任意非负整数、new_ci 可为任意正整数，但在备注中又限定 new_ti ≤ 2000、new_ci ≤ 10^9，两处说法可能有轻微的歧义，建议统一表述。",
+                "evidence_refs": [
+                  "generated_problem.description",
+                  "generated_problem.notes"
+                ],
+                "fix_hint": "在描述中直接写明 new_ti 的取值范围为 [0,2000]、new_ci 为 [1,10^9]，或者将备注信息移至输入格式处。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "样例覆盖不足",
+                "detail": "当前仅有两个样例，无法展示不可能达成（输出 -1）的场景，也缺少较大 n 或特殊结构的示例，可能影响参赛者对边界条件的理解。",
+                "evidence_refs": [
+                  "generated_problem.samples"
+                ],
+                "fix_hint": "建议增加一个输出 -1 的样例，以及一个 n 稍大、修改方案多样的样例，以帮助验证算法正确性。"
+              }
+            ],
+            "suggested_revisions": [
+              "在描述中直接写明 new_ti 的取值范围为 [0,2000]、new_ci 为 [1,10^9]，或者将备注信息移至输入格式处。",
+              "建议增加一个输出 -1 的样例，以及一个 n 稍大、修改方案多样的样例，以帮助验证算法正确性。",
+              "统一修改后属性的取值范围描述，避免前后口头矛盾",
+              "增加一个无法达成目标的样例和一个较大规模的样例",
+              "在约束部分可补充 n、ti、ci、K 的数值范围（当前仅在输入格式中提及，但通常也会在约束部分重复）"
+            ],
+            "strengths_to_keep": [
+              "准确实现了新的逆向设计任务，修改代价、目标 K、可行性输出等要素均无遗漏",
+              "输入格式、输出格式、样例之间高度一致，解释充分",
+              "主题映射自然，没有原题信息泄露",
+              "备注中提示使用 64 位整数，考虑周到"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 3,
+        "latest_round_index": 3,
+        "latest_iteration_phase": "full_score_polish",
+        "latest_overall_status": "pass",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 97.0,
+        "latest_divergence_score": 73.1,
+        "suggested_revisions": [
+          "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。",
+          "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+          "简化description中与调度相关的类比，直接聚焦于约束的不等式。",
+          "可以考虑增加一个n较大的样例或边界测试，但当前两个样例已足够。",
+          "优先改写核心任务定义，而不是继续替换故事背景。",
+          "增加一个简单不可行样例，如 n=1, ti=0, ci=5, K=10，解释为何无法通过修改使得最小支付恰好为 10。",
+          "增加一个输出 -1 的样例，覆盖不可行情景。",
+          "可考虑将数据范围单独列为约束部分，提高可读性（非必须）。",
+          "在描述中直接写明 new_ti 的取值范围为 [0,2000]、new_ci 为 [1,10^9]，或者将备注信息移至输入格式处。",
+          "建议增加一个输出 -1 的样例，以及一个 n 稍大、修改方案多样的样例，以帮助验证算法正确性。",
+          "统一修改后属性的取值范围描述，避免前后口头矛盾",
+          "增加一个无法达成目标的样例和一个较大规模的样例",
+          "在约束部分可补充 n、ti、ci、K 的数值范围（当前仅在输入格式中提及，但通常也会在约束部分重复）"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "描述中的类比可能引发误解",
+            "detail": "description中提到“管理员只能在赞助社团活动的时段内处理普通社团的事务”，这可能让读者误以为需要安排具体的时序调度，但实际约束只是简单的总数不等式。这种叙事虽不影响核心正确性，但可能增加理解负担。",
+            "evidence_refs": [
+              "generated_problem.description"
+            ],
+            "fix_hint": "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。"
+          },
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "solution transfer risk too high",
+            "detail": "核心约束（容量覆盖 ∑(t_i+1) ≥ n）完全一致，仅增加字典序最小化次要目标，且目标形式仍基于相同背包模型。状态设计从一维费用扩展为(费用, 掩码)对，但原 DP 框架和转移方程可直接沿用，熟悉原题的选手能快速迁移。新题叙事（社团赞助 vs 收银台偷窃）系统性地一对一映射了时间、费用、数量等关键实体，表层换皮痕迹明显。尽管输出方案和字典序比较引入了轻微实现复杂度，但未从根本上改变问题建模或求解策略，语义差异有限。",
+            "evidence_refs": [
+              "original_schema.core_constraints[0].formal",
+              "new_schema.core_constraints[0].formal",
+              "original_schema.objective",
+              "new_schema.objective",
+              "review_context.distance_breakdown.axis_scores",
+              "review_context.algorithmic_delta_claim.reusable_subroutines",
+              "hard_checks[0].evidence_refs",
+              "hard_checks[1].evidence_refs",
+              "hard_checks[11].evidence_refs",
+              "hard_checks[12].evidence_refs"
+            ],
+            "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "缺少不可行样例",
+            "detail": "题面仅包含两个可行样例，没有给出无法达成目标 K 从而输出 -1 的样例。参赛者可能不清楚 -1 的具体触发条件。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "增加一个简单不可行样例，如 n=1, ti=0, ci=5, K=10，解释为何无法通过修改使得最小支付恰好为 10。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "修改后属性范围描述不一致",
+            "detail": "题目描述中称 new_ti 可为任意非负整数、new_ci 可为任意正整数，但在备注中又限定 new_ti ≤ 2000、new_ci ≤ 10^9，两处说法可能有轻微的歧义，建议统一表述。",
+            "evidence_refs": [
+              "generated_problem.description",
+              "generated_problem.notes"
+            ],
+            "fix_hint": "在描述中直接写明 new_ti 的取值范围为 [0,2000]、new_ci 为 [1,10^9]，或者将备注信息移至输入格式处。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "样例覆盖不足",
+            "detail": "当前仅有两个样例，无法展示不可能达成（输出 -1）的场景，也缺少较大 n 或特殊结构的示例，可能影响参赛者对边界条件的理解。",
+            "evidence_refs": [
+              "generated_problem.samples"
+            ],
+            "fix_hint": "建议增加一个输出 -1 的样例，以及一个 n 稍大、修改方案多样的样例，以帮助验证算法正确性。"
+          }
+        ],
+        "strengths_to_keep": [
+          "字典序最小的定义和比较规则解释清晰，样例中详细展示了比较过程。",
+          "输出格式明确，要求输出最小总费用和字典序最小的赞助集合，符合规范。",
+          "样例覆盖了t_i=0的情况，并演示了字典序选择。",
+          "提供了使用64位整数的提醒，避免溢出。",
+          "任务描述完整，修改操作和代价定义清晰，易于理解。",
+          "输入输出格式明确，数据范围在输入格式中直接给出。",
+          "样例解释详细，有助于理解题目逻辑。",
+          "无原题泄露， retheme 干净。",
+          "准确实现了新的逆向设计任务，修改代价、目标 K、可行性输出等要素均无遗漏",
+          "输入格式、输出格式、样例之间高度一致，解释充分",
+          "主题映射自然，没有原题信息泄露",
+          "备注中提示使用 64 位整数，考虑周到"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "problem_id": "taco_codechef_b749353a25b4",
+  "source": "codechef",
+  "input_structure": {
+    "type": "array",
+    "length": {
+      "min": 1,
+      "max": 10000
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    }
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "movement_directions_orthogonal",
+        "description": "Only horizontal and vertical steps are allowed, each step moving one unit.",
+        "formal": "step ∈ {(dx,0), (0,dy)} where dx,dy ∈ {1,-1}",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "no_point_revisiting",
+        "description": "Cannot visit any point more than once along the path.",
+        "formal": "∀ i≠j, P_i ≠ P_j",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "exact_manhattan_distance_steps",
+        "description": "The total number of steps must be exactly the Manhattan distance between start and end points, i.e., abs(a-c)+abs(b-d).",
+        "formal": "steps_total = |a-c| + |b-d|",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "counting",
+    "description": "sum of number of ways from each point in set A to each point in set B",
+    "target": "total_ways",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "modular_factorial_inverse",
+        "description": "The arrays factorial and invFactorial satisfy factorial[i] ≡ i! (mod MOD) and invFactorial[i] ≡ (i!)^{-1} (mod MOD) for all i, maintained by the recurrences factorial[i] = i * factorial[i-1] mod MOD and invFactorial[i] = invFactorial[i-1] * i^{-1} mod MOD using linear inverse computation, guaranteeing correct binomial coefficient queries.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codechef_b749353a25b4",
+    "title": "NWAYS",
+    "description": "Read problems statements in Mandarin Chinese  and Russian. \n\nDevu is learning Combinatorics in his college. He find it very interesting to calculate number of ways of going to point (c,d) from point (a,b) in co-ordinate plane. We can take horizontal and vertical steps only and can not visit at a point twice. In a step, you can move one unit only. We have to reach to the point (c,d) from the point (a,b) using abs(a-c)+ abs(b-d) steps only.\n\nDevu has two sets of points. Set A contains points having X co-ordinate 0 and Y co-ordinates varying from 1 to N(both inclusive). Set B contains points having X co-ordinate K and Y co-ordinates varying from 1 to N(both inclusive).  Both sets contains N number of integral points. He wants to calculate the sum of number of ways to going to the each point of set B from the each point of set A .\n\nAs the answer can be large, print it modulo 1000000007.\n \n------ Input ------ \n\nFirst line of input contains an integer T denoting number of test cases.  \nNext T lines will contain pair of integers N and K\n\n------ Output ------ \n\nFor each test case, print a single integer representing the answer of that test case.\n\n------ Constraints ------ \n\nSubtask #1: 10 points\n\n\t$1 ≤ T  ≤ 20, 1 ≤ N ,K ≤ 1000$\n\nSubtask #1: 10 points\n\n\t$1 ≤ T  ≤ 20, 1 ≤ N ,K ≤ 10^{6}$\n\nSubtask #3: 80 points\n\n\t$1 ≤ T  ≤ 10000, 1 ≤ N,K  ≤ 10^{6}$\n\n----- Sample Input 1 ------ \n2\n\n2 2\n\n4 5\n----- Sample Output 1 ------ \n8\n\n236\n----- explanation 1 ------ \n\nFor the first sample case,\nways[(0,1)->(2,1)]= 1\nways[(0,2)->(2,2)]= 1\nways[(0,1)->(2,2)]= 3\nways[(0,2)->(2,1)]= 3\n\nSo, the total number of ways = 8.",
+    "input": "",
+    "output": "",
+    "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+    "source": "codechef",
+    "standard_solution_code": "(limit, MOD) = (int(2 * 10 ** 6 + 10), int(10 ** 9) + 7)\n(factorial, invFactorial) = ([0] * limit, [0] * limit)\n\ndef calFactorial():\n\tlimit = int(2 * 10 ** 6 + 10)\n\t(factorial[0], factorial[1], invFactorial[0], invFactorial[1]) = (1, 1, 1, 1)\n\tfor i in range(2, limit):\n\t\tfactorial[i] = factorial[i - 1] * i % MOD\n\tfor i in range(2, limit):\n\t\tinvFactorial[i] = (MOD - MOD // i * invFactorial[MOD % i]) % MOD\n\tfor i in range(1, limit):\n\t\tinvFactorial[i] = invFactorial[i - 1] * invFactorial[i] % MOD\n\ndef nCr(N, R):\n\tif R > N:\n\t\treturn 0\n\tans = factorial[N] * invFactorial[R] % MOD * invFactorial[N - R]\n\tans %= MOD\n\treturn ans\n\ndef solve(N, K):\n\tans = 2 * nCr(N + K + 1, K + 2) - N\n\tans = (ans % MOD + MOD) % MOD\n\tprint(ans)\ncalFactorial()\nT = int(input())\nfor _ in range(T):\n\t(N, K) = map(int, input().split())\n\tsolve(N, K)"
+  }
+}

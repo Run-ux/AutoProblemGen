@@ -1,0 +1,843 @@
+{
+  "problem_id": "inverse_design_commute_expectation",
+  "source_problem_ids": [
+    "taco_codeforces_e41b78710a22"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_e41b78710a22",
+      "codeforces",
+      "Barney lives in country USC (United States of Charzeh). USC has n cities numbered from 1 through n and n - 1 roads between them. Cities and roads of USC form a rooted tree (Barney's not sure why it is rooted). Root of...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "C新增目标期望值匹配约束和操作定义，O从计算期望变为最小化修改操作，V增加操作影响量化与最小性下界。",
+    "summary": "将原始的正向期望计算转换为反向最小化修改问题，要求通过最少父节点重连操作使树的期望值达到给定目标。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.5609,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.5609,
+    "axis_scores": {
+      "I": 0.0374,
+      "C": 1.0,
+      "O": 0.5292,
+      "V": 0.5963
+    },
+    "components": {
+      "input_tree_distance": 0.0374,
+      "constraint_match_distance": 1.0,
+      "objective_type_distance": 0.5546,
+      "objective_text_distance": 0.4911,
+      "invariant_match_distance": 0.5963
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization_and_construction",
+    "description": "Find the minimum number of valid operations (parent changes) such that the resulting tree's expected starting times match the target array within absolute error 1e-6. Output the minimum k followed by k lines each describing v and new_parent. If impossible, output -1."
+  },
+  "rule_selection_reason": "规则2将正向期望计算翻转为以期望值为目标的树结构重建，根本改变求解方向，形成结构性逆问题，与核心规律紧密耦合；规则1扰动自然但易退化为最坏情形递推，创新与难度提升有限。；创新度判断：原题义务是计算给定树上节点的期望起始时间，新题将其视为目标，要求反向设计树结构或最小修改使目标成立，迫使算法围绕目标约束反推状态，完全拉离正向传播。；难度判断：算法需从浮点目标反解子树大小与父子关系，处理多解/无解，并证明最小性或构造正确性，显著抬高推理与证明难度。；风险判断：逆问题可能因浮点误差导致判定困难，需精心设计容差与验证；但通过精确约束和规范检查可控制风险。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_design_commute_expectation",
+    "source": "derived_from_forward_solution_inverse_design",
+    "input_structure": {
+      "type": "tree_and_target_array",
+      "length": {
+        "min": 1,
+        "max": 100000
+      },
+      "properties": {
+        "tree_rooted_at_1": true,
+        "acyclic": true,
+        "connected": true
+      },
+      "additional_fields": {
+        "target_expectations": {
+          "description": "Array t of length n with t_i being target expected starting time for node i. t_1 must be 1.0 (root expectation is fixed).",
+          "type": "float_array"
+        }
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "valid_operation_definition",
+          "description": "An operation consists of selecting a non-root node v and a new parent p (p != v and p not in the subtree of v) and setting parent[v] = p. The resulting graph must remain a tree rooted at 1."
+        },
+        {
+          "name": "expectation_matching_target",
+          "description": "After operations, for each node i, the expected starting time E[i] computed via the random DFS process must satisfy |E[i] - t_i| <= 1e-6."
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization_and_construction",
+      "description": "Find the minimum number of valid operations (parent changes) such that the resulting tree's expected starting times match the target array within absolute error 1e-6. Output the minimum k followed by k lines each describing v and new_parent. If impossible, output -1."
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "expectation_recurrence_holds",
+          "description": "For any tree (rooted at 1) and any node v, E[1]=1 and E[v] = E[parent(v)] + 1 + (sum_{sibling s} size(s) - size(v))/2, where size(w) is the number of nodes in the subtree of w. This holds before and after any sequence of valid operations."
+        },
+        {
+          "name": "operation_effect_quantification",
+          "description": "Changing parent of v from p to p' changes subtree sizes along the paths from p and p' to root, and adjusts E values for v and its descendants. The change in E[u] for u in subtree of v is a function of the size differences and ancestral expectations."
+        },
+        {
+          "name": "minimality_lower_bound",
+          "description": "A lower bound on the number of operations can be derived from mismatches between original E and target t; each operation can resolve at most a constant number of independent mismatches under certain structural conditions."
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Compute subtree sizes via post-order traversal; then compute expected starting times through a top-down pass using linear recurrence based on parent expectation and sibling subtree sizes.",
+    "reusable_subroutines": "Subtree size calculation, expectation propagation algorithm, tree traversal orders.",
+    "new_solver_core": "Identify nodes with expectation mismatches; analyze how changing parents affects expectations; formulate the problem as a minimum cover or matching problem on dependencies; derive a lower bound and construct an optimal sequence using combinatorial properties of the recurrence (e.g., independence of siblings' contributions).",
+    "new_proof_obligation": "Prove that the constructed sequence achieves the minimum number of operations, possibly by showing that the mismatch vector has a certain rank and each operation can reduce it by at most 1, and that the constructed sequence attains this reduction.",
+    "why_direct_reuse_fails": "The forward solver only computes expectations from a fixed tree; it does not provide any mechanism to select or minimize changes to meet a target array, requiring a fundamentally different optimization approach."
+  },
+  "anti_shallow_rationale": "该反向设计不是简单换皮，因为它将计算问题彻底翻转为组合优化问题，引入了设计自由度（父节点修改）和最小性证明责任，算法核心从树形DP变为需要搜索或匹配的最优化策略，原解题思路无法直接复用。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "将原题每个节点的期望值计算结果绑定为反向目标数组，要求通过修改树结构达到目标",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "在核心约束和objective中引入目标期望值数组作为必须匹配的条件"
+      ],
+      "innovation_reason": "翻转求解方向，从计算已知结构的期望变成设计结构以满足目标期望",
+      "difficulty_reason": "目标驱动要求算法必须处理匹配约束，不能仅计算"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "定义修改树结构的操作集（改变一个节点的父节点），作为达到目标的手段",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在核心约束中明确操作定义和合法性，在不变量中描述操作对期望值的影响公式"
+      ],
+      "innovation_reason": "将问题从简单计算转变为组合优化，操作空间自然来自原题对象结构",
+      "difficulty_reason": "操作引入指数级搜索空间，且影响非局部，增加优化难度"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小操作次数及操作序列，承担最小性证明责任",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective改为最小化，不变量增加下界性质"
+      ],
+      "innovation_reason": "要求算法给出可验证的最小性证据，避免平凡构造解",
+      "difficulty_reason": "最小性证明通常需要建立强下界，显著提升复杂度"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_lacks_constructible_object",
+      "selection_reason": "原题输出为实数期望值，允许浮点误差，不存在可直接规范化或恢复为构造方案的解对象；将输出强制改为规范DFS序会完全改变题目性质，且种子属性中‘原题有明确解对象或答案可恢复方案’不成立。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'value_computation'，输出为期望值数组且有误差容忍；原解仅通过子树大小和期望递推计算，无任何回溯或方案构造步骤；原题描述从未提及输出方案或顺序。",
+        "feedback": "该种子题为纯计算题，缺乏可规范化的组合解结构，强行升级将导致新题与原题几乎无算法关联，不符合规范解扩展的种子要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_property_mismatch",
+      "selection_reason": "原题始终存在期望起始时间解，没有‘做不到’的情形，无法满足规则要求‘无解情形落成可局部检查的阻碍证据’，冲突证据分支无法激活。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "规则required_seed_properties要求‘做不到的原因可以用局部证据表示’和‘冲突证据可以从输出直接检查’，但原题是一个确定性计算问题，输入保证为树，输出总是可行，不存在任何无解、不可达或矛盾情形，因此无法产生局部冲突证据。",
+        "feedback": "该规则要求种子问题必须具有可检测的不可行分支，但当前种子问题是纯期望值计算，无法映射到‘方案或冲突证据’的范式，建议更换种子或修改规则以强制引入判不可行条件。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_mismatch",
+      "selection_reason": "种子题目标为计算期望值，并非存在性或单一最优值问题，不符合规则要求的前提条件。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type = \"value_computation\"，target = \"expected_value\"，描述为 \"Calculate the expected value of starting_time for each vertex\"，不涉及存在性或最优值判定。",
+        "feedback": "规则要求种子题属于存在性或单一最优值问题，但当前种子题是数值期望计算，无法直接改造为计数题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "native_uncertainty_present",
+      "selection_reason": "原题算法在随机DFS中使用了shuffle children，该顺序不确定性是原生扰动来源，可直接放大为对抗性顺序选择，构造最小保底优化问题，符合‘required_seed_properties’第一条。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "原题描述：‘shuffle children[v] randomly (each permutation with equal possibility)’ 说明存在天然的顺序不确定性。不变式证据中‘subtree_size_aggregation’和‘expectation_linear_propagation’均不依赖具体顺序，证明该扰动在原有语义中可被分离。",
+        "feedback": "扰动模型可直建为允许敌手为每个节点选择孩子遍历顺序，保底目标可设为最小化最坏情形下的最大starting_time或类似度量，完全内生，无需虚构对手。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题为计算期望值，无可行性判定，不存在随参数单调变化的可行区域，无法满足种子性质要求。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题可行性随某个参数具有清晰的单调性或分层结构（required_seed_properties），但原题描述为给定一棵树，随机DFS，输出每个节点的起始时间期望值，并未定义任何可行性条件或可变参数。约束和输入仅包含树结构和节点数，无阈值概念。",
+        "feedback": "种子题缺少自然临界参数，属于纯计算题，不适合扩展为阈值优化题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_conflicting_metric",
+      "selection_reason": "种子题是纯期望值计算，不存在决策变量，无法定义自然冲突的第二评价指标，无法形成双指标权衡前沿。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 'Calculate the expected value of starting_time for each vertex'，是确定性计算任务；规则要求 '原题目标附近存在自然的第二评价指标' 且 '两个指标之间存在真实冲突'。该题无预算、无可控参数，期望值由树结构唯一确定，无法产生冲突或折中，不符合规则 eligibility 条件。",
+        "feedback": "建议寻找存在优化目标的种子题，如最大化收益同时考虑成本或风险，且两者不能同时最优。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "reverse_target_feasible",
+      "selection_reason": "原题输出为每个节点的期望起始时间序列，可以直接绑定为反向目标；输入结构为树的父亲序列，存在自然的修改操作（改变父节点、重连边）；规则要求的最小修改设计与原核心规律（期望公式）密切相关，具备设计自由度。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为浮点数序列（期望值），可作为目标；输入为父节点序列，定义修改操作为改变父节点或重连边，属于树的自然结构；规则声明必须改变C、O、V，新题可将约束变为目标序列匹配和修改计数，目标变为最小修改构造。Helper 'target_result_binding' 要求绑定原题结果为反向目标，'edit_operation_contract' 要求修改操作与核心对象相关，均满足。不变量'期望线性传播'可支撑反推逻辑。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_independent_local_units",
+      "selection_reason": "种子题中每个节点的期望开始时间依赖于父节点和兄弟子树大小，已经通过期望线性传播全局耦合，不存在可独立求解的局部单元，无法应用‘独立分量转全局耦合’变换。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "根据原题不变式 ’expectation_linear_propagation‘，期望值由父节点和兄弟子树大小确定，整个求解过程是一次性全局计算；规则要求的‘原题存在可分解的局部单元’不满足，没有明显的分量可独立处理后再用共享资源绑定。",
+        "feedback": "建议选择具有清晰可分离局部单元（如多个独立子问题、可并行处理的块）的种子题，这样耦合操作才有意义。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_required_property",
+      "selection_reason": "原题是一个随机DFS过程的期望值计算，不存在可供玩家选择、拿取、移动或改变状态的自然操作，遍历顺序由随机洗牌决定而非决策，无法满足规则要求的存在可轮流选择操作这一必备属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'shuffle children[v] randomly (each permutation with equal possibility)' 及 'Barney uses a random DFS' 表明过程无玩家可控选择。Schema的invariant描述为确定性递归和期望线性传播，无交互决策。",
+        "feedback": "规则要求原题有可自然转化为双方轮流选择的操作，但本题核心是计算随机过程的期望值，缺乏任何可由玩家进行的决策性操作。即使强行引入对抗方也只会沦为故事背景硬造，违反禁止规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch_with_seed_objects",
+      "selection_reason": "种子题核心是计算每个节点的期望开始时间，通过子树聚合的线性关系，不存在需要求解覆盖或割的对象族；如果强行构造覆盖关系（如点覆盖所有子树），则与原始计算问题无关，属于无关附加限制，违反forbidden_seed_properties。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为计算每个城市的expected starting_time，核心不变量为subtree_size_aggregation和expectation_linear_propagation，无覆盖或割语义。规则forbidden_seed_properties明确禁止“覆盖关系只能靠无关附加限制产生”。",
+        "feedback": "种子题的局部结构（子树）仅用于递归计算，缺乏可自然形成覆盖或割的对象族，强行转化将破坏原题核心，建议寻找具有显式路径集合或覆盖需求的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题目标是计算每个节点的期望开始时间，属于期望值计算而非计数问题。没有明确有限的计数对象，不满足规则要求。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为value_computation，target为expected_value；原题描述中未定义任何计数对象（如合法方案数、路径数等），输出是期望值而非计数总数。",
+        "feedback": "该规则要求原题为普通计数题，且对象上存在自然权重或统计量。本题不满足此基本前提，无法扩展为带权分布计数。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_constructible_object",
+      "message": "原题输出为实数期望值，允许浮点误差，不存在可直接规范化或恢复为构造方案的解对象；将输出强制改为规范DFS序会完全改变题目性质，且种子属性中‘原题有明确解对象或答案可恢复方案’不成立。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type = 'value_computation'，输出为期望值数组且有误差容忍；原解仅通过子树大小和期望递推计算，无任何回溯或方案构造步骤；原题描述从未提及输出方案或顺序。",
+        "feedback": "该种子题为纯计算题，缺乏可规范化的组合解结构，强行升级将导致新题与原题几乎无算法关联，不符合规范解扩展的种子要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_property_mismatch",
+      "message": "原题始终存在期望起始时间解，没有‘做不到’的情形，无法满足规则要求‘无解情形落成可局部检查的阻碍证据’，冲突证据分支无法激活。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "规则required_seed_properties要求‘做不到的原因可以用局部证据表示’和‘冲突证据可以从输出直接检查’，但原题是一个确定性计算问题，输入保证为树，输出总是可行，不存在任何无解、不可达或矛盾情形，因此无法产生局部冲突证据。",
+        "feedback": "该规则要求种子问题必须具有可检测的不可行分支，但当前种子问题是纯期望值计算，无法映射到‘方案或冲突证据’的范式，建议更换种子或修改规则以强制引入判不可行条件。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "seed_mismatch",
+      "message": "种子题目标为计算期望值，并非存在性或单一最优值问题，不符合规则要求的前提条件。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type = \"value_computation\"，target = \"expected_value\"，描述为 \"Calculate the expected value of starting_time for each vertex\"，不涉及存在性或最优值判定。",
+        "feedback": "规则要求种子题属于存在性或单一最优值问题，但当前种子题是数值期望计算，无法直接改造为计数题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "pass",
+      "reason_code": "native_uncertainty_present",
+      "message": "原题算法在随机DFS中使用了shuffle children，该顺序不确定性是原生扰动来源，可直接放大为对抗性顺序选择，构造最小保底优化问题，符合‘required_seed_properties’第一条。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "原题描述：‘shuffle children[v] randomly (each permutation with equal possibility)’ 说明存在天然的顺序不确定性。不变式证据中‘subtree_size_aggregation’和‘expectation_linear_propagation’均不依赖具体顺序，证明该扰动在原有语义中可被分离。",
+        "feedback": "扰动模型可直建为允许敌手为每个节点选择孩子遍历顺序，保底目标可设为最小化最坏情形下的最大starting_time或类似度量，完全内生，无需虚构对手。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题为计算期望值，无可行性判定，不存在随参数单调变化的可行区域，无法满足种子性质要求。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题可行性随某个参数具有清晰的单调性或分层结构（required_seed_properties），但原题描述为给定一棵树，随机DFS，输出每个节点的起始时间期望值，并未定义任何可行性条件或可变参数。约束和输入仅包含树结构和节点数，无阈值概念。",
+        "feedback": "种子题缺少自然临界参数，属于纯计算题，不适合扩展为阈值优化题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_conflicting_metric",
+      "message": "种子题是纯期望值计算，不存在决策变量，无法定义自然冲突的第二评价指标，无法形成双指标权衡前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为 'Calculate the expected value of starting_time for each vertex'，是确定性计算任务；规则要求 '原题目标附近存在自然的第二评价指标' 且 '两个指标之间存在真实冲突'。该题无预算、无可控参数，期望值由树结构唯一确定，无法产生冲突或折中，不符合规则 eligibility 条件。",
+        "feedback": "建议寻找存在优化目标的种子题，如最大化收益同时考虑成本或风险，且两者不能同时最优。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_target_feasible",
+      "message": "原题输出为每个节点的期望起始时间序列，可以直接绑定为反向目标；输入结构为树的父亲序列，存在自然的修改操作（改变父节点、重连边）；规则要求的最小修改设计与原核心规律（期望公式）密切相关，具备设计自由度。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为浮点数序列（期望值），可作为目标；输入为父节点序列，定义修改操作为改变父节点或重连边，属于树的自然结构；规则声明必须改变C、O、V，新题可将约束变为目标序列匹配和修改计数，目标变为最小修改构造。Helper 'target_result_binding' 要求绑定原题结果为反向目标，'edit_operation_contract' 要求修改操作与核心对象相关，均满足。不变量'期望线性传播'可支撑反推逻辑。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_independent_local_units",
+      "message": "种子题中每个节点的期望开始时间依赖于父节点和兄弟子树大小，已经通过期望线性传播全局耦合，不存在可独立求解的局部单元，无法应用‘独立分量转全局耦合’变换。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "根据原题不变式 ’expectation_linear_propagation‘，期望值由父节点和兄弟子树大小确定，整个求解过程是一次性全局计算；规则要求的‘原题存在可分解的局部单元’不满足，没有明显的分量可独立处理后再用共享资源绑定。",
+        "feedback": "建议选择具有清晰可分离局部单元（如多个独立子问题、可并行处理的块）的种子题，这样耦合操作才有意义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "missing_required_property",
+      "message": "原题是一个随机DFS过程的期望值计算，不存在可供玩家选择、拿取、移动或改变状态的自然操作，遍历顺序由随机洗牌决定而非决策，无法满足规则要求的存在可轮流选择操作这一必备属性。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：'shuffle children[v] randomly (each permutation with equal possibility)' 及 'Barney uses a random DFS' 表明过程无玩家可控选择。Schema的invariant描述为确定性递归和期望线性传播，无交互决策。",
+        "feedback": "规则要求原题有可自然转化为双方轮流选择的操作，但本题核心是计算随机过程的期望值，缺乏任何可由玩家进行的决策性操作。即使强行引入对抗方也只会沦为故事背景硬造，违反禁止规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch_with_seed_objects",
+      "message": "种子题核心是计算每个节点的期望开始时间，通过子树聚合的线性关系，不存在需要求解覆盖或割的对象族；如果强行构造覆盖关系（如点覆盖所有子树），则与原始计算问题无关，属于无关附加限制，违反forbidden_seed_properties。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为计算每个城市的expected starting_time，核心不变量为subtree_size_aggregation和expectation_linear_propagation，无覆盖或割语义。规则forbidden_seed_properties明确禁止“覆盖关系只能靠无关附加限制产生”。",
+        "feedback": "种子题的局部结构（子树）仅用于递归计算，缺乏可自然形成覆盖或割的对象族，强行转化将破坏原题核心，建议寻找具有显式路径集合或覆盖需求的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题目标是计算每个节点的期望开始时间，属于期望值计算而非计数问题。没有明确有限的计数对象，不满足规则要求。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为value_computation，target为expected_value；原题描述中未定义任何计数对象（如合法方案数、路径数等），输出是期望值而非计数总数。",
+        "feedback": "该规则要求原题为普通计数题，且对象上存在自然权重或统计量。本题不满足此基本前提，无法扩展为带权分布计数。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划完整兑现了反向设计合同：定义了来自原题结果语义的目标数组、允许操作（更改父节点）及最小性证明责任，所有 helper 均已落实到核心约束、目标与不变量中。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "目标绑定：candidate_schema.core_constraints.expectation_matching_target 要求 E[i] 匹配目标 t_i，objective 要求最小操作数达成匹配；操作合同：valid_operation_definition 定义自然修改操作，invariant.operation_effect_quantification 量化影响；最小性锁：objective 最小化，invariant.minimality_lower_bound 承担下界证明。applied_helpers 中三个 helper 均对应以上变更，且 redlines 无违反（目标非简单等于判定、操作源于树结构、承担最小性而非任意解）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_compliant",
+      "message": "题面明确将目标绑定为原题期望值计算结果，修改操作保留树结构的自然修改语义，并要求最小操作次数及具体构造，完全兑现了逆设计规则的核心承诺。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述要求“使得每个站点 i 的期望到达时间恰好等于给定的目标值 t_i”，对应 target_result_binding；操作定义为“选择某个非起点的站点 v，并将其父站点改为另一个站点 p”，且要求“操作后整体仍然形成一棵以 1 为根的树”，对应 edit_operation_contract 且修改来自原题的树结构；输出要求“求出最少的操作次数，并输出一种具体的操作方案”，对应 minimality_or_certificate_lock；notes 给出期望值计算公式并声明“该关系在任意合法操作后依然保持”，为操作影响提供了不变量语义。约束中强调“操作次数 k 必须为全局最小值”，确保算法承担最小性证明责任。所有 helper 的关键语义均在题面中明确写清。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "公交期望重规划",
+    "description": "城市中有一条公交快线，共有 n 个站点，编号 1 至 n。线路以站点 1 为起点，结构为一棵树。每天清晨，一辆公交车从站点 1 出发，按照随机深度优先的顺序遍历所有站点：每当到达某个站点，它会立刻将当前时间加 1，然后随机打乱该站点所有子站点的访问顺序，并按照打乱后的顺序依次前往每个子站点。对每个站点 i，公交车到达 i 的时刻是一个随机变量，记其期望值为 E[i]。\n\n现在，公交公司希望调整线路，使得每个站点 i 的期望到达时间恰好等于给定的目标值 t_i（允许绝对误差不超过 1e-6）。调整的方式是进行“改线”操作：一次操作可以选择某个非起点的站点 v，并将其父站点改为另一个站点 p。要求 p 不能等于 v 且 p 不能位于 v 的子树中，操作后整体仍然形成一棵以 1 为根的树。\n\n你需要求出最少的操作次数，并输出一种具体的操作方案。如果无论如何也无法达到目标，则输出 -1。",
+    "input_format": "第一行一个整数 n (1 ≤ n ≤ 100000)，表示站点数量。\n第二行 n-1 个整数 p2, p3, ..., pn (1 ≤ pi < n)，pi 表示初始树中站点 i 的父站点（保证构成一棵以 1 为根的树）。\n第三行 n 个浮点数 t1, t2, ..., tn，表示每个站点的目标期望到达时间。",
+    "output_format": "若无法通过有限次操作达到目标期望，则输出一行 -1。\n否则，第一行输出一个整数 k，表示最少操作次数。\n接下来 k 行，每行输出两个整数 v 和 p，表示一次操作：将站点 v 的父站点改为 p。若存在多种可行方案，输出任意一种。",
+    "constraints": [
+      "1 ≤ n ≤ 100000",
+      "时间限制：2 秒",
+      "空间限制：256 MB",
+      "输入的树保证以 1 为根，且每条边连接两个不同站点",
+      "t_i 为实数，可能为任意值；若 t_1 != 1.0，则一定无解（因为 E[1] 恒为 1）",
+      "答案允许绝对误差不超过 1e-6",
+      "操作次数 k 必须为全局最小值，且操作序列在过程合法性条件内可以任意顺序输出"
+    ],
+    "samples": [
+      {
+        "input": "3\n1 2\n1.0 3.0 3.0",
+        "output": "-1",
+        "explanation": "初始线路为链：1-2-3。根期望 E[1]=1，E[2]=2，E[3]=2.5。目标期望 [1,3,3] 无法通过任何合法操作达到。"
+      },
+      {
+        "input": "3\n1 1\n1.0 2.0 2.5",
+        "output": "1\n3 2",
+        "explanation": "初始线路为星型：1-2 和 1-3。当前期望 E = [1, 3, 3]。目标期望为 [1, 2, 2.5]。只需将站点 3 的父站点改为 2，线路变为链 1-2-3，期望值恰好变为目标。操作次数为 1，已是最少。"
+      }
+    ],
+    "notes": "对于期望值的计算，函数关系满足：E[1]=1，对任意非根站点 v，E[v] = E[parent(v)] + 1 + (sum_{u 与 v 同父} size(u) - size(v)) / 2，其中 size(w) 表示以 w 为根的子树中的站点总数。该关系在任意合法操作后依然保持。若 t_1 不等于 1.0，则可直接输出 -1。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_e41b78710a22_urban_commute_20260609_220603",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

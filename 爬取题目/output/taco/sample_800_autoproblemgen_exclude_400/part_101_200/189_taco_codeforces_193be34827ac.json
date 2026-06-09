@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_193be34827ac",
+  "title": "E",
+  "description": "Let's denote d(n) as the number of divisors of a positive integer n. You are given three integers a, b and c. Your task is to calculate the following sum:\n\n<image>\n\nFind the sum modulo 1073741824 (230).\n\nInput\n\nThe first line contains three space-separated integers a, b and c (1 ≤ a, b, c ≤ 2000).\n\nOutput\n\nPrint a single integer — the required sum modulo 1073741824 (230).\n\nExamples\n\nInput\n\n2 2 2\n\n\nOutput\n\n20\n\n\nInput\n\n4 4 4\n\n\nOutput\n\n328\n\n\nInput\n\n10 10 10\n\n\nOutput\n\n11536\n\nNote\n\nFor the first example.\n\n  * d(1·1·1) = d(1) = 1; \n  * d(1·1·2) = d(2) = 2; \n  * d(1·2·1) = d(2) = 2; \n  * d(1·2·2) = d(4) = 3; \n  * d(2·1·1) = d(2) = 2; \n  * d(2·1·2) = d(4) = 3; \n  * d(2·2·1) = d(4) = 3; \n  * d(2·2·2) = d(8) = 4. \n\n\n\nSo the result is 1 + 2 + 2 + 3 + 2 + 3 + 3 + 4 = 20.",
+  "input": "The first line contains three space-separated integers a, b and c (1 ≤ a, b, c ≤ 2000).",
+  "output": "Print a single integer — the required sum modulo 1073741824 (230).",
+  "constraints": "time limit: 3.0 seconds\nmemory limit: 512.0 megabytes",
+  "source": "codeforces",
+  "standard_solution_code": "primes = []\nd = {}\nfor i in range(2, 100):\n\tif i not in d:\n\t\tprimes.append(i)\n\t\tj = 2\n\t\twhile i * j < 100:\n\t\t\td[i * j] = 1\n\t\t\tj += 1\n\ndef solve(x, y, z):\n\td = {}\n\tfor p in primes:\n\t\td[p] = 0\n\tfor p in primes:\n\t\tif p > x and p > y and (p > z):\n\t\t\tbreak\n\t\twhile x % p == 0:\n\t\t\tx /= p\n\t\t\td[p] += 1\n\t\twhile y % p == 0:\n\t\t\ty /= p\n\t\t\td[p] += 1\n\t\twhile z % p == 0:\n\t\t\tz /= p\n\t\t\td[p] += 1\n\tans = 1\n\tfor p in primes:\n\t\tans *= d[p] + 1\n\treturn ans\n(a, b, c) = map(int, input().split(' '))\nans = 0\nseen = {}\nfor i in range(1, a + 1):\n\tfor j in range(1, b + 1):\n\t\tfor k in range(1, c + 1):\n\t\t\tp = i * j * k\n\t\t\tif p in seen:\n\t\t\t\tans = (ans + seen[p]) % 1073741824\n\t\t\telse:\n\t\t\t\ttemp = solve(i, j, k)\n\t\t\t\tans = (ans + temp) % 1073741824\n\t\t\t\tseen[p] = temp\nprint(ans)"
+}

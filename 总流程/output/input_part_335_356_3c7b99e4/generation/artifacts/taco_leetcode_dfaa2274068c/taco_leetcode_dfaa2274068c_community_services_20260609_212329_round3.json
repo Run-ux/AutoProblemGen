@@ -1,0 +1,1144 @@
+{
+  "problem_id": "community_harmony_design",
+  "source_problem_ids": [
+    "taco_leetcode_dfaa2274068c"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_leetcode_dfaa2274068c",
+      "number of squareful arrays",
+      "leetcode",
+      "Given an array A of non-negative integers, the array is squareful if for every pair of adjacent elements, their sum is a perfect square. Return the number of permutations of A that are squareful. Two permutations A1 a...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "为构建逆设计问题，输入增加目标 K；核心约束新增目标约束和修改操作；目标由计数变为最小化修改次数；不变量扩展为包括修改操作的合法性和最小性证明。",
+    "summary": "在原有和谐排列计数限制上，增加目标约束和修改操作，要求通过最少次数修改达成指定数量的和谐排列。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.5477,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.5477,
+    "axis_scores": {
+      "I": 0.2429,
+      "C": 0.7095,
+      "O": 0.5122,
+      "V": 0.7305
+    },
+    "components": {
+      "input_tree_distance": 0.2429,
+      "constraint_match_distance": 0.7095,
+      "objective_type_distance": 0.5664,
+      "objective_text_distance": 0.4308,
+      "invariant_match_distance": 0.7305
+    }
+  },
+  "changed_axes_realized": [
+    "I",
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "求最少修改次数，使得修改后数组的和谐排列数量等于 K。如果不可能，输出 -1。",
+    "target": "minimum_operations",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "种子题是计数问题，可以自然定义目标K并转化为最小修改反向设计，符合规则 eligibility；construct_or_obstruction 要求输出方案或局部冲突证据，但原题总是有解（计数结果），无法稳定生成‘做不到’的证据，且反向设计能带来更深刻的求解方向转变，是唯一可行且创新度高的选项。；创新度判断：将正向计数翻转为目标驱动的最小修改设计，核心义务从‘统计所有可行排列’变为‘最小修改使计数恰好为K’，原相邻平方和约束不变，但求解方向逆转，引入目标绑定、修改操作空间与最小性证明，显著拉离原题任务。；难度判断：最小性责任要求算法在指数级排列空间中论证不能以更少修改达成目标，增加了优化维度和下界证明负担，比单纯计数更难。；风险判断：主要风险是目标K可能退化为原题（如K=原计数）导致题面浅改；但通过 strong helpers (target_result_binding, minimality_or_certificate_lock) 可压实新责任，且 revision_context 已暴露样例矛盾需修正，只要重新设计样例即可控制风险。",
+  "new_schema_snapshot": {
+    "problem_id": "community_harmony_design",
+    "source": "extension",
+    "input_structure": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "n",
+          "type": "integer",
+          "range": "[1,12]",
+          "description": "居民数量（数组长度）。"
+        },
+        {
+          "name": "a",
+          "type": "array",
+          "element_type": "integer",
+          "range": "[0, 1000000000]",
+          "length": "n",
+          "description": "初始居民欢乐值数组。"
+        },
+        {
+          "name": "K",
+          "type": "integer",
+          "range": "[0, 479001600]",
+          "description": "目标和谐排列数量。"
+        }
+      ],
+      "description": "输入包含三行：第一行 n，第二行 n 个整数 a_i，第三行目标 K。",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {}
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "harmony_definition",
+          "description": "一个排列是和谐的当且仅当任意相邻元素之和为完全平方数。特别地，当 n=1 时，排列自动视为和谐。",
+          "formal": "For a permutation p of a, ∀i ∈ [1, n-1], p[i]+p[i+1] ∈ {k² | k ∈ ℤ}; if n=1, it's harmonious.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "permutation_counting",
+          "description": "和谐排列的计数方式：按值序列去重，即相同值的排列只计一次。",
+          "formal": "Distinct permutations are determined by the sequence of values; duplicate values are not counted multiple times.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "modification_operation",
+          "description": "允许的修改操作：一次操作可以选择一个位置 i，将 a[i] 改为任意非负整数 v ∈ [0, 1e9]。",
+          "formal": "Operation: choose i and v (0 ≤ v ≤ 1e9), set a[i] = v.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "target_constraint",
+          "description": "需要通过一系列修改使得最终数组的和谐排列数量恰好为 K。若不可能，输出 -1。",
+          "formal": "Let f(a) be the number of harmonious permutations of a. Goal: find min operations such that f(a') = K, or determine impossible.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "求最少修改次数，使得修改后数组的和谐排列数量等于 K。如果不可能，输出 -1。",
+      "target": "minimum_operations",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "modification_bounds",
+          "description": "每次修改后，a[i] 必须在 [0, 1e9] 内，且数组长度不变。",
+          "properties": {}
+        },
+        {
+          "name": "harmony_count_deterministic",
+          "description": "数组 a 的和谐排列数量由 DP 计算，与修改历史无关，仅由最终值决定。",
+          "properties": {}
+        },
+        {
+          "name": "minimality_proof",
+          "description": "算法必须证明找到的操作序列是达成目标 K 所需的最小修改次数。这可以通过穷举所有可能修改子集并验证可行性来保证。",
+          "properties": {}
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "原题使用回溯剪枝枚举所有排列，统计满足相邻和为完全平方数的排列数（值去重）。",
+    "reusable_subroutines": "计算给定数组的和谐排列数的函数（可以使用 DP 或 DFS 剪枝），去重逻辑，以及完全平方数判断。",
+    "new_solver_core": "新算法需在原有计数函数基础上，搜索修改方案。由于 n≤12，可以采用 BFS 或枚举修改子集（2^n 种），对于每个子集，枚举修改目标值集合并尝试（利用候选值集，候选值由所有可能的 k^2 - a[j] 产生）。使用 DP 计算每次修改后的和谐排列数，寻找最小修改次数。可采用分支限界或 A* 加速。",
+    "new_proof_obligation": "必须证明算法穷举了所有可能的修改序列（在值域限制下）并找到了最小者；需要证明候选值集合的充分性，即任何最优解中修改的值必然属于该候选集合。此外需证明 DP 计数正确，以及当 K 不可达时能正确返回 -1。",
+    "why_direct_reuse_fails": "原题只解决单次计数，逆设计需要反复评估修改后数组的排列数，且需搜索最优修改，直接复用无法处理最小性搜索和反向目标 K。"
+  },
+  "anti_shallow_rationale": "不是简单将原问法改成‘能否达到 K 个排列’，而是引入了‘修改操作’这一新维度，并要求最小性证明，这迫使算法从单纯计数转向搜索在修改空间上的最优化，算法结构发生本质变化。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "将原题输出（排列数）直接绑定为新题要达成的目标 K，实现正向到反向的翻转。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 新增 target_constraint 要求 f(a') = K",
+        "objective 由计数变为最小化修改次数以达成 K"
+      ],
+      "innovation_reason": "使问题从‘计算多少’变为‘如何设计达到指定数量’，引入目标驱动的设计任务。",
+      "difficulty_reason": "要求算法围绕目标约束搜索可行的修改方案，增加了搜索和验证难度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "定义修改操作，将反向设计落实到具体的元素值改变动作。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 新增 modification_operation 定义允许的修改",
+        "invariant 新增 modification_bounds 限制修改合法性"
+      ],
+      "innovation_reason": "为逆设计提供可操作的空间，使任务从描述性变为操作性。",
+      "difficulty_reason": "需要在巨大值域中定义可行的修改候选集，并证明操作集合覆盖最优解。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小修改次数，并承担最小性证明责任。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确要求最小化修改次数",
+        "invariant 新增 minimality_proof 要求算法证明最小性"
+      ],
+      "innovation_reason": "答案不仅是可行方案，还必须是最优的，提升了问题的理论深度。",
+      "difficulty_reason": "算法必须能证明没有更少的修改方案，通常需要穷举或利用下界证明。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题解法已按字典序生成排列，要求输出规范解（如字典序最小）仅需提前终止，不改变核心状态转移或约束，新题规范性要求未对主要解法产生实质影响，不符合canonical_witness规则对差异深度的要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题标准解法使用排序后DFS回溯，过程自然产生字典序排列。若改为输出字典序最小合法排列，只需在首次计数时返回path，核心搜索逻辑不变。规则要求必须变化的轴C、O、V中，约束C（adjacent_sum_perfect_square）未变，目标O从计数变为输出排列但搜索过程无需调整，验证V可能增加但未影响算法设计。helper 'canonical_order_pressure' 要求规范顺序进入合法性或最优性定义，但原解法已内建字典序，无法驱动新的状态转移证明。",
+        "feedback": "该种子题性质过于简单，其标准解法已隐含规范的字典序构造，导致任何仅要求输出最小解或某一规范解的升级都沦为表面修改。若要实现有意义的规范性升级，需考虑更深刻的规范定义（如与图结构或全局最优性关联），但当前种子无法支撑。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "obstructable_local_certificate",
+      "selection_reason": "种子题的核心约束（相邻和为完全平方）天然导出图模型，无解可归结为图结构障碍（孤立点、度不足等），能够定义局部可检查的证据对象（如输出一个无法嵌入任何哈密顿路径的节点集合），且检查该证据只需验证该节点在原数组中的度数或连通性，与规则要求的‘局部冲突证据’严格对齐。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题 schema 中 core_constraints 要求相邻和为完全平方，这直接将数字对转换成图的边。无解时，如某个数字没有与任何其他数字的和为平方数（即度为0），可输出该数字作为证据；检查时只需重新计算该数字与其他所有数字的和，都非平方数即证毕。这满足规则中 required_seed_properties 的‘局部证据表示’和‘从输出直接检查’。此外，helper ‘obstruction_embedding’ 明确要求证据来自主约束内部，本例中主约束直接定义了证据结构，完全匹配。",
+        "feedback": "此种子题的无解情形具有较强的结构化证据潜力，建议在规划阶段进一步明确证据的格式（如最小冲突子集）和局部检查算法，确保不退化为一串自然语言说明。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题已经是计数题，不满足规则要求的'存在性或单一最优值'前提，变换缺乏语义升级基础。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective.type为'counting'，描述为'统计排列数量'，解空间有限，去重规则由permutation_identity_by_value和sorted_deduplication明确定义；规则handler='existence_to_counting'明确要求原题为存在性或单一最优值问题，现有计数结构与之冲突。",
+        "feedback": "该种子题不适合'存在性转计数'规则，如需产生变化，可考虑更大幅度的重定义（如更改计数对象或追加约束），但当前变换前提已不成立。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题要求统计满足完全平方和条件的排列数量，其核心约束（相邻和是完全平方）和输入均为确定值，没有任何关于顺序不确定、资源波动或局部选择差异的语义。强行引入的扰动模型只能来自故事背景，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 adjacent_sum_perfect_square 是确定性的：给定两个元素，其和是否为完全平方是确定的。种子题的输入是一个固定数组，没有‘合法顺序’之外的不确定性，也没有提及资源波动或局部选择差异。全局红线禁止‘只能靠故事背景硬造对手’。",
+        "feedback": "该种子题不存在可被放大的原生扰动来源，因此不适合应用 minimum_guarantee_under_perturbation 规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_threshold",
+      "selection_reason": "原题是计数问题（number of squareful arrays），不是可行性判定，缺少随参数单调变化的可行性结构，无法自然升级为临界阈值优化题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 counting，描述为统计满足相邻元素之和为完全平方数的排列数量，没有定义任何可行性判定（core_constraints 只有排列约束和去重），也不存在参数控制可行性的单调分层。",
+        "feedback": "该种子题缺少自然阈值参数，强行扩展只会在外层机械二分而不改变主约束，建议选择具有明确可行性且该可行性随某参数单调变化的问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_optimization_objective",
+      "selection_reason": "原题本质是计数问题，只统计满足平方条件的排列数量，不存在可优化的单目标，无法定义与之真实冲突的第二评价指标，不满足规则要求的必要种子属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为 'counting'，描述为 '返回 squareful 排列的数量'，输入输出不涉及任何优化目标或自然派生的权衡指标；核心约束仅 one primary condition (相邻和为平方数)，无其他可冲突的维度。",
+        "feedback": "规则依赖单目标最优题，本种子题为纯计数，即使强行引入第二个指标也容易退化成独立子任务或无关统计，建议更换种子或选择其他变换规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "EG_semantic_target_bindable",
+      "selection_reason": "原题示例中的具体 squareful 排列（如 [1,8,17]）可直接作为反向目标，且对输入数组的元素修改操作与核心平方和约束自然关联，改动方向符合反向设计的最小修改范式。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 中 core_constraints 的 adjacent_sum_perfect_square 直接约束排列合法性；original_problem 的示例输出包含具体排列序列，满足 required_seed_properties 中“原题输出或性质可以作为反向目标被指定”；修改输入数组元素值会影响平方和性质，存在 natural edit operation，符合“存在自然的修改操作或设计自由度”。",
+        "feedback": "原题结果为计数而非具体构造，但借助测试用例可提取具体目标实例，过渡自然。需注意不能将反向目标简单设为“计数大于某个值”而失去设计深度；建议目标锁定为具体序列并引入最小操作代价。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "Squareful Arrays 问题本质上是一个全局排列约束计数，不存在可独立处理的局部单元。原题约束通过相邻元素和的完全平方条件将所有位置强耦合，回溯解法也必须维护全局路径状态，无法分解为独立子任务。规则要求的“可分解的局部单元”在种子题中不成立，强行套用会导致语义错误变换。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 core_constraints 仅有一个全局相邻和约束，无任何独立子单元或可并行处理的组件描述。invariant 提及的 sorted_deduplication 仍服务于全局排列构造，不是局部独立性。原题摘要明确为“every pair of adjacent elements, their sum is a perfect square”，整个问题天然耦合。",
+        "feedback": "此规则需要种子题包含多个可独立求解的单元（如多个区间、并行查询），再通过共享资源产生耦合。本题是单序列排列构造，不适合引入该规则，建议寻找具有自然分治结构的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_natural_operations",
+      "selection_reason": "原题是纯排列计数，没有可供双方轮流选择的自然操作，无法在不硬造故事背景的情况下转化为对抗博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 counting，输入为静态数组，core_constraints 仅定义相邻和平方数条件，无一涉及选择、拿取或状态转移的操作语义；规则 required_seed_properties 要求存在可轮流选择、拿取、移动或改变状态的自然操作，原题不满足。",
+        "feedback": "规则要求原题存在可转化为双方轮流决策的自然操作（如取物、移动棋子），而该种子题为计数问题，强行改为博弈将完全脱离原核心规律，落入全局红线“只换故事背景”或“跟原核心规律无关的额外约束”。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题的核心是计算满足相邻平方条件的排列数量，问题结构仅限于单个排列的局部约束验证，不存在需要同时处理或覆盖的多个局部对象族，强制扩展为覆盖或割问题将引入与核心无关的约束，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中core_constraints仅包含adjacent_sum_perfect_square，作用在单个排列的相邻元素对上；objective为counting，统计满足条件的排列个数。并无任何对象族、覆盖关系或多对象联动的语义。规则要求的局部对象族无法从原结构中自然导出。",
+        "feedback": "原题缺乏可组合的局部对象族，不建议强行改造为覆盖/割问题，可考虑其他扩展方向如引入区间约束或多个排列间的条件传递。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_weight_or_statistic",
+      "selection_reason": "原题仅统计满足相邻元素和为完全平方数的排列总数，排列对象上并未定义或暗示任何自然权重、等级或统计量，不符合规则要求的“计数对象上存在自然权重、等级或统计量”。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为“Return the number of permutations of A that are squareful”，输出是单一整数，无任何权重或分类需求；规则 eligibility.required_seed_properties 明确规定“计数对象上存在自然权重、等级或统计量”，否则不应接入。",
+        "feedback": "该种子题缺少内在的加权或分布属性，强行附加统计量将属于规则禁止的“硬造”，建议寻找自带代价、频次或分层属性的计数题。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题解法已按字典序生成排列，要求输出规范解（如字典序最小）仅需提前终止，不改变核心状态转移或约束，新题规范性要求未对主要解法产生实质影响，不符合canonical_witness规则对差异深度的要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题标准解法使用排序后DFS回溯，过程自然产生字典序排列。若改为输出字典序最小合法排列，只需在首次计数时返回path，核心搜索逻辑不变。规则要求必须变化的轴C、O、V中，约束C（adjacent_sum_perfect_square）未变，目标O从计数变为输出排列但搜索过程无需调整，验证V可能增加但未影响算法设计。helper 'canonical_order_pressure' 要求规范顺序进入合法性或最优性定义，但原解法已内建字典序，无法驱动新的状态转移证明。",
+        "feedback": "该种子题性质过于简单，其标准解法已隐含规范的字典序构造，导致任何仅要求输出最小解或某一规范解的升级都沦为表面修改。若要实现有意义的规范性升级，需考虑更深刻的规范定义（如与图结构或全局最优性关联），但当前种子无法支撑。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "obstructable_local_certificate",
+      "message": "种子题的核心约束（相邻和为完全平方）天然导出图模型，无解可归结为图结构障碍（孤立点、度不足等），能够定义局部可检查的证据对象（如输出一个无法嵌入任何哈密顿路径的节点集合），且检查该证据只需验证该节点在原数组中的度数或连通性，与规则要求的‘局部冲突证据’严格对齐。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题 schema 中 core_constraints 要求相邻和为完全平方，这直接将数字对转换成图的边。无解时，如某个数字没有与任何其他数字的和为平方数（即度为0），可输出该数字作为证据；检查时只需重新计算该数字与其他所有数字的和，都非平方数即证毕。这满足规则中 required_seed_properties 的‘局部证据表示’和‘从输出直接检查’。此外，helper ‘obstruction_embedding’ 明确要求证据来自主约束内部，本例中主约束直接定义了证据结构，完全匹配。",
+        "feedback": "此种子题的无解情形具有较强的结构化证据潜力，建议在规划阶段进一步明确证据的格式（如最小冲突子集）和局部检查算法，确保不退化为一串自然语言说明。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题已经是计数题，不满足规则要求的'存在性或单一最优值'前提，变换缺乏语义升级基础。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective.type为'counting'，描述为'统计排列数量'，解空间有限，去重规则由permutation_identity_by_value和sorted_deduplication明确定义；规则handler='existence_to_counting'明确要求原题为存在性或单一最优值问题，现有计数结构与之冲突。",
+        "feedback": "该种子题不适合'存在性转计数'规则，如需产生变化，可考虑更大幅度的重定义（如更改计数对象或追加约束），但当前变换前提已不成立。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题要求统计满足完全平方和条件的排列数量，其核心约束（相邻和是完全平方）和输入均为确定值，没有任何关于顺序不确定、资源波动或局部选择差异的语义。强行引入的扰动模型只能来自故事背景，违反红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 adjacent_sum_perfect_square 是确定性的：给定两个元素，其和是否为完全平方是确定的。种子题的输入是一个固定数组，没有‘合法顺序’之外的不确定性，也没有提及资源波动或局部选择差异。全局红线禁止‘只能靠故事背景硬造对手’。",
+        "feedback": "该种子题不存在可被放大的原生扰动来源，因此不适合应用 minimum_guarantee_under_perturbation 规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold",
+      "message": "原题是计数问题（number of squareful arrays），不是可行性判定，缺少随参数单调变化的可行性结构，无法自然升级为临界阈值优化题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 counting，描述为统计满足相邻元素之和为完全平方数的排列数量，没有定义任何可行性判定（core_constraints 只有排列约束和去重），也不存在参数控制可行性的单调分层。",
+        "feedback": "该种子题缺少自然阈值参数，强行扩展只会在外层机械二分而不改变主约束，建议选择具有明确可行性且该可行性随某参数单调变化的问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_optimization_objective",
+      "message": "原题本质是计数问题，只统计满足平方条件的排列数量，不存在可优化的单目标，无法定义与之真实冲突的第二评价指标，不满足规则要求的必要种子属性。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标类型为 'counting'，描述为 '返回 squareful 排列的数量'，输入输出不涉及任何优化目标或自然派生的权衡指标；核心约束仅 one primary condition (相邻和为平方数)，无其他可冲突的维度。",
+        "feedback": "规则依赖单目标最优题，本种子题为纯计数，即使强行引入第二个指标也容易退化成独立子任务或无关统计，建议更换种子或选择其他变换规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "EG_semantic_target_bindable",
+      "message": "原题示例中的具体 squareful 排列（如 [1,8,17]）可直接作为反向目标，且对输入数组的元素修改操作与核心平方和约束自然关联，改动方向符合反向设计的最小修改范式。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.87,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 中 core_constraints 的 adjacent_sum_perfect_square 直接约束排列合法性；original_problem 的示例输出包含具体排列序列，满足 required_seed_properties 中“原题输出或性质可以作为反向目标被指定”；修改输入数组元素值会影响平方和性质，存在 natural edit operation，符合“存在自然的修改操作或设计自由度”。",
+        "feedback": "原题结果为计数而非具体构造，但借助测试用例可提取具体目标实例，过渡自然。需注意不能将反向目标简单设为“计数大于某个值”而失去设计深度；建议目标锁定为具体序列并引入最小操作代价。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "Squareful Arrays 问题本质上是一个全局排列约束计数，不存在可独立处理的局部单元。原题约束通过相邻元素和的完全平方条件将所有位置强耦合，回溯解法也必须维护全局路径状态，无法分解为独立子任务。规则要求的“可分解的局部单元”在种子题中不成立，强行套用会导致语义错误变换。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 core_constraints 仅有一个全局相邻和约束，无任何独立子单元或可并行处理的组件描述。invariant 提及的 sorted_deduplication 仍服务于全局排列构造，不是局部独立性。原题摘要明确为“every pair of adjacent elements, their sum is a perfect square”，整个问题天然耦合。",
+        "feedback": "此规则需要种子题包含多个可独立求解的单元（如多个区间、并行查询），再通过共享资源产生耦合。本题是单序列排列构造，不适合引入该规则，建议寻找具有自然分治结构的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_operations",
+      "message": "原题是纯排列计数，没有可供双方轮流选择的自然操作，无法在不硬造故事背景的情况下转化为对抗博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为 counting，输入为静态数组，core_constraints 仅定义相邻和平方数条件，无一涉及选择、拿取或状态转移的操作语义；规则 required_seed_properties 要求存在可轮流选择、拿取、移动或改变状态的自然操作，原题不满足。",
+        "feedback": "规则要求原题存在可转化为双方轮流决策的自然操作（如取物、移动棋子），而该种子题为计数问题，强行改为博弈将完全脱离原核心规律，落入全局红线“只换故事背景”或“跟原核心规律无关的额外约束”。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题的核心是计算满足相邻平方条件的排列数量，问题结构仅限于单个排列的局部约束验证，不存在需要同时处理或覆盖的多个局部对象族，强制扩展为覆盖或割问题将引入与核心无关的约束，违反规则红线。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中core_constraints仅包含adjacent_sum_perfect_square，作用在单个排列的相邻元素对上；objective为counting，统计满足条件的排列个数。并无任何对象族、覆盖关系或多对象联动的语义。规则要求的局部对象族无法从原结构中自然导出。",
+        "feedback": "原题缺乏可组合的局部对象族，不建议强行改造为覆盖/割问题，可考虑其他扩展方向如引入区间约束或多个排列间的条件传递。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_natural_weight_or_statistic",
+      "message": "原题仅统计满足相邻元素和为完全平方数的排列总数，排列对象上并未定义或暗示任何自然权重、等级或统计量，不符合规则要求的“计数对象上存在自然权重、等级或统计量”。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为“Return the number of permutations of A that are squareful”，输出是单一整数，无任何权重或分类需求；规则 eligibility.required_seed_properties 明确规定“计数对象上存在自然权重、等级或统计量”，否则不应接入。",
+        "feedback": "该种子题缺少内在的加权或分布属性，强行附加统计量将属于规则禁止的“硬造”，建议寻找自带代价、频次或分层属性的计数题。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将正向计数题逆转为目标驱动的设计题：定义了目标结果、修改操作和最小性证明，所有 helpers（target_result_binding, edit_operation_contract, minimality_or_certificate_lock）均落实到 schema 变化中，且满足各自的 redlines。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "planner_payload 中 applied_helpers 逐一列出三个 helper 及其 schema 变更；new_schema 中 core_constraints 新增 target_constraint 与 modification_operation，objective 改为 minimization 并要求最少修改次数，invariant 新增 modification_bounds 和 minimality_proof；anti_shallow_rationale 指出引入修改操作与最小性证明使算法结构本质变化；这些都是规则专属合同的直接证据。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized",
+      "message": "题面明确将原题排列计数结果绑定为目标K，定义了修改数组元素的操作，并要求输出最少修改次数，完整兑现了反向设计规则的核心语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：“管理员可以执行修改操作：每次选择一个位置，将该位置上的欢乐值改为任意非负整数…目标是使修改后的欢乐值数组恰好有 K 种不同的和谐排列…请你求出最少需要多少次修改操作”，以及样例解释展示了最小次数，notes补充了操作范围与不可达输出-1。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.87,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "I",
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "社区和谐设计",
+    "description": "社区中有 n 位居民，每位居民有一个非负整数欢乐值。社区管理员希望重新安排居民的欢乐值序列，使得一个排列被称为“和谐”的当且仅当排列中每相邻两位的欢乐值之和为完全平方数。注意，如果居民数量为 1，则该排列自动视为和谐。\n\n你不需要计算总共有多少种和谐排列，而是有一个目标数量 K。管理员可以执行修改操作：每次选择一个位置，将该位置上的欢乐值改为任意非负整数（范围 0 到 10^9）。目标是使修改后的欢乐值数组恰好有 K 种不同的和谐排列（按值序列判定是否相同，即两个排列若数值序列完全一致，则视为同一种）。\n\n请你求出最少需要多少次修改操作，如果无法通过任何修改达到目标 K，则输出 -1。",
+    "input_format": "第一行一个整数 n (1 ≤ n ≤ 12)，表示居民数量。\n第二行 n 个整数 a_1, a_2, ..., a_n (0 ≤ a_i ≤ 10^9)，表示初始欢乐值。\n第三行一个整数 K (0 ≤ K ≤ 479001600)，表示目标和谐排列数量。",
+    "output_format": "输出一个整数，表示最少修改操作次数，如果无法达成目标则输出 -1。",
+    "constraints": [
+      "1 ≤ n ≤ 12",
+      "0 ≤ a_i ≤ 10^9",
+      "0 ≤ K ≤ 479001600",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "1\n0\n1",
+        "output": "0",
+        "explanation": "只有一位居民，任何排列均视为和谐，因此初始和谐排列数为 1，等于目标 K，无需修改。"
+      },
+      {
+        "input": "2\n1 1\n1",
+        "output": "1",
+        "explanation": "初始数组 [1,1] 只有一种排列，但相邻和 1+1=2 不是完全平方数，和谐排列数为 0。将第二个数改为 0，得到 [1,0]，此时仅一种排列，且 1+0=1 为完全平方数，和谐排列数为 1，达到目标。最少修改次数为 1。"
+      },
+      {
+        "input": "2\n1 3\n2",
+        "output": "0",
+        "explanation": "初始数组 [1,3] 有两种不同的排列：[1,3] 和 [3,1]，相邻和均为 1+3=4 为完全平方数，故和谐排列数即为 2，已等于目标 K，无需修改。"
+      }
+    ],
+    "notes": "当 n=1 时，由于不存在相邻对，该排列自动视为和谐，且和谐排列数为 1（仅有一种排列）。\n排列按值序列区分：若两个排列在每一个位置上的数值都相同，则认为它们是同一种排列，不计为多次。\n完全平方数指可以表示为某个整数的平方的数，例如 0, 1, 4, 9, 16 等。\n如果无论如何修改都无法得到恰好 K 种和谐排列，则输出 -1。\n修改操作可以任意选择位置和值，但值必须保持在 [0, 10^9] 范围内。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_leetcode_dfaa2274068c_community_services_20260609_212329",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_leetcode_dfaa2274068c\\taco_leetcode_dfaa2274068c_community_services_20260609_212329_round2.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\reports\\taco_leetcode_dfaa2274068c\\taco_leetcode_dfaa2274068c_community_services_20260609_212329_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 2,
+      "overall_status": "revise_quality",
+      "generated_status": "ok",
+      "quality_score": 68.0,
+      "divergence_score": 77.5,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例 2 解释与和谐排列定义矛盾",
+          "detail": "样例 2 输入为 1 1，解释称‘初始编号 [1,1] 只有一种和谐排列’，但按照题目定义，相邻和必须为完全平方数，1+1=2 不是平方数，因此该排列不和谐，实际和谐排列数为 0。解释错误导致与 description 严重冲突。",
+          "evidence_refs": [
+            "generated_problem.samples[1].explanation",
+            "generated_problem.description"
+          ],
+          "fix_hint": "将解释修改为‘初始编号 [1,1] 的排列不满足相邻和为完全平方数的条件，和谐排列数为 0’，并相应调整后续说明以保持逻辑连贯。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例 2 解释中排列计数错误",
+          "detail": "对于数组 [1,8]，根据 notes 中排列不同的定义，应有 [1,8] 和 [8,1] 两个不同的排列，且均满足相邻和为完全平方数，因此初始和谐排列数应为 2，而非解释中的 1。该错误导致样例与规则矛盾，并使样例输出 1 的推导路径失效。",
+          "evidence_refs": [
+            "generated_problem.samples[1].input",
+            "generated_problem.samples[1].explanation",
+            "generated_problem.notes"
+          ],
+          "fix_hint": "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。"
+        }
+      ],
+      "suggested_revisions": [
+        "将解释修改为‘初始编号 [1,1] 的排列不满足相邻和为完全平方数的条件，和谐排列数为 0’，并相应调整后续说明以保持逻辑连贯。",
+        "紧急修复样例 2 的解释，确保与和谐排列定义严格一致，消除理解误导。",
+        "可考虑增加一个 n 较大或需要修改多个元素的样例，以更充分展示解题中可能遇到的分支情况。",
+        "在 notes 中明确 n=1 的特殊处理（无相邻对，排列自动视为和谐），避免仅依赖样例推断。",
+        "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。",
+        "修正样例 2 的解释，使其与排列计数规则一致，可考虑更换数组或调整目标值以简化示例。",
+        "增加一个 n=1 或重复元素较多的样例，以覆盖边界和去重逻辑。",
+        "在 notes 中更正式地定义排列不同性的判定依据（如引用位置上的值），目前 notes 已有类似说明，可加强呼应。"
+      ],
+      "strengths_to_keep": [
+        "题目变体实现准确：将原正向计数问题转化为带目标 K 的最小修改反向设计，核心约束和目标定义清晰落地。",
+        "社区主题包装自然，关键词（居民、和谐排列）贴合映射提示，且无明显题源泄露。",
+        "输入输出格式简洁明了，约束完整，n≤12 的设定暗示了指数级搜索空间，符合难度预期。",
+        "家庭收纳主题映射自然，物品标签与完全平方数的结合不突兀。",
+        "任务描述完整，包含所有关键约束和边界说明（如 n=1 的特殊处理）。",
+        "目标驱动明确，最小操作次数与不可行标记符合常见 OJ 优化题习惯。",
+        "样例 1 简洁且解释清晰，能帮助理解基本规则。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 63.0,
+            "divergence_score": 71.1,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例 2 解释与和谐排列定义矛盾",
+                "detail": "样例 2 输入为 1 1，解释称‘初始编号 [1,1] 只有一种和谐排列’，但按照题目定义，相邻和必须为完全平方数，1+1=2 不是平方数，因此该排列不和谐，实际和谐排列数为 0。解释错误导致与 description 严重冲突。",
+                "evidence_refs": [
+                  "generated_problem.samples[1].explanation",
+                  "generated_problem.description"
+                ],
+                "fix_hint": "将解释修改为‘初始编号 [1,1] 的排列不满足相邻和为完全平方数的条件，和谐排列数为 0’，并相应调整后续说明以保持逻辑连贯。"
+              }
+            ],
+            "suggested_revisions": [
+              "将解释修改为‘初始编号 [1,1] 的排列不满足相邻和为完全平方数的条件，和谐排列数为 0’，并相应调整后续说明以保持逻辑连贯。",
+              "紧急修复样例 2 的解释，确保与和谐排列定义严格一致，消除理解误导。",
+              "可考虑增加一个 n 较大或需要修改多个元素的样例，以更充分展示解题中可能遇到的分支情况。",
+              "在 notes 中明确 n=1 的特殊处理（无相邻对，排列自动视为和谐），避免仅依赖样例推断。"
+            ],
+            "strengths_to_keep": [
+              "题目变体实现准确：将原正向计数问题转化为带目标 K 的最小修改反向设计，核心约束和目标定义清晰落地。",
+              "社区主题包装自然，关键词（居民、和谐排列）贴合映射提示，且无明显题源泄露。",
+              "输入输出格式简洁明了，约束完整，n≤12 的设定暗示了指数级搜索空间，符合难度预期。"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 68.0,
+            "divergence_score": 77.5,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例 2 解释中排列计数错误",
+                "detail": "对于数组 [1,8]，根据 notes 中排列不同的定义，应有 [1,8] 和 [8,1] 两个不同的排列，且均满足相邻和为完全平方数，因此初始和谐排列数应为 2，而非解释中的 1。该错误导致样例与规则矛盾，并使样例输出 1 的推导路径失效。",
+                "evidence_refs": [
+                  "generated_problem.samples[1].input",
+                  "generated_problem.samples[1].explanation",
+                  "generated_problem.notes"
+                ],
+                "fix_hint": "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。"
+              }
+            ],
+            "suggested_revisions": [
+              "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。",
+              "修正样例 2 的解释，使其与排列计数规则一致，可考虑更换数组或调整目标值以简化示例。",
+              "增加一个 n=1 或重复元素较多的样例，以覆盖边界和去重逻辑。",
+              "在 notes 中更正式地定义排列不同性的判定依据（如引用位置上的值），目前 notes 已有类似说明，可加强呼应。"
+            ],
+            "strengths_to_keep": [
+              "家庭收纳主题映射自然，物品标签与完全平方数的结合不突兀。",
+              "任务描述完整，包含所有关键约束和边界说明（如 n=1 的特殊处理）。",
+              "目标驱动明确，最小操作次数与不可行标记符合常见 OJ 优化题习惯。",
+              "样例 1 简洁且解释清晰，能帮助理解基本规则。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "revise_quality",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 68.0,
+        "latest_divergence_score": 77.5,
+        "suggested_revisions": [
+          "将解释修改为‘初始编号 [1,1] 的排列不满足相邻和为完全平方数的条件，和谐排列数为 0’，并相应调整后续说明以保持逻辑连贯。",
+          "紧急修复样例 2 的解释，确保与和谐排列定义严格一致，消除理解误导。",
+          "可考虑增加一个 n 较大或需要修改多个元素的样例，以更充分展示解题中可能遇到的分支情况。",
+          "在 notes 中明确 n=1 的特殊处理（无相邻对，排列自动视为和谐），避免仅依赖样例推断。",
+          "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。",
+          "修正样例 2 的解释，使其与排列计数规则一致，可考虑更换数组或调整目标值以简化示例。",
+          "增加一个 n=1 或重复元素较多的样例，以覆盖边界和去重逻辑。",
+          "在 notes 中更正式地定义排列不同性的判定依据（如引用位置上的值），目前 notes 已有类似说明，可加强呼应。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例 2 解释与和谐排列定义矛盾",
+            "detail": "样例 2 输入为 1 1，解释称‘初始编号 [1,1] 只有一种和谐排列’，但按照题目定义，相邻和必须为完全平方数，1+1=2 不是平方数，因此该排列不和谐，实际和谐排列数为 0。解释错误导致与 description 严重冲突。",
+            "evidence_refs": [
+              "generated_problem.samples[1].explanation",
+              "generated_problem.description"
+            ],
+            "fix_hint": "将解释修改为‘初始编号 [1,1] 的排列不满足相邻和为完全平方数的条件，和谐排列数为 0’，并相应调整后续说明以保持逻辑连贯。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例 2 解释中排列计数错误",
+            "detail": "对于数组 [1,8]，根据 notes 中排列不同的定义，应有 [1,8] 和 [8,1] 两个不同的排列，且均满足相邻和为完全平方数，因此初始和谐排列数应为 2，而非解释中的 1。该错误导致样例与规则矛盾，并使样例输出 1 的推导路径失效。",
+            "evidence_refs": [
+              "generated_problem.samples[1].input",
+              "generated_problem.samples[1].explanation",
+              "generated_problem.notes"
+            ],
+            "fix_hint": "修正样例 2 的输入或目标 K 使其匹配修改方案，或调整解释：例如说明初始和谐排列数实际为 2，需要修改一个元素使和谐排列数降为 0，并给出正确的修改示例（如将 1 改为 2 后数组变为 [2,8]，无和谐排列），同时确保解释与排列定义一致。"
+          }
+        ],
+        "strengths_to_keep": [
+          "题目变体实现准确：将原正向计数问题转化为带目标 K 的最小修改反向设计，核心约束和目标定义清晰落地。",
+          "社区主题包装自然，关键词（居民、和谐排列）贴合映射提示，且无明显题源泄露。",
+          "输入输出格式简洁明了，约束完整，n≤12 的设定暗示了指数级搜索空间，符合难度预期。",
+          "家庭收纳主题映射自然，物品标签与完全平方数的结合不突兀。",
+          "任务描述完整，包含所有关键约束和边界说明（如 n=1 的特殊处理）。",
+          "目标驱动明确，最小操作次数与不可行标记符合常见 OJ 优化题习惯。",
+          "样例 1 简洁且解释清晰，能帮助理解基本规则。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

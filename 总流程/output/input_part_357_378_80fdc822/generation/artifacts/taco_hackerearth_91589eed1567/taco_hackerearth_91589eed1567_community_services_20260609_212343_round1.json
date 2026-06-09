@@ -1,0 +1,950 @@
+{
+  "problem_id": "proj_inv_design_temples_move",
+  "source_problem_ids": [
+    "taco_hackerearth_91589eed1567"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_hackerearth_91589eed1567",
+      "the-enlightened-ones",
+      "hackerearth",
+      "There are N temples in a straight line and K monks who want to spread their enlightening power to the entire road of temples. All the monks have an enlightenment value, which denotes the range of enlightenment which t...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "输入增加固定半径 R，且整体结构从 tuple 组合改为具名对象，使约束更独立（I）；核心约束新增固定 enlightenment 与移动操作（C）；目标从最小半径转为最小移动次数并输出新方案（O）；不变量新增移动等价性与最优子结构支撑最小性证明（V）。",
+    "summary": "原题：给定点集，求最小半径 R 使 K 个僧侣覆盖所有点。新题：给定半径 R，允许移动点，求最少移动次数使 K 个僧侣仍能覆盖，并输出移动后坐标。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4504,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4504,
+    "axis_scores": {
+      "I": 0.3199,
+      "C": 0.4356,
+      "O": 0.4175,
+      "V": 0.677
+    },
+    "components": {
+      "input_tree_distance": 0.3199,
+      "constraint_match_distance": 0.4356,
+      "objective_type_distance": 0.4249,
+      "objective_text_distance": 0.4063,
+      "invariant_match_distance": 0.677
+    }
+  },
+  "changed_axes_realized": [
+    "I",
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_and_construct",
+    "description": "最小化移动寺庙的次数，并输出移动后的寺庙位置方案（移动后的完整坐标列表）。",
+    "target": "minimum moves and resulting positions",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "inverse_design通过引入移动寺庙的操作，彻底颠覆原题的正向求解方向，要求最小化编辑代价，避免了后处理式反转，且创新空间远大于其它规则；canonical_witness可能只是线性增加输出规范解，tradeoff_frontier可能退化成参数扫描。；创新度判断：将核心义务从计算给定K的最小半径改成：给定目标半径和K，求最少移动寺庙坐标的总距离。这迫使从覆盖可行性问题转为输入编辑优化问题，核心约束全面从覆盖逻辑转为移动代价与覆盖的交互。；难度判断：主求解责任变为在移动代价下设计满足覆盖约束的新配置，需要协调多个寺庙的位移避免相互影响，可能涉及动态规划或图论建模，难度显著高于原二分贪心。；风险判断：可落地性风险：移动距离最小化可能在一般情形下难以高效解决，但可通过限制移动方向、整数坐标等条件确保有贪心或DP解法，且设计时需验证算法正确性。",
+  "new_schema_snapshot": {
+    "problem_id": "proj_inv_design_temples_move",
+    "source": "derived",
+    "input_structure": {
+      "type": "object",
+      "properties": {
+        "N": {
+          "type": "integer",
+          "description": "寺庙数量，1 ≤ N ≤ 10^5"
+        },
+        "K": {
+          "type": "integer",
+          "description": "僧侣数量，1 ≤ K < N"
+        },
+        "R": {
+          "type": "integer",
+          "description": "给定的 enlightenment 半径，1 ≤ R ≤ 10^7"
+        },
+        "positions": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000
+          },
+          "description": "N 座寺庙的整数位置"
+        }
+      },
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "fixed_enlightenment",
+          "description": "所有僧侣的 enlightenment 值（覆盖半径）固定为给定整数 R，不可改变。",
+          "formal": "r_j = R for all j=1..K"
+        },
+        {
+          "name": "num_monks",
+          "description": "恰好有 K 个僧侣可用，每个僧侣可放置在数轴上任一实数坐标。",
+          "formal": "|monks| = K, c_j ∈ ℝ"
+        },
+        {
+          "name": "move_operation",
+          "description": "允许将任意寺庙从其原始整数位置 p_i 移动到任意整数位置 p_i'，1 ≤ p_i' ≤ 10^7。每次移动代价为 1。",
+          "formal": "For each i, choose p_i' ∈ ℤ, 1 ≤ p_i' ≤ 1e7; cost = Σ [p_i' ≠ p_i]"
+        },
+        {
+          "name": "complete_coverage_after_moves",
+          "description": "移动后，所有寺庙的最终位置必须能被 K 个僧侣的半径为 R 的 enlightenment 范围完全覆盖。",
+          "formal": "∀i ∃j: |p_i' - c_j| ≤ R"
+        },
+        {
+          "name": "monks_less_than_temples",
+          "description": "僧侣数量严格少于寺庙数量，避免平凡零移动情况。",
+          "formal": "K < N"
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_and_construct",
+      "description": "最小化移动寺庙的次数，并输出移动后的寺庙位置方案（移动后的完整坐标列表）。",
+      "target": "minimum moves and resulting positions",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "feasibility_preservation",
+          "description": "若一组寺庙位置可被 K 个半径为 R 的僧侣覆盖，则将其扩展为同一覆盖区域内的任何超集仍可被覆盖。这保证移动进入已覆盖区域不会破坏可行性。",
+          "properties": {},
+          "evidence_source": "deduction"
+        },
+        {
+          "name": "greedy_min_monks",
+          "description": "对于任意点集 S，覆盖它们所需的最小僧侣数可由贪心算法得到：从左向右扫描，在 (第一个未覆盖点 + R) 处放置僧侣。该性质可用于可行性检验。",
+          "properties": {},
+          "evidence_source": "known"
+        },
+        {
+          "name": "move_equivalence",
+          "description": "最小移动次数等于 N 减去最大可保留点集的大小；未保留的点可统一移动到某个僧侣中心，每次代价 1。因此问题归约为求最大可保留子集。",
+          "properties": {},
+          "evidence_source": "deduction"
+        },
+        {
+          "name": "optimal_substructure",
+          "description": "在排序后的点上，一个可保留子集可划分为最多 K 个连续段，每段跨度 ≤ 2R。可利用动态规划按区间划分计算最大保留点数。",
+          "properties": {},
+          "evidence_source": "deduction"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "medium-hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "二分搜索最小半径 R，对每个候选 R 调用贪心检验 is_enlightenment_possible(positions, N, K, R) 判断是否可行。",
+    "reusable_subroutines": "贪心检验函数 is_enlightenment_possible 可直接复用，判定一个保留点集 S 是否可被 K 个半径为 R 的僧侣覆盖。",
+    "new_solver_core": "将问题转化为：选择最大子集 S，使得 is_enlightenment_possible(S, K, R) = true，最少移动次数 = N - |S|。求解 S 可对排序点进行动态规划：dp[i][k] 表示前 i 个点用 k 个区间最多覆盖点数，每个区间跨度 ≤ 2R。利用双指针预处理每个 i 的最左可达点，并通过前缀最大值或线段树优化转移，复杂度 O(NK) 可优化至 O(N log N) 或 O(N)。",
+    "new_proof_obligation": "证明最少移动次数 = N - 最大保留点数；证明贪心检验正确判定保留点集可行性；证明 DP 算法正确计算最大保留点集并满足区间划分的合法性；证明移动操作可统一将未保留点移至僧侣中心而保持覆盖。",
+    "why_direct_reuse_fails": "原题算法（二分 + 贪心检验）直接假设所有点必须覆盖且不可移动，无法处理选择性保留和移动代价优化。新题的优化目标要求从点集中选出最大可覆盖子集，这超出原题判定框架。"
+  },
+  "anti_shallow_rationale": "虽然原题贪心检验可作为子程序直接复用，但新题求解核心从二分半径变为最大保留点集优化，引入了全新的组合优化结构（区间覆盖 DP），输出从数值半径变为最小移动次数并附带构造证明，问题本质已翻转，绝非仅换背景或参数。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "将原题的结果最小半径绑定为新题的固定约束，从而实现逆向设计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "将问题从‘给定点集求最小半径’翻转为‘给定半径求最小修改点集’，带来从优化输出到优化输入的根本转变。",
+      "difficulty_reason": "引入组合覆盖优化，要求新算法处理选择性覆盖，增加问题难度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "定义修改操作集合——移动寺庙，将反向设计落实为具体操作。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "通过允许移动操作，将点集变为设计变量，从而将问题转化为优化输入，带来全新设计空间。",
+      "difficulty_reason": "要求算法不仅要决定移动哪些点，还要确保移动后整体覆盖，增加了状态空间复杂度。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "锁定输出为最小移动次数，并要求提供最小性证明或构造。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [],
+      "innovation_reason": "强制答案承担最小性责任，防止输出任意可行解，保证问题深度。",
+      "difficulty_reason": "需要证明算法解确实最小，可能涉及下界论证，增加理论难度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.77,
+      "reason_code": "sufficient_novelty_space",
+      "selection_reason": "原题只输出最小半径值，不要求输出覆盖方案；但方案空间存在且不唯一，可定义自然的字典序最小规范解。该规范要求无法通过原贪心可行性检查简单回溯得到，能够推动解法增加构造性证明，满足输出升级的差异性门槛。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示objective为最小化半径，输出为单个整数，未要求输出僧侣坐标。核心约束包含覆盖条件与K个僧侣限制，存在隐式解对象（坐标序列）。原题标准解法通过二分+贪心可行性检查，贪心过程中会构造一种可行方案，但任意回溯得到的方案不满足字典序最小规范。规则forbidden_seed_properties中“原解只要顺手回溯就能拿到方案”指的是任意方案，而规范解需特定顺序，故不触发该禁止项。方案序列按坐标排序具有自然顺序，可定义字典序规范，满足required_seed_properties。",
+        "feedback": "建议在差异规划中明确要求最小半径与字典序最小方案同时输出，并将字典序约束融入可行性验证逻辑，避免成为独立后处理步骤。强化输出方案的正确性校验，并确保规范要求导致主解法状态设计产生实质调整。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_failure_case",
+      "selection_reason": "种子题（the-enlightened-ones）总存在解（任何 K>=1 都能通过取足够大的半径覆盖所有寺庙），不存在无解情形，因此无法应用“做不到就输出冲突证据”的规则。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束：‘1 ≤ K < N’，但僧侣可放置在任意实数坐标，覆盖半径可任意大，故对于任何输入，总是存在一个足够大的 r 使得 K 个僧侣覆盖所有点，没有无解边缘。规则要求输出冲突证据仅对无解情形有意义。",
+        "feedback": "该规则要求种子题必须有无解分支，但本题始终有解，因此无法产生冲突证据输出。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "seed_space_infinite",
+      "selection_reason": "种子题僧侣可连续放置在实数坐标，对于给定的最优半径，存在无限多种放置方案，解空间天然无限，无法定义有限计数对象，不满足所需种子属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "schema中core_constraints明确声明\"Each monk can be placed at any real coordinate on the line\"（continuous_placement），且种子题未对僧侣位置施加离散化约束。这导致构造空间是连续无限集，与规则要求的'解空间有限'、'去重规则能说清楚'冲突。",
+        "feedback": "即使重新定义计数对象（如基于覆盖划分），原连续放置本质仍会引入等价类模糊性，且改动幅度已超出规则允许的单一辅助移动，不符合严格准入标准。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是确定性的最小覆盖半径问题，没有顺序不确定、资源波动或局部选择差异等原生扰动来源，无法定义语义内扰动模型，强行引入将违反“只能靠故事背景硬造对手”的禁止项。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints 中所有约束均为确定性要求（uniform_range, complete_coverage等），original_problem.description 未提及任何不确定性；invariant 中的 greedy_coverage_frontier 只是解法的内部选择，不是问题语义层面的扰动。",
+        "feedback": "该种子题缺乏可被放大的原生扰动来源，无法构造符合要求的保底优化，建议选择其他具有内在不确定性的种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.25,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题已是求最小启蒙半径的阈值优化题，目标为 minimize r，且通过单调性进行二分搜索，完全符合规则的产出形态。应用该规则无法产生实质差异，只会重复原题结构。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中的 objective.type 为 'minimize_value'，constraints 包含可行性随 r 的单调性，invariant 中明确写了 feasibility_monotonicity 和 greedy_coverage_frontier 用于二分验证。规则要求从判定升级为阈值，但种子已包含阈值优化全过程。",
+        "feedback": "规则适用于纯可行性判定问题，而该种子已处于优化形态。强行应用会导致新题与原题高重叠，不符合差异要求。建议寻找仅输出 Yes/No 且存在自然单调参数的种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_secondary_metric_exists",
+      "selection_reason": "原题最小化覆盖半径 r，和尚数量 K 是给定的输入，但二者在覆盖问题中天然冲突（减小 r 需要更多和尚，反之亦然），可自然扩展为双目标权衡或帕累托前沿查询，且不能由单次最优解后处理得到。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题目标：最小化能覆盖所有寺庙的 enlightenment 值 r，约束中固定 K 个和尚。若引入和尚数量作为第二指标，则‘更小的 r’与‘更少的和尚’不可兼得（若少用和尚则 r 需增大），形成真实冲突。原题描述中 K < N 已暗示了非平凡权衡。",
+        "feedback": "规则可直接应用于该种子，建议将 K 从固定输入变为可变参数，定义支配关系与前沿输出。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "valid_inverse_target_natural_modification",
+      "selection_reason": "原题输出为最小覆盖半径，可绑定为反向目标；存在自然的修改操作——增加僧侣数量，以提高覆盖能力满足目标半径；僧侣放置有连续自由度，保留了设计空间；增加僧侣与原核心覆盖机制直接相关，且可定义最小新增人数满足目标，实现反向设计。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题结果是最小半径值（详见objective: minimize_value of radius），可作为反向目标设定；core_constraints中K<N表明僧侣数量可变，且约束fixed_num_monks在反向中可以放宽；invariant中的feasibility_monotonicity支持在给定半径下对僧侣数量的单调验证；原题解法为二分半径加贪心验证，反向只需改变目标为新增僧侣数，仍用贪心验证，核心算法相同但目标翻转符合规则要求。",
+        "feedback": "反向设计合理，目标明确，操作自然，最小新增僧侣的求解与原题算法高度重合但方向不同，可作为种子题的有效延伸。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "原题是一个整体覆盖问题，所有僧侣共享同一范围 r，不存在可独立求解的局部单元，无法应用从独立组件到全局耦合的转换。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "根据 schema 和原题描述，约束 uniform_range 规定所有僧侣 enlightenment 值相同，complete_coverage 要求所有寺庙被覆盖，整个问题本身即为一个全局优化问题，没有可分解的局部独立单元。规则 eligibility 要求 “原题存在可分解的局部单元”，而本题缺失此属性。",
+        "feedback": "该规则要求种子题存在可独立处理的分量（如多个区间各自选点），但本题是一个统一的覆盖问题，所有变量已在全局层面耦合，不适合本规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.05,
+      "reason_code": "no_natural_adversarial_operations",
+      "selection_reason": "原题是单人的最小化覆盖半径优化问题，核心操作（贪心放置僧侣）顺序固定且无选择自由度，不存在可自然轮流选择、对抗化的操作空间。若强行改为双人博弈，对抗方只能靠故事背景硬造，违反规则红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最小化覆盖全部N个点的共同半径，使用K个僧侣，僧侣位置连续。解决方案为二分答案+贪心放置：按从左到右顺序，每次将僧侣放在当前未覆盖最左点+半径处。该过程无分支、无交替决策点，不满足规则 required_seed_properties 中“存在可轮流选择、拿取、移动或改变状态的自然操作”与“不同操作改变后续可选状态”。同时 forbidden_seed_properties 明确禁止“操作顺序固定且没有选择自由度”，原题完美匹配该禁止项。",
+        "feedback": "该规则要求种子题具备可自然的对抗化操作空间。本题为确定性单调覆盖过程，无法在不硬造玩家和对抗语义的前提下转化为博弈。建议寻找存在离散选择、组合游戏或资源争夺特征的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.12,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子问题本身已是一个全局覆盖问题（最小化半径以用K个区间覆盖全部点），不存在可扩展的单个局部路径/区间/子树等核心对象。应用本规则只会产生与原题高度相似的变体，无法形成实质性的语义升级。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题的 core_constraints 包含 complete_coverage（所有寺庙必须被僧侣覆盖）和 objective 为最小化覆盖半径，已完全体现全局覆盖语义；原问题描述中不存在可独立抽象的单路径或单区间作为求解对象。",
+        "feedback": "规则要求原题核心对象具有可供扩展的局部结构，但本种子题的寺庙位置仅为点集，核心求解对象即为覆盖方案本身。建议寻找以单条路径、单个区间或单个子树性质为核心的问题作为种子，再考虑扩展为覆盖/割/支配问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是优化问题（最小化覆盖半径），没有定义任何稳定的计数对象，无法应用带权计数扩展。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema.objective.type = 'minimize_value'，原题描述为求最小 enlightenment 值，不涉及计数任何方案或状态；schema.core_constraints 均为覆盖与单调性约束，无计数对象定义。",
+        "feedback": "该规则要求原题存在明确可计数的对象及自然权重/统计量，但本题本质是搜索与贪心问题，不计数。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "sufficient_novelty_space",
+      "message": "原题只输出最小半径值，不要求输出覆盖方案；但方案空间存在且不唯一，可定义自然的字典序最小规范解。该规范要求无法通过原贪心可行性检查简单回溯得到，能够推动解法增加构造性证明，满足输出升级的差异性门槛。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.77,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示objective为最小化半径，输出为单个整数，未要求输出僧侣坐标。核心约束包含覆盖条件与K个僧侣限制，存在隐式解对象（坐标序列）。原题标准解法通过二分+贪心可行性检查，贪心过程中会构造一种可行方案，但任意回溯得到的方案不满足字典序最小规范。规则forbidden_seed_properties中“原解只要顺手回溯就能拿到方案”指的是任意方案，而规范解需特定顺序，故不触发该禁止项。方案序列按坐标排序具有自然顺序，可定义字典序规范，满足required_seed_properties。",
+        "feedback": "建议在差异规划中明确要求最小半径与字典序最小方案同时输出，并将字典序约束融入可行性验证逻辑，避免成为独立后处理步骤。强化输出方案的正确性校验，并确保规范要求导致主解法状态设计产生实质调整。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_failure_case",
+      "message": "种子题（the-enlightened-ones）总存在解（任何 K>=1 都能通过取足够大的半径覆盖所有寺庙），不存在无解情形，因此无法应用“做不到就输出冲突证据”的规则。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束：‘1 ≤ K < N’，但僧侣可放置在任意实数坐标，覆盖半径可任意大，故对于任何输入，总是存在一个足够大的 r 使得 K 个僧侣覆盖所有点，没有无解边缘。规则要求输出冲突证据仅对无解情形有意义。",
+        "feedback": "该规则要求种子题必须有无解分支，但本题始终有解，因此无法产生冲突证据输出。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "seed_space_infinite",
+      "message": "种子题僧侣可连续放置在实数坐标，对于给定的最优半径，存在无限多种放置方案，解空间天然无限，无法定义有限计数对象，不满足所需种子属性。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "schema中core_constraints明确声明\"Each monk can be placed at any real coordinate on the line\"（continuous_placement），且种子题未对僧侣位置施加离散化约束。这导致构造空间是连续无限集，与规则要求的'解空间有限'、'去重规则能说清楚'冲突。",
+        "feedback": "即使重新定义计数对象（如基于覆盖划分），原连续放置本质仍会引入等价类模糊性，且改动幅度已超出规则允许的单一辅助移动，不符合严格准入标准。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是确定性的最小覆盖半径问题，没有顺序不确定、资源波动或局部选择差异等原生扰动来源，无法定义语义内扰动模型，强行引入将违反“只能靠故事背景硬造对手”的禁止项。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints 中所有约束均为确定性要求（uniform_range, complete_coverage等），original_problem.description 未提及任何不确定性；invariant 中的 greedy_coverage_frontier 只是解法的内部选择，不是问题语义层面的扰动。",
+        "feedback": "该种子题缺乏可被放大的原生扰动来源，无法构造符合要求的保底优化，建议选择其他具有内在不确定性的种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题已是求最小启蒙半径的阈值优化题，目标为 minimize r，且通过单调性进行二分搜索，完全符合规则的产出形态。应用该规则无法产生实质差异，只会重复原题结构。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.25,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中的 objective.type 为 'minimize_value'，constraints 包含可行性随 r 的单调性，invariant 中明确写了 feasibility_monotonicity 和 greedy_coverage_frontier 用于二分验证。规则要求从判定升级为阈值，但种子已包含阈值优化全过程。",
+        "feedback": "规则适用于纯可行性判定问题，而该种子已处于优化形态。强行应用会导致新题与原题高重叠，不符合差异要求。建议寻找仅输出 Yes/No 且存在自然单调参数的种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_secondary_metric_exists",
+      "message": "原题最小化覆盖半径 r，和尚数量 K 是给定的输入，但二者在覆盖问题中天然冲突（减小 r 需要更多和尚，反之亦然），可自然扩展为双目标权衡或帕累托前沿查询，且不能由单次最优解后处理得到。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "原题目标：最小化能覆盖所有寺庙的 enlightenment 值 r，约束中固定 K 个和尚。若引入和尚数量作为第二指标，则‘更小的 r’与‘更少的和尚’不可兼得（若少用和尚则 r 需增大），形成真实冲突。原题描述中 K < N 已暗示了非平凡权衡。",
+        "feedback": "规则可直接应用于该种子，建议将 K 从固定输入变为可变参数，定义支配关系与前沿输出。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_inverse_target_natural_modification",
+      "message": "原题输出为最小覆盖半径，可绑定为反向目标；存在自然的修改操作——增加僧侣数量，以提高覆盖能力满足目标半径；僧侣放置有连续自由度，保留了设计空间；增加僧侣与原核心覆盖机制直接相关，且可定义最小新增人数满足目标，实现反向设计。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题结果是最小半径值（详见objective: minimize_value of radius），可作为反向目标设定；core_constraints中K<N表明僧侣数量可变，且约束fixed_num_monks在反向中可以放宽；invariant中的feasibility_monotonicity支持在给定半径下对僧侣数量的单调验证；原题解法为二分半径加贪心验证，反向只需改变目标为新增僧侣数，仍用贪心验证，核心算法相同但目标翻转符合规则要求。",
+        "feedback": "反向设计合理，目标明确，操作自然，最小新增僧侣的求解与原题算法高度重合但方向不同，可作为种子题的有效延伸。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "原题是一个整体覆盖问题，所有僧侣共享同一范围 r，不存在可独立求解的局部单元，无法应用从独立组件到全局耦合的转换。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "根据 schema 和原题描述，约束 uniform_range 规定所有僧侣 enlightenment 值相同，complete_coverage 要求所有寺庙被覆盖，整个问题本身即为一个全局优化问题，没有可分解的局部独立单元。规则 eligibility 要求 “原题存在可分解的局部单元”，而本题缺失此属性。",
+        "feedback": "该规则要求种子题存在可独立处理的分量（如多个区间各自选点），但本题是一个统一的覆盖问题，所有变量已在全局层面耦合，不适合本规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_operations",
+      "message": "原题是单人的最小化覆盖半径优化问题，核心操作（贪心放置僧侣）顺序固定且无选择自由度，不存在可自然轮流选择、对抗化的操作空间。若强行改为双人博弈，对抗方只能靠故事背景硬造，违反规则红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.05,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最小化覆盖全部N个点的共同半径，使用K个僧侣，僧侣位置连续。解决方案为二分答案+贪心放置：按从左到右顺序，每次将僧侣放在当前未覆盖最左点+半径处。该过程无分支、无交替决策点，不满足规则 required_seed_properties 中“存在可轮流选择、拿取、移动或改变状态的自然操作”与“不同操作改变后续可选状态”。同时 forbidden_seed_properties 明确禁止“操作顺序固定且没有选择自由度”，原题完美匹配该禁止项。",
+        "feedback": "该规则要求种子题具备可自然的对抗化操作空间。本题为确定性单调覆盖过程，无法在不硬造玩家和对抗语义的前提下转化为博弈。建议寻找存在离散选择、组合游戏或资源争夺特征的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子问题本身已是一个全局覆盖问题（最小化半径以用K个区间覆盖全部点），不存在可扩展的单个局部路径/区间/子树等核心对象。应用本规则只会产生与原题高度相似的变体，无法形成实质性的语义升级。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.12,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题的 core_constraints 包含 complete_coverage（所有寺庙必须被僧侣覆盖）和 objective 为最小化覆盖半径，已完全体现全局覆盖语义；原问题描述中不存在可独立抽象的单路径或单区间作为求解对象。",
+        "feedback": "规则要求原题核心对象具有可供扩展的局部结构，但本种子题的寺庙位置仅为点集，核心求解对象即为覆盖方案本身。建议寻找以单条路径、单个区间或单个子树性质为核心的问题作为种子，再考虑扩展为覆盖/割/支配问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是优化问题（最小化覆盖半径），没有定义任何稳定的计数对象，无法应用带权计数扩展。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema.objective.type = 'minimize_value'，原题描述为求最小 enlightenment 值，不涉及计数任何方案或状态；schema.core_constraints 均为覆盖与单调性约束，无计数对象定义。",
+        "feedback": "该规则要求原题存在明确可计数的对象及自然权重/统计量，但本题本质是搜索与贪心问题，不计数。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized_and_redlines_met",
+      "message": "规划成功将正向求解转化为反向设计，通过三个 helper 完整实现了目标结果绑定、编辑操作合同与最小性锁定，所有 redlines 未违反。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "helper target_result_binding: core_constraints 增加 fixed_enlightenment，objective 改为最小移动次数；helper edit_operation_contract: core_constraints 增加 move_operation，invariant 增加移动等价性；helper minimality_or_certificate_lock: objective 明确 minimize_and_construct，invariant 增加最优子结构。改变轴涵盖 C, O, V。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确写清了目标（最少搬家次数并输出最终地址）、修改操作（搬家即改地址）和最小性语义，完全遵循了反向设计规则。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "目标：'计算最少需要多少次搬家，并给出一个能实现最少搬家的最终住户地址列表'；修改操作：'搬家是指将该住户的地址改为任意整数坐标'；最小性：要求最少次数，且输出方案可验证。固定半径 R 与原正向求解结果绑定。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "I",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "C",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "便民服务点布局",
+    "description": "在一个线形社区，有 N 户居民，他们的地址用整数坐标表示。社区计划部署 K 个移动便民服务点，每个服务点有固定的服务半径 R（即它可以覆盖距离它半径 R 范围内的所有住户）。由于服务点数量有限，无法直接覆盖所有住户。社区工作者可以事先与部分住户协调，让他们临时在指定日期搬家到其他地点（搬家是指将该住户的地址改为任意整数坐标），每次搬家计入一次调整。服务点可以放置在数轴上的任意实数坐标。\n\n你的任务是计算最少需要多少次搬家，并给出一个能实现最少搬家的最终住户地址列表（按居民编号顺序输出），使得所有居民最终都能被 K 个服务点覆盖。",
+    "input_format": "第一行包含三个整数 N, K, R，分别表示住户数量、服务点数量和固定的服务半径。\n第二行包含 N 个整数，表示每个住户的初始地址，整数之间用空格分隔。",
+    "output_format": "第一行输出一个整数 M，表示最少搬家次数。\n接下来 N 行，每行输出一个整数，表示最终每个住户的地址。输出顺序必须与输入中住户的顺序一致。如果存在多种最优方案，输出任意一种即可。",
+    "constraints": [
+      "1 ≤ N ≤ 10^5",
+      "1 ≤ K ≤ 10^5",
+      "K < N",
+      "1 ≤ R ≤ 10^7",
+      "1 ≤ 初始地址 ≤ 10^7",
+      "时间限制：1 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "3 2 3\n1 5 20",
+        "output": "1\n1\n5\n5",
+        "explanation": "将第三户的地址从 20 移动到 5，移动次数为 1。服务点可以放置在坐标 3（覆盖用户 1 和 2）和坐标 5（覆盖用户 3）。所有住户均被覆盖，且无法用 0 次移动满足要求，故最小移动次数为 1。"
+      },
+      {
+        "input": "4 2 1\n1 2 4 5",
+        "output": "0\n1\n2\n4\n5",
+        "explanation": "初始位置已可直接部署服务点覆盖：设置服务点在 1.5 和 4.5，覆盖半径 1 恰好覆盖所有住户。无需搬家，最少移动次数 0。"
+      },
+      {
+        "input": "5 2 3\n1 2 10 11 20",
+        "output": "1\n1\n2\n10\n11\n11",
+        "explanation": "将第五户的地址从 20 移动到 11，移动次数为 1。然后可将服务点放置在中心 1.5（覆盖用户 1 和 2）和中心 10.5（覆盖用户 3、4、5）。所有住户均被覆盖，且无法通过少于 1 次移动满足要求。"
+      }
+    ],
+    "notes": "保证存在至少一种方案使得通过若干次搬家后所有住户均可被覆盖。输出方案不唯一，任意最优解均可接受。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_hackerearth_91589eed1567_community_services_20260609_212343",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

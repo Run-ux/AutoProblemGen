@@ -1,0 +1,710 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 50.1,
+    "schema_distance": 0.4545,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的所有结构、约束、目标和唯一性规则均已准确无误地反映在 generated_problem 的各个部分中，包括多测试用例、配对规则、匹配度公式、计数目标、物品使用限制及基于索引的方案区分等。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面完整提供了独立解题所需的全部信息：清晰的任务说明、输入输出格式、详细的约束条件、明确的匹配度定义、方案区分规则以及模数要求，样例解释也覆盖了关键场景，读者无需额外猜测。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "描述、输入格式、输出格式、约束和样例之间完全一致，没有出现字段数量、目标定义或符号含义的冲突，例如匹配度公式在描述和样例解释中保持一致，输出模数与要求吻合，方案计数规则在 notes 中再次强调。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供了两个样例，覆盖了匹配度全零、组合计数、重复标签、单一配对等情况，解释清晰，能帮助理解题意和计数规则，数量虽不多但已能说明核心逻辑。",
+        "evidence_refs": [
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]",
+          "hard_checks[12].message"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，描述、输入输出格式、约束、样例、注释分段合理，语言准确且无多余噪声，没有原题泄露或其他无关文本，符合 OJ 题面标准。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "new_schema 中的全部约束和计数规则均被精确落地，没有偏差",
+      "题面独立完整，无需外部知识即可理解并解题",
+      "各部分之间信息一致，无矛盾",
+      "样例有代表性且解释详尽，覆盖全零和非零匹配度及基本计数规则",
+      "语言清晰，无歧义，符合 OJ 题面风格"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4545,
+      "axis_scores": {
+        "I": 0.0833,
+        "C": 0.7226,
+        "O": 0.4829,
+        "V": 0.4808
+      },
+      "components": {
+        "input_tree_distance": 0.0833,
+        "constraint_match_distance": 0.7226,
+        "objective_type_distance": 0.4628,
+        "objective_text_distance": 0.513,
+        "invariant_match_distance": 0.4808
+      }
+    },
+    "schema_distance": 0.4545,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.45,
+    "solution_transfer_risk": 0.9,
+    "surface_retheme_risk": 0.35,
+    "verdict": "reject_as_retheme",
+    "rationale": "新题将原题的最优化目标改为计数最优方案数目，并引入模数，但核心优化结构和约束完全保留。字符串交错变换、排序、相邻最小 LCP 分治等关键算法均可直接复用，仅需在递归中增加方案数合并逻辑。对原题标准解的选手而言，迁移代价很低。虽有计数去重和 d=0 特殊处理，但整体仍高度依赖原题解法框架。表层叙事从英语单词转变为家庭收纳，但任务结构、输入输出模式、配对定义完全照搬，属于明显的换皮延伸。因此判定为拒绝。",
+    "evidence_refs": [
+      "hard_checks[?(@.check_id=='schema_distance_threshold')].message",
+      "review_context.difference_plan.summary",
+      "review_context.distance_breakdown",
+      "snapshots.new_schema.objective",
+      "snapshots.generated_problem.description"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.45，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "新题将原题的最优化目标改为计数最优方案数目，并引入模数，但核心优化结构和约束完全保留。字符串交错变换、排序、相邻最小 LCP 分治等关键算法均可直接复用，仅需在递归中增加方案数合并逻辑。对原题标准解的选手而言，迁移代价很低。虽有计数去重和 d=0 特殊处理，但整体仍高度依赖原题解法框架。表层叙事从英语单词转变为家庭收纳，但任务结构、输入输出模式、配对定义完全照搬，属于明显的换皮延伸。因此判定为拒绝。",
+      "evidence_refs": [
+        "hard_checks[?(@.check_id=='schema_distance_threshold')].message",
+        "review_context.difference_plan.summary",
+        "review_context.distance_breakdown",
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.description"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 50.1,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "新题将原题的最优化目标改为计数最优方案数目，并引入模数，但核心优化结构和约束完全保留。字符串交错变换、排序、相邻最小 LCP 分治等关键算法均可直接复用，仅需在递归中增加方案数合并逻辑。对原题标准解的选手而言，迁移代价很低。虽有计数去重和 d=0 特殊处理，但整体仍高度依赖原题解法框架。表层叙事从英语单词转变为家庭收纳，但任务结构、输入输出模式、配对定义完全照搬，属于明显的换皮延伸。因此判定为拒绝。",
+        "evidence_refs": [
+          "hard_checks[?(@.check_id=='schema_distance_threshold')].message",
+          "review_context.difference_plan.summary",
+          "review_context.distance_breakdown",
+          "snapshots.new_schema.objective",
+          "snapshots.generated_problem.description"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "new_schema 中的全部约束和计数规则均被精确落地，没有偏差",
+      "题面独立完整，无需外部知识即可理解并解题",
+      "各部分之间信息一致，无矛盾",
+      "样例有代表性且解释详尽，覆盖全零和非零匹配度及基本计数规则",
+      "语言清晰，无歧义，符合 OJ 题面风格"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\source\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\artifacts\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669_home_organization_20260609_192605_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\output\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669_home_organization_20260609_192605_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_4a283930e669",
+      "title": "ENGLISH",
+      "description": "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well.\n\nChef is learning English. So far, he knows $N$ words, and he wants to write a verse.\n\nLet's call a pair of English words a *stanza*. A *verse* is a list of stanzas. The *prefixal rhyme* of a stanza is the longest common prefix of the words in it. Similarly, the *suffixal rhyme* of a stanza is the longest common suffix of the words in it. The *beauty* of a stanza whose prefixal and suffixal rhymes have lengths $l_{p}$ and $l_{s}$ respectively is $\\mathrm{min}(l_{p}, l_{s})^2$.\n\nFor example, a stanza formed by the words \"abcdefghijkl\" and \"abcxyzhijkl\" has a prefixal rhyme \"abc\" (with length $3$), suffixal rhyme \"hijkl\" (with length $5$) and beauty $\\mathrm{min}(3,5)^2 = 3^{2} = 9$.\n\nThe beauty of a verse is the sum of beauties of all its stanzas. For example, the beauty of the verse ((\"abcdefghijkl\", \"abcxyzhijkl\"), (\"world\", \"word\"), (\"code\", \"chef\")) is $9+1+0=10$.\n\nYou are given $N$ words $W_{1}, W_{2}, \\ldots, W_{N}$ (they are not necessarily distinct). Help Chef write the most beautiful verse. It is not necessary to use all the words, but each word may be used at most once in the whole verse (more precisely, each element of the sequence $W$ may be used only once, but if some word appears $k$ times in $W$, we can use it up to $k$ times).\n\n------  Input ------\nThe first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\nThe first line of each test case contains a single integer $N$.\n$N$ lines follow. For each $i$ ($1 ≤ i ≤ N$), the $i$-th of these lines contains a single string $W_{i}$.\n\n------  Output ------\nFor each test case, print a single line containing one integer ― the greatest possible beauty of Chef's verse.\n\n------  Constraints ------\n$1 ≤ T ≤ 10^{5}$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ |W_{i}| ≤ 10^{5}$ for each valid $i$\nall words contain only lowercase English letters\nthe sum of $|W_{1}|+|W_{2}|+\\ldots+|W_{N}|$ over all test cases does not exceed $10^{5}$\n\n------  Subtasks ------\nSubtask #1 (50 points): all words are palindromes\n\nSubtask #2 (50 points): original constraints\n\n----- Sample Input 1 ------ \n3\n\n6\n\nabcdefghijkl\n\nchef\n\nworld\n\ncode\n\nabcxyzhijkl\n\nword\n\n4\n\nproblem\n\npoem\n\nproblem\n\nproblem\n\n3\n\ncontest\n\ncoolest\n\nunused\n----- Sample Output 1 ------ \n10\n\n50\n\n4\n----- explanation 1 ------ \nExample case 1: The best verse is ((\"abcdefghijkl\", \"abcxyzhijkl\"), (\"world\", \"word\"), (\"code\", \"chef\")), which was described above.\n\nExample case 2: The best verse is ((\"problem\", \"problem\"), (\"problem\", \"poem\")). Its beauty is $7^{2}+1^{2} = 49+1 = 50$. Note that we have three copies of the word \"problem\", so we can use it three times.\n\nExample case 3: The best verse is ((\"coolest\", \"contest\")), which contains only one stanza. Its beauty is $2^{2}=4$. Note that it is not necessary to use all the words ? the word \"unused\" is left unused.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 2 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "def change(u):\n\ti = 0\n\tN = len(u)\n\tv = u[::-1]\n\tnew = ''\n\tfor i in range(N):\n\t\tnew += u[i] + v[i]\n\treturn new\nT = int(input())\nfor nnn in range(T):\n\tk = []\n\tN = int(input())\n\tfor i in range(N):\n\t\tu = input()\n\t\tu = change(u)\n\t\tk.append(u)\n\tk.sort()\n\ttt = []\n\tttt = 0\n\ti = 0\n\tnewarr = []\n\tif len(tt) < 0:\n\t\ta = 'abcdefghijklmnopqrstuvwxyz'\n\t\tb = 0\n\t\tfor i in a:\n\t\t\tm = []\n\t\t\tfor j in range(b, len(k)):\n\t\t\t\tif i == k[j][0]:\n\t\t\t\t\tm.append(k[j])\n\t\t\t\telse:\n\t\t\t\t\tb = j\n\t\t\t\t\tbreak\n\t\t\tnewarr.append(m)\n\t\tttt = 0\n\t\tfor d in newarr:\n\t\t\tif len(d) <= 1:\n\t\t\t\tcontinue\n\t\t\twhile len(d) >= 1:\n\t\t\t\ti = 0\n\t\t\t\tarr_indexes = 0\n\t\t\t\tmax1 = 0\n\t\t\t\twhile i < len(d) - 1:\n\t\t\t\t\tu = 0\n\t\t\t\t\tfor j in range(min(len(d[i]), len(d[i + 1]))):\n\t\t\t\t\t\tif d[i][j] == d[i + 1][j]:\n\t\t\t\t\t\t\tu += 1\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\tif u > 0:\n\t\t\t\t\t\tif max1 < u:\n\t\t\t\t\t\t\tmax1 = u\n\t\t\t\t\t\t\tarr_indexes = i\n\t\t\t\t\t\ti += 1\n\t\t\t\t\telse:\n\t\t\t\t\t\ti += 1\n\t\t\t\ttry:\n\t\t\t\t\td.pop(arr_indexes)\n\t\t\t\t\td.pop(arr_indexes)\n\t\t\t\texcept:\n\t\t\t\t\tbreak\n\t\t\t\tttt += max1 * max1\n\n\tdef my(k, mmm):\n\t\tmini = 1000000000000\n\t\tindex = 0\n\t\tfor i in range(0, len(k) - 1):\n\t\t\tu = 0\n\t\t\tfor j in range(min(len(k[i]), len(k[i + 1]))):\n\t\t\t\tif k[i][j] == k[i + 1][j]:\n\t\t\t\t\tu += 1\n\t\t\t\telse:\n\t\t\t\t\tbreak\n\t\t\tif mini > u:\n\t\t\t\tmini = u\n\t\t\t\tindex = i\n\t\tif k[0] == k[-1]:\n\t\t\tc = len(k) // 2 * len(k[0]) * len(k[0]) // 4\n\t\t\tif len(k) % 2 == 0:\n\t\t\t\treturn (0, 0, c)\n\t\t\telse:\n\t\t\t\treturn (1, mmm.index(k[0]), c)\n\t\tif len(k) == 1:\n\t\t\treturn (1, mmm.index(k[0]), 0)\n\t\tif len(k) == 2:\n\t\t\tmini = mini // 2\n\t\t\treturn (0, 0, mini * mini)\n\t\ta1 = my(k[:index + 1], mmm)\n\t\ta2 = my(k[index + 1:], mmm)\n\t\tif a1[0] == 1 and a2[0] == 1:\n\t\t\tu = 0\n\t\t\tfor j in range(min(len(mmm[a1[1]]), len(mmm[a2[1]]))):\n\t\t\t\tif mmm[a1[1]][j] == mmm[a2[1]][j]:\n\t\t\t\t\tu += 1\n\t\t\t\telse:\n\t\t\t\t\tbreak\n\t\t\tu = u // 2\n\t\t\treturn (0, 0, a1[2] + a2[2] + u * u)\n\t\telif a1[0] == 1 and a2[0] == 0:\n\t\t\treturn (1, a1[1], a1[2] + a2[2])\n\t\telif a1[0] == 0 and a2[0] == 1:\n\t\t\treturn (1, a2[1], a1[2] + a2[2])\n\t\telse:\n\t\t\treturn (0, 0, a1[2] + a2[2])\n\tmmm = k[:]\n\ta = my(k, mmm)\n\tprint(a[2])"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_4a283930e669",
+        "ENGLISH",
+        "codechef",
+        "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well. Chef is learning English. So far, he knows $N$ words, and he wants to write a verse. Let's call a pair of English...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "O 从最大值优化变为计数；C 加入计数对象定义、去重规则和模数；V 从仅维护最大值改为同时维护方案数，并引入 d=0 时的多路合并。",
+      "summary": "目标由最大化美丽度改为计数最大美丽度方案数，约束中明确计数单位与去重，不变式里增加方案数传递与合并逻辑。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "home_organization_counting_v1",
+      "source": "generated",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true,
+          "theme_note": "输入为待整理的物品清单"
+        },
+        "components": [
+          {
+            "role": "test_case_count",
+            "role_description": "测试用例数量 T",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            },
+            "properties": {}
+          },
+          {
+            "role": "test_cases",
+            "role_description": "每个测试用例包含一个整数 N 和 N 个物品标签（字符串）",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100000
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "element_usage_limit",
+            "description": "每个物品标签（按索引区分）在整个收纳方案中最多被使用一次；同一物品出现多次则每个实例单独计数。",
+            "formal": "索引 i 的物品用至多一次，多次出现视为不同元素。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "pairing_structure",
+            "description": "一个收纳单元由恰好两个物品标签组成；整个收纳方案是一个收纳单元的序列（可能为空）。",
+            "formal": "方案为配对集合 P = { {a1,b1}, {a2,b2}, ..., {am,bm} }，每个配对使用两个不同的物品索引，且索引不重复使用。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "allow_unused_elements",
+            "description": "不要求使用所有物品标签；任意子集均可组成合法方案。",
+            "formal": "使用的物品总数 ≤ N。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "alphabet_restriction",
+            "description": "所有物品标签仅由小写英文字母组成。",
+            "formal": "每个物品标签 ∈ [a-z]+。",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "beauty_definition",
+            "description": "对于一对物品标签，其匹配度定义为 min(lcp, lcs)^2，其中 lcp 为最长公共前缀长度，lcs 为最长公共后缀长度。整个方案的匹配度为所有配对匹配度之和。",
+            "formal": "beauty((x,y)) = min(lcp(x,y), lcs(x,y))^2，方案总匹配度 = Σ beauty(pair)。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "optimal_solution_definition",
+            "description": "目标是计数所有合法方案中总匹配度等于最大可能值的不同方案。",
+            "formal": "设最优值为 M = max{beauty(S) | S 为合法方案}，则计数集合为 {S | beauty(S)=M}。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "counting_uniqueness",
+            "description": "两个方案视为不同当且仅当它们对应的配对集合（作为无序对的多重集，基于物品索引）不同。配对内部顺序无关，方案内配对顺序无关。",
+            "formal": "方案 A 和 B 不同 ⇔ {{i,j} ∈ A} ≠ {{i,j} ∈ B}。",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "modulus",
+            "description": "由于方案数可能很大，答案需要模一个固定大质数 1_000_000_007 输出。",
+            "formal": "输出 = (方案数) mod 1_000_000_007。",
+            "source_sections": [
+              "output requirements"
+            ]
+          },
+          {
+            "name": "finite_solution_space",
+            "description": "物品标签总数为 N（有限），每个方案由有限个配对组成，因此合法方案总数有限，计数问题良定。",
+            "formal": "|所有合法方案| ≤ 2^{N}·(N!) 之类，有限。",
+            "source_sections": [
+              "analysis"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_optimal_solutions",
+        "description": "计算所有总匹配度最大的不同收纳方案的数量，输出该数量模 1_000_000_007。",
+        "target": "number_of_max_beauty_solutions",
+        "requires_solution": false,
+        "modulus": 1000000007
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "string_transformation_and_sorting",
+            "description": "将每个物品标签 s 与其反转字符串交错合并得到新字符串 t = interleave(s, reverse(s))。对任意两个物品，其原始匹配度 min(lcp, lcs) 等于 t 串间 LCP 的一半（下取整）。将所有 t 按字典序排序后，匹配度计算转化为对排序序列的 LCP 操作。",
+            "properties": {
+              "formula": "beauty(i,j) = (lcp(t_i, t_j) // 2)^2"
+            },
+            "evidence_source": "原题解中字符串变换"
+          },
+          {
+            "name": "adjacent_min_lcp_bound_for_counting",
+            "description": "排序后的序列中，若 split_idx 使得 lcp(t_split, t_{split+1}) 为全局相邻最小 LCP，则对于任意 i ≤ split < j，lcp(t_i, t_j) ≤ lcp(t_split, t_{split+1})。这一性质保证跨区配对产生的贡献不会超过此最小 LCP，且任何最优方案中跨区配对至多一对，且必然由左右最终剩余的两个物品构成。",
+            "properties": {
+              "condition": "若 max_beauty 方案中使用了跨区配对，则该配对必涉及左侧最终剩余物品和右侧最终剩余物品，其贡献 = (min_adj_lcp//2)^2。不存在其他跨区配对。"
+            },
+            "evidence_source": "分治引理"
+          },
+          {
+            "name": "divide_and_conquer_with_count",
+            "description": "递归函数 solve(l, r) 返回三元组 (rem_idx, max_beauty, count_mod)。其中 rem_idx 为该子区间内若最终剩余一个未配对物品时其原始索引，否则为 None；max_beauty 为该子区间内部能达到的最大总匹配度；count_mod 为达到该最大匹配度的方案数模 MOD。递归根据相邻最小 LCP 索引 split 划分子问题，并利用 count_mod 的乘法与加法规则合并。",
+            "properties": {
+              "base_case": "区间为空或只有一个物品时，返回 (唯一物品索引或None, 0, 1)。",
+              "recursive_step": "let (remL, maxL, cntL) = solve(l, split); (remR, maxR, cntR) = solve(split+1, r)。设 d = (min_adj_lcp//2)^2。如果 remL 和 remR 均存在：若 d > 0，则配对是必须的，total_max = maxL + maxR + d，total_cnt = cntL * cntR % MOD；若 d == 0，则配对与不配对均可达到相同总最大值 maxL + maxR，total_cnt = (cntL * cntR * 2) % MOD。若仅一侧有剩余，则 total_max = maxL + maxR，剩余物品向上传递，total_cnt = cntL * cntR % MOD。"
+            },
+            "evidence_source": "计数扩展的分治逻辑"
+          },
+          {
+            "name": "global_optimal_count",
+            "description": "对整个排序序列调用 solve(0, N-1) 得到 (rem, max_beauty, ans)，则 max_beauty 即为全局最大匹配度，ans 即为所求的不同最优方案数模 MOD。由于原题最大匹配度算法已保证此分治正确找到最大值，计数扩展仅在其基础上累积方案数，正确性由归纳和跨区性质保证。",
+            "properties": {
+              "guarantee": "所有最优方案在递归树上被且仅被计数一次。"
+            },
+            "evidence_source": "正确性证明"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "整理收纳方案计数",
+      "description": "小明正在整理他的物品收纳间。他有一张物品清单，上面包含了 N 个物品标签（每个标签是一个仅由小写英文字母组成的字符串）。他打算将清单中的部分物品两两配对，放入收纳格中。每个收纳格恰好放置两个物品，一个物品至多使用一次，也可以选择不放入任何收纳格（即闲置）。\n\n对于一个收纳格中两个物品标签，定义它们的匹配度为：设 p 为两个标签的最长公共前缀长度，s 为最长公共后缀长度，则匹配度为 min(p, s)^2。整个收纳方案的整齐度为所有收纳格的匹配度之和。\n\n小明想知道：在所有能够达到的最大整齐度的不同收纳方案中，一共有多少种方案？由于答案可能很大，只需要输出方案数模 1,000,000,007 的结果。\n\n两个收纳方案视为不同，当且仅当它们对应的配对集合（基于物品在清单中的原始索引形成无序对）作为多重集不同。配对内部的顺序以及方案内配对的顺序均无关。",
+      "input_format": "第一行包含一个整数 T（1 ≤ T ≤ 100,000），表示测试用例的数量。接下来是 T 个测试用例。\n每个测试用例的第一行包含一个整数 N（1 ≤ N ≤ 100,000），表示物品数量。\n接下来的 N 行，每行包含一个仅由小写字母组成的非空字符串，表示一个物品标签。",
+      "output_format": "对于每个测试用例，输出一行一个整数，表示达到最大整齐度的不同方案数模 1,000,000,007 的结果。",
+      "constraints": [
+        "1 ≤ T ≤ 100,000",
+        "所有测试用例的 N 之和不超过 100,000",
+        "所有测试用例的物品标签总长度之和不超过 100,000",
+        "每个物品标签仅由小写英文字母组成，且长度至少为 1",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "2\n3\nabc\nabd\nxyz\n4\na\na\na\na",
+          "output": "4\n3",
+          "explanation": "第一个测试用例中，三个物品标签分别为 \"abc\"、\"abd\"、\"xyz\"。任何配对的匹配度均为 0，因此最大整齐度为 0，所有合法方案（包括空方案）都是最优方案。空方案有 1 种；恰好包含一个配对的方案有 C(3,2)=3 种，总方案数为 4。\n第二个测试用例中，四个物品标签均为 \"a\"（但索引不同）。配对 \"a\" 和 \"a\" 的匹配度为 min(1,1)^2 = 1。最大总整齐度为 2（形成两个配对）。达到该最大值的方案即为将四个物品分成两个配对的方式，共有 (4-1)!! = 3 种（分别对应三种不同的配对划分），因此方案数为 3。"
+        },
+        {
+          "input": "1\n2\nab\nab",
+          "output": "1",
+          "explanation": "两个物品标签均为 \"ab\"。它们可以配成一个收纳格，匹配度为 min(2,2)^2 = 4，达到最大整齐度 4。由于只有一种配对方式，最优方案唯一，故输出 1。"
+        }
+      ],
+      "notes": "方案的不同性严格基于物品在原始清单中的索引，而非标签内容。即使两个物品标签相同，只要它们来自清单中的不同位置，在计数时视为不同的元素；但配对集合是无序的，因此交换同一对内的两个物品或改变配对在方案中的顺序不产生新方案。所有运算均在模 1,000,000,007 下进行。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "目标由最大化美丽度改为计数最大美丽度方案数，约束中明确计数单位与去重，不变式里增加方案数传递与合并逻辑。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4545,
+        "axis_scores": {
+          "I": 0.0833,
+          "C": 0.7226,
+          "O": 0.4829,
+          "V": 0.4808
+        },
+        "components": {
+          "input_tree_distance": 0.0833,
+          "constraint_match_distance": 0.7226,
+          "objective_type_distance": 0.4628,
+          "objective_text_distance": 0.513,
+          "invariant_match_distance": 0.4808
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确计数对象、不同解的定义和去重规则，这是计数题的核心。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中添加 counting_uniqueness 和 optimal_solution_definition，明确定义不同方案。",
+            "在 objective 中指定目标为计数最优方案数，并引入模数。",
+            "在 invariant 中增加方案计数递归定义，并说明何种方案算同一。"
+          ],
+          "innovation_reason": "原题仅优化，新题引入集合计数，要求严格定义等价关系，方案区分依赖物品索引而非内容。",
+          "difficulty_reason": "去重和模数增加实现复杂度，且计数需要小心处理乘法与加法，选手必须正确处理等价类。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "需要将解空间划分为可汇总的计数单元，与原分治结构自然结合。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中保留分治所需的结构性质，并增加方案数累积的约束。",
+            "在 invariant 中详细定义 divide_and_conquer_with_count，将整个解空间拆分为子区间的方案乘积，并继承跨区配对限制。"
+          ],
+          "innovation_reason": "利用原题已有的分治因子分解，将计数嵌入因子树，而非额外后处理。",
+          "difficulty_reason": "选手需要在理解分治的基础上，正确推导方案数的乘法与加法规则，并处理 d=0 的细节，这增加了算法设计的深度。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "计数必须作为主目标，而非附带统计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "在 objective 中彻底替换为计数目标，放弃原最大化输出。",
+            "在 core_constraints 中将计数独特性与最高匹配度要求结合，确保主状态转移围绕计数而非判决。"
+          ],
+          "innovation_reason": "问题性质从判定/优化彻底转为计数，答案意义完全改变。",
+          "difficulty_reason": "选手不能沿用求最大值后简单统计的方式，必须重新设计递归逻辑以直接生产计数结果。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "通过字符串交错转换和排序，利用相邻最小 LCP 进行分治，递归求解最大匹配度。",
+        "reusable_subroutines": "字符串交错转换函数、排序、相邻 LCP 计算、分治拆分逻辑可完全复用。",
+        "new_solver_core": "在分治递归中同时维护每个子问题的最大匹配度与达到该最大值的方案数模 MOD，合并时根据左右剩余物品配对的贡献 d 决定方案数的乘法组合或加倍。",
+        "new_proof_obligation": "证明在分治框架下，所有最优方案均唯一地由子问题内的方案及左右配对/非配对选择生成，不存在跨区非剩余配对也能达到最大值的可能性；特别地，当 d=0 时配对与不配对方案不重不漏。此外需证明模运算不影响正确加法与乘法。",
+        "why_direct_reuse_fails": "原题分治只需求得一个最大值，不关心不同方案；直接复用无法得出方案数量，因为递归合并时未处理方案计数，且未考虑 d=0 时的多种选择。"
+      },
+      "anti_shallow_rationale": "将目标从最大匹配度改为计数，不是简单更换输出。新题引入了‘不同方案’定义、去重规则、模运算，算法核心必须从单纯贪心变为带模计数的递归组合，状态从最大值扩展为 (最大值,计数) 二元组，合并逻辑新增 d=0 的加倍处理，显著改变了问题的求解义务与不变式。"
+    }
+  }
+}

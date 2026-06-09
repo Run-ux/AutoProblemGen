@@ -1,0 +1,980 @@
+{
+  "problem_id": "home_org_canonical_witness_001",
+  "source_problem_ids": [
+    "taco_codeforces_7d8b7f871b5c"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_7d8b7f871b5c",
+      "codeforces",
+      "You are an environmental activist at heart but the reality is harsh and you are just a cashier in a cinema. But you can still do something! You have n tickets to sell. The price of the i-th ticket is p_i. As a teller,...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "规范解要求进入主约束改变了约束优先级（C）；目标从单一最小化变为最小化后字典序最大（O）；不变量需新增构造过程的可行性保持性质（V）。输入结构仅做主题映射，结构未变，故I轴不列入变化。",
+    "summary": "新增字典序最优的排列构造和证明责任，足以使原解法无法直接复用。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3524,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3524,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5469,
+      "O": 0.4122,
+      "V": 0.4266
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5469,
+      "objective_type_distance": 0.5089,
+      "objective_text_distance": 0.2672,
+      "invariant_match_distance": 0.4266
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_primary_with_lexicographical_max_secondary",
+    "description": "最小化需要放置的物品数 m，并在所有最小物品数且总评分达到 k 的放置方案中，输出字典序最大的物品分数序列（以及对应的物品索引序列）。",
+    "target": "number_of_items_placed_and_sequence",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "canonical_witness直接要求输出规范解（如字典序最小排列），将原题从单纯计算最少票数升级为构造并证明规范解，迫使求解过程重新设计状态和分配策略，而其他规则要么不适用（minimum_guarantee和game缺乏原生扰动/对抗），要么数据范围不支持落地（existence_to_counting计数需要处理2e5规模），要么额外定义修改操作偏离原结构过多（inverse_design作为备选）；创新度判断：将输出义务从单一数值改为带字典序约束的完整排列，原题只需存在性证据，新题必须产出可校验的规范解，核心约束需同时容纳贡献目标和顺序规范，拉离原题单纯的最小化目标；难度判断：原有的降序贪心分配不再直接适用，求解者必须处理字典序与最大化贡献之间的权衡，可能引入新的状态组织或证明结构，迫使主求解责任在分配策略上抬高难度；风险判断：主要风险是若规范解可简单后处理得到则创新不实，但通过helper将规范顺序压力注入主约束和不变量，可迫使解法从底层处理字典序，风险可控",
+  "new_schema_snapshot": {
+    "problem_id": "home_org_canonical_witness_001",
+    "source": "extended_from_codeforces",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 100
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "multiple_test_cases": true,
+        "ordered": true
+      },
+      "components": [
+        {
+          "role": "n",
+          "role_description": "物品数量",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 200000
+          },
+          "properties": {}
+        },
+        {
+          "role": "scores",
+          "role_description": "物品重要性分数（100的倍数）",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 100,
+            "max": 1000000000
+          },
+          "properties": {}
+        },
+        {
+          "role": "program1",
+          "role_description": "项目A参数 (x 和 a)",
+          "type": "tuple",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "program2",
+          "role_description": "项目B参数 (y 和 b)",
+          "type": "tuple",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "k",
+          "role_description": "目标整理评分",
+          "type": "integer",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000000000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "score_multiple_of_100",
+          "description": "每个物品分数是100的倍数，避免百分比计算产生小数。",
+          "formal": "s_i ≡ 0 (mod 100)",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "percentage_sum_limit",
+          "description": "两个标签的百分比之和不超过100，确保重叠位置贡献不超过物品分数。",
+          "formal": "x + y ≤ 100",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "lexicographically_maximal_placement",
+          "description": "输出方案必须满足：使用的物品数 m 是最小的，并且在所有恰用 m 个物品且总评分 ≥ k 的放置序列中，该序列字典序最大。字典序比较基于物品分数序列，分数大的为优；若分数相同，则以原物品输入索引（从1开始）大的为优。",
+          "formal": "let S be the set of sequences of scores of length m achieving total score ≥ k with minimal m; output the one that is lexicographically maximum according to the order defined by (score, original_index).",
+          "priority": "primary"
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_primary_with_lexicographical_max_secondary",
+      "description": "最小化需要放置的物品数 m，并在所有最小物品数且总评分达到 k 的放置方案中，输出字典序最大的物品分数序列（以及对应的物品索引序列）。",
+      "target": "number_of_items_placed_and_sequence",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "monotonicity",
+          "description": "随着允许放置物品数的增加，可达到的最大评分非降。用于二分最小 m。",
+          "properties": {}
+        },
+        {
+          "name": "feasibility_preserving_greedy",
+          "description": "在构造字典序最大序列时，从前往后对于每一个位置，如果将剩余物品中分数最大的物品放置于此，且存在一种剩余物品的排列使总评分达到 k（基于当前累积评分），则这样选择不会导致无解；换言之，贪心选择最大可行物品始终可以扩展为完整最优解。",
+          "properties": {
+            "greedy_choice_property": true,
+            "max_possible_feasibility_check": true
+          }
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "canonical_witness",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "二分查找/线性扫描确定最小票数，内部基于排序价格和前缀和计算最大贡献。",
+    "reusable_subroutines": "二分查找最小 m；前缀和计算最大贡献，用于判定给定 m 的可行性。",
+    "new_solver_core": "在确定最小 m 后，通过从前往后的贪心构造：每一步选择剩余物品中分数最大的物品，判断将其放在当前位置后剩余物品能否完成评分要求（借助最大贡献快速检查）；若不可行则尝试次大物品。该构造依赖可行性保持不变量来保证最优性。",
+    "new_proof_obligation": "证明贪心构造选择的正确性：若当前可放置最大物品且剩余物品的最大贡献充分，则存在一个字典序最大的完整序列以该物品开头；同时证明检查剩余物品最大贡献足以判定可行性。",
+    "why_direct_reuse_fails": "原解法仅输出最小数字，未涉及排列构造及字典序优化；即使输出最大贡献排列，它可能不满足字典序最大，因此需要新的构造与决策过程。"
+  },
+  "anti_shallow_rationale": "新题引入了字典序最优这一全局目标，要求解法在保持最小物品数的前提下处理顺序与贡献的权衡，而不仅仅是计算一个最大总和。原有的贪心分配策略（最大贡献排列）不再直接奏效，需要额外的可行性判定与序列构造，证明义务也显著增强，因此绝非表面修改或仅加格式要求。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "canonical_order_pressure",
+      "selection_reason": "必须引入规范顺序影响状态演化，而字典序最优直接推动从左到右的构造顺序成为核心状态。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中新增 lexicographically_maximal_placement 约束",
+        "更改 objective 为双目标",
+        "在 invariant 中加入 feasibility_preserving_greedy"
+      ],
+      "innovation_reason": "让输出对象（特定字典序序列）与验证责任离开原题的最大贡献路径，迫使解法处理顺序与可行性的交织。",
+      "difficulty_reason": "需要引导状态转移过程中的规范性证明（贪心选择正确性），提高了构造难度。"
+    },
+    {
+      "id": "proof_bearing_output",
+      "selection_reason": "输出需升级为带证明责任的规范解，字典序最大序列自身就是可校验的解对象。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 要求同时输出数字和序列，且序列需满足全局最优",
+        "invariant 新增构造过程的不变量以支撑序列正确性"
+      ],
+      "innovation_reason": "输出不再是简单数值，而是一个需要解释为什么满足全局约束（字典序最大）的构造结果。",
+      "difficulty_reason": "解法必须证明输出序列的最优性，而非仅仅计算可行性。"
+    },
+    {
+      "id": "constraint_reweighting",
+      "selection_reason": "规范解要求必须成为主约束之一，改变约束优先级。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "将 lexicographically_maximal_placement 提升为 primary 约束",
+        "invariant 中的 feasibility_preserving_greedy 直接支撑主约束的满足"
+      ],
+      "innovation_reason": "让规范性要求进入主约束的优先级分配，导致解法必须围绕它设计状态。",
+      "difficulty_reason": "原有主约束（分数整除性等）退居次要，新主约束支配算法核心。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.9,
+      "reason_code": "potential_for_canonical_output",
+      "selection_reason": "原题输出仅为最小售出票数，但答案可恢复为具体票号排列；存在自然贪心构造顺序（降序价格与权重分配），且原题并未要求输出方案，满足规则所需种子属性。可通过定义强规范性输出（如字典序最小的可行排列）迫使解法从单纯可行性检查转向带有证明责任的构造，从而改变主要解法，满足轴变化要求并避免浅层修改。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema中invariant的'descending_weight_optimal_assignment'指明方案的自然顺序；原题output为单一整数，不输出方案——符合required_seed_properties且不触发forbidden_seed_properties；positive example支持从判定到规范构造的升级方向。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_local_certificate_structure",
+      "selection_reason": "原题无解的唯一原因是全局资源不足：所有票的任何排列都无法使总贡献达到k。不存在局部冲突结构，无法构造出可局部检查的阻碍证据，只能输出全局上界，不符合规则对冲突证据的局部性要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求冲突证据必须能局部检查（validation_contract: hard_checks第一条），且种子题要求做不到的原因可以用局部证据表示（eligibility.required_seed_properties）。但原题中，无解是因为全局最大贡献低于k，只能通过贪心计算全票贡献验证，没有类似于不可满足子公式或冲突子集那样的局部阻碍，只能输出全局上界值，属于退化为解释的风险（examples.negative）。",
+        "feedback": "建议寻找具有局部冲突结构的原题，例如存在满足部分约束必导致整体矛盾的组合问题，否则证书化只会是数值包装，不满足规则的核心意图。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "finite_clear_countable",
+      "selection_reason": "种子题的解空间（所有排列）在 n 给定时有限，且贡献仅由特殊位置上的票决定，可定义等价关系为“排列序列完全相同”，去重规则明确；计数单元可按双倍、单a、单b位置的票集合及其内部排列拆分，满足拆分与汇总要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema 中 n ≤ 2e5，排列总数有限；原题不变量“将最大价格票分配给最高权重位置”揭示了贡献仅依赖于特殊位置上的票，为计数单元定义提供了直接依据；约束 p_i mod 100=0 和 x+y≤100 保证计算无小数，避免舍入歧义，去重规则可自然沿用全序列比较。",
+        "feedback": "后续规划需明确计数对象是“全排列中总贡献≥k的序列数”，并在 O 轴清晰定义模数；在 C 轴加入去重准则（两序列不同当且仅当某位置票值不同）；V 轴验证计数结果模 MOD 的正确性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "eligible",
+      "selection_reason": "原题提供了排列顺序的自由度，自然构成顺序不确定性，可被放大为最坏情况分析；最坏顺序下的贡献计算仍完全基于原题的位置百分比权重，语义一致性高。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "原题明确允许选择任意排列（顺序不确定），扰动模型可定义为对手选择最不利排列；核心约束 percentage_sum 和 price_multiple 不变；不变量 descending_weight_optimal_assignment 可直接对偶得到最坏情况分配规则。",
+        "feedback": "规则适用，规则要求的变化轴 O、C、V 均可被触发，且扰动来源纯来自原题机制而非故事背景。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "种子题已经是求最小售出票数的阈值优化，进一步变换可能导致目标重复或机械二分。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最小化售出票数，解法利用贡献随票数单调递增性质找到最小临界值，已经完成从判定到极值阈值的转换，规则所要求的升级在此已无必要。",
+        "feedback": "目标轴O已经是极值求解，再套用此规则会违背‘不能只在原判定外层做机械二分’的红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "second_metric_is_byproduct",
+      "selection_reason": "原题的贪心分配算法已经隐式计算了所有售出票数 i 下的最大贡献，仅需移除二分查找的提前终止即可得到完整前沿。第二指标（贡献）虽然与目标（最小票数）自然冲突，但权衡前沿可由原解法直接后处理得到，不符合规则对算法创新的要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "标准解法中，循环 `for i in range(1, n+1)` 先累加 nab/na/nb 计数，再计算 `current = (sum[nab]*(x+y) + ...) // 100`。当 current>=k 时记录答案并 break。去掉 k 的条件并持续计算即可得到每个 i 的最大贡献，无需新的状态设计或支配关系处理。",
+        "feedback": "该种子题不适用多目标扩展，因为第二指标完全内嵌于单目标求解过程，无法产生有意义的算法增量。建议选择存在决策矛盾且不能由原方法直接给出前沿的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "SEED_CAN_BE_INVERSE_DESIGNED",
+      "selection_reason": "原题输出是最小售出票数，可被指定为反向目标（如要求恰好需要t张达到贡献k）；票价、百分比等输入参数是核心对象，修改它们以满足目标贡献是自然的操作，与原计算逻辑紧密相关，并产生新的最优化目标（最小修改代价）。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "schema中input_structure包含ticket prices数组、program参数(x,a,y,b)和贡献目标k，这些均可作为修改设计变量；core_constraints要求p_i是100的倍数，提供了修改约束；invariant的贪心分配规则在修改后仍可用于验证目标；原题objective是最小化票数，可翻转成目标导向的设计任务。",
+        "feedback": "该种子题具备明确的反向目标候选（票数或贡献值）和可构造的修改操作空间，满足反向设计要求，建议进入规划阶段。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_coupling",
+      "selection_reason": "种子题的每个位置贡献仅依赖票的价格和固定倍数位置，票之间无共享资源或跨组件依赖，不存在可天然耦合的局部独立单元，强行施加全局耦合会破坏原问题核心逻辑。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题 invariant 指明，对于任意售出票数，最大总贡献由贪心匹配票价格与权重得到，权重仅由 a,b 的倍数位置决定，各位置贡献可独立相加，无共享预算或总量守恒约束。规则要求“局部单元之间能通过共享资源、总量或全局选择自然耦合”，但种子题不存在此类共享变量。",
+        "feedback": "该规则更适合具有资源分配、预算上限或跨单元一致性需求的种子题，当前种子题为典型的贪心分配题，缺乏耦合基础。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "natural_turn_based_action",
+      "selection_reason": "原题的核心操作是选择票的出售顺序，这可自然解释为逐步从剩余票集中选择下一张票，构成一个轮流选择过程。将单人逐步选择改为双方轮流选择后，每个玩家的行动都会改变后续状态，满足博弈化规则对自然操作的要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述中明确给出：“you have a possibility to select the order in which the tickets will be sold”，且示例展示了选择过程。逐步构造排列等价于依次决定每个位置放置哪张票，该操作存在且可由双方轮流执行。原题输入结构包含票的列表和固定参数，转换后可保留为博弈的初始状态。",
+        "feedback": "需注意将单人优化目标转化为双方博弈时的胜负或得分差目标，确保博弈规则不脱离原题约束（如贡献计算方式），并建立清晰的博弈不变量。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_local_structure",
+      "selection_reason": "种子题的核心对象是售票序列，没有路径、区间或子树等可扩展为覆盖/割的局部结构。问题本质是调度和贪心分配，而非覆盖或支配问题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 的 core_constraints 和 invariant 只涉及价格、整除位置和降序分配，未出现局部路径或区间结构。原题描述中“single path”或“segment”无依据。",
+        "feedback": "规则要求原题有路径/区间等局部结构，但该题仅为序列位置整除标记，不适合扩展为全局覆盖或割问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_a_counting_problem",
+      "selection_reason": "种子题是优化问题（最小化售出票数），没有明确有限的计数对象，不满足规则要求的“原题已经有明确有限的计数对象”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为minimize_value，描述为最小化number_of_tickets_sold，且original_problem.description明确要求寻找minimum number of tickets，输出是单个整数而非计数方案总数。整个问题没有任何计数目标。",
+        "feedback": "规则plain_counting_to_weighted_distribution要求种子题必须是一个计数问题，但该题是求最小满足条件的数量，属于优化问题，无法进行“从计数总数改成带权或分布统计”的变换。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "potential_for_canonical_output",
+      "message": "原题输出仅为最小售出票数，但答案可恢复为具体票号排列；存在自然贪心构造顺序（降序价格与权重分配），且原题并未要求输出方案，满足规则所需种子属性。可通过定义强规范性输出（如字典序最小的可行排列）迫使解法从单纯可行性检查转向带有证明责任的构造，从而改变主要解法，满足轴变化要求并避免浅层修改。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.9,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema中invariant的'descending_weight_optimal_assignment'指明方案的自然顺序；原题output为单一整数，不输出方案——符合required_seed_properties且不触发forbidden_seed_properties；positive example支持从判定到规范构造的升级方向。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_local_certificate_structure",
+      "message": "原题无解的唯一原因是全局资源不足：所有票的任何排列都无法使总贡献达到k。不存在局部冲突结构，无法构造出可局部检查的阻碍证据，只能输出全局上界，不符合规则对冲突证据的局部性要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求冲突证据必须能局部检查（validation_contract: hard_checks第一条），且种子题要求做不到的原因可以用局部证据表示（eligibility.required_seed_properties）。但原题中，无解是因为全局最大贡献低于k，只能通过贪心计算全票贡献验证，没有类似于不可满足子公式或冲突子集那样的局部阻碍，只能输出全局上界值，属于退化为解释的风险（examples.negative）。",
+        "feedback": "建议寻找具有局部冲突结构的原题，例如存在满足部分约束必导致整体矛盾的组合问题，否则证书化只会是数值包装，不满足规则的核心意图。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "finite_clear_countable",
+      "message": "种子题的解空间（所有排列）在 n 给定时有限，且贡献仅由特殊位置上的票决定，可定义等价关系为“排列序列完全相同”，去重规则明确；计数单元可按双倍、单a、单b位置的票集合及其内部排列拆分，满足拆分与汇总要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema 中 n ≤ 2e5，排列总数有限；原题不变量“将最大价格票分配给最高权重位置”揭示了贡献仅依赖于特殊位置上的票，为计数单元定义提供了直接依据；约束 p_i mod 100=0 和 x+y≤100 保证计算无小数，避免舍入歧义，去重规则可自然沿用全序列比较。",
+        "feedback": "后续规划需明确计数对象是“全排列中总贡献≥k的序列数”，并在 O 轴清晰定义模数；在 C 轴加入去重准则（两序列不同当且仅当某位置票值不同）；V 轴验证计数结果模 MOD 的正确性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "pass",
+      "reason_code": "eligible",
+      "message": "原题提供了排列顺序的自由度，自然构成顺序不确定性，可被放大为最坏情况分析；最坏顺序下的贡献计算仍完全基于原题的位置百分比权重，语义一致性高。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "eligible",
+        "evidence": "原题明确允许选择任意排列（顺序不确定），扰动模型可定义为对手选择最不利排列；核心约束 percentage_sum 和 price_multiple 不变；不变量 descending_weight_optimal_assignment 可直接对偶得到最坏情况分配规则。",
+        "feedback": "规则适用，规则要求的变化轴 O、C、V 均可被触发，且扰动来源纯来自原题机制而非故事背景。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "种子题已经是求最小售出票数的阈值优化，进一步变换可能导致目标重复或机械二分。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为最小化售出票数，解法利用贡献随票数单调递增性质找到最小临界值，已经完成从判定到极值阈值的转换，规则所要求的升级在此已无必要。",
+        "feedback": "目标轴O已经是极值求解，再套用此规则会违背‘不能只在原判定外层做机械二分’的红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "second_metric_is_byproduct",
+      "message": "原题的贪心分配算法已经隐式计算了所有售出票数 i 下的最大贡献，仅需移除二分查找的提前终止即可得到完整前沿。第二指标（贡献）虽然与目标（最小票数）自然冲突，但权衡前沿可由原解法直接后处理得到，不符合规则对算法创新的要求。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "标准解法中，循环 `for i in range(1, n+1)` 先累加 nab/na/nb 计数，再计算 `current = (sum[nab]*(x+y) + ...) // 100`。当 current>=k 时记录答案并 break。去掉 k 的条件并持续计算即可得到每个 i 的最大贡献，无需新的状态设计或支配关系处理。",
+        "feedback": "该种子题不适用多目标扩展，因为第二指标完全内嵌于单目标求解过程，无法产生有意义的算法增量。建议选择存在决策矛盾且不能由原方法直接给出前沿的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "SEED_CAN_BE_INVERSE_DESIGNED",
+      "message": "原题输出是最小售出票数，可被指定为反向目标（如要求恰好需要t张达到贡献k）；票价、百分比等输入参数是核心对象，修改它们以满足目标贡献是自然的操作，与原计算逻辑紧密相关，并产生新的最优化目标（最小修改代价）。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "schema中input_structure包含ticket prices数组、program参数(x,a,y,b)和贡献目标k，这些均可作为修改设计变量；core_constraints要求p_i是100的倍数，提供了修改约束；invariant的贪心分配规则在修改后仍可用于验证目标；原题objective是最小化票数，可翻转成目标导向的设计任务。",
+        "feedback": "该种子题具备明确的反向目标候选（票数或贡献值）和可构造的修改操作空间，满足反向设计要求，建议进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_natural_coupling",
+      "message": "种子题的每个位置贡献仅依赖票的价格和固定倍数位置，票之间无共享资源或跨组件依赖，不存在可天然耦合的局部独立单元，强行施加全局耦合会破坏原问题核心逻辑。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题 invariant 指明，对于任意售出票数，最大总贡献由贪心匹配票价格与权重得到，权重仅由 a,b 的倍数位置决定，各位置贡献可独立相加，无共享预算或总量守恒约束。规则要求“局部单元之间能通过共享资源、总量或全局选择自然耦合”，但种子题不存在此类共享变量。",
+        "feedback": "该规则更适合具有资源分配、预算上限或跨单元一致性需求的种子题，当前种子题为典型的贪心分配题，缺乏耦合基础。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "natural_turn_based_action",
+      "message": "原题的核心操作是选择票的出售顺序，这可自然解释为逐步从剩余票集中选择下一张票，构成一个轮流选择过程。将单人逐步选择改为双方轮流选择后，每个玩家的行动都会改变后续状态，满足博弈化规则对自然操作的要求。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述中明确给出：“you have a possibility to select the order in which the tickets will be sold”，且示例展示了选择过程。逐步构造排列等价于依次决定每个位置放置哪张票，该操作存在且可由双方轮流执行。原题输入结构包含票的列表和固定参数，转换后可保留为博弈的初始状态。",
+        "feedback": "需注意将单人优化目标转化为双方博弈时的胜负或得分差目标，确保博弈规则不脱离原题约束（如贡献计算方式），并建立清晰的博弈不变量。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "missing_local_structure",
+      "message": "种子题的核心对象是售票序列，没有路径、区间或子树等可扩展为覆盖/割的局部结构。问题本质是调度和贪心分配，而非覆盖或支配问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 的 core_constraints 和 invariant 只涉及价格、整除位置和降序分配，未出现局部路径或区间结构。原题描述中“single path”或“segment”无依据。",
+        "feedback": "规则要求原题有路径/区间等局部结构，但该题仅为序列位置整除标记，不适合扩展为全局覆盖或割问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_a_counting_problem",
+      "message": "种子题是优化问题（最小化售出票数），没有明确有限的计数对象，不满足规则要求的“原题已经有明确有限的计数对象”。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为minimize_value，描述为最小化number_of_tickets_sold，且original_problem.description明确要求寻找minimum number of tickets，输出是单个整数而非计数方案总数。整个问题没有任何计数目标。",
+        "feedback": "规则plain_counting_to_weighted_distribution要求种子题必须是一个计数问题，但该题是求最小满足条件的数量，属于优化问题，无法进行“从计数总数改成带权或分布统计”的变换。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划通过引入字典序最大约束、双目标优化和可行性保持不变量，真正兑现了 canonical_witness 规则要求：输出从数值升级为带证明责任的规范解，主轴 C、O、V 均发生实质性变化，三个 helper 全部生效且未触及红线。",
+      "details": {
+        "review_role": "你扮演一名规范解规划审查官，重点确认规划是否真正把输出责任升级为可比较、可校验的规范解。",
+        "review_brief": "确认规划是否明确了规范解的定义、比较口径与校验方式，并且规范性会改变主要求解责任。",
+        "evidence": "C轴变化：candidate_schema.core_constraints 新增 lexicographically_maximal_placement 约束并标记为 primary；O轴变化：objective 从 minimize_value 改为 minimize_primary_with_lexicographical_max_secondary，target 包含 sequence；V轴变化：invariant 新增 feasibility_preserving_greedy 以支撑构造正确性。helpers 实现：canonical_order_pressure 通过字典序定义进入 C/O/V；proof_bearing_output 使输出成为带全局最优校验的解对象；constraint_reweighting 将新约束提升为主约束并反映在 V 中。algorithmic_delta_claim 表明原二分+前缀和不再直接可用，需新增贪心构造与可行性判定，解决了 redlines 中‘不能退化为输出后处理’等问题。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "canonical_witness_fulfilled",
+      "message": "题面已经明确要求输出一个规范且可校验的构造方案：先最小化使用的物品数 m，再在所有最小 m 方案中输出字典序最大的分数序列，并给出了具体的字典序比较规则，使输出成为一个可直接检查的规范解。",
+      "details": {
+        "review_role": "你扮演一名规范解题面审查官，重点确认题面是否要求输出一个规范且可检查的构造。",
+        "review_brief": "确认题面是否写清规范解、字典序或统一比较规则，并要求输出一个可校验的构造方案。",
+        "evidence": "题面描述部分写明'在满足 m 最小的前提下，他希望在格子 1 到 m 中看到的物品分数序列（按格子从左到右的顺序）的字典序尽可能大'，并随后详细解释字典序比较规则（先比分数，分数相同比原输入索引）。输出格式要求'输出一个整数 m（最小格子数），然后是 m 个整数，表示字典序最大的分数序列'。core_constraints 中新增了 lexicographically_maximal_placement 作为 primary 约束，objective 被定义为双目标 minimize_primary_with_lexicographical_max_secondary，invariant 中加入了 feasibility_preserving_greedy。这些变化兑现了 canonical_order_pressure（规范顺序进入目标定义与约束）、proof_bearing_output（输出序列本身承担校验责任）和 constraint_reweighting（规范要求提升为主约束）的承诺，使得 C、O、V 三轴均发生实质性变化。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "score": 0.9,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "canonical_witness",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "I",
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "整理柜子 · 最优清单",
+    "description": "小明正在整理家里的柜子。柜子有一排共 n 个格子，编号为 1 到 n。他有 n 件物品，每件物品有一个重要性分数 s_i（保证都是 100 的倍数）。\n\n柜子参与了两项整理标签计划：\n- 标签 A：在编号为 a, 2a, 3a, … 的格子上，该格子中物品的 x% 分数会计入整理评分；\n- 标签 B：在编号为 b, 2b, 3b, … 的格子上，该格子中物品的 y% 分数会计入整理评分。\n若某个格子同时被两个标签覆盖，则计入 (x + y)% 的分数。\n\n保证 x + y ≤ 100，且所有分数都是 100 的倍数，因此计算不会产生小数。\n\n小明计划只使用前 m 个格子（即格子 1 到 m）。他需要从 n 件物品中挑选恰好 m 件，每件物品只能使用一次，并将它们放入这 m 个格子里（每个格子放一件）。放入的顺序（即哪个物品放在哪个格子）可以任意决定。\n\n整理评分的计算方式为：对前 m 个格子，根据上述标签规则计算每个格子的贡献百分比，再乘上该格子中物品的分数，求和后得到总整理评分。\n\n小明有两个目标：\n1. 使用的格子数 m 尽可能小，即用最少的物品让总整理评分达到或超过 k；\n2. 在满足 m 最小的前提下，他希望在格子 1 到 m 中看到的物品分数序列（按格子从左到右的顺序）的字典序尽可能大。\n\n字典序比较规则：将两个长度均为 m 的分数序列从左到右逐项比较。在第一个不同的位置上，分数较大的序列视为更大；如果分数相同，则比较该物品在原输入中出现的索引（从 1 开始），索引较大的视为更大。你只需输出分数序列，不需要输出索引。\n\n请你帮助小明求出每个询问下的最优方案。",
+    "input_format": "第一行一个整数 q (1 ≤ q ≤ 100)，表示询问的组数。\n接下来按组依次给出 q 组询问。每组询问的格式如下：\n\n第一行一个整数 n (1 ≤ n ≤ 2×10^5)，代表物品的总数。\n第二行 n 个整数 s_1, s_2, ..., s_n (100 ≤ s_i ≤ 10^9, s_i 是 100 的倍数)，表示每件物品的重要性分数。\n第三行两个整数 x 和 a (1 ≤ x ≤ 100, 1 ≤ a ≤ n)，表示标签 A 的百分比和周期。\n第四行两个整数 y 和 b (1 ≤ y ≤ 100, 1 ≤ b ≤ n, 保证 x + y ≤ 100)，表示标签 B 的百分比和周期。\n第五行一个整数 k (1 ≤ k ≤ 10^14)，为目标整理评分。\n\n保证所有询问的 n 之和不超过 2×10^5。",
+    "output_format": "对于每组询问，输出一行：\n- 如果存在方案能达到 k 分，输出一个整数 m（最小格子数），然后是 m 个整数，表示字典序最大的分数序列（按放置位置从左到右的顺序）。\n- 否则输出 -1。",
+    "constraints": [
+      "时间限制：2.0 秒",
+      "空间限制：256.0 MB",
+      "1 ≤ n ≤ 200000，所有询问 n 的总和 ≤ 200000",
+      "100 ≤ s_i ≤ 10^9，s_i 是 100 的倍数",
+      "1 ≤ x, y ≤ 100，x + y ≤ 100",
+      "1 ≤ a, b ≤ n",
+      "1 ≤ k ≤ 10^14"
+    ],
+    "samples": [
+      {
+        "input": "2\n3\n200 100 300\n50 2\n30 3\n150\n4\n400 100 200 100\n20 2\n10 4\n80",
+        "output": "2 200 300\n2 200 400",
+        "explanation": "第一组询问：n=3，分数 [200, 100, 300]，标签 A: x=50%, a=2；标签 B: y=30%, b=3；目标 k=150。\n- 若只用 1 个格子（m=1），只能用格子 1，它不带任何标签，贡献为 0，不可能达到 150。\n- 使用 2 个格子（m=2）：格子 1（无标签），格子 2（标签 A，50%）。需要总贡献 ≥150。把最大的分数 300 放到格子 2，贡献 = 300 × 50% = 150；格子 1 放任意剩余物品，贡献 0。因此 m=2 可行，且 2 是最小的 m。\n- 在所有 m=2 且总贡献 ≥150 的序列中，要选字典序最大的。可能的分数序列有 [200, 300] 或 [100, 300]（格子 2 必须放 300 才能达标，格子 1 放剩下的）。比较 [200, 300] 和 [100, 300]，第一项 200 > 100，因此 [200, 300] 更大。输出 2 200 300。\n\n第二组询问：n=4，分数 [400, 100, 200, 100]，标签 A: x=20%, a=2；标签 B: y=10%, b=4；目标 k=80。\n- m=1：格子 1 无标签，不可行。\n- m=2：格子 1（无），格子 2（标签 A，20%）。需要贡献 ≥80，则格子 2 必须放至少 400 的物品（400×20%=80）。因此必须把 400 放在格子 2，格子 1 放剩余任意物品。\n- 剩余物品中可选 200 或 100（两个 100 中的一个）。为了字典序最大，格子 1 的分数应尽量大，所以选 200。序列 [200, 400] 是可行的且字典序最大。注意 [400, 100] 虽然第一个数更大，但 400 放在格子 1 贡献为 0，格子 2 只能放剩余最大 200（贡献 40），总贡献 40 < 80，不可行。因此输出 2 200 400。"
+      },
+      {
+        "input": "1\n1\n100\n10 2\n10 2\n50",
+        "output": "-1",
+        "explanation": "只有一件物品，分数为 100。格子 1 不在任何标签周期内（a=2, b=2，第 1 个格子不是 2 的倍数），贡献百分比为 0%，总贡献为 0，无法达到目标 k=50，因此输出 -1。"
+      }
+    ],
+    "notes": "字典序比较规则：先比较分数，分数大的序列更大；分数相同时，比较该物品在原输入中的索引（从 1 开始），索引大的更大。所有物品的分数均为 100 的倍数，计算贡献时不会产生小数。每组询问独立，物品不可跨询问复用。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_7d8b7f871b5c_home_organization_20260609_222721",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}
