@@ -34,7 +34,7 @@ python D:\AutoProblemGen\总流程\main.py --workflow-config D:\AutoProblemGen\�
 说明：
 
 - generation LLM 配置来自 `总流程/generation_llm.env`，用于标准解、小规模真值 oracle（暴力解）、测试输入、checker 和错误解池生成。
-- 执行限制来自 `总流程/workflow.env` 中的 `EXECUTION_*` 字段，用于约束本地子进程执行生成器、小规模真值 oracle（暴力解）和 checker 的时间/空间限制；`STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制标准解 debug 最大修复轮数。
+- 执行限制来自 `总流程/workflow.env` 中的 `EXECUTION_*` 字段，用于约束本地子进程执行生成器、小规模真值 oracle（暴力解）和 checker 的时间/空间限制；`STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制标准解 debug 最大候选生成轮数，拒绝候选同样计数。
 - `generate_all_artifacts` 必须接收总流程传入的 `LLMConfig` 或显式 client。
 - `generate_verified_artifacts` 必须额外接收总流程传入的 `ExecutionConfig`。
 - 缺少 LLM 配置或执行限制时会 fail-fast，不会尝试读取模块本地配置文件。
@@ -132,10 +132,10 @@ result = generate_verified_artifacts(artifact, config, execution_config=executio
 - 小规模真值 oracle（暴力解）：对 30 条输入逐一运行 `solve`。它只要求为小规模合法输入产出可信真值，不要求覆盖题面最大输入规模。编译错误、接口错误和可缩小到小规模的运行时错误会触发暴力 debug LLM 修复，并从头重新验证；超时或超内存输入会归为 `large_scale_inputs`，不触发 debug。
 - 真值用例：最终只保留小规模真值 oracle 能正常返回字符串输出的 `solved_cases`，数量允许少于已验证输入总数；`large_scale_inputs` 和 `large_scale_runtime_failures` 后续由标准解生成真值。
 - checker：当 `needs_checker=false` 时跳过 checker 闭环；当需要 checker 时，先用 `solved_cases` 验证不误拒合法输出，再由反例生成 LLM 构造错误输出集合验证不误收非法输出。
-- 标准解：错误解池补测后，用全部 `solved_cases` 验证标准解。无 checker 题做输出字符串精确比对；有 checker 题使用修复后的 checker 判定标准解输出。每轮会先跑完全部真值用例，收集失败批次并分类，再触发一次标准解 debug LLM 修复；修复后从头重跑全部用例。
+- 标准解：错误解池补测后，用全部 `solved_cases` 验证标准解。无 checker 题做输出字符串精确比对；有 checker 题使用修复后的 checker 判定标准解输出。流水线始终维护失败数最少的当前最佳版本；每个 LLM 修复结果只作为候选，全量重跑后必须同时满足“未破坏当前已通过用例”和“失败数严格下降”才会被采纳，否则记录原因并回退。debug prompt 最多携带 10 条代表性失败用例、3 条按来源和输入输出规模选择的通过锚点，以及历次修复摘要；最近两次尝试额外携带相对当时最佳版本的统一 diff。
 - 大规模真值：标准解通过小规模真值后，运行 `large_scale_inputs` 和 `large_scale_runtime_failures` 并把标准解输出写入 `large_scale_truth_outputs`；若标准解超时或超内存，会记录到 `failed_cases` 并继续后续大规模输入；若标准解运行错误或未返回字符串，会 fail-fast，不产出可疑真值。
 - 标准解执行限制：从 `generated_problem.constraints` 解析带明确标签的题面限制，例如 `时间限制: 2s`、`time limit: 2 seconds`、`空间限制: 512MB`、`memory limit: 256 MB`。缺少时间或空间限制时会 fail-fast。
-- 修复循环：标准解修复轮数由 `STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制，达到上限仍失败会 fail-fast 并输出失败分类摘要；暴力解法、checker 误拒和 checker 误收修复仍不设轮数上限，直到本地执行结果通过对应阶段。
+- 修复循环：标准解修复轮数由 `STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制，表示候选生成次数，拒绝候选同样计数。达到上限仍失败会 fail-fast，并在失败 JSON 的 `details` 中保留历史最佳代码、最佳版本失败摘要和完整 `repair_history`；暴力解法、checker 误拒和 checker 误收修复仍不设轮数上限，直到本地执行结果通过对应阶段。
 - 错误解池增强：基础 checker 验证完成后，默认执行单题临时错误解池；无 checker 题使用输出字符串差异识别错误解问题，有 checker 题只使用已修复 checker 判定错误解输出是否暴露问题。
 - 定向补测：错误解池会为全部当前尚未暴露问题的错误解生成单条 targeted 输入；输入通过现有 validate 函数且暴力解能产出真值时，会追加到 `verified_test_inputs` 和 `solved_cases`。当原始未暴露问题的错误解累计暴露比例达到 0.8，或某轮没有新增有效输入时停止。
 

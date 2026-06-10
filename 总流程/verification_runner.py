@@ -20,6 +20,20 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_error_payload(artifact_path: Path, exc: Exception, traceback_text: str) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "status": "failed",
+        "artifact_path": str(artifact_path),
+        "error_type": type(exc).__name__,
+        "error": str(exc),
+        "traceback": traceback_text,
+    }
+    details = getattr(exc, "details", None)
+    if isinstance(details, dict) and details:
+        payload["details"] = details
+    return payload
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -48,13 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[OK] verified artifacts saved to: {output_path}")
         return 0
     except Exception as exc:
-        error_payload = {
-            "status": "failed",
-            "artifact_path": str(artifact_path),
-            "error_type": type(exc).__name__,
-            "error": str(exc),
-            "traceback": traceback.format_exc(),
-        }
+        error_payload = _build_error_payload(artifact_path, exc, traceback.format_exc())
         output_path.write_text(json.dumps(error_payload, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[ERROR] verification failed: {exc}", file=sys.stderr)
         return 1

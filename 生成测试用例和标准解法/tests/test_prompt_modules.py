@@ -261,6 +261,23 @@ class PromptModuleTests(unittest.TestCase):
                     "error_report": "输出不一致",
                 }
             ],
+            anchor_cases=[
+                {
+                    "case_id": "case_002",
+                    "source": "random",
+                    "input": "1\n2",
+                    "expected_output": "2",
+                    "actual_output": "2",
+                }
+            ],
+            repair_attempts=[
+                {
+                    "repair_round": 1,
+                    "decision": "rejected",
+                    "decision_reason": "候选失败用例数未严格下降。",
+                    "candidate_diff_from_incumbent": "--- incumbent.py",
+                }
+            ],
         )
         false_reject_prompt = prompt_checker_false_reject_debug.build_user_prompt(
             self.artifact,
@@ -297,6 +314,10 @@ class PromptModuleTests(unittest.TestCase):
         self.assertIn('"fix_plan"', standard_debug_prompt)
         self.assertIn("本轮失败分类统计", standard_debug_prompt)
         self.assertIn("本轮代表性失败样例", standard_debug_prompt)
+        self.assertIn("已通过锚点用例", standard_debug_prompt)
+        self.assertIn("历次修复尝试摘要", standard_debug_prompt)
+        self.assertIn("不得破坏当前已经正确的行为", standard_debug_prompt)
+        self.assertIn("不要重复已经验证失败的修复方向", standard_debug_prompt)
         self.assertIn("先综合本轮全部失败样例", standard_debug_prompt)
         self.assertIn('"checker_code"', false_reject_prompt)
         self.assertIn('"checker_code"', false_accept_prompt)
