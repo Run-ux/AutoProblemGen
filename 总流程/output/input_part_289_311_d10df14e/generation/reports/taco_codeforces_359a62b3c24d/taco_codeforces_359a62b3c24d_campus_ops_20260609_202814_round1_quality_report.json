@@ -1,0 +1,661 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 51.4,
+    "schema_distance": 0.385,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema中的任务变体、输入对象、目标函数和约束均准确体现在题面的描述、输入输出格式、样例和约束中，无偏差。",
+        "evidence_refs": [
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含完整且清晰的任务说明、输入输出格式、约束、样例和额外说明，做题者无需猜测核心规则。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "描述、输入输出格式、约束和样例之间相互一致，无矛盾。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "两个样例具有代表性，解释清晰，有助于理解题意和字典序规则。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构规范，措辞明确，使用日常校园故事易于理解，无来源污染或无关文本。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.notes"
+        ]
+      }
+    ],
+    "strengths": [
+      "字典序最小的定义和比较规则解释清晰，样例中详细展示了比较过程。",
+      "输出格式明确，要求输出最小总费用和字典序最小的赞助集合，符合规范。",
+      "样例覆盖了t_i=0的情况，并演示了字典序选择。",
+      "提供了使用64位整数的提醒，避免溢出。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.385,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5712,
+        "O": 0.6685,
+        "V": 0.2325
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5712,
+        "objective_type_distance": 0.775,
+        "objective_text_distance": 0.5088,
+        "invariant_match_distance": 0.2325
+      }
+    },
+    "schema_distance": 0.385,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.5,
+    "solution_transfer_risk": 0.7,
+    "surface_retheme_risk": 0.75,
+    "verdict": "reject_as_retheme",
+    "rationale": "核心约束（容量覆盖 ∑(t_i+1) ≥ n）完全一致，仅增加字典序最小化次要目标，且目标形式仍基于相同背包模型。状态设计从一维费用扩展为(费用, 掩码)对，但原 DP 框架和转移方程可直接沿用，熟悉原题的选手能快速迁移。新题叙事（社团赞助 vs 收银台偷窃）系统性地一对一映射了时间、费用、数量等关键实体，表层换皮痕迹明显。尽管输出方案和字典序比较引入了轻微实现复杂度，但未从根本上改变问题建模或求解策略，语义差异有限。",
+    "evidence_refs": [
+      "original_schema.core_constraints[0].formal",
+      "new_schema.core_constraints[0].formal",
+      "original_schema.objective",
+      "new_schema.objective",
+      "review_context.distance_breakdown.axis_scores",
+      "review_context.algorithmic_delta_claim.reusable_subroutines",
+      "hard_checks[0].evidence_refs",
+      "hard_checks[1].evidence_refs",
+      "hard_checks[11].evidence_refs",
+      "hard_checks[12].evidence_refs"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.39，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "描述中的类比可能引发误解",
+      "detail": "description中提到“管理员只能在赞助社团活动的时段内处理普通社团的事务”，这可能让读者误以为需要安排具体的时序调度，但实际约束只是简单的总数不等式。这种叙事虽不影响核心正确性，但可能增加理解负担。",
+      "evidence_refs": [
+        "generated_problem.description"
+      ],
+      "fix_hint": "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。"
+    },
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "solution transfer risk too high",
+      "detail": "核心约束（容量覆盖 ∑(t_i+1) ≥ n）完全一致，仅增加字典序最小化次要目标，且目标形式仍基于相同背包模型。状态设计从一维费用扩展为(费用, 掩码)对，但原 DP 框架和转移方程可直接沿用，熟悉原题的选手能快速迁移。新题叙事（社团赞助 vs 收银台偷窃）系统性地一对一映射了时间、费用、数量等关键实体，表层换皮痕迹明显。尽管输出方案和字典序比较引入了轻微实现复杂度，但未从根本上改变问题建模或求解策略，语义差异有限。",
+      "evidence_refs": [
+        "original_schema.core_constraints[0].formal",
+        "new_schema.core_constraints[0].formal",
+        "original_schema.objective",
+        "new_schema.objective",
+        "review_context.distance_breakdown.axis_scores",
+        "review_context.algorithmic_delta_claim.reusable_subroutines",
+        "hard_checks[0].evidence_refs",
+        "hard_checks[1].evidence_refs",
+        "hard_checks[11].evidence_refs",
+        "hard_checks[12].evidence_refs"
+      ],
+      "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+    }
+  ],
+  "suggested_revisions": [
+    "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。",
+    "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+    "简化description中与调度相关的类比，直接聚焦于约束的不等式。",
+    "可以考虑增加一个n较大的样例或边界测试，但当前两个样例已足够。",
+    "优先改写核心任务定义，而不是继续替换故事背景。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 51.4,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "描述中的类比可能引发误解",
+        "detail": "description中提到“管理员只能在赞助社团活动的时段内处理普通社团的事务”，这可能让读者误以为需要安排具体的时序调度，但实际约束只是简单的总数不等式。这种叙事虽不影响核心正确性，但可能增加理解负担。",
+        "evidence_refs": [
+          "generated_problem.description"
+        ],
+        "fix_hint": "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。"
+      },
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "solution transfer risk too high",
+        "detail": "核心约束（容量覆盖 ∑(t_i+1) ≥ n）完全一致，仅增加字典序最小化次要目标，且目标形式仍基于相同背包模型。状态设计从一维费用扩展为(费用, 掩码)对，但原 DP 框架和转移方程可直接沿用，熟悉原题的选手能快速迁移。新题叙事（社团赞助 vs 收银台偷窃）系统性地一对一映射了时间、费用、数量等关键实体，表层换皮痕迹明显。尽管输出方案和字典序比较引入了轻微实现复杂度，但未从根本上改变问题建模或求解策略，语义差异有限。",
+        "evidence_refs": [
+          "original_schema.core_constraints[0].formal",
+          "new_schema.core_constraints[0].formal",
+          "original_schema.objective",
+          "new_schema.objective",
+          "review_context.distance_breakdown.axis_scores",
+          "review_context.algorithmic_delta_claim.reusable_subroutines",
+          "hard_checks[0].evidence_refs",
+          "hard_checks[1].evidence_refs",
+          "hard_checks[11].evidence_refs",
+          "hard_checks[12].evidence_refs"
+        ],
+        "fix_hint": "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。"
+      }
+    ],
+    "suggested_revisions": [
+      "简化或删除该句，直接陈述“赞助社团的总活动时间不能少于普通社团的数量”即可。",
+      "增加输入、约束与目标的实质变化，降低原题解法的直接迁移性。",
+      "简化description中与调度相关的类比，直接聚焦于约束的不等式。",
+      "可以考虑增加一个n较大的样例或边界测试，但当前两个样例已足够。",
+      "优先改写核心任务定义，而不是继续替换故事背景。"
+    ],
+    "strengths_to_keep": [
+      "字典序最小的定义和比较规则解释清晰，样例中详细展示了比较过程。",
+      "输出格式明确，要求输出最小总费用和字典序最小的赞助集合，符合规范。",
+      "样例覆盖了t_i=0的情况，并演示了字典序选择。",
+      "提供了使用64位整数的提醒，避免溢出。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\source\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\artifacts\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d_campus_ops_20260609_202814_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\output\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d_campus_ops_20260609_202814_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_359a62b3c24d",
+      "title": "B",
+      "description": "Bob came to a cash & carry store, put n items into his trolley, and went to the checkout counter to pay. Each item is described by its price ci and time ti in seconds that a checkout assistant spends on this item. While the checkout assistant is occupied with some item, Bob can steal some other items from his trolley. To steal one item Bob needs exactly 1 second. What is the minimum amount of money that Bob will have to pay to the checkout assistant? Remember, please, that it is Bob, who determines the order of items for the checkout assistant.\n\nInput\n\nThe first input line contains number n (1 ≤ n ≤ 2000). In each of the following n lines each item is described by a pair of numbers ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 109). If ti is 0, Bob won't be able to steal anything, while the checkout assistant is occupied with item i.\n\nOutput\n\nOutput one number — answer to the problem: what is the minimum amount of money that Bob will have to pay.\n\nExamples\n\nInput\n\n4\n2 10\n0 20\n1 5\n1 3\n\n\nOutput\n\n8\n\n\nInput\n\n3\n0 1\n0 10\n0 100\n\n\nOutput\n\n111",
+      "input": "The first input line contains number n (1 ≤ n ≤ 2000). In each of the following n lines each item is described by a pair of numbers ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 109). If ti is 0, Bob won't be able to steal anything, while the checkout assistant is occupied with item i.",
+      "output": "Output one number — answer to the problem: what is the minimum amount of money that Bob will have to pay.",
+      "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "n = int(input())\nar = [float('inf')] * (n + 1)\nar[0] = 0\nfor i in range(n):\n\t(t, c) = map(int, input().split())\n\tfor j in range(n - 1, -1, -1):\n\t\tw = min(j + t + 1, n)\n\t\tar[w] = min(ar[w], ar[j] + c)\nprint(ar[n])"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_359a62b3c24d",
+        "codeforces",
+        "Bob came to a cash & carry store, put n items into his trolley, and went to the checkout counter to pay. Each item is described by its price ci and time ti in seconds that a checkout assistant spends on this item. Whi...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "在核心约束中加入字典序最小要求，使目标变为输出规范方案，并让DP状态进化以承载字典序比较，从而从根本上改变算法结构和正确性证明。",
+      "summary": "核心约束新增字典序最小条件，目标从求最小值转变为输出特定规范解，DP状态从单目标（费用）扩展为双目标（费用+字典序），导致解法必须重新设计状态比较与转移。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_codeforces_359a62b3c24d_canonical_witness_campus_ops",
+      "source": "codeforces",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": 1,
+          "max": 2000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "org_count",
+            "role_description": "n，社团总数",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 2000
+            },
+            "properties": {}
+          },
+          {
+            "role": "orgs",
+            "role_description": "列表，每项包含占用时间 ti 和费用 ci",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 2000
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "time_coverage_constraint",
+            "description": "管理员必须支付一组社团，使得支付社团的总占用时间（ti秒）至少等于未支付社团的数量。即支付集合P必须满足 ∑_{i∈P} t_i ≥ n - |P|。",
+            "formal": "∑_{i∈P} t_i ≥ n - |P|",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "canonical_lexicographic_minimal_constraint",
+            "description": "在满足时间覆盖约束且总费用最小的所有方案中，支付方案必须按社团编号（1..n）从左到右的字典序最小（0表示不支付，1表示支付；字典序比较：第一个不同位，0更小）。",
+            "formal": "在所有可行方案中，首先最小化 total_cost = ∑_{i∈P} c_i，然后最小化 lex_order(P)，其中 lex_order 是按社团编号升序的支付指示向量（0/1）的字典序。",
+            "source_sections": [
+              "description",
+              "output"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "output_set_with_canonical_order",
+        "description": "输出在满足约束且总费用最小的前提下，按社团编号字典序最小的支付社团编号列表。",
+        "target": "paying_orgs",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "dp_state_with_lexicographic_invariance",
+            "description": "在依次处理每个社团后，dp[j] (0 ≤ j ≤ n) 保存一个对 (min_cost, min_mask)，其中 min_cost 是由前i个社团中选出若干，使得每个被选社团的贡献体积 t_k+1 之和达到 j 的最小总费用；min_mask 是一个n位二进制掩码（从最高位到最低位对应社团1到n），表示在费用相同时字典序最小的支付集合。转移时，对于容量j，若未选社团i，则保留原状态；若选择社团i，新费用 = dp[j].cost + c_i，新掩码 = dp[j].mask | (1 << (n - i))。更新时，若新费用更小则直接替换；若相等且新掩码更小则替换。整个过程中维持此不变式。",
+            "properties": {
+              "volume_unit": "t_i + 1",
+              "target_volume": "n",
+              "optimized_value": "cost c_i",
+              "optimized_secondary": "lexicographic mask",
+              "update_rule": "w = min(j + t + 1, n); if dp[j].cost + c < dp[w].cost or (dp[j].cost + c == dp[w].cost and (dp[j].mask | (1 << (n - i))) < dp[w].mask): update"
+            },
+            "evidence_source": "solution_design"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium-hard"
+    },
+    "generated_problem": {
+      "title": "社团赞助方案",
+      "description": "学校有 n 个学生社团，每个社团计划举办一场活动，需要连续占用一间教室。社团 i 需要占用 t_i 分钟，并且愿意向学校缴纳赞助费 c_i 元。每个社团要么全额缴纳赞助费（成为“赞助社团”），要么不缴纳（成为“普通社团”）。不缴纳赞助费的社团，在使用教室时需要学校管理员协助开门、调试设备等，每个普通社团正好消耗管理员 1 分钟的时间。管理员只能在赞助社团活动的时段内处理普通社团的事务，且管理员同一分钟只能处理一个社团。为了确保所有普通社团都能得到服务，学校要求赞助社团的总活动时间（分钟数）不能少于普通社团的数量。\n\n学校希望总赞助费尽可能少，同时如果存在多种费用相同的方案，希望赞助方案在字典序意义上最优：将 n 个社团按编号 1 到 n 的顺序排成一行，每个社团下方标 0（普通）或 1（赞助），得到一个 01 序列。在总费用最小的方案中，学校希望这个 01 序列的字典序最小（即尽可能让编号小的社团不赞助）。\n\n请你找出这样的赞助方案，并输出最小总赞助费和赞助社团的编号列表。",
+      "input_format": "第一行一个整数 n (1 ≤ n ≤ 2000)，表示社团总数。\n接下来 n 行，每行两个整数 t_i 和 c_i (0 ≤ t_i ≤ 2000, 1 ≤ c_i ≤ 10^9)，分别表示社团 i 的占用时间和赞助费。",
+      "output_format": "第一行输出一个整数，表示最小总赞助费。\n第二行首先输出一个整数 k，表示赞助社团的数量；随后输出 k 个整数（升序排列），表示赞助社团的编号。",
+      "constraints": [
+        "时间限制：2.0 秒",
+        "空间限制：256 MB",
+        "1 ≤ n ≤ 2000",
+        "0 ≤ t_i ≤ 2000",
+        "1 ≤ c_i ≤ 10^9",
+        "总费用可能超过 32 位整数范围，请使用 64 位整数。"
+      ],
+      "samples": [
+        {
+          "input": "4\n2 5\n2 5\n0 5\n0 5",
+          "output": "10\n2\n2 4",
+          "explanation": "满足条件且总赞助费最小的方案有多个，例如赞助社团 {1,2}、{1,3}、{1,4}、{2,3}、{2,4}，总费用均为 10。对应的 01 序列分别为 1100、1010、1001、0110、0101。字典序最小的是 0101（社团 2 和 4 赞助，其余不赞助）。"
+        },
+        {
+          "input": "3\n1 5\n1 5\n1 5",
+          "output": "10\n2\n1 3",
+          "explanation": "最小总赞助费为 10。两个赞助社团即可满足条件。三种方案对应 01 序列：110（赞助 {1,2}）、101（赞助 {1,3}）、011（赞助 {2,3}）。字典序最小的是 101。"
+        }
+      ],
+      "notes": "字典序比较规则：将赞助情况表示成一个长度为 n 的 01 串，第 i 位为 1 表示社团 i 赞助，0 表示不赞助。比较时从社团 1 到 n 逐位进行，第一位不同的位置上，为 0 的序列字典序更小。\n输入保证至少存在一个合法方案，且赞助社团数量至少为 1。\n推荐使用 64 位整数类型（如 C++ 中的 long long）存储费用。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "核心约束新增字典序最小条件，目标从求最小值转变为输出特定规范解，DP状态从单目标（费用）扩展为双目标（费用+字典序），导致解法必须重新设计状态比较与转移。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.385,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5712,
+          "O": 0.6685,
+          "V": 0.2325
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5712,
+          "objective_type_distance": 0.775,
+          "objective_text_distance": 0.5088,
+          "invariant_match_distance": 0.2325
+        }
+      },
+      "applied_rule": "canonical_witness",
+      "applied_helpers": [
+        {
+          "id": "canonical_order_pressure",
+          "selection_reason": "需要将规范顺序（字典序）推进到主状态演化中，使新题输出责任离开原题路径。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints: 添加了字典序最小约束，使其成为合法解的必要条件。",
+            "objective: 目标从求最小费用改为输出满足字典序最小的支付方案。",
+            "invariant: DP状态进化为(min_cost, min_mask)，并在费用相同时比较mask字典序。"
+          ],
+          "innovation_reason": "通过将字典序比较直接嵌入DP状态转移，避免了后处理回溯，使输出对象与验证责任脱离原题仅求最小费用的路径。",
+          "difficulty_reason": "DP状态需要同时维护两个优化目标（费用和字典序），增加了状态设计和转移的复杂性，并要求正确性证明扩展到字典序维度。"
+        },
+        {
+          "id": "proof_bearing_output",
+          "selection_reason": "升级输出对象为带证明责任的规范解，确保输出方案可校验且满足全局规范。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective: 输出要求变为具体的支付社团集合，该集合必须经过DP证明其规范最小性。",
+            "invariant: DP状态保证了输出的方案同时满足费用最小和字典序最小，为输出提供了正确性依据。"
+          ],
+          "innovation_reason": "将输出责任从数值提升到可校验的解对象，要求解法必须生成带有规范证明的方案，而非简单的值。",
+          "difficulty_reason": "解法需要额外逻辑来构建和输出方案，且必须确保输出的集合确实符合所有规范要求，增加了实现和验证难度。"
+        },
+        {
+          "id": "constraint_reweighting",
+          "selection_reason": "需要重排约束优先级，使字典序最小成为主约束之一，改变原有约束结构。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints: 添加了第二优先级约束（字典序最小），原有约束保持，但整体约束体系变为多层优化。",
+            "invariant: DP状态的不变式反映了这种多层优化：在费用相等的情况下才考虑字典序比较。"
+          ],
+          "innovation_reason": "通过显式引入字典序约束，迫使解法在状态设计中处理新的约束主次关系，避免简单叠加。",
+          "difficulty_reason": "需要设计能够处理多层优先级的状态比较逻辑，增加了正确性证明的深度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "0/1背包变体的DP求最小花费",
+        "reusable_subroutines": "处理物品并更新容量j的循环框架，以及 min(j+t+1,n) 的容量截断逻辑",
+        "new_solver_core": "DP状态扩展为 (min_cost, min_mask)，在费用相同时比较mask字典序；最终输出满足容量n的最小费用和相应字典序最小的物品集合",
+        "new_proof_obligation": "证明DP能够正确维护字典序最小性：当费用相同时，选择字典序最小的掩码；并且最终的dp[n]确实是所有最小费用方案中字典序最小的。这需要证明DP的贪心选择性在字典序维度的正确性。",
+        "why_direct_reuse_fails": "原解只记录最小费用，无法直接比较和输出字典序最小的方案；若仅回溯则无法保证字典序最小，因此必须重新设计状态和转移。"
+      },
+      "anti_shallow_rationale": "虽然输出方案可以通过回溯原DP获得，但要求字典序最小引入了新的全局比较，这迫使DP状态必须同时考虑两个优先级，并且需要全新的证明，不是简单后处理或添加回溯。"
+    }
+  }
+}

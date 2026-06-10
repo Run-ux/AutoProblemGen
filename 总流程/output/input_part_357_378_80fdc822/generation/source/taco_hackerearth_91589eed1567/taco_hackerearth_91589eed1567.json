@@ -1,0 +1,133 @@
+{
+  "problem_id": "taco_hackerearth_91589eed1567",
+  "source": "hackerearth",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "parameters",
+        "role_description": "two integers: number of temples and number of monks",
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "ordered": true
+        }
+      },
+      {
+        "role": "positions",
+        "role_description": "integer positions of temples on the line",
+        "type": "array",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 10000000
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "uniform_range",
+        "description": "All monks share the same enlightenment value (range) that must be minimized.",
+        "formal": "r_1 = r_2 = ... = r_K = r, minimize r",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "range_integer",
+        "description": "The enlightenment value is an integer.",
+        "formal": "r ∈ Z",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "complete_coverage",
+        "description": "All N temples must be covered by the enlightenment ranges of the monks.",
+        "formal": "∀i ∈ {1,…,N}, ∃j ∈ {1,…,K} such that |p_i - c_j| ≤ r",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "fixed_num_monks",
+        "description": "Exactly K monks are available to be placed.",
+        "formal": "number_of_monks = K",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "continuous_placement",
+        "description": "Each monk can be placed at any real coordinate on the line.",
+        "formal": "c_j ∈ R",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "monks_less_than_temples",
+        "description": "The number of monks is strictly less than the number of temples, ensuring a non-trivial minimum range.",
+        "formal": "K < N",
+        "source_sections": [
+          "constraints"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "最小化完全覆盖数轴上给定点所需的最大覆盖半径（enlightenment值）,使得可以使用K个僧侣覆盖所有点。",
+    "target": "radius",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "feasibility_monotonicity",
+        "description": "If an enlightenment value R is sufficient to cover all temples with K monks, then any value greater than R is also sufficient. Conversely, if R is insufficient, any smaller value is also insufficient. This monotonicity justifies binary search for the minimum value.",
+        "properties": {},
+        "evidence_source": "both"
+      },
+      {
+        "name": "greedy_coverage_frontier",
+        "description": "During the feasibility check, a greedy strategy places each monk at the rightmost possible position to cover the current uncovered prefix: the monk is placed at (first uncovered temple + R). This maintains that all scanned temples are covered, and the number of monks used is minimized for the given R.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_hackerearth_91589eed1567",
+    "title": "the-enlightened-ones",
+    "description": "There are N temples in a straight line and K monks who want to spread  their enlightening power to the entire road of temples. All the monks have an enlightenment value, which denotes the range of enlightenment which they can spread in both the directions. Since, they do not want to waste their efficiency on trivial things of the world, they want to keep their range minimum.\n\nAlso, when we say that the N temples are in a straight line, we mean that that all the temples lie on something like an X-axis in a graph.\n\nFind the minimum enlightenment value such that all the temples can receive it. \n\nInput Format:\nThe first line contains two integers, N and K - denoting the number of temples and number of monks.  The next line contains N integers denoting the position of the temples in the straight line.\n\nOutput format:\nPrint the answer in a new line.\n\nConstraints:\n1 ≤ N  ≤ 10^5\n1 ≤ K < N \n1 ≤ Positioni ≤ 10^7\n\nUpdate: \nThe enlightenment value is an integer.\n\nSAMPLE INPUT\n3 2\n1 5 20\n\nSAMPLE OUTPUT\n2\n\nExplanation\n\nThe optimal answer is 2.\nA monk positioned at 3, can serve temples at 1 and 5.\nThe other monk can be placed at 18, to serve temple at 20.",
+    "input": "The first line contains two integers, N and K - denoting the number of temples and number of monks.  The next line contains N integers denoting the position of the temples in the straight line.",
+    "output": "Print the answer in a new line.",
+    "constraints": "1 ≤ N  ≤ 10^5\n1 ≤ K < N \n1 ≤ Positioni ≤ 10^7\n\nUpdate: \nThe enlightenment value is an integer.",
+    "source": "hackerearth",
+    "standard_solution_code": "def is_enlightenment_possible(ar, n, k, dist):\n\t#Checks if all n temples in list ar is possible to be enlightened by k monks with range dist\n\tpos = ar[0] + dist\n\tfor i in ar:\n\t\tif abs(pos - i) > dist:\n\t\t\tk = k - 1\n\t\t\tpos = i + dist\n\tk = k - 1\n\tif k >= 0:\treturn True\n\treturn False\n\n\nN, K = list(map(int, input().split()))\nar = list(map(int, input().split()))\nar.sort()\nlo, hi = 1, 10000000\nans = 0\nwhile lo<=hi:\n\tmid = (lo + hi) >> 1\n\t#print '%d .. %d .. %d' %(lo, mid, hi)\n\tif is_enlightenment_possible(ar, N, K, mid):\n\t\tans = mid\n\t\thi = mid - 1\n\telse:\n\t\tlo = mid + 1\nprint(ans)"
+  }
+}

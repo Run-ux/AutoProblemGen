@@ -1,0 +1,918 @@
+{
+  "problem_id": "urban_commute_gate_pairing_count",
+  "source_problem_ids": [
+    "taco_codeforces_3249c8d739df"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_3249c8d739df",
+      "codeforces",
+      "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. In Treeland there are 2k universities which are located in different tow...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "Objective changed from computing a scalar maximum value to counting the number of configurations achieving it. Core constraints now explicitly encode the equivalence rule and the edge-flow condition that characterizes maximizers. The invariant shifts from an upper bound to a lock on edge flows, tying maximization to a fixed flow pattern.",
+    "summary": "We count the distinct pairings that achieve the maximum total distance, redefining the output type, adding deduplication rules, and reconstructing the state space for counting.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4201,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4201,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4239,
+      "O": 0.6178,
+      "V": 0.6925
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4239,
+      "objective_type_distance": 0.7294,
+      "objective_text_distance": 0.4505,
+      "invariant_match_distance": 0.6925
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_objects",
+    "description": "Count the number of distinct pairings (as defined by the equivalence rule) that satisfy the maximum-distance condition, modulo 1000000007.",
+    "target": "number_of_pairings",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "种子题是求最大总距离的单一最优值问题，解空间为有限配对划分，去重规则（无序配对集合）明确，完美符合existence_to_counting的eligibility。其他规则中：canonical_witness虽可要求输出规范方案，但可能退化为构造任意方案的后处理；tradeoff缺乏自然的冲突第二指标；inverse_design需额外定义修改操作，自然性稍弱；global_coupling原题已具全局性质，不适合。因此计数规则在保证可落地的同时带来最深刻的创新与难度提升。；创新度判断：将核心义务从输出最大数值彻底替换为计数所有达到该最大值的合法配对方案数。新义务要求明确定义计数对象（无序配对划分）、去重口径和有限性，迫使主状态从仅统计子树大学数变为维护未匹配大学数并驱动方案计数过程，完全脱离原题的单纯数值输出。；难度判断：主要求解责任从O(n)的边贡献求和提升为在树形结构上计数满足所有边达到理论上界的配对方案数。必须设计新的DP状态（如子树内未匹配大学数）来准确汇总组合数，并承担计数正确性与完备性证明（如使用模数处理大数），算法难度跃进至组合计数与树形DP融合的层次。；风险判断：主要风险是方案数可能极度庞大导致无法直接存储，但可通过取模化解；去重规则需要精确定义（如配对内部无序，配对之间无序）以免歧义，整体风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "urban_commute_gate_pairing_count",
+    "source": "generated",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "connected": true,
+        "acyclic": true,
+        "directed": false,
+        "simple": true
+      },
+      "components": [
+        {
+          "role": "config",
+          "role_description": "Two integers: number of stops and number of gate pairs",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "gates",
+          "role_description": "List of distinct stop indices where gates are located",
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 200000
+          },
+          "value_range": {
+            "min": 1,
+            "max": null
+          },
+          "properties": {
+            "distinct": true
+          }
+        },
+        {
+          "role": "edges",
+          "role_description": "Undirected edges defining the bus network (tree)",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 199999
+          },
+          "value_range": {
+            "min": 1,
+            "max": null
+          },
+          "properties": {
+            "directed": false
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "complete_pairing",
+          "description": "The 2k gates must be partitioned into exactly k disjoint unordered pairs, with each gate belonging to exactly one pair.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "distinct_nodes_for_gates",
+          "description": "All 2k gates are located at mutually distinct stops (i.e., no two gates share the same stop).",
+          "formal": "",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "unit_edge_weight",
+          "description": "Every road segment has the same length equal to 1, so the distance between two gates is the number of edges on the unique tree path.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "max_distance_condition",
+          "description": "A pairing achieves the maximum total distance if and only if for every edge, the number of paired paths passing through that edge is exactly the smaller of the numbers of gates in the two connected components after removing that edge.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "equivalence_rule",
+          "description": "Two pairings are considered the same if they consist of exactly the same set of k unordered pairs of gate stops. The order of pairs or the order within a pair is irrelevant.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_objects",
+      "description": "Count the number of distinct pairings (as defined by the equivalence rule) that satisfy the maximum-distance condition, modulo 1000000007.",
+      "target": "number_of_pairings",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "edge_flow_upper_bound_lock",
+          "description": "For any pairing that satisfies the max-distance condition, the flow on each edge is fixed to the smaller gate count of the two sides. Conversely, any pairing achieving this fixed flow on all edges automatically attains the maximum total distance, which is the sum of these smaller counts.",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "fixed_total_distance",
+          "description": "The maximum total distance is uniquely determined by the tree and gate placements, equal to sum over edges of min(cnt_left, cnt_right).",
+          "properties": {},
+          "evidence_source": "derived"
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "medium-hard"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "DFS to count gates in each subtree, then accumulate min(cnt_left, cnt_right) to get maximum distance.",
+    "reusable_subroutines": "Subtree gate counting (same DFS as seed) can be reused as a preprocessing step to compute the fixed flow on each edge.",
+    "new_solver_core": "Tree DP with state (u, i) counting ways to pair i gates in the subtree with external gates while satisfying edge-flow constraints. The DP merges children and processes the node's own gate.",
+    "new_proof_obligation": "Prove that the DP recurrence correctly counts each distinct pairing exactly once under the equivalence rule, and that the edge-flow condition is both necessary and sufficient for maximum distance, thereby ensuring the counting objective is well-defined.",
+    "why_direct_reuse_fails": "The seed problem only evaluates a single maximum integer. Directly outputting the number of pairings from the seed solution is impossible because the optimal solution does not enumerate or count them. Counting requires a fundamentally different algorithmic structure."
+  },
+  "anti_shallow_rationale": "This problem is not a shallow relabeling; it changes the core output type from a scalar to a count with modulo, introduces a nontrivial equivalence rule for pairings, replaces the simple edge accumulation with a DP over tree decompositions, and adds proof obligations around uniqueness and sufficiency of the flow condition. The state factorization into subtree DP units with internal/external pairing distinction constitutes a substantial restructuring.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "Fulfills rule requirement to explicitly define counting objects and deduplication.",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Added equivalence_rule constraint to define what constitutes distinct pairings.",
+        "Objective redefined to count distinct pairings modulo prime.",
+        "Invariant extended to justify that the max-distance condition fixes edge flows, making counting well-defined."
+      ],
+      "innovation_reason": "Turns the answer from a numeric optimum into a combinatorial enumeration, requiring explicit object definition.",
+      "difficulty_reason": "Forces solver to handle deduplication in counting, which increases combinatorial complexity."
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "Required to decompose the solution space into DP units for counting.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Core constraints no longer rely on a global optimality condition; instead they enforce an edge-flow condition that decomposes naturally along tree edges.",
+        "Invariant now explicitly ties the flow condition to a fixed per-edge value, enabling DP on subtrees."
+      ],
+      "innovation_reason": "Shifts problem structure from a single global sum to a local per-edge invariant, enabling counting via subtree decomposition.",
+      "difficulty_reason": "Solver must design a DP state that tracks unpaired gates per subtree and combine correctly, significantly harder than computing a single max."
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "Ensures the main solve objective is counting, not a side note.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Objective explicitly demands counting as the primary output.",
+        "Core constraints now include the max-distance condition as part of the eligibility for counting, so the solver must enforce it to count correctly."
+      ],
+      "innovation_reason": "Makes counting the central algorithmic challenge, not merely attaching a modulo to the max value.",
+      "difficulty_reason": "The problem now requires the solver to integrate optimality verification directly into the counting process, preventing simplistic bypasses."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "CANONICAL_UPGRADE_VIABLE",
+      "selection_reason": "种子题仅要求输出最大距离，但存在明确的配对方案空间；升级为输出规范配对（如字典序最小）会强制改变解法核心，原DP无法直接回溯方案，且需要全新状态设计以满足规范约束，满足C、O、V轴的全方位变化要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中目标为最大化总距离（core_constraints.maximize_total_pairwise_distance），输出仅为最大值；标准解使用DP计算边贡献和，未构造具体配对（source standard_solution_code）。种子题不要求输出完整方案，也未顺手回溯方案，符合required_seed_properties。",
+        "feedback": "规则适用性强，但需确保规范顺序定义明确（如最小字典序），且避免退化为仅增加格式要求或借助后处理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题要求最大化总距离，但并非判定问题，且题目保证输入合法，不存在无解情形，因此无法触发失败分支输出冲突证据。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema的objective要求最大化total_distance，且由invariant可知目标可达，不存在任何合法输入会因无解而要求输出阻碍证据。rule的’construct_or_obstruction’要求从’判定或求值’改成’给方案或给冲突证据’，但原题无判定边界，失败语义无法落地。",
+        "feedback": "规则在该种子上不适用，建议寻找具有可判定无解特征的题目，例如存在冲突约束的组合问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.04,
+      "reason_code": "seed_conditions_met",
+      "selection_reason": "种子题是求最大总距离的最优化问题，解空间为有限个大学配对方案，去重规则自然（配对视为无序集族），可借助树DP按边贡献拆分为子树计数单元，满足‘解空间有限、等价关系清晰、可汇总’的要求；改成计数后目标、约束、不变量均需重新定义，变更幅度明显，不属于全局红线禁止的浅层变化。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题输入为大小至多200000的树和2k个大学节点，要求最大化k对大学路径总长。原题只输出最大值，但所有可能配对方案总数有限且可枚举；不同方案若仅对调对序或对内次序视为同一解，去重口径明确。最优性由边贡献上界刻画：方案合法当且仅当每条边被经过次数等于min(一侧大学数,另一侧)。该性质可转化为子树状态，拆分为可汇总计数单元（如子树内配对状态及外溢需求），满足 helper‘state_factorization’ 要求。规则要求的‘must_change’ O/C/V 均可实现：O 变为计数，C 新增去重与计数约束，V 从单值变为方案数（模大质数）。",
+        "feedback": "建议在规划阶段明确计数对象为‘达到最大总线长的大学配对方案数’，并在约束中声明‘两个配对方案若仅是内的序或对的排列不同视为相同’，同时指定取模方式（如 998244353）。树DP需重建状态，定义如何合并子树计数并避免重复，确保算法复杂度可控。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是确定性的树配对最大化问题，没有任何顺序不确定、资源波动或局部选择差异，无法稳定放大原生扰动来源，强行应用只能硬造对手。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述和约束显示输入固定（给定树和大学位置），目标为最大化总距离，没有随机性、波动或选择差异。核心约束不包括任何不确定性模型。",
+        "feedback": "该种子题缺乏原生扰动来源，无法满足规则要求的‘原题里本来就有顺序不确定、资源波动或局部选择差异’，故不适合此变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.25,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题是最大化总距离的优化问题，并非判定或可行性问题。将其转化为求最大可行阈值的判定版本仅仅是原优化问题的逆向等价表述，没有引入新的临界参数或改变核心求解结构，无法满足规则对 C、O、V 轴的实质性变化要求。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“maximize the total distance”，属于优化问题；规则要求原题可行性随参数具有单调性，但种子题本身不直接是判定问题。规则示例 positive 为“把判断是否存在合法方案改成求允许合法方案存在的最小容量”，而种子题的“存在方案使距离≥D”的判定只是原最大值的二分搜索步骤，属于 forbidden 的“阈值只是在原判定外层做机械二分”。且 required_axis_changes 要求改变 C, O, V，但转化后 V 仍为边计数上限，无实质创新。",
+        "feedback": "该规则期望从判定或可行性问题出发，引入一个自然参数并构建新的临界阈值优化目标。种子题已经是优化问题，直接反转会得到与原题等价的题目，缺乏创新性和教育价值。建议放弃此规则对本题的扩展，或寻找其他有自然二阶段结构的种子题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_conflicting_metric_present",
+      "selection_reason": "原题是树上大学配对最大化总距离的单目标问题，最大单对距离作为距离的自然属性可充当第二指标，且与总距离最大化存在真实冲突（总距离最大要求远距离配对，会推高最大距离；最小化最大距离则需就近配对，会压低总距离），因此适合扩展为双指标权衡前沿问题。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "根据原题摘要与约束，核心属性为树上的配对距离，最大距离是距离维度的天然补充；规则要求第二指标需与原目标冲突且不能同时独立最优，本场景中最大化总距离的解往往具有较大最大距离，而最小化最大距离的解必然无法达到总距离上界，满足真实冲突条件。",
+        "feedback": "建议将第二指标设为最大单对距离，输出前沿时可采用对最大距离限制的扫描或直接求非支配解集，需确保约束整合后状态不退化，防止新题变成两次独立调用原解法。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "matching_seed",
+      "selection_reason": "原题输出（最大总距离）可作为反向目标，且大学位置的自然修改操作提供了设计自由度。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "Seed schema: objective is to maximize total distance (scalar target). Input includes 'universities' array of distinct vertex indices, which can be modified to change the resulting max distance. Invariant: maximum distance is sum over edges of min(#universities on each side), providing a clear mechanism to compute the effect of modifications. Therefore, it is feasible to define a target distance and ask for minimal university relocations to achieve it.",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "feasible_global_coupling",
+      "selection_reason": "原题求解基于每条边的独立贡献上限（invariant: edge_crossing_upper_bound），各边贡献解耦，构成可独立处理的局部单元。通过引入共享资源（如边容量）或跨边依赖，可自然打破独立求解，实现全局耦合目标。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints.complete_pairing 要求大学完全配对，但 invariant.edge_crossing_upper_bound 指出每条边被经过的最大次数等于两侧大学数量的较小值，且该上限在所有边上同时可达，因此最优解退化为各边独立贡献之和，无需全局协调。这为规则提供了明确的局部单元。引入 shared_resource_constraint（如边使用次数限制）可强制耦合，因为必须全局分配路径。",
+        "feedback": "规则适用于该种子题：局部单元（各边贡献）明确，树结构和大学分布为共享资源约束提供了自然基础，耦合后能创造有意义的算法挑战。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_turn_based_operation",
+      "selection_reason": "原题是静态组合优化问题：给定树和大学位置，直接求解最大距离配对，不存在任何可供轮流选择的自然操作或状态转移过程；强行引入玩家和行动只能硬造故事背景，违反禁止凭背景硬造玩家的红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述中只有配对方案的选择，没有逐步操作；核心约束只定义配对与距离计算，没有行动顺序或选择状态；不变式仅涉及边贡献上界，与对抗选择无关。规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，且不同操作会改变后续可选状态，但该题完全不具备这些特征。",
+        "feedback": "该题不适合博弈化扩展，除非为了造题而完全虚构一套与原始问题无关的互动规则，但这已超出自然转化的范围。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "seed_unsuitable",
+      "selection_reason": "种子题的核心是全局配对距离最大化，不存在天然可扩展为覆盖/割的局部路径、区间或子树对象族；输入只给出树和点集，没有显式的局部对象列表。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 的 input_structure 仅包含树边和大学点集，core_constraints 为配对和最大化距离，没有任何局部路径或区间列表。规则 required_seed_properties 要求‘原题核心对象具有路径、区间、子树等局部结构’，且‘多个局部对象之间可以自然形成覆盖或割关系’，此处不满足。",
+        "feedback": "这道题虽然涉及树上的割容量概念，但缺乏可以统一覆盖的局部对象输入；若强行构造路径列表，将变为无关附加限制，违背规则红线和 failure_templates 中的 not_applicable。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是一个最大化总距离的最值问题，而非计数问题。原题目标为 maximize_value，没有明确的有限计数对象，不满足规则 required_seed_properties 中的“原题已经有明确有限的计数对象”，因此无法应用该计数规约规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子 schema 中 objective.type 为 'maximize_value'，目标描述为 'maximize the total distance of k pairs of universities'；核心约束均为配对与最大化要求，不含计数方案。规则 eligibility 的 required_seed_properties 第一条强制要求原题必须有明确有限的计数对象，种子题未提供。",
+        "feedback": "若要将此题扩展为带权分布计数，需先转化为计数问题（如统计不同配对方案的距离分布），但这已超出规则允许的简单扩展范围，且可能违反红线“不能添加与计数对象无关的权重”。因此不适合进入规划阶段。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "CANONICAL_UPGRADE_VIABLE",
+      "message": "种子题仅要求输出最大距离，但存在明确的配对方案空间；升级为输出规范配对（如字典序最小）会强制改变解法核心，原DP无法直接回溯方案，且需要全新状态设计以满足规范约束，满足C、O、V轴的全方位变化要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中目标为最大化总距离（core_constraints.maximize_total_pairwise_distance），输出仅为最大值；标准解使用DP计算边贡献和，未构造具体配对（source standard_solution_code）。种子题不要求输出完整方案，也未顺手回溯方案，符合required_seed_properties。",
+        "feedback": "规则适用性强，但需确保规范顺序定义明确（如最小字典序），且避免退化为仅增加格式要求或借助后处理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题要求最大化总距离，但并非判定问题，且题目保证输入合法，不存在无解情形，因此无法触发失败分支输出冲突证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema的objective要求最大化total_distance，且由invariant可知目标可达，不存在任何合法输入会因无解而要求输出阻碍证据。rule的’construct_or_obstruction’要求从’判定或求值’改成’给方案或给冲突证据’，但原题无判定边界，失败语义无法落地。",
+        "feedback": "规则在该种子上不适用，建议寻找具有可判定无解特征的题目，例如存在冲突约束的组合问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "seed_conditions_met",
+      "message": "种子题是求最大总距离的最优化问题，解空间为有限个大学配对方案，去重规则自然（配对视为无序集族），可借助树DP按边贡献拆分为子树计数单元，满足‘解空间有限、等价关系清晰、可汇总’的要求；改成计数后目标、约束、不变量均需重新定义，变更幅度明显，不属于全局红线禁止的浅层变化。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.04,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题输入为大小至多200000的树和2k个大学节点，要求最大化k对大学路径总长。原题只输出最大值，但所有可能配对方案总数有限且可枚举；不同方案若仅对调对序或对内次序视为同一解，去重口径明确。最优性由边贡献上界刻画：方案合法当且仅当每条边被经过次数等于min(一侧大学数,另一侧)。该性质可转化为子树状态，拆分为可汇总计数单元（如子树内配对状态及外溢需求），满足 helper‘state_factorization’ 要求。规则要求的‘must_change’ O/C/V 均可实现：O 变为计数，C 新增去重与计数约束，V 从单值变为方案数（模大质数）。",
+        "feedback": "建议在规划阶段明确计数对象为‘达到最大总线长的大学配对方案数’，并在约束中声明‘两个配对方案若仅是内的序或对的排列不同视为相同’，同时指定取模方式（如 998244353）。树DP需重建状态，定义如何合并子树计数并避免重复，确保算法复杂度可控。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是确定性的树配对最大化问题，没有任何顺序不确定、资源波动或局部选择差异，无法稳定放大原生扰动来源，强行应用只能硬造对手。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述和约束显示输入固定（给定树和大学位置），目标为最大化总距离，没有随机性、波动或选择差异。核心约束不包括任何不确定性模型。",
+        "feedback": "该种子题缺乏原生扰动来源，无法满足规则要求的‘原题里本来就有顺序不确定、资源波动或局部选择差异’，故不适合此变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题是最大化总距离的优化问题，并非判定或可行性问题。将其转化为求最大可行阈值的判定版本仅仅是原优化问题的逆向等价表述，没有引入新的临界参数或改变核心求解结构，无法满足规则对 C、O、V 轴的实质性变化要求。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.25,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“maximize the total distance”，属于优化问题；规则要求原题可行性随参数具有单调性，但种子题本身不直接是判定问题。规则示例 positive 为“把判断是否存在合法方案改成求允许合法方案存在的最小容量”，而种子题的“存在方案使距离≥D”的判定只是原最大值的二分搜索步骤，属于 forbidden 的“阈值只是在原判定外层做机械二分”。且 required_axis_changes 要求改变 C, O, V，但转化后 V 仍为边计数上限，无实质创新。",
+        "feedback": "该规则期望从判定或可行性问题出发，引入一个自然参数并构建新的临界阈值优化目标。种子题已经是优化问题，直接反转会得到与原题等价的题目，缺乏创新性和教育价值。建议放弃此规则对本题的扩展，或寻找其他有自然二阶段结构的种子题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_conflicting_metric_present",
+      "message": "原题是树上大学配对最大化总距离的单目标问题，最大单对距离作为距离的自然属性可充当第二指标，且与总距离最大化存在真实冲突（总距离最大要求远距离配对，会推高最大距离；最小化最大距离则需就近配对，会压低总距离），因此适合扩展为双指标权衡前沿问题。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "根据原题摘要与约束，核心属性为树上的配对距离，最大距离是距离维度的天然补充；规则要求第二指标需与原目标冲突且不能同时独立最优，本场景中最大化总距离的解往往具有较大最大距离，而最小化最大距离的解必然无法达到总距离上界，满足真实冲突条件。",
+        "feedback": "建议将第二指标设为最大单对距离，输出前沿时可采用对最大距离限制的扫描或直接求非支配解集，需确保约束整合后状态不退化，防止新题变成两次独立调用原解法。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "matching_seed",
+      "message": "原题输出（最大总距离）可作为反向目标，且大学位置的自然修改操作提供了设计自由度。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "Seed schema: objective is to maximize total distance (scalar target). Input includes 'universities' array of distinct vertex indices, which can be modified to change the resulting max distance. Invariant: maximum distance is sum over edges of min(#universities on each side), providing a clear mechanism to compute the effect of modifications. Therefore, it is feasible to define a target distance and ask for minimal university relocations to achieve it.",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "feasible_global_coupling",
+      "message": "原题求解基于每条边的独立贡献上限（invariant: edge_crossing_upper_bound），各边贡献解耦，构成可独立处理的局部单元。通过引入共享资源（如边容量）或跨边依赖，可自然打破独立求解，实现全局耦合目标。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.core_constraints.complete_pairing 要求大学完全配对，但 invariant.edge_crossing_upper_bound 指出每条边被经过的最大次数等于两侧大学数量的较小值，且该上限在所有边上同时可达，因此最优解退化为各边独立贡献之和，无需全局协调。这为规则提供了明确的局部单元。引入 shared_resource_constraint（如边使用次数限制）可强制耦合，因为必须全局分配路径。",
+        "feedback": "规则适用于该种子题：局部单元（各边贡献）明确，树结构和大学分布为共享资源约束提供了自然基础，耦合后能创造有意义的算法挑战。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_turn_based_operation",
+      "message": "原题是静态组合优化问题：给定树和大学位置，直接求解最大距离配对，不存在任何可供轮流选择的自然操作或状态转移过程；强行引入玩家和行动只能硬造故事背景，违反禁止凭背景硬造玩家的红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述中只有配对方案的选择，没有逐步操作；核心约束只定义配对与距离计算，没有行动顺序或选择状态；不变式仅涉及边贡献上界，与对抗选择无关。规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，且不同操作会改变后续可选状态，但该题完全不具备这些特征。",
+        "feedback": "该题不适合博弈化扩展，除非为了造题而完全虚构一套与原始问题无关的互动规则，但这已超出自然转化的范围。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "seed_unsuitable",
+      "message": "种子题的核心是全局配对距离最大化，不存在天然可扩展为覆盖/割的局部路径、区间或子树对象族；输入只给出树和点集，没有显式的局部对象列表。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 的 input_structure 仅包含树边和大学点集，core_constraints 为配对和最大化距离，没有任何局部路径或区间列表。规则 required_seed_properties 要求‘原题核心对象具有路径、区间、子树等局部结构’，且‘多个局部对象之间可以自然形成覆盖或割关系’，此处不满足。",
+        "feedback": "这道题虽然涉及树上的割容量概念，但缺乏可以统一覆盖的局部对象输入；若强行构造路径列表，将变为无关附加限制，违背规则红线和 failure_templates 中的 not_applicable。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是一个最大化总距离的最值问题，而非计数问题。原题目标为 maximize_value，没有明确的有限计数对象，不满足规则 required_seed_properties 中的“原题已经有明确有限的计数对象”，因此无法应用该计数规约规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子 schema 中 objective.type 为 'maximize_value'，目标描述为 'maximize the total distance of k pairs of universities'；核心约束均为配对与最大化要求，不含计数方案。规则 eligibility 的 required_seed_properties 第一条强制要求原题必须有明确有限的计数对象，种子题未提供。",
+        "feedback": "若要将此题扩展为带权分布计数，需先转化为计数问题（如统计不同配对方案的距离分布），但这已超出规则允许的简单扩展范围，且可能违反红线“不能添加与计数对象无关的权重”。因此不适合进入规划阶段。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划将最大化问题转化为计数达到最大总距离的配对数量，明确通过equivalence_rule定义去重，以max_distance_condition确保有限性，并引入取模；所有helpers均已应用并兑现目标变化轴和redlines。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "目标字段从maximize_value改为count_objects，并声明按modulo 1000000007计数；core_constraints新增equivalence_rule和max_distance_condition；invariant重写为edge_flow_upper_bound_lock和fixed_total_distance；algorithmic_delta_claim提出基于子树DP的计数方案；applied_helpers列表包含三个必需的helper并提供了具体的schema_changes。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "fulfilled",
+      "message": "题面完整定义了计数对象（无序配对集合）、去重规则（notes中的等价定义）、取模方式（mod 1e9+7），并通过充要条件（每条边流量=min(cnt_left,cnt_right)）提供了按边/子树拆分的计数单元结构，主目标直接要求计数输出，未保留原判定目标。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "description中明确写出配对方案构成无顺序的闸机对，notes定义两个方案相同当且仅当包含的无序对集合一致；output_format要求输出方案数模1000000007；description给出最大总距离充要条件，每条边恰好通过min(cnt_left,cnt_right)个配对，将解空间按边流量锁定，构成可分解计数单元；objective字段直接要求count_objects；core_constraints中equivalence_rule和max_distance_condition完成定义与拆分。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.04,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "公交闸机最优配对方案计数",
+    "description": "城市公交网络包含 n 个站点和 n−1 条双向道路，任意两站点可以相互到达，形成树形结构。\n为了方便通勤统计，公交公司在其中 2k 个站点安装了闸机，每站至多安装一个闸机，所有闸机所在站点互不相同。\n每位通勤者会从一个闸机刷卡进站，从另一个闸机刷卡出站，其所乘车辆经过的道路总长度即为本次通勤的距离（每条道路长度均为 1）。\n现在，公司希望刚好把这 2k 个闸机两两配对，形成 k 对进出站组合（每对中的两个闸机没有顺序，且不同对之间也不考虑顺序），使得所有 k 对通勤的距离之和达到最大。\n\n可以证明，一个配对方案的总距离达到最大的充要条件是：对于任意一条道路，设将该道路断开后，两侧的闸机数量分别为 a 和 b（不妨设 a≤b），则该方案中恰好有 a 个配对中的路径经过了这条道路。\n\n请计算有多少种不同的闸机配对方案能够使总通勤距离达到最大。由于答案可能很大，请输出方案数对 1,000,000,007 取模的结果。",
+    "input_format": "第一行包含两个整数 n 和 k，分别表示站点总数和需要形成的通勤对数。\n第二行包含 2k 个互不相同的整数，表示安装有闸机的站点编号。\n接下来 n−1 行，每行包含两个整数 u 和 v，表示一条连接站点 u 和站点 v 的双向道路。\n\n输入保证所有道路构成一棵树，且 1≤k≤n/2，2≤n≤200,000。",
+    "output_format": "一个整数，表示达到最大总距离的不同配对方案数对 1,000,000,007 取模的结果。",
+    "constraints": [
+      "2 ≤ n ≤ 200,000",
+      "1 ≤ k ≤ n/2",
+      "所有闸机所在站点编号均为 1..n 且互不相同",
+      "道路构成一棵树",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "5 2\n1 2 4 5\n1 2\n2 3\n3 4\n4 5",
+        "output": "1",
+        "explanation": "唯一的方案是将闸机 1 与 5 配对、闸机 2 与 4 配对。此时各条边上的经过次数分别为：1−2:1，2−3:2，3−4:2，4−5:1，均达到上限，总距离 6 为最大。没有其他方案。"
+      },
+      {
+        "input": "4 2\n1 2 3 4\n1 2\n2 3\n2 4",
+        "output": "3",
+        "explanation": "共有 3 种方案：\n• (1,2) 和 (3,4)\n• (1,3) 和 (2,4)\n• (1,4) 和 (2,3)\n每种方案中，边 1−2 被经过 1 次，边 2−3 被经过 1 次，边 2−4 被经过 1 次，均达到上限，总距离 3 为最大。"
+      }
+    ],
+    "notes": "两个配对方案视为相同当且仅当它们所包含的无序闸机对的集合完全一致。\n输出结果对 1,000,000,007 取模。\n题目保证至少存在一种最优方案。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_3249c8d739df_urban_commute_20260609_201208",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

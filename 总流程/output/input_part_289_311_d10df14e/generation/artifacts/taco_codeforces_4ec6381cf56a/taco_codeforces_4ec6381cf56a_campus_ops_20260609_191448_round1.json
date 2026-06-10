@@ -1,0 +1,927 @@
+{
+  "problem_id": "campus_ops_equity_modify",
+  "source_problem_ids": [
+    "taco_codeforces_4ec6381cf56a"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_4ec6381cf56a",
+      "codeforces",
+      "Let's call beauty of an array $b_1, b_2, \\ldots, b_n$ ($n > 1$) — $\\min\\limits_{1 \\leq i < j \\leq n} |b_i - b_j|$. You're given an array $a_1, a_2, \\ldots a_n$ and a number $k$. Calculate the sum of beauty over all su...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "引入目标结果约束（C），将目标从计算改为最小修改（O），同时引入编辑操作与单调性等新不变量（V）。",
+    "summary": "问题从“计算给定输入的结果”变为“设计输入（通过最小修改）使结果等于指定目标”。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4079,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4079,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.6072,
+      "O": 0.5431,
+      "V": 0.4498
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.6072,
+      "objective_type_distance": 0.5075,
+      "objective_text_distance": 0.5965,
+      "invariant_match_distance": 0.4498
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimization",
+    "description": "求最少的修改元素次数，使得存在修改后的数组满足目标模等式。",
+    "target": "min_edit_count",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design 能真正翻转求解方向，把原题的正向聚合计数改成给定目标下的最小输入修改，既完整继承原题的 beauty 定义与子序列结构，又强制改变核心约束、目标和验证三轴，避免退化为浅改或换皮。其余规则：feasibility_to_extremal_threshold 试图将求和问题简化为判定阈值优化，实际会降低难度且 eligibility 不符；local_path_to_global_cover 缺乏自然的覆盖 / 割关系，强行嫁接会脱离原核心规律。；创新度判断：将原题“计算所有子序列 beauty 之和”的核心义务完全替换为“给定目标总和 S，求最少修改数组元素个数（可改任意值）以使所有长度为 k 的子序列的 beauty 之和等于 S”，使得反向目标绑定、编辑操作合同和最小性锁成为新的支柱，把正向统计问题翻转为反推设计问题。；难度判断：主求解责任从原来的 DP 计数（可借助单调增量求和）抬高到联合处理离散修改与 beauty 子序列计数的优化，需要证明修改的最少次数，且必须同时保持子序列长度约束和 beauty 定义，这显著增加了算法设计的复杂度。；风险判断：主要风险在于修改后的 beauty 之和计算可能不具多项式可解性或最优解难以证明，但规则要求的 helper 会强制定义清晰的修改操作与代价模型，并通过 minimality_or_certificate_lock 提供下界或正确性证明框架，落地风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "campus_ops_equity_modify",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "n",
+          "role_description": "教室总数",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 2,
+            "max": 1000
+          },
+          "properties": {}
+        },
+        {
+          "role": "k",
+          "role_description": "选取的教室数量",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 2,
+            "max": 1000
+          },
+          "properties": {
+            "note": "k ≤ n"
+          }
+        },
+        {
+          "role": "target_mod_sum",
+          "role_description": "目标美丽值之和模 998244353",
+          "type": "integer",
+          "length": {},
+          "value_range": {
+            "min": 0,
+            "max": 998244352
+          },
+          "properties": {
+            "modulus": 998244353
+          }
+        },
+        {
+          "role": "capacities",
+          "role_description": "每个教室的初始容量",
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 1000
+          },
+          "value_range": {
+            "min": 0,
+            "max": 100000
+          },
+          "properties": {
+            "ordered": false,
+            "note": "输入不保证有序，算法内部会排序处理"
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "target_modular_equality",
+          "description": "最终容量配置 a' 的所有长度为 k 的子序列的美丽值之和模 998244353 必须等于 target_mod_sum。",
+          "formal": "∑_{subseq S of length k} min_{i<j} |S_i - S_j| ≡ target_mod_sum (mod 998244353)",
+          "source_sections": []
+        },
+        {
+          "name": "edit_operation_definition",
+          "description": "一次操作可以选择一个教室，将其容量修改为任意非负整数，且修改后的值仍需在 [0, 100000] 范围内。",
+          "formal": "∀ i, 0 ≤ a'_i ≤ 100000; operation: change a_i to any integer in range",
+          "source_sections": []
+        },
+        {
+          "name": "input_domain",
+          "description": "n, k, 目标值及数组的取值范围限制与原题保持一致。",
+          "formal": "2 ≤ k ≤ n ≤ 1000; 0 ≤ a_i ≤ 100000; 0 ≤ target_mod_sum < 998244353",
+          "source_sections": []
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimization",
+      "description": "求最少的修改元素次数，使得存在修改后的数组满足目标模等式。",
+      "target": "min_edit_count",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "array_resortable",
+          "description": "美丽值计算只依赖元素多重集，与顺序无关，因此修改后的数组可任意重排（例如排序）以应用原 DP 计算。",
+          "properties": {
+            "order_independent": true
+          },
+          "evidence_source": "derived_from_definition"
+        },
+        {
+          "name": "edit_monotonicity",
+          "description": "若修改 t 个元素可以达成目标，则修改 t+1 个元素也一定可以达成（通过额外一次无影响的修改，例如改回原值）。",
+          "properties": {
+            "monotonic": true
+          },
+          "evidence_source": "construction"
+        },
+        {
+          "name": "beauty_sum_formula",
+          "description": "数组 A 的美丽值之和可通过原题 DP 计算：对每个可能的阈值 x，统计相邻差至少为 x 的长度为 k 的子序列个数，求和。该公式适用于任意多重集。",
+          "properties": {},
+          "evidence_source": "reuse_from_seed"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "对每个可能的阈值 x，通过动态规划计算以排序后每个位置结尾的长度为 k 的子序列个数，这些子序列满足相邻元素差值至少为 x，然后对所有 x 求和得到总美丽值。",
+    "reusable_subroutines": "计算给定数组美丽值之和的 DP 过程（包括排序、枚举 x、维护前缀和等）可直接作为新题的验证子程序，用于判定某个数组配置是否满足目标模等式。",
+    "new_solver_core": "采用二分答案或枚举最小修改次数 t，然后检查是否存在不超过 t 次修改达到目标。检查时需枚举保留哪些元素不变，并为修改的元素选择合适的值，使最终 F 值等于 target_mod_sum。可能需要预处理部分子集贡献、利用 DP 状态搜索或贪心构造。",
+    "new_proof_obligation": "需要证明：（1）检查算法的正确性，即对于给定保留集合和修改额度，能够准确判断目标的可达性；（2）最小 t 的单调性使得二分搜索有效；（3）当声称无解时，不存在任何修改方案（包括非枚举的正确性论证）。",
+    "why_direct_reuse_fails": "原解仅输出一个确定数组的单一答案，不能直接回答“最小修改多少次才能让结果等于指定值”，因为后者是一个搜索/优化问题，需要反复尝试不同配置并评估结果，原 DP 只是一个内部计算工具。"
+  },
+  "anti_shallow_rationale": "新问题不仅变换了叙事，更将整个求解方向从正向计数翻转为逆向设计，并引入了编辑操作空间和最小性证明要求。算法结构从一次 DP 累加变为基于搜索和验证的迭代优化，核心决策从‘计算已定输入的结果’变为‘寻找达成目标的最优输入’，这是质的改变而非表面改装。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "将原题输出的美丽值之和绑定为新题需要达成的目标结果，实现方向反转。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 增加 target_modular_equality 约束，明确目标模等式",
+        "objective 从 value_computation 变为 minimization 且目标值作为输入参数"
+      ],
+      "innovation_reason": "要求算法不再从输入推导输出，而是围绕已知输出反过来搜索输入，提升了问题建模的创造性。",
+      "difficulty_reason": "增加目标约束后，算法必须处理可达性判定和优化，而不仅仅是计算，显著抬高了难度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "定义修改教室容量的操作集合，让反向设计落实到具体的编辑自由度上。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 增加 edit_operation_definition，明确允许的操作和值域",
+        "invariant 增加 array_resortable 和 edit_monotonicity，解释操作对状态的影响"
+      ],
+      "innovation_reason": "从无操作到引入可枚举的编辑动作，使问题从计算变为交互式设计。",
+      "difficulty_reason": "操作的影响是全局且耦合的，验证一个修改序列的效果需要重复运行原 DP，增加了搜索和优化的复杂度。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小修改次数，强制答案附带最小性证明。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确定义为最小化修改次数",
+        "invariant 增加 edit_monotonicity，支撑二分/枚举的正确性"
+      ],
+      "innovation_reason": "答案不再是任意可行解，而是经过优化的最小解，提升了问题的严谨性。",
+      "difficulty_reason": "需要证明不存在更小的修改方案，这通常要求下界论证或穷举完备性，极大增加了证明负担。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题目标为计算所有子序列的beauty之和，是纯统计量输出，不存在明确的构造解对象，也无法从答案自然恢复出规范解，强行改造将导致问题语义断裂，失去与原题的关联。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type为value_computation，requires_solution为false；original_problem.description仅要求输出一个整数模998244353；核心约束仅有长度和模数，无任何与构造或规范序相关的定义；solution_code基于动态规划累加计数，不维护具体子序列信息，回溯需额外存储，且无规范顺序概念。",
+        "feedback": "种子题缺少适合规范化的解对象，不符合required_seed_properties第一条，建议使用其他具有自然构造目标的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题始终有解，不存在‘做不到’的自然情形，强行引入失败分支会违背‘跟原核心规律无关的额外约束’红线，且无法构造可局部检查的冲突证据。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为求和，core_constraints仅含子序列长度和模数，invariant基于排序单调性，整个问题没有无解分支。规则要求输出方案或冲突证据，但种子题不可能触发失败分支，helpers中的local_certificate_design需要障碍来自主约束，而这里没有。",
+        "feedback": "该规则不适合此种子题，因为无法在永真的计算问题中嵌入有意义的失败语义。考虑更换种子题或调整规则，使失败情形有自然数学基础。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题已经通过阈值转换隐含了计数结构，改为显式计数仅替换答案形式，没有引入新的算法责任或状态组织方式。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为求 beauty 总和，但解法已利用 'sum over x = count of subsequences with min diff ≥ x' 的计数变形；去重和有限性已自然满足。规则要求更改 O、C、V 轴，但若仅将求和改为直接计数特定性质子序列，核心状态转移和约束不变，未产生新难度。",
+        "feedback": "建议种子更改为存在性或最优值问题，以使升级到计数题更有区分度。当前种子不适合直接应用该规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation_source",
+      "selection_reason": "原题要求对给定数组的全部确定子序列计算固定的 beauty 和，没有任何顺序不确定、资源波动或局部选择差异；beauty 定义中的 min 仅作用于子序列内部，不构成可推广的扰动模型。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：‘Calculate the sum of beauty over all subsequences of the array of length exactly k.’ 输入为确定的整数数组，无随机因素。解法利用排序保障单调性，不变量基于确定性有序数组，未引用任何不确定性语义。规则要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但本种子题完全缺失这些特征。",
+        "feedback": "不能通过故事背景硬造对手，也无法从确定性求和任务中提取合法扰动模型，强行应用本规则将导致语义脱钩，建议放弃此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "monotonic_threshold_exists",
+      "selection_reason": "原题隐含判定子问题（是否存在长度k的子序列美度≥x），该可行性随x单调递减，且原算法已利用此单调性枚举x求和。将其核心提取为求最大x的阈值优化题，完全符合规则要求的自然临界参数扩展。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "原题 solution_code 中显式枚举 x 从 1 到 (A[n]-A[1])//(k-1)，并通过单调移动 pre 指针计算 f[i][j]（长度为 i 且以 j 结尾的子序列个数），正是利用了可行性随 x 的单调性。不变量 monotonic_prefix_accumulation 和 sorted_non_decreasing 验证了该单调结构。",
+        "feedback": "规则完全匹配，阈值可直接嵌入约束定义（子序列相邻差≥x），目标变为求最大可行 x，且需提供临界性证明（存在性与上界）。唯一风险是转换后算法核心与原题累加结构相似，需额外设计二分或直接优化以维持难度。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_conflicting_secondary_metric",
+      "selection_reason": "原题是计算所有长度为k的子序列的beauty之和，是一个全局求和问题，并非优化单个子序列的单一目标。无法找到与原目标自然冲突且不能同时独立最优的第二评价指标，引入任何额外指标要么是同义改写，要么无真实冲突。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标描述：“Compute the sum of the defined beauty value over all subsequences of given length k”。规则要求‘原题目标附近存在自然的第二评价指标’且‘两个指标之间存在真实冲突’。原题的结构是计数求和，不存在候选的第二指标可与‘总beauty和’形成冲突权衡。问题域是固定组合聚合，不是帕累托前沿优化。",
+        "feedback": "该种子题本质是组合计数问题，不适用于多目标权衡扩展。建议从具有明确单目标最优（如最大化收益、最小化距离）的题目中选择。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.04,
+      "reason_code": "valid_target_and_natural_edits",
+      "selection_reason": "原题输出（所有长度为k的子序列的美价值和模998244353）可自然绑定为反向目标；数组元素修改操作与美价值定义直接关联，设计自由度充分；最小性证明可通过编辑距离或操作代价引入。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.target为'sum_of_beauty'，输出为模意义下的整数，可作为反向题目指定的目标值。seed_schema.input_structure.components中的'array'角色允许对元素值进行修改，该操作直接改变子序列差值，符合edit_operation_contract中‘修改操作来自原题对象的自然结构’的要求。原题core_constraints中的modulus_constraint确保了目标在模下的可验证性。",
+        "feedback": "规则适用性强，原题结果精确定义且可验证，修改操作自然绑定于输入数组，满足helpers所有红线要求。建议进入规划阶段逐步生成四元组。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题没有可自然分解的局部独立单元。问题直接要求所有长度为k的子序列的beauty之和，标准解法虽按x分层DP，但各层计算之间仅存在简单的加法聚合，没有共享资源、相互依赖或全局守恒的基础。强行将其视为局部单元并引入全局耦合会偏离原题核心规律，属于生硬添加无关约束。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘Calculate the sum of beauty over all subsequences of the array of length exactly k’，目标函数是简单的和，不涉及跨组件的预算分配或冲突。约束中仅包含固定长度和模数，无跨单元互动变量。标准解法中对于不同的x，DP数组f独立计算，仅累加到ans，没有共享状态或依赖关系（见invariant）。因此不存在能够被共享资源自然绑定的局部单元。",
+        "feedback": "建议寻找本身包含多个可独立求解子任务（如多询问、多区域、多分量）且子任务之间存在共同资源或冲突的种子题，例如总操作次数限制、总选取点覆盖等，才能通过共享资源或全局约束实现自然耦合。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_natural_adversarial_operation",
+      "selection_reason": "原题为子序列枚举的计数求和，不涉及任何单人选择或移动操作，无法自然转化为双方轮流选择的过程，不满足规则要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 value_computation，目标计算所有长度为 k 的子序列的美观值之和；core_constraints 仅包含子序列长度固定和模约束；invariant 描述单调性和前缀累积，均为算法内部性质，无任何玩家或操作者；original_problem.description 仅定义美学值并要求求和，没有选择、拿取或改变状态的操作。",
+        "feedback": "该种子题不具备可对抗化的自然操作（如轮流选取元素、移动棋子等），强行添加博弈方将沦为纯背景叙事，违反‘不能凭背景硬造玩家’的红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": true,
+      "score": 0.87,
+      "reason_code": "rule_applicable",
+      "selection_reason": "种子问题定义了一个清晰的对象族（所有长度为k的子序列），这些局部对象之间可以自然形成割关系（例如，删除最少的元素使得剩余数组中任意长度为k的子序列的beauty至少为x），满足规则要求的从局部路径/子结构扩展为全局覆盖/割问题的条件。原题的不变量（如排序、单调指针）能够被重新用于构造割问题的高效算法，确保了变换后的核心关联性。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "schema中定义了固定长度k的子序列作为core_constraints，输入包含有序数组，这些对象族天然具备组合覆盖/割结构。invariant中的sorted_non_decreasing和monotonic_prefix_accumulation表明原题已利用顺序特性进行整体计算，可以迁移到割问题的最优性证明中。规则要求的required_seed_properties（局部结构+自然覆盖/割关系）均得到满足，且不存在forbidden_seed_properties所指的缺陷。",
+        "feedback": "建议规划时重点保留beauty概念，例如将问题改造为“选择最少的元素删除，使得所有k-子序列的beauty至少为x”，以维持与原题语义的强关联，避免退化为普通的点覆盖问题。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题已是带权求和，自然有按阈值分层的计数结构。将其改为输出分布，核心状态（DP 计数）完全不变，只是后处理收集每层结果，属于普通计数的后处理，无实质性算法创新。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 invariant 已利用 monotonic_prefix_accumulation 和 threshold_sum_identity 将求和分解为对每个 x 的计数，solution_code 显式遍历 x 并累加 f[m][i]。变换为输出每个 x 的计数仅需在循环中暂存 sum_f，无需更改 C、V 轴的核心约束与状态定义。",
+        "feedback": "建议选择原题本身为纯计数（如统计子序列个数而非求和）的种子，或原计数对象上存在未被显式利用的多级分类统计量，才能触发实质性的带权分层扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题目标为计算所有子序列的beauty之和，是纯统计量输出，不存在明确的构造解对象，也无法从答案自然恢复出规范解，强行改造将导致问题语义断裂，失去与原题的关联。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type为value_computation，requires_solution为false；original_problem.description仅要求输出一个整数模998244353；核心约束仅有长度和模数，无任何与构造或规范序相关的定义；solution_code基于动态规划累加计数，不维护具体子序列信息，回溯需额外存储，且无规范顺序概念。",
+        "feedback": "种子题缺少适合规范化的解对象，不符合required_seed_properties第一条，建议使用其他具有自然构造目标的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题始终有解，不存在‘做不到’的自然情形，强行引入失败分支会违背‘跟原核心规律无关的额外约束’红线，且无法构造可局部检查的冲突证据。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为求和，core_constraints仅含子序列长度和模数，invariant基于排序单调性，整个问题没有无解分支。规则要求输出方案或冲突证据，但种子题不可能触发失败分支，helpers中的local_certificate_design需要障碍来自主约束，而这里没有。",
+        "feedback": "该规则不适合此种子题，因为无法在永真的计算问题中嵌入有意义的失败语义。考虑更换种子题或调整规则，使失败情形有自然数学基础。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题已经通过阈值转换隐含了计数结构，改为显式计数仅替换答案形式，没有引入新的算法责任或状态组织方式。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为求 beauty 总和，但解法已利用 'sum over x = count of subsequences with min diff ≥ x' 的计数变形；去重和有限性已自然满足。规则要求更改 O、C、V 轴，但若仅将求和改为直接计数特定性质子序列，核心状态转移和约束不变，未产生新难度。",
+        "feedback": "建议种子更改为存在性或最优值问题，以使升级到计数题更有区分度。当前种子不适合直接应用该规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation_source",
+      "message": "原题要求对给定数组的全部确定子序列计算固定的 beauty 和，没有任何顺序不确定、资源波动或局部选择差异；beauty 定义中的 min 仅作用于子序列内部，不构成可推广的扰动模型。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：‘Calculate the sum of beauty over all subsequences of the array of length exactly k.’ 输入为确定的整数数组，无随机因素。解法利用排序保障单调性，不变量基于确定性有序数组，未引用任何不确定性语义。规则要求‘原题里本来就有顺序不确定、资源波动或局部选择差异’，但本种子题完全缺失这些特征。",
+        "feedback": "不能通过故事背景硬造对手，也无法从确定性求和任务中提取合法扰动模型，强行应用本规则将导致语义脱钩，建议放弃此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "monotonic_threshold_exists",
+      "message": "原题隐含判定子问题（是否存在长度k的子序列美度≥x），该可行性随x单调递减，且原算法已利用此单调性枚举x求和。将其核心提取为求最大x的阈值优化题，完全符合规则要求的自然临界参数扩展。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "原题 solution_code 中显式枚举 x 从 1 到 (A[n]-A[1])//(k-1)，并通过单调移动 pre 指针计算 f[i][j]（长度为 i 且以 j 结尾的子序列个数），正是利用了可行性随 x 的单调性。不变量 monotonic_prefix_accumulation 和 sorted_non_decreasing 验证了该单调结构。",
+        "feedback": "规则完全匹配，阈值可直接嵌入约束定义（子序列相邻差≥x），目标变为求最大可行 x，且需提供临界性证明（存在性与上界）。唯一风险是转换后算法核心与原题累加结构相似，需额外设计二分或直接优化以维持难度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_conflicting_secondary_metric",
+      "message": "原题是计算所有长度为k的子序列的beauty之和，是一个全局求和问题，并非优化单个子序列的单一目标。无法找到与原目标自然冲突且不能同时独立最优的第二评价指标，引入任何额外指标要么是同义改写，要么无真实冲突。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标描述：“Compute the sum of the defined beauty value over all subsequences of given length k”。规则要求‘原题目标附近存在自然的第二评价指标’且‘两个指标之间存在真实冲突’。原题的结构是计数求和，不存在候选的第二指标可与‘总beauty和’形成冲突权衡。问题域是固定组合聚合，不是帕累托前沿优化。",
+        "feedback": "该种子题本质是组合计数问题，不适用于多目标权衡扩展。建议从具有明确单目标最优（如最大化收益、最小化距离）的题目中选择。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_target_and_natural_edits",
+      "message": "原题输出（所有长度为k的子序列的美价值和模998244353）可自然绑定为反向目标；数组元素修改操作与美价值定义直接关联，设计自由度充分；最小性证明可通过编辑距离或操作代价引入。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.04,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema.objective.target为'sum_of_beauty'，输出为模意义下的整数，可作为反向题目指定的目标值。seed_schema.input_structure.components中的'array'角色允许对元素值进行修改，该操作直接改变子序列差值，符合edit_operation_contract中‘修改操作来自原题对象的自然结构’的要求。原题core_constraints中的modulus_constraint确保了目标在模下的可验证性。",
+        "feedback": "规则适用性强，原题结果精确定义且可验证，修改操作自然绑定于输入数组，满足helpers所有红线要求。建议进入规划阶段逐步生成四元组。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题没有可自然分解的局部独立单元。问题直接要求所有长度为k的子序列的beauty之和，标准解法虽按x分层DP，但各层计算之间仅存在简单的加法聚合，没有共享资源、相互依赖或全局守恒的基础。强行将其视为局部单元并引入全局耦合会偏离原题核心规律，属于生硬添加无关约束。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘Calculate the sum of beauty over all subsequences of the array of length exactly k’，目标函数是简单的和，不涉及跨组件的预算分配或冲突。约束中仅包含固定长度和模数，无跨单元互动变量。标准解法中对于不同的x，DP数组f独立计算，仅累加到ans，没有共享状态或依赖关系（见invariant）。因此不存在能够被共享资源自然绑定的局部单元。",
+        "feedback": "建议寻找本身包含多个可独立求解子任务（如多询问、多区域、多分量）且子任务之间存在共同资源或冲突的种子题，例如总操作次数限制、总选取点覆盖等，才能通过共享资源或全局约束实现自然耦合。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_natural_adversarial_operation",
+      "message": "原题为子序列枚举的计数求和，不涉及任何单人选择或移动操作，无法自然转化为双方轮流选择的过程，不满足规则要求的种子属性。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 value_computation，目标计算所有长度为 k 的子序列的美观值之和；core_constraints 仅包含子序列长度固定和模约束；invariant 描述单调性和前缀累积，均为算法内部性质，无任何玩家或操作者；original_problem.description 仅定义美学值并要求求和，没有选择、拿取或改变状态的操作。",
+        "feedback": "该种子题不具备可对抗化的自然操作（如轮流选取元素、移动棋子等），强行添加博弈方将沦为纯背景叙事，违反‘不能凭背景硬造玩家’的红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "pass",
+      "reason_code": "rule_applicable",
+      "message": "种子问题定义了一个清晰的对象族（所有长度为k的子序列），这些局部对象之间可以自然形成割关系（例如，删除最少的元素使得剩余数组中任意长度为k的子序列的beauty至少为x），满足规则要求的从局部路径/子结构扩展为全局覆盖/割问题的条件。原题的不变量（如排序、单调指针）能够被重新用于构造割问题的高效算法，确保了变换后的核心关联性。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.87,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "eligible",
+        "evidence": "schema中定义了固定长度k的子序列作为core_constraints，输入包含有序数组，这些对象族天然具备组合覆盖/割结构。invariant中的sorted_non_decreasing和monotonic_prefix_accumulation表明原题已利用顺序特性进行整体计算，可以迁移到割问题的最优性证明中。规则要求的required_seed_properties（局部结构+自然覆盖/割关系）均得到满足，且不存在forbidden_seed_properties所指的缺陷。",
+        "feedback": "建议规划时重点保留beauty概念，例如将问题改造为“选择最少的元素删除，使得所有k-子序列的beauty至少为x”，以维持与原题语义的强关联，避免退化为普通的点覆盖问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题已是带权求和，自然有按阈值分层的计数结构。将其改为输出分布，核心状态（DP 计数）完全不变，只是后处理收集每层结果，属于普通计数的后处理，无实质性算法创新。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题 invariant 已利用 monotonic_prefix_accumulation 和 threshold_sum_identity 将求和分解为对每个 x 的计数，solution_code 显式遍历 x 并累加 f[m][i]。变换为输出每个 x 的计数仅需在循环中暂存 sum_f，无需更改 C、V 轴的核心约束与状态定义。",
+        "feedback": "建议选择原题本身为纯计数（如统计子序列个数而非求和）的种子，或原计数对象上存在未被显式利用的多级分类统计量，才能触发实质性的带权分层扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_fulfilled",
+      "message": "规划成功将正向求和问题翻转为反向最小修改设计：绑定了目标结果 (target_modular_equality)，定义了编辑操作 (edit_operation_definition)，并要求输出最小修改次数并证明最小性，各个 helper 均被落实且 redlines 未被触犯。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "规则要求的 changed_axes [C, O, V] 已全部出现在 planner_payload.changed_axes；helper 'target_result_binding' 通过 core_constraints 中的 target_modular_equality 约束和 objective 从 value_computation 变为 minimization 实现目标绑定，改变了 C 和 O 轴；helper 'edit_operation_contract' 通过 core_constraints 中的 edit_operation_definition 和 invariant 中的 array_resortable 与 edit_monotonicity 定义了基于原数组的自然修改操作及其对状态的影响，改变了 C 和 V 轴；helper 'minimality_or_certificate_lock' 通过 objective 的 minimization 类型和 invariant 的 edit_monotonicity 支撑最小性证明要求，改变了 O 和 V 轴；所有的 redlines 均未被违反（目标非简单等值提问，操作与原核心对象相关，答案要求最小性而非任意可行解）。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized",
+      "message": "题面清晰定义了目标模等式、修改教室容量的操作集合以及最小修改次数的优化目标，并通过不变量说明计算与顺序无关，完整兑现了规则要求的三个辅助语义合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "目标绑定：描述中明确要求“最终所有 k 元教室组合的公平度之和模 998244353 恰好等于 S”。编辑操作：描述中声明“每次调整可以将一间教室的容量修改为任意 0 到 100000 之间的整数”。最小性：输出格式要求“最少需要调整的教室数量”，样例解释强调“可以证明这是最少的”。不变量：notes 指出“公平度计算只与容量值的多重集有关，与教室顺序无关”，隐含了数组可重排性质，支撑修改操作对目标的影响。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.04,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "社团教室公平度调整",
+    "description": "某大学有 n 间教室，每间教室有一个容纳人数（容量）。校学生会需要从中选出 k 间教室用于社团活动日，希望所选教室的容量尽可能接近，以避免资源分配不均。定义一组教室的公平度为：这组教室中任意两间容量差的最小绝对值。\n学生会关心所有可能选出 k 间教室的组合，并想知道这些组合的公平度之和。由于社团发展，他们希望这个和值达到一个特定的目标 S（模 998244353）。\n为此，学校可以调整某些教室的容量，每次调整可以将一间教室的容量修改为任意 0 到 100000 之间的整数。调整不需要连续，可以一次把一个教室的容量直接改为新值。\n给定初始容量和目标 S，请你计算最少需要调整多少间教室的容量，才能使得最终所有 k 元教室组合的公平度之和模 998244353 恰好等于 S。\n注意公平度计算只与容量值的多重集有关，与教室顺序无关。你可以内部对容量进行排序以便计算。",
+    "input_format": "第一行包含三个整数 n, k, S，分别表示教室数量、需要选出的教室数量、以及目标公平度之和模 998244353 后的值。\n第二行包含 n 个整数 a_1, a_2, ..., a_n，表示每间教室的初始容量。",
+    "output_format": "输出一个整数，表示最少需要调整的教室数量。如果无论怎么调整都无法使公平度之和模 998244353 等于 S，则输出 -1。",
+    "constraints": [
+      "2 ≤ k ≤ n ≤ 1000",
+      "0 ≤ a_i ≤ 100000",
+      "0 ≤ S < 998244353",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "3 2 2\n1 2 3",
+        "output": "1",
+        "explanation": "初始容量 [1,2,3]，所有 2 间教室组合的公平度之和为 4（组合与公平度：{1,2}→1, {1,3}→2, {2,3}→1）。目标 S=2。可以将容量 3 调整为 1，得到 [1,1,2]，此时组合与公平度：{1,1}→0, {1,2}→1, {1,2}→1，和为 2（模 998244353 仍为 2），达成目标。只调整了 1 间教室，可以证明这是最少的。"
+      },
+      {
+        "input": "4 2 10\n1 2 5 6",
+        "output": "2",
+        "explanation": "初始容量 [1,2,5,6]，所有 2 间教室组合的公平度之和为 18。目标 S=10。可以将 5 调整为 3，6 调整为 4，得到 [1,2,3,4]，此时组合与公平度：{1,2}→1, {1,3}→2, {1,4}→3, {2,3}→1, {2,4}→2, {3,4}→1，和为 10，达成目标。至少需要调整 2 间教室，因为没有只调整 1 间就可得到和 10 的方案。"
+      }
+    ],
+    "notes": "公平度之和可能很大，需要模 998244353。调整后的容量仍须在 [0, 100000] 范围内。如果目标不可能达成，请输出 -1。\n你可以将容量数组排序后计算公平度之和，因为公平度只与值有关，与原始顺序无关。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_4ec6381cf56a_campus_ops_20260609_191448",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

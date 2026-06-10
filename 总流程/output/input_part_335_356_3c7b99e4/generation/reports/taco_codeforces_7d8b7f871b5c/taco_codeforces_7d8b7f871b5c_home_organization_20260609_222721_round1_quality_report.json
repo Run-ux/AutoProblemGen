@@ -1,0 +1,700 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 53.9,
+    "schema_distance": 0.3524,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "题面准确实现了 new_schema 中的输入结构 (n, scores, program1, program2, k)、约束 (score_multiple_of_100, percentage_sum_limit, lexicographically_maximal_placement)、目标 (最小 m 下字典序最大序列) 以及输出格式，无遗漏或错误。",
+        "evidence_refs": [
+          "new_schema.input_structure.components",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了完整的任务说明、输入输出格式、约束条件、样例及解释，读者无需猜测任何核心规则。字典序比较规则在 description, notes 和 samples 中多次明确，且物品唯一使用、百分比计算等均有详细说明。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "各部分之间没有矛盾。描述中标签覆盖规则、百分比限制、字典序比较等与输入格式、样例和约束完全一致。样例的解释与规则匹配，输出格式要求的 m 和序列也在样例中正确体现。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "两个样本覆盖了多组询问，包含可行解与无解情况。每个样例附带详细的解释，演示了字典序最大构造的逻辑和最小 m 的判定，对理解题目很有帮助。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，按 OJ 习惯分为描述、输入、输出、样例、注释等部分，语言明确，噪声少。虽然 hard_check source_leakage 报告检测到原题标识 'a'，但实际文本中该字母仅为正常参数名，未造成可辨识的来源污染或阅读理解障碍。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "hard_checks.source_leakage"
+        ]
+      }
+    ],
+    "strengths": [
+      "双目标（最小物品数+字典序最大）清晰且有趣，增加了构造难度",
+      "约束明确，分数为100倍数避免小数，便于实现",
+      "样例解释详细，展示了字典序构造的贪心思想",
+      "题面故事化合理，家庭收纳贴近生活"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3524,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5469,
+        "O": 0.4122,
+        "V": 0.4266
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5469,
+        "objective_type_distance": 0.5089,
+        "objective_text_distance": 0.2672,
+        "invariant_match_distance": 0.4266
+      }
+    },
+    "schema_distance": 0.3524,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.5,
+    "solution_transfer_risk": 0.5,
+    "surface_retheme_risk": 0.3,
+    "verdict": "pass",
+    "rationale": "新题在原题的基础上增加了字典序最优的次级目标，要求输出最小物品数 m 下的字典序最大分数序列，而不仅仅输出最小 m。这一改动迫使解题者从仅计算可行性转向构造具体序列并证明其字典序最优，改变了求解的核心流程。尽管确定给定 m 的可行性（最大贡献计算）可以完全沿用原解的子程序，但整体算法必须加入贪心构造与多轮可行性检验，直接迁移原码无法解决新要求。语义层面虽有相近的可行性内核，但输出维度的扩展使得任务有实质差异。表层叙事与样例已全面重写，复刻风险低。因此判定为通过。",
+    "evidence_refs": [
+      "new_schema.objective",
+      "new_schema.core_constraints[2]",
+      "generated_problem.output_format",
+      "generated_problem.description",
+      "review_context.algorithmic_delta_claim",
+      "hard_checks[9].evidence_refs"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.35，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": false,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "检测到原题标识或标题片段泄露：a",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "retheme_issue",
+      "severity": "blocker",
+      "title": "source leakage",
+      "detail": "检测到原题标识或标题片段泄露：a",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ],
+      "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "原题标识泄露告警",
+      "detail": "hard_check 检测到原题标识或标题片段泄露：a，可能为误报，但变量名 'a' 在题面中作为参数使用。若需彻底避免，可考虑更名，但当前不影响题面独立性和新意。",
+      "evidence_refs": [
+        "hard_checks.source_leakage"
+      ],
+      "fix_hint": "检查是否确实有原题片段泄露，若仅为同名变量可忽略；或考虑更换无关联的参数名。"
+    }
+  ],
+  "suggested_revisions": [
+    "删除原题编号、题源、标题和明显句式复用。",
+    "检查是否确实有原题片段泄露，若仅为同名变量可忽略；或考虑更换无关联的参数名。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 53.9,
+    "failed_hard_checks": [
+      {
+        "check_id": "source_leakage",
+        "severity": "blocker",
+        "category": "retheme_issue",
+        "message": "检测到原题标识或标题片段泄露：a",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_type": "retheme_issue",
+        "severity": "blocker",
+        "title": "source leakage",
+        "detail": "检测到原题标识或标题片段泄露：a",
+        "evidence_refs": [
+          "snapshots.original_problem",
+          "snapshots.generated_problem"
+        ],
+        "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "原题标识泄露告警",
+        "detail": "hard_check 检测到原题标识或标题片段泄露：a，可能为误报，但变量名 'a' 在题面中作为参数使用。若需彻底避免，可考虑更名，但当前不影响题面独立性和新意。",
+        "evidence_refs": [
+          "hard_checks.source_leakage"
+        ],
+        "fix_hint": "检查是否确实有原题片段泄露，若仅为同名变量可忽略；或考虑更换无关联的参数名。"
+      }
+    ],
+    "suggested_revisions": [
+      "删除原题编号、题源、标题和明显句式复用。",
+      "检查是否确实有原题片段泄露，若仅为同名变量可忽略；或考虑更换无关联的参数名。"
+    ],
+    "strengths_to_keep": [
+      "双目标（最小物品数+字典序最大）清晰且有趣，增加了构造难度",
+      "约束明确，分数为100倍数避免小数，便于实现",
+      "样例解释详细，展示了字典序构造的贪心思想",
+      "题面故事化合理，家庭收纳贴近生活"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\source\\taco_codeforces_7d8b7f871b5c\\taco_codeforces_7d8b7f871b5c.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_codeforces_7d8b7f871b5c\\taco_codeforces_7d8b7f871b5c_home_organization_20260609_222721_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\output\\taco_codeforces_7d8b7f871b5c\\taco_codeforces_7d8b7f871b5c_home_organization_20260609_222721_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_7d8b7f871b5c",
+      "title": "A",
+      "description": "You are an environmental activist at heart but the reality is harsh and you are just a cashier in a cinema. But you can still do something!\n\nYou have n tickets to sell. The price of the i-th ticket is p_i. As a teller, you have a possibility to select the order in which the tickets will be sold (i.e. a permutation of the tickets). You know that the cinema participates in two ecological restoration programs applying them to the order you chose:\n\n  * The x\\% of the price of each the a-th sold ticket (a-th, 2a-th, 3a-th and so on) in the order you chose is aimed for research and spreading of renewable energy sources. \n  * The y\\% of the price of each the b-th sold ticket (b-th, 2b-th, 3b-th and so on) in the order you chose is aimed for pollution abatement. \n\n\n\nIf the ticket is in both programs then the (x + y) \\% are used for environmental activities. Also, it's known that all prices are multiples of 100, so there is no need in any rounding.\n\nFor example, if you'd like to sell tickets with prices [400, 100, 300, 200] and the cinema pays 10\\% of each 2-nd sold ticket and 20\\% of each 3-rd sold ticket, then arranging them in order [100, 200, 300, 400] will lead to contribution equal to 100 ⋅ 0 + 200 ⋅ 0.1 + 300 ⋅ 0.2 + 400 ⋅ 0.1 = 120. But arranging them in order [100, 300, 400, 200] will lead to 100 ⋅ 0 + 300 ⋅ 0.1 + 400 ⋅ 0.2 + 200 ⋅ 0.1 = 130.\n\nNature can't wait, so you decided to change the order of tickets in such a way, so that the total contribution to programs will reach at least k in minimum number of sold tickets. Or say that it's impossible to do so. In other words, find the minimum number of tickets which are needed to be sold in order to earn at least k.\n\nInput\n\nThe first line contains a single integer q (1 ≤ q ≤ 100) — the number of independent queries. Each query consists of 5 lines.\n\nThe first line of each query contains a single integer n (1 ≤ n ≤ 2 ⋅ 10^5) — the number of tickets.\n\nThe second line contains n integers p_1, p_2, ..., p_n (100 ≤ p_i ≤ 10^9, p_i mod 100 = 0) — the corresponding prices of tickets.\n\nThe third line contains two integers x and a (1 ≤ x ≤ 100, x + y ≤ 100, 1 ≤ a ≤ n) — the parameters of the first program.\n\nThe fourth line contains two integers y and b (1 ≤ y ≤ 100, x + y ≤ 100, 1 ≤ b ≤ n) — the parameters of the second program.\n\nThe fifth line contains single integer k (1 ≤ k ≤ 10^{14}) — the required total contribution.\n\nIt's guaranteed that the total number of tickets per test doesn't exceed 2 ⋅ 10^5.\n\nOutput\n\nPrint q integers — one per query. \n\nFor each query, print the minimum number of tickets you need to sell to make the total ecological contribution of at least k if you can sell tickets in any order.\n\nIf the total contribution can not be achieved selling all the tickets, print -1.\n\nExample\n\nInput\n\n\n4\n1\n100\n50 1\n49 1\n100\n8\n100 200 100 200 100 200 100 100\n10 2\n15 3\n107\n3\n1000000000 1000000000 1000000000\n50 1\n50 1\n3000000000\n5\n200 100 100 100 100\n69 5\n31 2\n90\n\n\nOutput\n\n\n-1\n6\n3\n4\n\nNote\n\nIn the first query the total contribution is equal to 50 + 49 = 99 < 100, so it's impossible to gather enough money.\n\nIn the second query you can rearrange tickets in a following way: [100, 100, 200, 200, 100, 200, 100, 100] and the total contribution from the first 6 tickets is equal to 100 ⋅ 0 + 100 ⋅ 0.1 + 200 ⋅ 0.15 + 200 ⋅ 0.1 + 100 ⋅ 0 + 200 ⋅ 0.25 = 10 + 30 + 20 + 50 = 110.\n\nIn the third query the full price of each ticket goes to the environmental activities.\n\nIn the fourth query you can rearrange tickets as [100, 200, 100, 100, 100] and the total contribution from the first 4 tickets is 100 ⋅ 0 + 200 ⋅ 0.31 + 100 ⋅ 0 + 100 ⋅ 0.31 = 62 + 31 = 93.",
+      "input": "The first line contains a single integer q (1 ≤ q ≤ 100) — the number of independent queries. Each query consists of 5 lines.\n\nThe first line of each query contains a single integer n (1 ≤ n ≤ 2 ⋅ 10^5) — the number of tickets.\n\nThe second line contains n integers p_1, p_2, ..., p_n (100 ≤ p_i ≤ 10^9, p_i mod 100 = 0) — the corresponding prices of tickets.\n\nThe third line contains two integers x and a (1 ≤ x ≤ 100, x + y ≤ 100, 1 ≤ a ≤ n) — the parameters of the first program.\n\nThe fourth line contains two integers y and b (1 ≤ y ≤ 100, x + y ≤ 100, 1 ≤ b ≤ n) — the parameters of the second program.\n\nThe fifth line contains single integer k (1 ≤ k ≤ 10^{14}) — the required total contribution.\n\nIt's guaranteed that the total number of tickets per test doesn't exceed 2 ⋅ 10^5.",
+      "output": "Print q integers — one per query. \n\nFor each query, print the minimum number of tickets you need to sell to make the total ecological contribution of at least k if you can sell tickets in any order.\n\nIf the total contribution can not be achieved selling all the tickets, print -1.",
+      "constraints": "time limit: 2.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "t = int(input())\nfor case_num in range(t):\n\tn = int(input())\n\tp = list(map(int, input().split(' ')))\n\t(x, a) = map(int, input().split(' '))\n\t(y, b) = map(int, input().split(' '))\n\tk = int(input())\n\tp.sort()\n\tp.reverse()\n\tsum = [0]\n\tfor i in range(n):\n\t\tsum.append(sum[-1] + p[i])\n\tif x < y:\n\t\t(x, y) = (y, x)\n\t\t(a, b) = (b, a)\n\tnab = 0\n\tna = 0\n\tnb = 0\n\tans = -1\n\tfor i in range(1, n + 1):\n\t\tif i % a != 0 and i % b != 0:\n\t\t\tcontinue\n\t\tif i % a == 0 and i % b == 0:\n\t\t\tnab += 1\n\t\tif i % a == 0 and i % b != 0:\n\t\t\tna += 1\n\t\tif i % a != 0 and i % b == 0:\n\t\t\tnb += 1\n\t\tcurrent = (sum[nab] * (x + y) + (sum[nab + na] - sum[nab]) * x + (sum[nab + na + nb] - sum[nab + na]) * y) // 100\n\t\tif current >= k:\n\t\t\tans = i\n\t\t\tbreak\n\tprint(ans)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_7d8b7f871b5c",
+        "codeforces",
+        "You are an environmental activist at heart but the reality is harsh and you are just a cashier in a cinema. But you can still do something! You have n tickets to sell. The price of the i-th ticket is p_i. As a teller,...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "规范解要求进入主约束改变了约束优先级（C）；目标从单一最小化变为最小化后字典序最大（O）；不变量需新增构造过程的可行性保持性质（V）。输入结构仅做主题映射，结构未变，故I轴不列入变化。",
+      "summary": "新增字典序最优的排列构造和证明责任，足以使原解法无法直接复用。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "home_org_canonical_witness_001",
+      "source": "extended_from_codeforces",
+      "input_structure": {
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true,
+          "ordered": true
+        },
+        "components": [
+          {
+            "role": "n",
+            "role_description": "物品数量",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 200000
+            },
+            "properties": {}
+          },
+          {
+            "role": "scores",
+            "role_description": "物品重要性分数（100的倍数）",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 200000
+            },
+            "value_range": {
+              "min": 100,
+              "max": 1000000000
+            },
+            "properties": {}
+          },
+          {
+            "role": "program1",
+            "role_description": "项目A参数 (x 和 a)",
+            "type": "tuple",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          },
+          {
+            "role": "program2",
+            "role_description": "项目B参数 (y 和 b)",
+            "type": "tuple",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          },
+          {
+            "role": "k",
+            "role_description": "目标整理评分",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 100000000000000
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "score_multiple_of_100",
+            "description": "每个物品分数是100的倍数，避免百分比计算产生小数。",
+            "formal": "s_i ≡ 0 (mod 100)",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "percentage_sum_limit",
+            "description": "两个标签的百分比之和不超过100，确保重叠位置贡献不超过物品分数。",
+            "formal": "x + y ≤ 100",
+            "source_sections": [
+              "input"
+            ]
+          },
+          {
+            "name": "lexicographically_maximal_placement",
+            "description": "输出方案必须满足：使用的物品数 m 是最小的，并且在所有恰用 m 个物品且总评分 ≥ k 的放置序列中，该序列字典序最大。字典序比较基于物品分数序列，分数大的为优；若分数相同，则以原物品输入索引（从1开始）大的为优。",
+            "formal": "let S be the set of sequences of scores of length m achieving total score ≥ k with minimal m; output the one that is lexicographically maximum according to the order defined by (score, original_index).",
+            "priority": "primary"
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize_primary_with_lexicographical_max_secondary",
+        "description": "最小化需要放置的物品数 m，并在所有最小物品数且总评分达到 k 的放置方案中，输出字典序最大的物品分数序列（以及对应的物品索引序列）。",
+        "target": "number_of_items_placed_and_sequence",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "monotonicity",
+            "description": "随着允许放置物品数的增加，可达到的最大评分非降。用于二分最小 m。",
+            "properties": {}
+          },
+          {
+            "name": "feasibility_preserving_greedy",
+            "description": "在构造字典序最大序列时，从前往后对于每一个位置，如果将剩余物品中分数最大的物品放置于此，且存在一种剩余物品的排列使总评分达到 k（基于当前累积评分），则这样选择不会导致无解；换言之，贪心选择最大可行物品始终可以扩展为完整最优解。",
+            "properties": {
+              "greedy_choice_property": true,
+              "max_possible_feasibility_check": true
+            }
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "整理柜子 · 最优清单",
+      "description": "小明正在整理家里的柜子。柜子有一排共 n 个格子，编号为 1 到 n。他有 n 件物品，每件物品有一个重要性分数 s_i（保证都是 100 的倍数）。\n\n柜子参与了两项整理标签计划：\n- 标签 A：在编号为 a, 2a, 3a, … 的格子上，该格子中物品的 x% 分数会计入整理评分；\n- 标签 B：在编号为 b, 2b, 3b, … 的格子上，该格子中物品的 y% 分数会计入整理评分。\n若某个格子同时被两个标签覆盖，则计入 (x + y)% 的分数。\n\n保证 x + y ≤ 100，且所有分数都是 100 的倍数，因此计算不会产生小数。\n\n小明计划只使用前 m 个格子（即格子 1 到 m）。他需要从 n 件物品中挑选恰好 m 件，每件物品只能使用一次，并将它们放入这 m 个格子里（每个格子放一件）。放入的顺序（即哪个物品放在哪个格子）可以任意决定。\n\n整理评分的计算方式为：对前 m 个格子，根据上述标签规则计算每个格子的贡献百分比，再乘上该格子中物品的分数，求和后得到总整理评分。\n\n小明有两个目标：\n1. 使用的格子数 m 尽可能小，即用最少的物品让总整理评分达到或超过 k；\n2. 在满足 m 最小的前提下，他希望在格子 1 到 m 中看到的物品分数序列（按格子从左到右的顺序）的字典序尽可能大。\n\n字典序比较规则：将两个长度均为 m 的分数序列从左到右逐项比较。在第一个不同的位置上，分数较大的序列视为更大；如果分数相同，则比较该物品在原输入中出现的索引（从 1 开始），索引较大的视为更大。你只需输出分数序列，不需要输出索引。\n\n请你帮助小明求出每个询问下的最优方案。",
+      "input_format": "第一行一个整数 q (1 ≤ q ≤ 100)，表示询问的组数。\n接下来按组依次给出 q 组询问。每组询问的格式如下：\n\n第一行一个整数 n (1 ≤ n ≤ 2×10^5)，代表物品的总数。\n第二行 n 个整数 s_1, s_2, ..., s_n (100 ≤ s_i ≤ 10^9, s_i 是 100 的倍数)，表示每件物品的重要性分数。\n第三行两个整数 x 和 a (1 ≤ x ≤ 100, 1 ≤ a ≤ n)，表示标签 A 的百分比和周期。\n第四行两个整数 y 和 b (1 ≤ y ≤ 100, 1 ≤ b ≤ n, 保证 x + y ≤ 100)，表示标签 B 的百分比和周期。\n第五行一个整数 k (1 ≤ k ≤ 10^14)，为目标整理评分。\n\n保证所有询问的 n 之和不超过 2×10^5。",
+      "output_format": "对于每组询问，输出一行：\n- 如果存在方案能达到 k 分，输出一个整数 m（最小格子数），然后是 m 个整数，表示字典序最大的分数序列（按放置位置从左到右的顺序）。\n- 否则输出 -1。",
+      "constraints": [
+        "时间限制：2.0 秒",
+        "空间限制：256.0 MB",
+        "1 ≤ n ≤ 200000，所有询问 n 的总和 ≤ 200000",
+        "100 ≤ s_i ≤ 10^9，s_i 是 100 的倍数",
+        "1 ≤ x, y ≤ 100，x + y ≤ 100",
+        "1 ≤ a, b ≤ n",
+        "1 ≤ k ≤ 10^14"
+      ],
+      "samples": [
+        {
+          "input": "2\n3\n200 100 300\n50 2\n30 3\n150\n4\n400 100 200 100\n20 2\n10 4\n80",
+          "output": "2 200 300\n2 200 400",
+          "explanation": "第一组询问：n=3，分数 [200, 100, 300]，标签 A: x=50%, a=2；标签 B: y=30%, b=3；目标 k=150。\n- 若只用 1 个格子（m=1），只能用格子 1，它不带任何标签，贡献为 0，不可能达到 150。\n- 使用 2 个格子（m=2）：格子 1（无标签），格子 2（标签 A，50%）。需要总贡献 ≥150。把最大的分数 300 放到格子 2，贡献 = 300 × 50% = 150；格子 1 放任意剩余物品，贡献 0。因此 m=2 可行，且 2 是最小的 m。\n- 在所有 m=2 且总贡献 ≥150 的序列中，要选字典序最大的。可能的分数序列有 [200, 300] 或 [100, 300]（格子 2 必须放 300 才能达标，格子 1 放剩下的）。比较 [200, 300] 和 [100, 300]，第一项 200 > 100，因此 [200, 300] 更大。输出 2 200 300。\n\n第二组询问：n=4，分数 [400, 100, 200, 100]，标签 A: x=20%, a=2；标签 B: y=10%, b=4；目标 k=80。\n- m=1：格子 1 无标签，不可行。\n- m=2：格子 1（无），格子 2（标签 A，20%）。需要贡献 ≥80，则格子 2 必须放至少 400 的物品（400×20%=80）。因此必须把 400 放在格子 2，格子 1 放剩余任意物品。\n- 剩余物品中可选 200 或 100（两个 100 中的一个）。为了字典序最大，格子 1 的分数应尽量大，所以选 200。序列 [200, 400] 是可行的且字典序最大。注意 [400, 100] 虽然第一个数更大，但 400 放在格子 1 贡献为 0，格子 2 只能放剩余最大 200（贡献 40），总贡献 40 < 80，不可行。因此输出 2 200 400。"
+        },
+        {
+          "input": "1\n1\n100\n10 2\n10 2\n50",
+          "output": "-1",
+          "explanation": "只有一件物品，分数为 100。格子 1 不在任何标签周期内（a=2, b=2，第 1 个格子不是 2 的倍数），贡献百分比为 0%，总贡献为 0，无法达到目标 k=50，因此输出 -1。"
+        }
+      ],
+      "notes": "字典序比较规则：先比较分数，分数大的序列更大；分数相同时，比较该物品在原输入中的索引（从 1 开始），索引大的更大。所有物品的分数均为 100 的倍数，计算贡献时不会产生小数。每组询问独立，物品不可跨询问复用。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "新增字典序最优的排列构造和证明责任，足以使原解法无法直接复用。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3524,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5469,
+          "O": 0.4122,
+          "V": 0.4266
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5469,
+          "objective_type_distance": 0.5089,
+          "objective_text_distance": 0.2672,
+          "invariant_match_distance": 0.4266
+        }
+      },
+      "applied_rule": "canonical_witness",
+      "applied_helpers": [
+        {
+          "id": "canonical_order_pressure",
+          "selection_reason": "必须引入规范顺序影响状态演化，而字典序最优直接推动从左到右的构造顺序成为核心状态。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中新增 lexicographically_maximal_placement 约束",
+            "更改 objective 为双目标",
+            "在 invariant 中加入 feasibility_preserving_greedy"
+          ],
+          "innovation_reason": "让输出对象（特定字典序序列）与验证责任离开原题的最大贡献路径，迫使解法处理顺序与可行性的交织。",
+          "difficulty_reason": "需要引导状态转移过程中的规范性证明（贪心选择正确性），提高了构造难度。"
+        },
+        {
+          "id": "proof_bearing_output",
+          "selection_reason": "输出需升级为带证明责任的规范解，字典序最大序列自身就是可校验的解对象。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 要求同时输出数字和序列，且序列需满足全局最优",
+            "invariant 新增构造过程的不变量以支撑序列正确性"
+          ],
+          "innovation_reason": "输出不再是简单数值，而是一个需要解释为什么满足全局约束（字典序最大）的构造结果。",
+          "difficulty_reason": "解法必须证明输出序列的最优性，而非仅仅计算可行性。"
+        },
+        {
+          "id": "constraint_reweighting",
+          "selection_reason": "规范解要求必须成为主约束之一，改变约束优先级。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "将 lexicographically_maximal_placement 提升为 primary 约束",
+            "invariant 中的 feasibility_preserving_greedy 直接支撑主约束的满足"
+          ],
+          "innovation_reason": "让规范性要求进入主约束的优先级分配，导致解法必须围绕它设计状态。",
+          "difficulty_reason": "原有主约束（分数整除性等）退居次要，新主约束支配算法核心。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "二分查找/线性扫描确定最小票数，内部基于排序价格和前缀和计算最大贡献。",
+        "reusable_subroutines": "二分查找最小 m；前缀和计算最大贡献，用于判定给定 m 的可行性。",
+        "new_solver_core": "在确定最小 m 后，通过从前往后的贪心构造：每一步选择剩余物品中分数最大的物品，判断将其放在当前位置后剩余物品能否完成评分要求（借助最大贡献快速检查）；若不可行则尝试次大物品。该构造依赖可行性保持不变量来保证最优性。",
+        "new_proof_obligation": "证明贪心构造选择的正确性：若当前可放置最大物品且剩余物品的最大贡献充分，则存在一个字典序最大的完整序列以该物品开头；同时证明检查剩余物品最大贡献足以判定可行性。",
+        "why_direct_reuse_fails": "原解法仅输出最小数字，未涉及排列构造及字典序优化；即使输出最大贡献排列，它可能不满足字典序最大，因此需要新的构造与决策过程。"
+      },
+      "anti_shallow_rationale": "新题引入了字典序最优这一全局目标，要求解法在保持最小物品数的前提下处理顺序与贡献的权衡，而不仅仅是计算一个最大总和。原有的贪心分配策略（最大贡献排列）不再直接奏效，需要额外的可行性判定与序列构造，证明义务也显著增强，因此绝非表面修改或仅加格式要求。"
+    }
+  }
+}

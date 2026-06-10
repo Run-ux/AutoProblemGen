@@ -1,0 +1,63 @@
+{
+  "problem_id": "taco_hackerrank_bfab8f30a3b6",
+  "source": "hackerrank",
+  "input_structure": {
+    "type": "array",
+    "length": {
+      "min": 1,
+      "max": 100000
+    },
+    "value_range": {
+      "min": 1,
+      "max": 100000
+    },
+    "properties": {
+      "ordered": true
+    },
+    "components": []
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "energy_non_negative",
+        "description": "The bot's energy must never go below zero during the entire jumping process.",
+        "formal": "For each step i (1 ≤ i ≤ n), energy_i ≥ 0.",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "minimize_value",
+    "description": "minimum initial energy ensuring bot can jump all buildings without energy dropping below zero",
+    "target": "initial_energy",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "energy_monotonicity",
+        "description": "The final energy after processing all buildings is a strictly increasing function of the initial energy e, because each update e := 2*e - h is linear with a positive coefficient (2). This monotonicity allows binary search on the initial energy.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "nonnegative_final_implies_feasibility",
+        "description": "If the final energy after all jumps is nonnegative, then the energy never drops below zero during the entire process. This property justifies checking only the final energy instead of validating intermediate steps, ensuring the starting energy satisfies the problem's constraint.",
+        "properties": {},
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_hackerrank_bfab8f30a3b6",
+    "title": "problem",
+    "description": "Chief's bot is playing an old DOS based game.  There is a row of buildings of different heights arranged at each index along a number line.  The bot starts at building $\\mbox{o}$ and at a height of $\\mbox{o}$.  You must determine the minimum energy his bot needs at the start so that he can jump to the top of each building without his energy going below zero.  \n\nUnits of height relate directly to units of energy.  The bot's energy level is calculated as follows:  \n\nIf the bot's $\\textit{botEnergy}$ is less than the height of the building, his $newenergy=botEnergy-(height-botEnrgy)$  \nIf the bot's $\\textit{botEnergy}$ is greater than the height of the building, his $newenergy=botEnergy+(botEnergy-height)$  \n\nExample  \n\n$arr=[2,3,4,3,2]$   \n\nStarting with $\\textit{botEnergy}=4$, we get the following table:\n\n    botEnergy   height  delta\n    4               2       +2\n    6               3       +3\n    9               4       +5\n    14              3       +11\n    25              2       +23\n    48\n\nThat allows the bot to complete the course, but may not be the minimum starting value.  The minimum starting $\\textit{botEnergy}$ in this case is $3$.  \n\nFunction Description  \n\nComplete the chiefHopper function in the editor below.  \n\nchiefHopper has the following parameter(s):  \n\nint arr[n]: building heights   \n\nReturns  \n\nint: the minimum starting $\\textit{botEnergy}$    \n\nInput Format\n\nThe first line contains an integer $n$, the number of buildings. \n\nThe next line contains $n$ space-separated integers $ar r[1]\\ldots ar r[n]$, the heights of the buildings.  \n\nConstraints\n\n$1\\leq n\\leq10^5$  \n$1\\leq ar r[i]\\leq10^5$ where $1\\leq i\\leq n$  \n\nSample Input 0\n5\n3 4 3 2 4\n\nSample Output 0\n4\n\nExplanation 0\n\nIf initial energy is 4, after step 1 energy is 5, after step 2 it's 6, after step 3 it's 9 and after step 4 it's 16, finally at step 5 it's 28. \n\nIf initial energy were 3 or less, the bot could not complete the course. \n\nSample Input 1\n3\n4 4 4\n\nSample Output 1\n4\n\nExplanation 1\n\nIn the second test case if bot has energy 4, it's energy is changed by (4 - 4 = 0) at every step and remains 4.  \n\nSample Input 2\n3\n1 6 4\n\nSample Output 2\n3\n\nExplanation 2\nbotEnergy   height  delta\n3           1       +2\n5           6       -1\n4           4       0\n4\n\nWe can try lower values to assure that they won't work.",
+    "input": "",
+    "output": "",
+    "constraints": "",
+    "source": "hackerrank",
+    "standard_solution_code": "N = int(input())\nheights = [int(n) for n in input().split()]\nmax_h = max(heights)\ninterval = [1, max_h]\n\ndef get_final_energy(e, heights):\n\tfor h in heights:\n\t\te = 2 * e - h\n\treturn e\nwhile interval[0] < interval[1] - 1:\n\tmid = (interval[0] + interval[1]) // 2\n\tfe = get_final_energy(mid, heights)\n\tif fe >= 0:\n\t\tinterval[1] = mid\n\telse:\n\t\tinterval[0] = mid\nif get_final_energy(interval[0], heights) >= 0:\n\tprint(interval[0])\nelse:\n\tprint(interval[1])"
+  }
+}

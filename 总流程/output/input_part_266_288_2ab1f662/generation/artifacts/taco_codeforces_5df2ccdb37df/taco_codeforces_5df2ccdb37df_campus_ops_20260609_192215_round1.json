@@ -1,0 +1,933 @@
+{
+  "problem_id": "extremal_min_star_size_cover",
+  "source_problem_ids": [
+    "taco_codeforces_5df2ccdb37df"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_5df2ccdb37df",
+      "E2",
+      "codeforces",
+      "A star is a figure of the following type: an asterisk character '*' in the center of the figure and four rays (to the left, right, top, bottom) of the same positive length. The size of a star is the length of its rays...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "Core constraints (C) are completely restructured: the original separate constraints are merged into a single d_valid_cover constraint that introduces D as a parameter, making the feasible region explicitly dependent on the threshold. The objective (O) shifts from constructing any cover to maximizing D. Invariants (V) now capture monotonicity of feasibility with respect to D and the criticality of the extreme value.",
+    "summary": "Changed C by merging and reparameterizing core constraints around D, O by seeking the maximum feasible D, and V by formalizing monotonicity and boundary properties.",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4085,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4085,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5815,
+      "O": 0.4298,
+      "V": 0.6329
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5815,
+      "objective_type_distance": 0.5084,
+      "objective_text_distance": 0.312,
+      "invariant_match_distance": 0.6329
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "optimization",
+    "description": "Find the maximum integer D ≥ 1 such that a D‑valid star cover exists. If none exists, output D=0. When D>0, also output an actual D‑valid cover (a set of stars).",
+    "target": "D_and_stars",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "feasibility_to_extremal_threshold 能最自然地将种子题的可行性构造升级为最小化星星数量的优化问题，改变了核心约束（引入阈值 k）和目标（求最小 k 并给出构造），从而产生全新的求解责任（证明最小性），同时保持了与网格覆盖核心规律的直接联系。相比之下，existence_to_counting 虽可定义计数对象，但去重规则和冗余解的处理可能使问题定义复杂，且容易退化为对原贪心构造方式的简单计数；forward_solution_to_inverse_design 在给定具体星星集合时退化为简单的差异比较，无法形成有算法深度的逆问题。；创新度判断：该规则迫使题目从“是否存在覆盖”翻转为“求最少星星覆盖”，核心义务从存在性构造转变为极小性证明与最小化构造。原题的贪心算法不再适用，求解者必须探索新的搜索、动态规划或覆盖优化策略，从而彻底重塑思维路径。；难度判断：最小化覆盖通常涉及集合覆盖等 NP-hard 结构，在限定小规模输入时，要求用状态压缩、分枝定界或启发式搜索来保证正确性，显著提升了对算法设计与证明能力的要求，远超原题 O(N^2) 的扫描贪心。；风险判断：主要风险在于需要恰当的规模收缩以保持可求解性 (n,m 可能需降至 15 左右)，以及确保最小性证明不会沦为事后备注。但只要在规划中明确限定输入规模和输出格式，该风险可控；可借助 helper 'extremal_answer_contract' 将证明义务锁定到不变量中。",
+  "new_schema_snapshot": {
+    "problem_id": "extremal_min_star_size_cover",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "dimensions",
+          "role_description": "row and column dimensions of the grid",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": 3,
+            "max": 1000
+          },
+          "properties": {}
+        },
+        {
+          "role": "grid",
+          "role_description": "character grid consisting of '*' and '.'",
+          "type": "matrix",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "star_structure",
+          "description": "A star consists of a center asterisk '*' and four rays (left, right, top, bottom) of the same positive integer length s. For a center (x,y) and size s ≥ 1, the star covers cells (x, y), (x±i, y), (x, y±i) for all i=1…s.",
+          "formal": "∀ star (x,y,s): covered = {(x,y)} ∪ {(x±i,y), (x,y±i) | i=1..s}, s ∈ ℤ⁺",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "d_valid_cover",
+          "description": "A solution is a pair (D, S) where D is a positive integer (or 0 if impossible) and S is a set of stars. The pair is valid iff: every cell with '*' is covered by some star in S, no cell with '.' is covered, every star in S has size at least D, and all stars lie within the grid. The feasible set of D is downward-closed: if (D, S) is valid and D' < D, then (D', S) is also valid.",
+          "formal": "valid(D,S) ⇔ (∀(i,j): G[i][j]='*' ⇒ ∃ star∈S covering (i,j)) ∧ (∀ star∈S, ∀ covered cell (i,j): G[i][j]='*') ∧ (∀ star∈S, star.size ≥ D) ∧ (∀ star∈S, star within grid). Feasible(D) = ∃ S such that valid(D,S). The set {D | Feasible(D)} is downward‑closed.",
+          "source_sections": []
+        }
+      ]
+    },
+    "objective": {
+      "type": "optimization",
+      "description": "Find the maximum integer D ≥ 1 such that a D‑valid star cover exists. If none exists, output D=0. When D>0, also output an actual D‑valid cover (a set of stars).",
+      "target": "D_and_stars",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "monotone_feasibility",
+          "description": "If there exists a D‑valid configuration, then for any D' < D the same configuration is also D'‑valid. Hence the set of feasible D is downward closed.",
+          "properties": {},
+          "evidence_source": "derived_from_monotonicity"
+        },
+        {
+          "name": "criticality",
+          "description": "The output D* is the maximal feasible value: there exists a D*‑valid cover, and no D‑valid cover exists for any D > D*. If D*=0, then even D=1 is impossible.",
+          "properties": {},
+          "evidence_source": "definition_of_maximum"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "feasibility_to_extremal_threshold",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Compute for each cell the maximum possible star size using four-directional prefix sums; place a maximal size star at every center; use difference arrays to mark coverage; verify that all '*' cells are covered.",
+    "reusable_subroutines": "Four-directional prefix sum computation yielding L, R, U, D arrays; difference array updates for rows and columns to mark intervals; prefix sum scan to recover per-cell coverage counts.",
+    "new_solver_core": "Binary search over D from 1 to min(n,m). For a given D, perform a feasibility check: for each cell whose computed maximum star size ≥ D, place its maximal star; then test if all '*' are covered using the same difference array technique. Maximize D.",
+    "new_proof_obligation": "Prove that the greedy placement of maximal stars for all eligible centers (max size ≥ D) is optimal for the D‑feasibility subproblem: if any D‑valid cover exists, the union of these maximal stars covers all '*'. This relies on the star geometry and the fact that any star’s rays only traverse '*' cells. Also prove monotonicity for binary search correctness.",
+    "why_direct_reuse_fails": "The original algorithm solves a one-shot construction problem without any notion of a threshold. It cannot directly output a maximal D or iterate over D values; adding the loop and maintaining the same sub-solver is a non-trivial extension requiring new correctness arguments."
+  },
+  "anti_shallow_rationale": "The transformation is not shallow because the core constraints are reparameterized with D, completely restructuring the feasibility condition. The objective moves from existence to extremum, and the invariants enforce monotonicity and criticality. The algorithm is extended with an outer optimization layer and must prove optimal placement under a minimum-size restriction, going beyond a mere binary search wrapper.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "threshold_parameterization",
+      "selection_reason": "To introduce a natural threshold D that parameterizes feasibility, directly altering the core constraints and objective.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Merged original grid coverage and star inside grid constraints into a single d_valid_cover constraint parameterized by D; changed objective from construction to maximization of D."
+      ],
+      "innovation_reason": "Shifts the problem from a Boolean existence question to an extremal optimization, requiring reasoning about the feasible D range.",
+      "difficulty_reason": "Solver must handle the coupling between D and the geometry of star placements, and search for the boundary value."
+    },
+    {
+      "id": "monotone_boundary_invariant",
+      "selection_reason": "Needed to formalize the monotonicity that underpins the correctness of binary search and the notion of a critical threshold.",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "The d_valid_cover constraint inherently defines a downward-closed feasible region; introduced monotone_feasibility invariant to make the monotonicity explicit."
+      ],
+      "innovation_reason": "Elevates the feasibility structure into a boundary localization problem, where the solver must reason about downward-closed feasible sets.",
+      "difficulty_reason": "Demands proof that the feasible region is monotone and that the computed D* is indeed the boundary between feasible and infeasible."
+    },
+    {
+      "id": "extremal_answer_contract",
+      "selection_reason": "To ensure the answer is not just any feasible D but provably the maximum, and that the invariant captures both attainability and unattainability beyond it.",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Objective explicitly requires maximal D; invariant includes criticality property (D* attainable, D*+1 unattainable)."
+      ],
+      "innovation_reason": "Transforms the answer into a certified extremum, giving it a stronger semantic than a simple feasible parameter.",
+      "difficulty_reason": "Requires the solution to simultaneously demonstrate feasibility at D* and impossibility for all larger D, often via constructive upper-bound arguments."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题已经要求输出完整的星星构造方案，直接违反了规则 eligibility 中 forbidden_seed_properties 的“原题本来就要求输出完整方案”，不具备从答案升级为规范解的基础空间。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 output 描述：如果可行则第一行输出星星数量 k，接下来 k 行输出每个星星的中心行、列和大小。标准解直接构造并输出星星列表，属于完整的构造方案，无法通过将答案恢复为方案再添加规范性的方式进行升级。",
+        "feedback": "该种子题已经是典型的构造输出题，若强行套用 canonical_witness 只会产生仅添加输出排序的表面修改，违反辅助规则红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "no_local_certificate_guarantee",
+      "selection_reason": "种子题无解情形仅输出-1，其‘做不到’原因难以稳定写成可局部检查的冲突证据；网格覆盖的可满足性判定依赖全局扫描，即使提供未覆盖点也无法直接局部验证不可覆盖性，不符合规则要求的‘冲突证据必须能局部检查’这一硬约束。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束只定义了合法星星和覆盖要求，无任何局部冲突证据的结构定义（如最小不可满足核）。标准解法通过全局差分数组扫描判定无解，失败时仅返回-1，未生成任何证书。规则强制要求输出‘能直接检查的局部冲突证据’，但种子题的无解实例（如样例3）中，未覆盖点是否真不可覆盖需重构整个放置过程，无法简化为局部规则可核验的证据对象。",
+        "feedback": "若强行实施，要么将无解情形退化成输出未覆盖点再加一段解释性文本（违反redline‘不能退化成一段解释’），要么要求出题人重新设计问题以天然承载局部证书（如预置一组矛盾模式），这已超出单条规则的变化允许范围，且与种子题核心行为不符。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "clear_counting_target",
+      "selection_reason": "原题是有限网格上的覆盖构造问题，解空间因网格尺寸和星星数量上限而有限。计数对象可定义为满足覆盖约束的无序星星集合，去重规则为每个(中心,大小)至多出现一次，不同解构成清晰的等价类。解可沿行列方向拆分为覆盖状态的动态规划单元，汇总可得总数。满足计数化规则的所有硬性条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子schema中star_count_upper_bound（0 ≤ k ≤ n·m）与star_inside_grid确保解空间有限；star_structure定义了一致的星星形状，使得不同解可由(中心,大小)元组区分；invariant中的difference_array_range_coverage提供了可拆分的覆盖状态结构，便于定义计数单元并去重。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题语义中不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，仅要求构造任意可行星形覆盖，无法放大为最小保底型优化。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题为Codeforces E2：给定网格，要求用星星覆盖所有'*'，输出任意合法解。约束为星形结构定义、完全覆盖、星在网格内，无任何隐含或显式的不确定性或对抗性因素。规则eligibility要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但本题中星星放置无顺序依赖，无资源限制波动，无局部选择的差异（只需构造一组解即可）。",
+        "feedback": "建议寻找具有天然不确定性（如在线序列、资源限制、对抗选择）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 1.04,
+      "reason_code": "natural_threshold_parameter_exists",
+      "selection_reason": "原题的核心约束 star_structure 将星星大小 s 定义为任意正整数，该参数直接决定射线的覆盖范围。标准解法通过在四个方向上累积连续 '*' 长度计算每一点的最大可行星星尺寸，这表明可行性对 s 具有清晰的单调性：若允许的最大星星尺寸 S 增大，可行解集合单调扩大。因此，可将原判定/构造题升级为求最小 S 使得覆盖仍可行的阈值优化题，阈值直接进入约束（star_size ≤ S），求解目标变为输出该临界值并附带构造。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子 schema 的 core_constraints 中，star_structure 描述星星由长度 s 的射线构成，s 为正整数（source_sections: description）。solution_code 展示通过 L、R、U、D 数组计算每个 '*' 格子的最大延伸长度，并取最小值作为该中心的星星尺寸，体现了大小参数在该可行性结构中的核心地位。规则 required_seed_properties 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，上述几何性质保证：限制星星尺寸上限 S 时，可行区域随 S 增加而单调扩张，满足分层条件。helper threshold_parameterization 的 redlines 要求阈值不得脱离主约束，S 将直接加入约束‘每个星星的大小 ≤ S’，而非外部机械二分。",
+        "feedback": "该种子具备天然临界参数（星星大小），且可行性结构的单调性已经隐含在标准解法中，完全贴合 thresholds 类规则的升级路径。建议在规划阶段明确阈值 S 的新约束形式，并设计单调不变量证明最小 S 的存在性。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_conflict_objective",
+      "selection_reason": "原题为构造可行性判定，无优化目标，不存在与当前目标自然冲突的第二评价指标，无法扩展为权衡前沿题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述明确：“you do not need to minimize the number of stars. Just find any way”，目标仅为构造一组覆盖所有‘*’的星星，不涉及最优性。标准解法贪心放置最大星星并用差分数组验证覆盖，未维护任何第二指标。规则要求‘原题目标附近存在自然的第二评价指标’，但此处无指标空间，更无冲突关系。",
+        "feedback": "建议寻找具有明确单目标最优（如最大化、最小化）的种子题，且该目标可自然衍生出资源、风险等冲突指标。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "reverse_target_natural",
+      "selection_reason": "原题输出（星形集合）可直接作为反向目标，网格字符的自然修改操作与原核心对象一致，且可要求最小修改，满足反向设计核心条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为可覆盖给定 '*' 的星形集合（见 problem output：'3 3 4 1 3 5 2 3 5 1'）；网格由 '*' 和 '.' 构成，修改字符翻转是自然操作；正向求解使用差分数组验证覆盖，可复用于反向题评估修改效果；规则要求目标绑定和最小性，均可实现。",
+        "feedback": "反向目标可取自正向解的任意一组星；修改网格字符操作直接源自原题输入结构；最小修改代价可通过动态规划或搜索证明，具备设计自由度。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是构造星星覆盖星形网格的问题，所有星星可独立放置且无总量限制，各格子覆盖仅需满足局部条件，不存在可分解且能通过共享资源自然耦合的局部单元。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘draw this grid using any number of stars’，约束中仅要求覆盖所有'*'格子且星星不超出网格，无任何共享预算、总量守恒或跨组件依赖；标准解法通过独立扫描每个位置的最大扩展尺寸并贪心放置，各星星决策未体现全局耦合。",
+        "feedback": "原题不具备规则所需的基础结构，强行引入全局耦合会变成无关背景硬加约束，建议更换种子题或选择其他规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "missing_natural_turn_operations",
+      "selection_reason": "原题为构造性问题，一次性输出所有星星覆盖方案，没有步骤化的轮流选择或状态转移，无法自然转化为双方最优博弈。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“draw this grid using any number of stars”，输出直接提供星星中心坐标及大小，无顺序；标准解法扫描所有可能星星中心并贪婪放置，不存在过程选择。规则 eligibility 要求原题存在可轮流选择、移动或改变状态的自然操作，此处不满足。",
+        "feedback": "即使强行设计轮流放置星星的规则，也完全脱离原题操作语法，属于硬造对抗方，违反 forbidden 条件。建议驳回。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题本身已经是全局覆盖问题：选择多个星形覆盖所有 '*'，核心约束 'grid_coverage' 明确要求每个 '*' 被至少一个星形覆盖，且每个星形不覆盖 '.'。这与规则的'从单局部对象扩展为全局覆盖'目标不符，因为缺乏从单局部到多对象的转化，覆盖语义已内建于种子题。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子 schema 的 core_constraints 包含 'grid_coverage' 约束：'The placed stars must together exactly draw the given grid: every cell containing '*' in the grid must be covered by at least one star, and no star may cover any cell that contains '.' in the grid.' 同时 objective 为 'construct a set of stars covering all '*' cells'。这表明原题天然具有全局覆盖结构和多对象选择，不符合规则所期望的种子（单路径或单区间性质的局部问题）。",
+        "feedback": "规则旨在将局部性质升级为全局覆盖，但种子题已经是全局覆盖问题，再应用该规则只会产生语义重复，无法形成有效创新。建议寻找更适合的局部问题种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_a_counting_problem",
+      "selection_reason": "原题是构造/判定问题，要求输出一组星星或-1，本质上不是计数问题，不存在明确的有限计数对象，更无自然权重、等级或统计量，不符合规则要求的种子属性。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "missing_counting_core"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'construction'，目标为 'construct a set of stars covering all '*' cells, or determine impossibility'，problem description 中未提及计数目标或总数统计，仅要求输出星星列表或 -1。规则 eligibility.required_seed_properties 要求 '原题已经有明确有限的计数对象' 和 '计数对象上存在自然权重、等级或统计量'，原题不满足。",
+        "feedback": "该规则仅适用于计数类种子题，原题是构造题，无法进行带权分布计数扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题已经要求输出完整的星星构造方案，直接违反了规则 eligibility 中 forbidden_seed_properties 的“原题本来就要求输出完整方案”，不具备从答案升级为规范解的基础空间。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 output 描述：如果可行则第一行输出星星数量 k，接下来 k 行输出每个星星的中心行、列和大小。标准解直接构造并输出星星列表，属于完整的构造方案，无法通过将答案恢复为方案再添加规范性的方式进行升级。",
+        "feedback": "该种子题已经是典型的构造输出题，若强行套用 canonical_witness 只会产生仅添加输出排序的表面修改，违反辅助规则红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_local_certificate_guarantee",
+      "message": "种子题无解情形仅输出-1，其‘做不到’原因难以稳定写成可局部检查的冲突证据；网格覆盖的可满足性判定依赖全局扫描，即使提供未覆盖点也无法直接局部验证不可覆盖性，不符合规则要求的‘冲突证据必须能局部检查’这一硬约束。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.3,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束只定义了合法星星和覆盖要求，无任何局部冲突证据的结构定义（如最小不可满足核）。标准解法通过全局差分数组扫描判定无解，失败时仅返回-1，未生成任何证书。规则强制要求输出‘能直接检查的局部冲突证据’，但种子题的无解实例（如样例3）中，未覆盖点是否真不可覆盖需重构整个放置过程，无法简化为局部规则可核验的证据对象。",
+        "feedback": "若强行实施，要么将无解情形退化成输出未覆盖点再加一段解释性文本（违反redline‘不能退化成一段解释’），要么要求出题人重新设计问题以天然承载局部证书（如预置一组矛盾模式），这已超出单条规则的变化允许范围，且与种子题核心行为不符。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_target",
+      "message": "原题是有限网格上的覆盖构造问题，解空间因网格尺寸和星星数量上限而有限。计数对象可定义为满足覆盖约束的无序星星集合，去重规则为每个(中心,大小)至多出现一次，不同解构成清晰的等价类。解可沿行列方向拆分为覆盖状态的动态规划单元，汇总可得总数。满足计数化规则的所有硬性条件。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子schema中star_count_upper_bound（0 ≤ k ≤ n·m）与star_inside_grid确保解空间有限；star_structure定义了一致的星星形状，使得不同解可由(中心,大小)元组区分；invariant中的difference_array_range_coverage提供了可拆分的覆盖状态结构，便于定义计数单元并去重。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题语义中不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，仅要求构造任意可行星形覆盖，无法放大为最小保底型优化。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "种子题为Codeforces E2：给定网格，要求用星星覆盖所有'*'，输出任意合法解。约束为星形结构定义、完全覆盖、星在网格内，无任何隐含或显式的不确定性或对抗性因素。规则eligibility要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，但本题中星星放置无顺序依赖，无资源限制波动，无局部选择的差异（只需构造一组解即可）。",
+        "feedback": "建议寻找具有天然不确定性（如在线序列、资源限制、对抗选择）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_threshold_parameter_exists",
+      "message": "原题的核心约束 star_structure 将星星大小 s 定义为任意正整数，该参数直接决定射线的覆盖范围。标准解法通过在四个方向上累积连续 '*' 长度计算每一点的最大可行星星尺寸，这表明可行性对 s 具有清晰的单调性：若允许的最大星星尺寸 S 增大，可行解集合单调扩大。因此，可将原判定/构造题升级为求最小 S 使得覆盖仍可行的阈值优化题，阈值直接进入约束（star_size ≤ S），求解目标变为输出该临界值并附带构造。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 1.04,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "种子 schema 的 core_constraints 中，star_structure 描述星星由长度 s 的射线构成，s 为正整数（source_sections: description）。solution_code 展示通过 L、R、U、D 数组计算每个 '*' 格子的最大延伸长度，并取最小值作为该中心的星星尺寸，体现了大小参数在该可行性结构中的核心地位。规则 required_seed_properties 要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，上述几何性质保证：限制星星尺寸上限 S 时，可行区域随 S 增加而单调扩张，满足分层条件。helper threshold_parameterization 的 redlines 要求阈值不得脱离主约束，S 将直接加入约束‘每个星星的大小 ≤ S’，而非外部机械二分。",
+        "feedback": "该种子具备天然临界参数（星星大小），且可行性结构的单调性已经隐含在标准解法中，完全贴合 thresholds 类规则的升级路径。建议在规划阶段明确阈值 S 的新约束形式，并设计单调不变量证明最小 S 的存在性。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_conflict_objective",
+      "message": "原题为构造可行性判定，无优化目标，不存在与当前目标自然冲突的第二评价指标，无法扩展为权衡前沿题。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述明确：“you do not need to minimize the number of stars. Just find any way”，目标仅为构造一组覆盖所有‘*’的星星，不涉及最优性。标准解法贪心放置最大星星并用差分数组验证覆盖，未维护任何第二指标。规则要求‘原题目标附近存在自然的第二评价指标’，但此处无指标空间，更无冲突关系。",
+        "feedback": "建议寻找具有明确单目标最优（如最大化、最小化）的种子题，且该目标可自然衍生出资源、风险等冲突指标。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_target_natural",
+      "message": "原题输出（星形集合）可直接作为反向目标，网格字符的自然修改操作与原核心对象一致，且可要求最小修改，满足反向设计核心条件。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题输出为可覆盖给定 '*' 的星形集合（见 problem output：'3 3 4 1 3 5 2 3 5 1'）；网格由 '*' 和 '.' 构成，修改字符翻转是自然操作；正向求解使用差分数组验证覆盖，可复用于反向题评估修改效果；规则要求目标绑定和最小性，均可实现。",
+        "feedback": "反向目标可取自正向解的任意一组星；修改网格字符操作直接源自原题输入结构；最小修改代价可通过动态规划或搜索证明，具备设计自由度。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是构造星星覆盖星形网格的问题，所有星星可独立放置且无总量限制，各格子覆盖仅需满足局部条件，不存在可分解且能通过共享资源自然耦合的局部单元。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘draw this grid using any number of stars’，约束中仅要求覆盖所有'*'格子且星星不超出网格，无任何共享预算、总量守恒或跨组件依赖；标准解法通过独立扫描每个位置的最大扩展尺寸并贪心放置，各星星决策未体现全局耦合。",
+        "feedback": "原题不具备规则所需的基础结构，强行引入全局耦合会变成无关背景硬加约束，建议更换种子题或选择其他规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "missing_natural_turn_operations",
+      "message": "原题为构造性问题，一次性输出所有星星覆盖方案，没有步骤化的轮流选择或状态转移，无法自然转化为双方最优博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“draw this grid using any number of stars”，输出直接提供星星中心坐标及大小，无顺序；标准解法扫描所有可能星星中心并贪婪放置，不存在过程选择。规则 eligibility 要求原题存在可轮流选择、移动或改变状态的自然操作，此处不满足。",
+        "feedback": "即使强行设计轮流放置星星的规则，也完全脱离原题操作语法，属于硬造对抗方，违反 forbidden 条件。建议驳回。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题本身已经是全局覆盖问题：选择多个星形覆盖所有 '*'，核心约束 'grid_coverage' 明确要求每个 '*' 被至少一个星形覆盖，且每个星形不覆盖 '.'。这与规则的'从单局部对象扩展为全局覆盖'目标不符，因为缺乏从单局部到多对象的转化，覆盖语义已内建于种子题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子 schema 的 core_constraints 包含 'grid_coverage' 约束：'The placed stars must together exactly draw the given grid: every cell containing '*' in the grid must be covered by at least one star, and no star may cover any cell that contains '.' in the grid.' 同时 objective 为 'construct a set of stars covering all '*' cells'。这表明原题天然具有全局覆盖结构和多对象选择，不符合规则所期望的种子（单路径或单区间性质的局部问题）。",
+        "feedback": "规则旨在将局部性质升级为全局覆盖，但种子题已经是全局覆盖问题，再应用该规则只会产生语义重复，无法形成有效创新。建议寻找更适合的局部问题种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_a_counting_problem",
+      "message": "原题是构造/判定问题，要求输出一组星星或-1，本质上不是计数问题，不存在明确的有限计数对象，更无自然权重、等级或统计量，不符合规则要求的种子属性。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "missing_counting_core"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.objective.type 为 'construction'，目标为 'construct a set of stars covering all '*' cells, or determine impossibility'，problem description 中未提及计数目标或总数统计，仅要求输出星星列表或 -1。规则 eligibility.required_seed_properties 要求 '原题已经有明确有限的计数对象' 和 '计数对象上存在自然权重、等级或统计量'，原题不满足。",
+        "feedback": "该规则仅适用于计数类种子题，原题是构造题，无法进行带权分布计数扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "FULL_CONTRACT_FULFILLED",
+      "message": "规划成功实现了阈值优化转化：临界参数 D 进入核心约束 d_valid_cover 并成为最大化目标，单调性与临界性不变量完整定义，三个 helper 全部在指定的轴（C、O、V）上兑现。",
+      "details": {
+        "review_role": "你扮演一名临界阈值规划审查官，重点确认阈值是否进入主约束和主目标，而不是外层机械二分。",
+        "review_brief": "确认规划是否定义临界参数、可行区域和边界不变量，并要求输出最小或最大阈值。",
+        "evidence": "candidate schema 中 core_constraints 的 d_valid_cover 约束以 D 参数化有效性，objective 明确要求最大化 D 并输出覆盖，invariant 的 monotone_feasibility 和 criticality 定义了可行区域的下闭性与极值边界；planner_payload 的 applied_helpers 逐一实现了 threshold_parameterization (C,O)、monotone_boundary_invariant (C,V) 和 extremal_answer_contract (O,V)。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "score": 1.04,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "Revised C axis by completely restructuring core_constraints: merged original grid_coverage, star_inside_grid, and star_count_upper_bound into a single d_valid_cover constraint parameterized by D. This results in a materially different constraint set, ensuring that the declared axes [C,O,V] are all realized.",
+      "contract_retry_count": 2,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "feasibility_to_extremal_threshold",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "feasibility_to_extremal_threshold",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "新题的主要算法与种子题高度重叠：原题算法已计算出每个细胞的最大可能星星大小，并贪心放置所有最大星星；新题只需在原解外层包一个二分搜索，可行性检查完全复用同一贪心放置逻辑（仅将条件从 size>1 改为 size>=D）。熟悉原题的选手只需极小改动即可解决，不符合 ‘why_direct_reuse_fails’ 声称的非平凡扩展，实质差异不足。",
+    "feedback": "请重新设计差异，使新解法核心不直接依赖于原题的构造-验证流程，例如引入更根本的约束变化或完全不同的目标结构。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_5df2ccdb37df_campus_ops_20260609_192215",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

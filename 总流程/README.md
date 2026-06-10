@@ -73,6 +73,14 @@ python -m pip install -r D:\AutoProblemGen\生成测试用例和标准解法\req
 python main.py --workflow-config workflow.env
 ```
 
+如果只想本次运行临时换一个输入路径，可以使用命令行参数覆盖 `workflow.env` 中的 `INPUT_PATH`：
+
+```powershell
+python main.py --workflow-config workflow.env --input-path D:\AutoProblemGen\爬取题目\output\taco\sample_400_autoproblemgen
+```
+
+`--input-path` 支持单个 JSON 文件或题目 JSON 目录，只影响当前进程，不会写回或修改 `workflow.env`。如果传入相对路径，会按当前命令执行目录解析。
+
 如果希望本次先推进未跑过的题，暂时不重跑历史已跑过但未成功的题，可以加：
 
 ```powershell
@@ -88,6 +96,8 @@ PYTHON_EXECUTABLE=D:\path\to\venv\Scripts\python.exe
 留空时会使用当前启动 `main.py` 的 Python 解释器。
 
 `VERIFICATION_TIMEOUT_SECONDS` 是废弃兼容项；总流程不再用外层总超时杀掉 `verification_runner.py`。验证耗时由 `generation_llm.env` 的 `TIMEOUT_SECONDS`、`MAX_RETRIES` 和 `workflow.env` 中的 `EXECUTION_TEST_INPUT_TIMEOUT_SECONDS`、`EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS`、`EXECUTION_CHECKER_TIMEOUT_SECONDS` 分阶段控制。
+
+标准解 debug 的最大修复轮数由 `workflow.env` 中的 `STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制，默认值为 5。达到上限仍无法通过全部小规模真值用例时，验证阶段会 fail-fast 并在结果中保留失败分类摘要。
 
 验证阶段还会使用 `workflow.env` 中的 LLM 上下文预算配置控制哪些测试用例可以进入模型 prompt。`LLM_CASE_*` 系列配置用于把小型可读用例和大规模压力用例分流：大规模用例继续用于本地执行验证，但不会原样进入 `checker_counterexample_generation` 等 LLM prompt。`MAX_LLM_PROMPT_CHARS` 用于在请求 API 前做本地预算检查，超限会直接失败并给出具体任务名和字符数；`LLM_TRACE_MAX_TEXT_CHARS` 控制 `logs/llm_calls.jsonl` 中大文本字段的记录上限。
 

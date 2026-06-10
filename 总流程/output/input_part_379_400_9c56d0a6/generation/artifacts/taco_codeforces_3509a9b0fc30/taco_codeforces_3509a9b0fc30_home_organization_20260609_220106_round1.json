@@ -1,0 +1,954 @@
+{
+  "problem_id": "taco_codeforces_3509a9b0fc30",
+  "source_problem_ids": [
+    "taco_codeforces_3509a9b0fc30"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_3509a9b0fc30",
+      "codeforces",
+      "Polycarpus participates in a competition for hacking into a new secure messenger. He's almost won. Having carefully studied the interaction protocol, Polycarpus came to the conclusion that the secret key can be obtain...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "construction",
+    "description": "构造一个满足左右两部分分别被给定整数整除的字符串分割方案",
+    "target": "partition",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design:原题输出（分割点及左右部分）可直接转化为反向目标（例如指定必须得到的左部分和右部分字符串），修改操作（改变公钥字符串中的单个数字）来自原题对象的自然结构，最小修改代价与整除约束紧密相关，能够产生设计难度，符合反向设计对目标驱动、操作空间和最小性证明的全部要求。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codeforces_3509a9b0fc30",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "public_key_string",
+          "role_description": "the public key as an integer without leading zeros, given as a string",
+          "type": "string",
+          "length": {
+            "min": 1,
+            "max": 1000000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "divisors",
+          "role_description": "the two positive integers a and b",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": 1,
+            "max": 100000000
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "cut_nonempty",
+          "description": "The public key must be cut into two nonempty parts.",
+          "formal": "length(left) > 0 and length(right) > 0",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "no_leading_zeros",
+          "description": "Both parts must be positive integers without leading zeros.",
+          "formal": "left[0] != '0' and right[0] != '0' and integer value of each part > 0",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "divisible_left",
+          "description": "The left part taken as an integer must be divisible by a.",
+          "formal": "(to_integer(left) mod a) = 0",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "divisible_right",
+          "description": "The right part taken as an integer must be divisible by b.",
+          "formal": "(to_integer(right) mod b) = 0",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "concatenation_identity",
+          "description": "Concatenating the left and right parts must reproduce the original public key string exactly.",
+          "formal": "left + right == S",
+          "source_sections": [
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construction",
+      "description": "构造一个满足左右两部分分别被给定整数整除的字符串分割方案",
+      "target": "partition",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "prefix_modulo_invariant",
+          "description": "在从左到右扫描数字字符串时,变量x始终等于当前已处理前缀所表示整数对a取模的结果,利用模运算的线性递推性质进行增量维护。",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "suffix_modulo_invariant",
+          "description": "在从右到左扫描数字字符串时,变量x始终等于当前已处理后缀所表示整数对b取模的结果,同时辅以10的幂次对b取模的增量更新,保证后缀整数模b值的正确计算。",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "Hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 1 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_already_outputs_full_solution",
+      "selection_reason": "原题本身已经要求输出完整的分割方案，且标准解法直接构造输出，不满足规则禁止的种子属性，无法升级为规范解。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为构造型，要求输出'YES'后跟左右两部分，已经构成完整方案。种子题schema中objective描述为'构造一个满足条件的字符串分割方案'，输出包含具体左右部分。规则forbidden明确列出'原题本来就要求输出完整方案'。",
+        "feedback": "此种子题已输出方案，规范解升级无实质变化，不符合规则要求的'输出要求必须真正变了'。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "failure_not_localizable",
+      "selection_reason": "种子题的无解原因无法稳定压缩为可局部检查的小型证据。原题无解意味着不存在任何切割点同时满足三个条件，若输出所有候选点的不满足证据则规模可达O(n)，且验证仍需重算前后缀模值，违背局部检查要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "failure_not_localizable"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中约束要求left能被a整除、right能被b整除、无前导零，原解法通过扫描所有候选点判定无解。规则要求产出‘局部冲突证据’，但种子题大规模输入下不可能给出既简洁又可独立验证的证据对象，失败分支只能输出NO字符串，无法结构化。",
+        "feedback": "建议选择无解原因可被小证书捕获的题目，例如存在可证伪的不变量或组合障碍，或允许证据为小规模示例反例。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.25,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "种子题的解空间虽然有限且去重规则可定义，但将构造题改为计数题时，核心状态结构（扫描维护前缀/后缀模）将保持不变，计数仅作为扫描结果的累加，这违反了 state_factorization 助手的红线“不能保持原状态结构不动”和“不能把计数只当成结果后处理”。改编后的题目未能带来明显的算法新责任，本质上只是答案形式的替换。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的原解空间为所有合法切割位置集合，有限且可由位置索引唯一区分（constraint: cut_nonempty, concatenation_identity），满足有限性和去重清晰的条件。但原题 solution 使用前缀模和后缀模扫描，一旦找到合法位置即输出；计数版本只需累加所有合法位置，状态结构和遍历逻辑与原题几乎一致（src: standard_solution_code 中的 pfx 列表和逆向扫描）。这直接触发了 state_factorization 的红线：“不能保持原状态结构不动”以及“不能把计数只当成结果后处理”。",
+        "feedback": "种子题具有稳定的有限解空间和明确的等价关系，但计数化需要更深入的状态重组，而不只是将输出结果从构造改为计数。建议寻找解空间天然需要动态规划或需拆分汇总的问题作为种子，以充分发挥状态因子化助手的作用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是确定性的字符串分割存在性问题，不包含顺序不确定、资源波动或局部选择差异；任何扰动都必须凭空捏造，不符合规则所要求的原生扰动源。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints 仅包含静态的整除与拼接约束，objective 为构造任意一个合法分割，invariant 为前缀与后缀模运算的确定型维护；original_problem_references 的描述未提及对抗性、不定顺序或波动资源。",
+        "feedback": "该种子题没有可放大的原生扰动来源，强行添加最坏情况保底会脱离原题语义，建议更换具有内在不确定性（如不同操作顺序、资源动态变化）的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_threshold_parameter",
+      "selection_reason": "原题可行性仅依赖于离散分割点，无单调阈值参数，无法自然扩展为阈值优化题。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 中核心约束为字符串分割整除，输入仅包含固定公钥与 a,b，无容量、大小等可连续变化且具单调性的参数；required_seed_properties 要求 '可行性随某个参数具有清晰的单调性或分层结构'，本题不满足。",
+        "feedback": "避免机械二分或强行引入阈值，应寻找有自然单调资源的问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_second_metric",
+      "selection_reason": "原题是存在性构造问题，目标仅为输出任意满足整除与无前导零约束的分割，不存在量化优化目标，无法抽取自然的第二评价指标，更无法形成真实冲突的权衡关系。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 construction，描述为构造一个分割方案，而非最大化/最小化；原题描述仅要求找到任意合法切割；核心约束均为布尔条件（整除、无前导零），无连续可比较的度量；不存在可自然衍生第二指标的基础。",
+        "feedback": "该规则要求原题目标附近已存在可冲突的第二指标，但本题仅要求存在性答案，强行引入如‘最小化左部’一类指标将退化为原解的附属统计，违反 ayudante 红线。建议仅在优化类种子题上使用此变换。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "reverse_target_exists_and_natural_edit_operations",
+      "selection_reason": "原题输出（分割点及左右部分）可直接转化为反向目标（例如指定必须得到的左部分和右部分字符串），修改操作（改变公钥字符串中的单个数字）来自原题对象的自然结构，最小修改代价与整除约束紧密相关，能够产生设计难度，符合反向设计对目标驱动、操作空间和最小性证明的全部要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "Seed schema显示原题目标是构造一个满足整除条件的切割（objective: construction, target: partition），输出即为具体的左右部分（output中存在YES/NO及两个字符串）；核心约束围绕整除和拼接（divisible_left, divisible_right, concatenation_identity）；输入数字串长度可达1e6，值域固定。这些为绑定反向目标（target_result_binding）和定义修改操作（edit_operation_contract）提供了充要条件，且helpers的redlines均未违反。",
+        "feedback": "建议在下一阶段明确目标结果的具体形式（如固定左右部分的值或指定切割点），并严格定义修改操作的范围（如是否允许改变长度），避免反向目标退化为简单存在性判断。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题左右部分共享同一个切割点，须同时满足两个整除条件，已经是全局耦合问题，不存在可独立处理的局部单元，无法应用此规则。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束包括 concatenation_identity 直接绑定左右部分，切割点同时决定两个部分的合法性；标准解法使用前缀和后缀模运算，遍历全局找到满足两个条件的唯一交点，不存在先独立求解再拼接的步骤；schema 中 invariant 的 prefix_modulo_invariant 和 suffix_modulo_invariant 表明整个状态就是为全局耦合而设计的。",
+        "feedback": "规则要求种子题具有可分解的局部单元，而原题结构天然耦合，强行引入共享资源只会变成无关背景硬加，违反红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_turn",
+      "selection_reason": "原题是单次切割构造，不存在双方轮流选择、拿取或移动的自然操作，无法在不破坏核心规律的情况下转化为对抗博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“Polycarpus needs to find such a way to cut the public key into two nonempty parts”，输入为一个完整数字串，输出为单次切割的结果。整个操作仅有一次分割动作，没有状态转移和轮流决策的天然结构。规则 required_seed_properties 明确要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，此处不满足。helper 也要求“行动必须来自原题已有操作或选择”，而原题除了一次性切割外无其他操作。",
+        "feedback": "硬造双方轮流选择切割点或逐位争夺将脱离原题核心约束，变成纯背景故事变换，违反红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_object_family",
+      "selection_reason": "原题的目标是构造单个字符串分割点，不存在多个路径、区间或子树等局部对象族，无法自然形成覆盖或割关系。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "required_seed_properties 要求“多个局部对象之间可以自然形成覆盖或割关系”，但原题 core_constraints 仅定义单个分割点的左右整除条件，objective 为“构造一个…分割方案”，不涉及任何对象族或组合。",
+        "feedback": "建议选择具有明显局部结构族（如多条路径、多个区间、多棵子树）的种子题，以便扩展为覆盖/割/支配问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "种子题是构造题（输出任意合法分割或NO），原题没有计数目标，不满足规则要求的“明确有限的计数对象”和“自然权重、等级或统计量”，强行应用将导致无中生有的权重定义。",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type = 'construction'，描述为“构造一个满足左右两部分分别被给定整数整除的字符串分割方案”，没有计数要求；core_constraints 均为分割存在性条件，不涉及计数；规则 eligibility.required_seed_properties 明确要求原题有明确计数对象和自然统计量，本例均不满足。",
+        "feedback": "该规则仅适用于已有计数对象的题目，当前种子题属于构造性问题，无法提供权重或分布的自然载体，建议更换种子或调整规则目标域。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "seed_already_outputs_full_solution",
+      "message": "原题本身已经要求输出完整的分割方案，且标准解法直接构造输出，不满足规则禁止的种子属性，无法升级为规范解。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标为构造型，要求输出'YES'后跟左右两部分，已经构成完整方案。种子题schema中objective描述为'构造一个满足条件的字符串分割方案'，输出包含具体左右部分。规则forbidden明确列出'原题本来就要求输出完整方案'。",
+        "feedback": "此种子题已输出方案，规范解升级无实质变化，不符合规则要求的'输出要求必须真正变了'。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "failure_not_localizable",
+      "message": "种子题的无解原因无法稳定压缩为可局部检查的小型证据。原题无解意味着不存在任何切割点同时满足三个条件，若输出所有候选点的不满足证据则规模可达O(n)，且验证仍需重算前后缀模值，违背局部检查要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.15,
+        "risk_tags": [
+          "semantic_mismatch",
+          "failure_not_localizable"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中约束要求left能被a整除、right能被b整除、无前导零，原解法通过扫描所有候选点判定无解。规则要求产出‘局部冲突证据’，但种子题大规模输入下不可能给出既简洁又可独立验证的证据对象，失败分支只能输出NO字符串，无法结构化。",
+        "feedback": "建议选择无解原因可被小证书捕获的题目，例如存在可证伪的不变量或组合障碍，或允许证据为小规模示例反例。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "种子题的解空间虽然有限且去重规则可定义，但将构造题改为计数题时，核心状态结构（扫描维护前缀/后缀模）将保持不变，计数仅作为扫描结果的累加，这违反了 state_factorization 助手的红线“不能保持原状态结构不动”和“不能把计数只当成结果后处理”。改编后的题目未能带来明显的算法新责任，本质上只是答案形式的替换。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.25,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题的原解空间为所有合法切割位置集合，有限且可由位置索引唯一区分（constraint: cut_nonempty, concatenation_identity），满足有限性和去重清晰的条件。但原题 solution 使用前缀模和后缀模扫描，一旦找到合法位置即输出；计数版本只需累加所有合法位置，状态结构和遍历逻辑与原题几乎一致（src: standard_solution_code 中的 pfx 列表和逆向扫描）。这直接触发了 state_factorization 的红线：“不能保持原状态结构不动”以及“不能把计数只当成结果后处理”。",
+        "feedback": "种子题具有稳定的有限解空间和明确的等价关系，但计数化需要更深入的状态重组，而不只是将输出结果从构造改为计数。建议寻找解空间天然需要动态规划或需拆分汇总的问题作为种子，以充分发挥状态因子化助手的作用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是确定性的字符串分割存在性问题，不包含顺序不确定、资源波动或局部选择差异；任何扰动都必须凭空捏造，不符合规则所要求的原生扰动源。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints 仅包含静态的整除与拼接约束，objective 为构造任意一个合法分割，invariant 为前缀与后缀模运算的确定型维护；original_problem_references 的描述未提及对抗性、不定顺序或波动资源。",
+        "feedback": "该种子题没有可放大的原生扰动来源，强行添加最坏情况保底会脱离原题语义，建议更换具有内在不确定性（如不同操作顺序、资源动态变化）的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold_parameter",
+      "message": "原题可行性仅依赖于离散分割点，无单调阈值参数，无法自然扩展为阈值优化题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 中核心约束为字符串分割整除，输入仅包含固定公钥与 a,b，无容量、大小等可连续变化且具单调性的参数；required_seed_properties 要求 '可行性随某个参数具有清晰的单调性或分层结构'，本题不满足。",
+        "feedback": "避免机械二分或强行引入阈值，应寻找有自然单调资源的问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_metric",
+      "message": "原题是存在性构造问题，目标仅为输出任意满足整除与无前导零约束的分割，不存在量化优化目标，无法抽取自然的第二评价指标，更无法形成真实冲突的权衡关系。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 construction，描述为构造一个分割方案，而非最大化/最小化；原题描述仅要求找到任意合法切割；核心约束均为布尔条件（整除、无前导零），无连续可比较的度量；不存在可自然衍生第二指标的基础。",
+        "feedback": "该规则要求原题目标附近已存在可冲突的第二指标，但本题仅要求存在性答案，强行引入如‘最小化左部’一类指标将退化为原解的附属统计，违反 ayudante 红线。建议仅在优化类种子题上使用此变换。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_target_exists_and_natural_edit_operations",
+      "message": "原题输出（分割点及左右部分）可直接转化为反向目标（例如指定必须得到的左部分和右部分字符串），修改操作（改变公钥字符串中的单个数字）来自原题对象的自然结构，最小修改代价与整除约束紧密相关，能够产生设计难度，符合反向设计对目标驱动、操作空间和最小性证明的全部要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "Seed schema显示原题目标是构造一个满足整除条件的切割（objective: construction, target: partition），输出即为具体的左右部分（output中存在YES/NO及两个字符串）；核心约束围绕整除和拼接（divisible_left, divisible_right, concatenation_identity）；输入数字串长度可达1e6，值域固定。这些为绑定反向目标（target_result_binding）和定义修改操作（edit_operation_contract）提供了充要条件，且helpers的redlines均未违反。",
+        "feedback": "建议在下一阶段明确目标结果的具体形式（如固定左右部分的值或指定切割点），并严格定义修改操作的范围（如是否允许改变长度），避免反向目标退化为简单存在性判断。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题左右部分共享同一个切割点，须同时满足两个整除条件，已经是全局耦合问题，不存在可独立处理的局部单元，无法应用此规则。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题约束包括 concatenation_identity 直接绑定左右部分，切割点同时决定两个部分的合法性；标准解法使用前缀和后缀模运算，遍历全局找到满足两个条件的唯一交点，不存在先独立求解再拼接的步骤；schema 中 invariant 的 prefix_modulo_invariant 和 suffix_modulo_invariant 表明整个状态就是为全局耦合而设计的。",
+        "feedback": "规则要求种子题具有可分解的局部单元，而原题结构天然耦合，强行引入共享资源只会变成无关背景硬加，违反红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_turn",
+      "message": "原题是单次切割构造，不存在双方轮流选择、拿取或移动的自然操作，无法在不破坏核心规律的情况下转化为对抗博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为“Polycarpus needs to find such a way to cut the public key into two nonempty parts”，输入为一个完整数字串，输出为单次切割的结果。整个操作仅有一次分割动作，没有状态转移和轮流决策的天然结构。规则 required_seed_properties 明确要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，此处不满足。helper 也要求“行动必须来自原题已有操作或选择”，而原题除了一次性切割外无其他操作。",
+        "feedback": "硬造双方轮流选择切割点或逐位争夺将脱离原题核心约束，变成纯背景故事变换，违反红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "missing_object_family",
+      "message": "原题的目标是构造单个字符串分割点，不存在多个路径、区间或子树等局部对象族，无法自然形成覆盖或割关系。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "required_seed_properties 要求“多个局部对象之间可以自然形成覆盖或割关系”，但原题 core_constraints 仅定义单个分割点的左右整除条件，objective 为“构造一个…分割方案”，不涉及任何对象族或组合。",
+        "feedback": "建议选择具有明显局部结构族（如多条路径、多个区间、多棵子树）的种子题，以便扩展为覆盖/割/支配问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "种子题是构造题（输出任意合法分割或NO），原题没有计数目标，不满足规则要求的“明确有限的计数对象”和“自然权重、等级或统计量”，强行应用将导致无中生有的权重定义。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 objective.type = 'construction'，描述为“构造一个满足左右两部分分别被给定整数整除的字符串分割方案”，没有计数要求；core_constraints 均为分割存在性条件，不涉及计数；规则 eligibility.required_seed_properties 明确要求原题有明确计数对象和自然统计量，本例均不满足。",
+        "feedback": "该规则仅适用于已有计数对象的题目，当前种子题属于构造性问题，无法提供权重或分布的自然载体，建议更换种子或调整规则目标域。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.2863,
+          "axis_scores": {
+            "I": 0.0,
+            "C": 0.3349,
+            "O": 0.4232,
+            "V": 0.4003
+          },
+          "components": {
+            "input_tree_distance": 0.0,
+            "constraint_match_distance": 0.3349,
+            "objective_type_distance": 0.5298,
+            "objective_text_distance": 0.2634,
+            "invariant_match_distance": 0.4003
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "contract_retry_count": 2,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "distance_gate_failed",
+          "reason": "规划结果未达到硬门槛，预测距离=0.2863，落地轴=C, O, V。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "distance_gate_failed",
+              "message": "规划结果未达到差异度或变化轴硬门槛。",
+              "details": {
+                "distance": {
+                  "distance_version": "v2",
+                  "backend": "embedding",
+                  "total": 0.2863,
+                  "axis_scores": {
+                    "I": 0.0,
+                    "C": 0.3349,
+                    "O": 0.4232,
+                    "V": 0.4003
+                  },
+                  "components": {
+                    "input_tree_distance": 0.0,
+                    "constraint_match_distance": 0.3349,
+                    "objective_type_distance": 0.5298,
+                    "objective_text_distance": 0.2634,
+                    "invariant_match_distance": 0.4003
+                  }
+                },
+                "changed_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "I",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 1 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_3509a9b0fc30_home_organization_20260609_220106",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

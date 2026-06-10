@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 import unittest
 
 import path_setup  # noqa: F401
@@ -15,14 +17,23 @@ class FakeLLMClient:
 
     def __init__(self) -> None:
         self.calls: list[dict[str, str]] = []
+        self._calls_lock = threading.Lock()
+
+    def _record_call(self, *, task_name: str, system_prompt: str, user_prompt: str) -> None:
+        with self._calls_lock:
+            self.calls.append(
+                {
+                    "task_name": task_name,
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                }
+            )
 
     def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
-        self.calls.append(
-            {
-                "task_name": task_name,
-                "system_prompt": system_prompt,
-                "user_prompt": user_prompt,
-            }
+        self._record_call(
+            task_name=task_name,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
         )
         if task_name == "standard_solution":
             return json.dumps(
@@ -111,6 +122,56 @@ class GenerationPipelineTests(unittest.TestCase):
             },
         }
 
+    def test_initial_generation_runs_independent_prompts_concurrently(self) -> None:
+        class Client(FakeLLMClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self._active_lock = threading.Lock()
+                self.active_initial_calls = 0
+                self.max_active_initial_calls = 0
+
+            def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
+                if self._is_initial_parallel_task(task_name):
+                    with self._active_lock:
+                        self.active_initial_calls += 1
+                        self.max_active_initial_calls = max(
+                            self.max_active_initial_calls,
+                            self.active_initial_calls,
+                        )
+                    try:
+                        time.sleep(0.05)
+                        return super().complete_json(
+                            task_name=task_name,
+                            system_prompt=system_prompt,
+                            user_prompt=user_prompt,
+                        )
+                    finally:
+                        with self._active_lock:
+                            self.active_initial_calls -= 1
+                return super().complete_json(
+                    task_name=task_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+
+            @staticmethod
+            def _is_initial_parallel_task(task_name: str) -> bool:
+                return task_name in {
+                    "standard_solution",
+                    "bruteforce_solution",
+                    "random_test_input",
+                    "adversarial_test_input",
+                    "small_challenge_test_input",
+                    "checker",
+                    "strategy_analysis",
+                } or task_name.startswith("fixed_wrong_solution:")
+
+        client = Client()
+
+        generate_all_artifacts(self.artifact, client=client)
+
+        self.assertGreaterEqual(client.max_active_initial_calls, 2)
+
     def test_generate_all_artifacts_calls_every_prompt_and_returns_public_shape(self) -> None:
         client = FakeLLMClient()
 
@@ -152,12 +213,10 @@ class GenerationPipelineTests(unittest.TestCase):
                 if task_name == "standard_solution":
                     self.standard_calls += 1
                     if self.standard_calls == 1:
-                        self.calls.append(
-                            {
-                                "task_name": task_name,
-                                "system_prompt": system_prompt,
-                                "user_prompt": user_prompt,
-                            }
+                        self._record_call(
+                            task_name=task_name,
+                            system_prompt=system_prompt,
+                            user_prompt=user_prompt,
                         )
                         return "{not json"
                 return super().complete_json(
@@ -185,12 +244,10 @@ class GenerationPipelineTests(unittest.TestCase):
             def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
                 if task_name == "strategy_analysis":
                     self.strategy_calls += 1
-                    self.calls.append(
-                        {
-                            "task_name": task_name,
-                            "system_prompt": system_prompt,
-                            "user_prompt": user_prompt,
-                        }
+                    self._record_call(
+                        task_name=task_name,
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
                     )
                     if self.strategy_calls == 1:
                         return json.dumps(
@@ -237,14 +294,12 @@ class GenerationPipelineTests(unittest.TestCase):
     def test_llm_contract_retry_fails_fast_after_two_extra_rounds(self) -> None:
         class Client(FakeLLMClient):
             def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
-                self.calls.append(
-                    {
-                        "task_name": task_name,
-                        "system_prompt": system_prompt,
-                        "user_prompt": user_prompt,
-                    }
-                )
                 if task_name == "standard_solution":
+                    self._record_call(
+                        task_name=task_name,
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                    )
                     return "{not json"
                 return super().complete_json(
                     task_name=task_name,
@@ -262,4 +317,3 @@ class GenerationPipelineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

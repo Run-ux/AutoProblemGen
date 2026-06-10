@@ -1,0 +1,96 @@
+{
+  "problem_id": "taco_geeksforgeeks_11e7b4c95fa2",
+  "source": "geeksforgeeks",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "size",
+        "role_description": "Number of elements in the array",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "array",
+        "role_description": "Sequence of integer elements",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": -10000,
+          "max": 10000
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "valid_pair_definition",
+        "description": "A pair of indices {i, j} with i != j is considered valid if a[i] + a[j] > 0. The pair is unordered, meaning {i, j} and {j, i} are the same pair and counted only once.",
+        "formal": "For i ≠ j, pair {i, j} is valid if and only if a[i] + a[j] > 0; each unordered pair is counted exactly once.",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "counting",
+    "description": "统计数组中所有满足两数之和大于0的无序对(i, j)的数量",
+    "target": "count",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "sorted_sequence",
+        "description": "The array is sorted in non-decreasing order, which stabilizes the comparison behavior and allows bulk counting of pairs.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "monotonic_index_progression",
+        "description": "The two indices i and j move monotonically towards each other (i only increases, j only decreases), ensuring each element is considered as endpoint exactly once and the search space shrinks correctly.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "threshold_transitivity",
+        "description": "When the sum of the smallest and largest remaining elements exceeds zero, the sorted order guarantees that all pairs formed by the largest element with any element from i to j-1 also exceed zero, enabling O(1) addition of j-i valid pairs.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_geeksforgeeks_11e7b4c95fa2",
+    "title": "1",
+    "description": "Given an array of size N, find the number of distinct pairs {i, j} (i != j) in the array such that the sum of a[i] and a[j] is greater than 0.\nExample 1:\nInput: N = 3, a[] = {3, -2, 1}\nOutput: 2\nExplanation: {3, -2}, {3, 1} are two \npossible pairs.\nExample 2:\nInput: N = 4, a[] = {-1, -1, -1, 0}\nOutput: 0\nExplanation: There are no possible pairs.\nYour Task:  \nYou don't need to read input or print anything. Complete the function ValidPair() which takes the array a[ ] and size of array N as input parameters and returns the count of such pairs.\nExpected Time Complexity: O(N * Log(N))\nExpected Auxiliary Space: O(1)\nConstraints:\n1 ≤ N ≤ 10^{5} \n-10^{4}  ≤ a[i] ≤ 10^{4}",
+    "input": "",
+    "output": "",
+    "constraints": "1 ≤ N ≤ 10^{5} \n-10^{4}  ≤ a[i] ≤ 10^{4}\n\nexpected time complexity: O(N * Log(N))\nexpected auxiliary space: O(1)",
+    "source": "geeksforgeeks",
+    "standard_solution_code": "class Solution:\n\n\tdef ValidPair(self, a, n):\n\t\ta.sort()\n\t\tcount = 0\n\t\ti = 0\n\t\tj = n - 1\n\t\twhile i < j:\n\t\t\tif a[i] + a[j] > 0:\n\t\t\t\tcount += j - i\n\t\t\t\tj -= 1\n\t\t\telse:\n\t\t\t\ti += 1\n\t\treturn count"
+  }
+}

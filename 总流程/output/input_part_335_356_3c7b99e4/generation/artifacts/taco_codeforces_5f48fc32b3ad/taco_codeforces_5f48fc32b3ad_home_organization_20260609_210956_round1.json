@@ -1,0 +1,914 @@
+{
+  "problem_id": "inverse_noise_min_edit_taco",
+  "source_problem_ids": [
+    "taco_codeforces_5f48fc32b3ad"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_5f48fc32b3ad",
+      "codeforces",
+      "Pushok the dog has been chasing Imp for a few hours already. $48$ Fortunately, Imp knows that Pushok is afraid of a robot vacuum cleaner. While moving, the robot generates a string t consisting of letters 's' and 'h',...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "输入结构从纯序列变为包含目标噪声K的对象；核心约束从允许任意排列变为固定顺序并增加目标噪声与编辑操作；优化目标从最大化噪声变为最小化编辑次数；引入新不变量保证最小性。输入轴变化是容纳目标噪声实体的自然结果。",
+    "summary": "固定字符串顺序，通过修改字符（翻转）使总'sh'子序列数量为目标值，求最少修改次数。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4001,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4001,
+    "axis_scores": {
+      "I": 0.3489,
+      "C": 0.4637,
+      "O": 0.2127,
+      "V": 0.6028
+    },
+    "components": {
+      "input_tree_distance": 0.3489,
+      "constraint_match_distance": 0.4637,
+      "objective_type_distance": 0.08,
+      "objective_text_distance": 0.4118,
+      "invariant_match_distance": 0.6028
+    }
+  },
+  "changed_axes_realized": [
+    "I",
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_value",
+    "description": "Minimize the total number of character flips performed.",
+    "target": "minimum_flips",
+    "requires_solution": true
+  },
+  "rule_selection_reason": "existence_to_counting 将最大化问题改为计数达到最大值的排列数时，计数责任仅需计算同密度组内全排列乘积，难度反而下降，且无法活化 state_factorization 等助手，属浅改。deterministic_process_to_game_outcome 虽可将排列选择转化为轮流博弈，但原题缺乏自然的对抗过程，强行游戏化可能引入指数级博弈树，在 n=10^5 下难以维持多项式可解性，落地风险高。相比之下，forward_solution_to_inverse_design 通过给定噪声目标并要求最小字符修改，在保留原排列核心规律的同时引入全新的优化维度，形成可清晰定义且可验证的反向设计题，创新度与难度均显著提升且可稳定实现，因此优先选择。；创新度判断：将原正向最大化噪声翻转为给定目标噪声的最小修改设计，迫使算法同时在字符修改（s↔h）与字符串重排两个自由度上决策，使核心义务从简单的密度排序延展为双变量最优协调，彻底脱离原题一成不变的贪心路径。；难度判断：主求解责任从应用排序公式变为证明最小修改数，需在排列空间内嵌入字符修改的代价分析，极可能要求新的贪心或 DP 结构，难度远高于原题，同时可通过限制修改范围保持计算可行性。；风险判断：主要风险在于最小修改的定义需足够清晰，且问题的组合性质可能导致暴力搜索不可行；但通过限定修改操作仅影响单个字符，并控制输入规模，可由题目设计者预设有效的多项式解法，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "inverse_noise_min_edit_taco",
+    "source": "codeforces",
+    "input_structure": {
+      "type": "object",
+      "properties": {
+        "n": {
+          "type": "integer",
+          "description": "number of strings",
+          "constraints": "1 ≤ n ≤ 10^5"
+        },
+        "K": {
+          "type": "integer",
+          "description": "target noise value",
+          "constraints": "0 ≤ K ≤ 10^10"
+        },
+        "strings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[sh]+$"
+          },
+          "description": "strings consisting only of 's' and 'h'"
+        }
+      },
+      "total_length_constraint": "sum of lengths of strings ≤ 10^5",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      }
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "character_set_restriction",
+          "description": "All strings consist only of the characters 's' and 'h'.",
+          "formal": "∀i, t_i ∈ {s, h}^+",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "non_empty_strings",
+          "description": "Every string in the sequence is non-empty.",
+          "formal": "|t_i| ≥ 1 for all i",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "fixed_concatenation_order",
+          "description": "The strings are concatenated in the given input order, forming a single string T = t_1 + t_2 + ... + t_n. No reordering is allowed.",
+          "formal": "The sequence order is fixed; concatenation follows input indices 1..n.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "target_noise",
+          "description": "The concatenated string T must have exactly K subsequences 'sh'.",
+          "formal": "Let noise(T) be the number of pairs (i,j) with i<j, T[i]='s', T[j]='h'. Then noise(T) = K.",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "allowed_edits",
+          "description": "We may perform operations of flipping a character: changing 's' to 'h' or 'h' to 's'. Each operation costs 1. We seek a sequence of edits such that after edits, the concatenation meets the target noise.",
+          "formal": "A flip on position p in T changes T[p] to the other character. Total flips minimize count.",
+          "source_sections": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_value",
+      "description": "Minimize the total number of character flips performed.",
+      "target": "minimum_flips",
+      "requires_solution": true
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "no_wasteful_flips",
+          "description": "In an optimal solution, no character is flipped more than once, and flipping direction is monotonic with respect to the needed net noise change.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Compute for each string its 'h'-density (h_count / length) and sort in non-decreasing order of density to maximize cross-pair contributions.",
+    "reusable_subroutines": "Counting number of 's' and 'h' in each string, computing inner 'sh' subsequences, and computing total noise given a sequence of strings (with fixed internal strings).",
+    "new_solver_core": "A need‑specific algorithm to find minimum flips to achieve target noise K. Likely involves dynamic programming or a greedy argument that processes the string left to right, maintaining the count of 's' seen so far and the minimum flips to achieve a certain noise value, or an efficient reduction to a min‑cut / max‑flow problem.",
+    "new_proof_obligation": "Prove that the proposed algorithm indeed yields the minimum possible number of flips. Unlike the original sorting proof which only had to show optimality among permutations, here we must handle local flips that interact through the evolving pre_s and post_h counts. The proof must establish a lower bound (e.g., via a potential function) and show the algorithm matches it.",
+    "why_direct_reuse_fails": "The original sorting algorithm depends on the ability to reorder entire strings, and it only maximizes, not achieves an arbitrary target. For a fixed order, the noise is predetermined by the original characters, and flipping characters changes pre_s counts in a non‑trivial way, so no simple sorting rule suffices."
+  },
+  "anti_shallow_rationale": "虽然保留了'sh'子序列噪声的原始定义，但放弃了排列操作，引入了字符编辑操作并固定顺序，使得算法从贪心排序完全转变为基于编辑代价的目标可达性优化。新题的核心不是极值问题，而是带约束的组合优化，且必须证明最小性，这与原题的本质求解策略截然不同，因此不是浅层换皮。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "将原题的计算结果（噪声值）绑定为新题必须达到的目标，实现方向翻转。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "在core_constraints中加入目标噪声K的约束",
+        "objective从最大化噪声变为最小化修改以达到目标噪声"
+      ],
+      "innovation_reason": "使求解从正向极值计算转为目标驱动的逆向设计，需要算法围绕目标反推可行方案。",
+      "difficulty_reason": "要求算法不仅要找到可行方案，还要在大量可能性中最小化代价，增加了优化维度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "定义字符翻转作为修改操作，将反向设计落实到具体可执行的操作空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在core_constraints中添加允许编辑操作的定义",
+        "在invariant中规定编辑操作的单调性和最小代价性质"
+      ],
+      "innovation_reason": "明确编辑操作与目标噪声的关联，使问题从单纯排序变为需要精确操作序列的设计问题。",
+      "difficulty_reason": "证明操作序列的最优性需要分析flip操作对噪声的非独立影响，不能简单贪心。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小编辑次数，确保证明答案最优性的义务。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective明确为最小化flips",
+        "invariant需要支持最优性证明（如flip次数下界）"
+      ],
+      "innovation_reason": "将答案从单一值提升为带证明的最小值，使题目要求更强的正确性论证。",
+      "difficulty_reason": "算法必须提供下界保证，或通过DP最优子结构证明，增加了理论复杂度。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题最优解的产生依赖于按密度排序，排序后的顺序天然就是一个方案；要求输出规范解（如字典序最小）仅需在排序比较器中添加次要键，主要解法（排序与计数）不发生本质变化，属于表面修改，不满足规范解输出需要显著影响主要解法的要求。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题标准解法：读取字符串，计算每个字符串的'h'密度（count('h')/len）并排序，然后连接计算'sh'数。排序步骤已隐含排列方案，直接输出该排列即为一个可行解。规范解要求（如字典序最小）仅对排序比较器增加二级键，算法框架完全不变。根据validation_contract硬性检查“规范要求要影响主要解法”，此变化不满足。",
+        "feedback": "该种子题不适合直接升级为规范解输出题，因为原解方案过于直接。可考虑在增加规范性要求的同时引入新的局部约束，如要求输出方案同时最小化某种代价，迫使重新设计状态或使用更复杂的算法。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_lacks_failure_semantics",
+      "selection_reason": "The seed problem always admits a feasible permutation achieving the maximum noise, thus there is no 'impossible' case. A conflict certificate cannot be productively embedded in a problem where every instance has a valid optimal solution, as the failure branch would never trigger, and the core constraints lack the structural incompatibilities needed for a local, checkable obstruction.",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "Seed problem description: 'The noise of the resulting string equals the noise of this concatenation. Help Imp to find the maximum noise he can achieve by changing the order of the strings.' There is no stated target threshold or infeasibility condition; the optimal concatenation always exists and is computable by density sorting, as shown in the standard solution. The core constraints (strings of 's' and 'h', mandatory inclusion of all strings in some order) always allow a permutation, so no instance is impossible. The required eligibility property '做不到的原因可以用局部证据表示' is absent.",
+        "feedback": "Choose a seed problem with inherent infeasibility (e.g., decision versions of NP-hard problems requiring a certificate of infeasibility) to enable a meaningful dual output scheme."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.04,
+      "reason_code": "countable_solution_space_with_clear_dedup",
+      "selection_reason": "种子题的最优排列解空间有限（n! 种，n ≤ 1e5），可通过 density 分组实现可拆分汇总，去重规则可基于最终字符串内容明确定义，满足计数化改造要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子 schema 显示目标为最大化 noise，解空间为所有排列的有限集；核心约束 `mandatory_inclusion_all` 保证解空间离散有限；不变量 `density_ordering` 揭示最优结构可按 density 分组拆分；规则 `existence_to_counting` 要求去重明确、有限性说明、可汇总，该种子均满足。",
+        "feedback": "建议明确定义去重标准（例如按最终字符串内容去重），并指定计数单元为 density 分组内部的排列数，取模方式需在后续规划中指定。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题中顺序完全由解题者选择，是决策变量而非不可控扰动；不存在对手或环境不确定性，无法自然构建需要保底优化的最坏情况责任，强行引入会违反禁止硬造对手的红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述（description_summary）明确给出'he can arbitrary change their order'，说明顺序是自由优化维度；seed_schema的core_constraints中mandatory_inclusion_all仅要求包含所有字符串一次，顺序可选，没有暗示任何顺序干扰或不可控因素。",
+        "feedback": "原题语义内部不存在可被放大的原生扰动来源，顺序不确定仅构成解空间而非扰动集。若改为求最坏顺序下的噪声值，则只是极值变换，未形成真正的保底优化，更无法满足helpers中'扰动模型必须回到原题语义'和'不能只凭背景硬造对手'的约束。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "forbidden_seed_properties",
+      "selection_reason": "种子题是最大化噪声的优化问题，不存在可行性判定或单调性结构，无法应用从可行性到阈值优化的变换。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'maximize_value'，描述为最大化 'sh' 子序列数，无任何可行性判定；core_constraints 定义字符集、非空、全包含，未涉及阈值或可行区域；原题解法基于密度排序，不包含临界参数。规则 required_seed_properties 要求原题可行性随参数具有单调性或分层结构，本题不符。",
+        "feedback": "该规则要求种子题为可行性或判定问题，但此题是直接最大化，缺失自然临界参数和可行/不可行边界，强行改造只会变成语义重复的包装。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_second_objective",
+      "selection_reason": "The seed problem maximizes a single metric (number of 'sh' subsequences) with no natural conflicting secondary metric arising from the problem domain. The only manipulable decision is the permutation order, and the total set of strings is fixed; no tradeoff like risk, cost, or fairness is present. Adding a second objective would be artificial and not grounded in the original problem's semantics.",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "Original problem description: 'maximize noise ... number of occurrences of string \"sh\" as a subsequence'. Constraints: strings consist of 's' and 'h', non-empty, must all be used exactly once. There is no mention of any other metric. The solution sorts by density ('h' count / length), which is a direct consequence of the single objective. No natural tradeoff exists.",
+        "feedback": "The rule requires a 'natural and conflicting second evaluation metric'. The seed problem lacks any such metric, as the sole focus is counting 'sh' subsequences. Attempting to introduce a budget or risk metric would be arbitrary and likely degrade into trivial post-processing."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "eligible_design_target_exists",
+      "selection_reason": "原题输出为最大‘sh’子序列数，是一个明确的数值目标，将其反转作为反向目标要求设计或修改输入以达成该目标，具有自然的修改操作（修改字符）和设计自由度（调整字符串或字符），且不违反任何红线。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题objective描述“Maximize the number of subsequences 'sh'”，输出示例为整数18和1，可作为反向目标绑定。core_constraints中character_set_restriction允许的字符集为{s,h}，修改字符操作属于该对象自然结构。edit_operation_contract红牌未触发，因为修改直接改变影响‘sh’计数的元素。minimality_or_certificate_lock可要求最小修改次数，难度提升。全局红线均未违反。",
+        "feedback": "该种子题完全符合反向设计准入条件，建议进入后续规划。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_not_independent_locally",
+      "selection_reason": "原题要求通过全局排序最大化总体子序列数量，每个字符串的贡献相互依赖，不存在可独立求解的局部单元，与规则‘从局部独立求解改成全局耦合求解’的前提相悖。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最大化由所有字符串连接而成的‘sh’子序列总数，核心约束要求必须包含所有字符串一次（mandatory_inclusion_all），且不变式为密度排序，这表明求解过程已内置跨字符串的全局耦合；规则要求原题存在可分解的局部单元（required_seed_properties第一条），而此处每个字符串不能单独决定其最终贡献。",
+        "feedback": "建议选择存在真正独立分量（如多个独立选点、独立子任务）的种子题，以便应用共享资源或全局守恒产生有意义的结构变化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": true,
+      "score": 0.72,
+      "reason_code": "transformable_with_risk",
+      "selection_reason": "原题排列字符串的操作可视为依次选择下一个，能自然分解为双方轮流选择，且目标可调整为博弈胜负，但对抗语义并非原题固有，新颖性可能不足。",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "原题允许任意改变字符串顺序（描述中“arbitrary change their order”），且输入是一个字符串序列，核心约束要求最终连接串包含所有字符串。将排序过程分解为轮流从剩余集合中选择下一个字符串是原操作空间的一个直接扩展。规则要求行动来自原题已有操作，这一点满足。",
+        "feedback": "需注意原题规模较大（n可达1e5），博弈状态空间可能爆炸，需在规划阶段探索是否存在简洁的博弈不变量或简化策略；同时应确保博弈目标与胜负定义清晰，避免沦为原单人最优解的简单对抗化。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题求解的是给定字符串序列的最佳排列以最大化全局子序列计数，核心不涉及路径、区间或子树的局部性质，无法自然形成局部对象族构成覆盖或割关系，不符合规则要求的种子结构。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 要求核心对象具有路径、区间、子树等局部结构，且对象间可形成覆盖/割关系；原题 schema 核心对象为字符串序列，约束为字符集和拼接使用，无任何局部结构（如路径、区间）的定义，解法的 density ordering 为全局性质，不满足该要求。",
+        "feedback": "建议选择具有明确路径、区间或子树结构，且存在多个可组合对象族的题目作为种子，例如树上的路径覆盖或区间调度问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是最大化给定字符串排列下'sh'子序列数量的组合优化问题，不是普通计数题，没有明确有限的计数对象，因此无法定义自然权重或统计量。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'maximize_value'，描述为'Maximize the number of subsequences 'sh''，输入为字符串序列，输出为单个最大噪声整数。schema中core_constraints涉及字符串包含和排列，但不存在需要统计的不同方案集或计数对象。",
+        "feedback": "该种子题不适合计数类变化，建议更换为统计合法方案个数或计数对象的题目再应用此规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题最优解的产生依赖于按密度排序，排序后的顺序天然就是一个方案；要求输出规范解（如字典序最小）仅需在排序比较器中添加次要键，主要解法（排序与计数）不发生本质变化，属于表面修改，不满足规范解输出需要显著影响主要解法的要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题标准解法：读取字符串，计算每个字符串的'h'密度（count('h')/len）并排序，然后连接计算'sh'数。排序步骤已隐含排列方案，直接输出该排列即为一个可行解。规范解要求（如字典序最小）仅对排序比较器增加二级键，算法框架完全不变。根据validation_contract硬性检查“规范要求要影响主要解法”，此变化不满足。",
+        "feedback": "该种子题不适合直接升级为规范解输出题，因为原解方案过于直接。可考虑在增加规范性要求的同时引入新的局部约束，如要求输出方案同时最小化某种代价，迫使重新设计状态或使用更复杂的算法。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_failure_semantics",
+      "message": "The seed problem always admits a feasible permutation achieving the maximum noise, thus there is no 'impossible' case. A conflict certificate cannot be productively embedded in a problem where every instance has a valid optimal solution, as the failure branch would never trigger, and the core constraints lack the structural incompatibilities needed for a local, checkable obstruction.",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "Seed problem description: 'The noise of the resulting string equals the noise of this concatenation. Help Imp to find the maximum noise he can achieve by changing the order of the strings.' There is no stated target threshold or infeasibility condition; the optimal concatenation always exists and is computable by density sorting, as shown in the standard solution. The core constraints (strings of 's' and 'h', mandatory inclusion of all strings in some order) always allow a permutation, so no instance is impossible. The required eligibility property '做不到的原因可以用局部证据表示' is absent.",
+        "feedback": "Choose a seed problem with inherent infeasibility (e.g., decision versions of NP-hard problems requiring a certificate of infeasibility) to enable a meaningful dual output scheme."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "countable_solution_space_with_clear_dedup",
+      "message": "种子题的最优排列解空间有限（n! 种，n ≤ 1e5），可通过 density 分组实现可拆分汇总，去重规则可基于最终字符串内容明确定义，满足计数化改造要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.04,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子 schema 显示目标为最大化 noise，解空间为所有排列的有限集；核心约束 `mandatory_inclusion_all` 保证解空间离散有限；不变量 `density_ordering` 揭示最优结构可按 density 分组拆分；规则 `existence_to_counting` 要求去重明确、有限性说明、可汇总，该种子均满足。",
+        "feedback": "建议明确定义去重标准（例如按最终字符串内容去重），并指定计数单元为 density 分组内部的排列数，取模方式需在后续规划中指定。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题中顺序完全由解题者选择，是决策变量而非不可控扰动；不存在对手或环境不确定性，无法自然构建需要保底优化的最坏情况责任，强行引入会违反禁止硬造对手的红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述（description_summary）明确给出'he can arbitrary change their order'，说明顺序是自由优化维度；seed_schema的core_constraints中mandatory_inclusion_all仅要求包含所有字符串一次，顺序可选，没有暗示任何顺序干扰或不可控因素。",
+        "feedback": "原题语义内部不存在可被放大的原生扰动来源，顺序不确定仅构成解空间而非扰动集。若改为求最坏顺序下的噪声值，则只是极值变换，未形成真正的保底优化，更无法满足helpers中'扰动模型必须回到原题语义'和'不能只凭背景硬造对手'的约束。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_properties",
+      "message": "种子题是最大化噪声的优化问题，不存在可行性判定或单调性结构，无法应用从可行性到阈值优化的变换。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective.type 为 'maximize_value'，描述为最大化 'sh' 子序列数，无任何可行性判定；core_constraints 定义字符集、非空、全包含，未涉及阈值或可行区域；原题解法基于密度排序，不包含临界参数。规则 required_seed_properties 要求原题可行性随参数具有单调性或分层结构，本题不符。",
+        "feedback": "该规则要求种子题为可行性或判定问题，但此题是直接最大化，缺失自然临界参数和可行/不可行边界，强行改造只会变成语义重复的包装。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_objective",
+      "message": "The seed problem maximizes a single metric (number of 'sh' subsequences) with no natural conflicting secondary metric arising from the problem domain. The only manipulable decision is the permutation order, and the total set of strings is fixed; no tradeoff like risk, cost, or fairness is present. Adding a second objective would be artificial and not grounded in the original problem's semantics.",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "Original problem description: 'maximize noise ... number of occurrences of string \"sh\" as a subsequence'. Constraints: strings consist of 's' and 'h', non-empty, must all be used exactly once. There is no mention of any other metric. The solution sorts by density ('h' count / length), which is a direct consequence of the single objective. No natural tradeoff exists.",
+        "feedback": "The rule requires a 'natural and conflicting second evaluation metric'. The seed problem lacks any such metric, as the sole focus is counting 'sh' subsequences. Attempting to introduce a budget or risk metric would be arbitrary and likely degrade into trivial post-processing."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible_design_target_exists",
+      "message": "原题输出为最大‘sh’子序列数，是一个明确的数值目标，将其反转作为反向目标要求设计或修改输入以达成该目标，具有自然的修改操作（修改字符）和设计自由度（调整字符串或字符），且不违反任何红线。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题objective描述“Maximize the number of subsequences 'sh'”，输出示例为整数18和1，可作为反向目标绑定。core_constraints中character_set_restriction允许的字符集为{s,h}，修改字符操作属于该对象自然结构。edit_operation_contract红牌未触发，因为修改直接改变影响‘sh’计数的元素。minimality_or_certificate_lock可要求最小修改次数，难度提升。全局红线均未违反。",
+        "feedback": "该种子题完全符合反向设计准入条件，建议进入后续规划。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "seed_not_independent_locally",
+      "message": "原题要求通过全局排序最大化总体子序列数量，每个字符串的贡献相互依赖，不存在可独立求解的局部单元，与规则‘从局部独立求解改成全局耦合求解’的前提相悖。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为最大化由所有字符串连接而成的‘sh’子序列总数，核心约束要求必须包含所有字符串一次（mandatory_inclusion_all），且不变式为密度排序，这表明求解过程已内置跨字符串的全局耦合；规则要求原题存在可分解的局部单元（required_seed_properties第一条），而此处每个字符串不能单独决定其最终贡献。",
+        "feedback": "建议选择存在真正独立分量（如多个独立选点、独立子任务）的种子题，以便应用共享资源或全局守恒产生有意义的结构变化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "pass",
+      "reason_code": "transformable_with_risk",
+      "message": "原题排列字符串的操作可视为依次选择下一个，能自然分解为双方轮流选择，且目标可调整为博弈胜负，但对抗语义并非原题固有，新颖性可能不足。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.72,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "eligible",
+        "evidence": "原题允许任意改变字符串顺序（描述中“arbitrary change their order”），且输入是一个字符串序列，核心约束要求最终连接串包含所有字符串。将排序过程分解为轮流从剩余集合中选择下一个字符串是原操作空间的一个直接扩展。规则要求行动来自原题已有操作，这一点满足。",
+        "feedback": "需注意原题规模较大（n可达1e5），博弈状态空间可能爆炸，需在规划阶段探索是否存在简洁的博弈不变量或简化策略；同时应确保博弈目标与胜负定义清晰，避免沦为原单人最优解的简单对抗化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题求解的是给定字符串序列的最佳排列以最大化全局子序列计数，核心不涉及路径、区间或子树的局部性质，无法自然形成局部对象族构成覆盖或割关系，不符合规则要求的种子结构。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则 required_seed_properties 要求核心对象具有路径、区间、子树等局部结构，且对象间可形成覆盖/割关系；原题 schema 核心对象为字符串序列，约束为字符集和拼接使用，无任何局部结构（如路径、区间）的定义，解法的 density ordering 为全局性质，不满足该要求。",
+        "feedback": "建议选择具有明确路径、区间或子树结构，且存在多个可组合对象族的题目作为种子，例如树上的路径覆盖或区间调度问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是最大化给定字符串排列下'sh'子序列数量的组合优化问题，不是普通计数题，没有明确有限的计数对象，因此无法定义自然权重或统计量。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为'maximize_value'，描述为'Maximize the number of subsequences 'sh''，输入为字符串序列，输出为单个最大噪声整数。schema中core_constraints涉及字符串包含和排列，但不存在需要统计的不同方案集或计数对象。",
+        "feedback": "该种子题不适合计数类变化，建议更换为统计合法方案个数或计数对象的题目再应用此规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "RULE_CONTRACT_FULFILLED",
+      "message": "规划成功将正向最大化噪声题翻转为固定顺序下通过最小字符翻转达到给定目标噪声的逆设计题，三个 helpers 全部兑现目标轴、落点与红线，满足规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "1. 规则要求改变轴 [C, O, V]，规划 changed_axes 包含 [I, C, O, V]，满足必须改变的轴。2. target_result_binding: candidate_schema.core_constraints 中 target_noise 约束绑定原题噪声结果，objective 从最大化翻转为最小化以达到目标噪声，未简单问“原答案是否等于给定值”，目标与原核心规律紧密相连。3. edit_operation_contract: core_constraints 中 allowed_edits 定义字符翻转操作，源于原题字符串结构，invariant 中 no_wasteful_flips 建立操作与目标噪声的单调关系，未发明无关操作。4. minimality_or_certificate_lock: objective 明确最小化 flip 次数，invariant 设定最优解下界性质，algorithmic_delta_claim 要求证明算法获得最小翻转数，未省略最小性责任。5. validation_contract 三项 hard_checks 全部满足。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 1.02,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "I",
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "schema_insufficient",
+    "error_reason": "The new_schema lacks specification for handling infeasible target K (when it is impossible to achieve exactly K noise by flipping characters). The output format, constraints, and objective need to clarify whether to output -1 or guarantee feasibility, to avoid ambiguity.",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_5f48fc32b3ad_home_organization_20260609_210956",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

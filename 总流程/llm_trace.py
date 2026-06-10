@@ -4,6 +4,7 @@ import itertools
 import json
 import os
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -19,6 +20,7 @@ RUNTIME_CONTEXT_ENV = "AUTOPROBLEMGEN_CONTEXT_CONFIG"
 DEFAULT_TRACE_MAX_TEXT_CHARS = 20_000
 
 _COUNTER = itertools.count(1)
+_WRITE_LOCK = threading.Lock()
 
 
 def trace_enabled() -> bool:
@@ -225,9 +227,10 @@ def _write_event(event: dict[str, Any]) -> None:
     if not trace_path_text:
         return
     trace_path = Path(trace_path_text)
-    trace_path.parent.mkdir(parents=True, exist_ok=True)
-    with trace_path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
+    with _WRITE_LOCK:
+        trace_path.parent.mkdir(parents=True, exist_ok=True)
+        with trace_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
 
 
 def _emit(lines: list[str]) -> None:

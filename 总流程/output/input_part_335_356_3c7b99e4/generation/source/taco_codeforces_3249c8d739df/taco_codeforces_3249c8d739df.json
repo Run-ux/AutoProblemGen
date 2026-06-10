@@ -1,0 +1,133 @@
+{
+  "problem_id": "taco_codeforces_3249c8d739df",
+  "source": "codeforces",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "connected": true,
+      "acyclic": true,
+      "directed": false,
+      "simple": true
+    },
+    "components": [
+      {
+        "role": "config",
+        "role_description": "Two integers: number of towns and number of university pairs",
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      {
+        "role": "universities",
+        "role_description": "List of distinct vertex indices where universities are located",
+        "type": "array",
+        "length": {
+          "min": 2,
+          "max": 200000
+        },
+        "value_range": {
+          "min": 1,
+          "max": null
+        },
+        "properties": {
+          "distinct": true
+        }
+      },
+      {
+        "role": "edges",
+        "role_description": "Undirected edges defining the tree",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 199999
+        },
+        "value_range": {
+          "min": 1,
+          "max": null
+        },
+        "properties": {
+          "directed": false
+        }
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "complete_pairing",
+        "description": "The 2k universities must be partitioned into exactly k disjoint pairs, with each university belonging to exactly one pair.",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "distinct_nodes_for_universities",
+        "description": "All 2k universities are located in mutually distinct towns (i.e., no two universities share the same town).",
+        "formal": "",
+        "source_sections": [
+          "description",
+          "input"
+        ]
+      },
+      {
+        "name": "unit_edge_weight",
+        "description": "Every road has the same length equal to 1, so the distance between two universities is the number of edges on the unique tree path.",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "maximize_total_pairwise_distance",
+        "description": "The objective is to maximize the total sum of distances over the k university pairs.",
+        "formal": "",
+        "source_sections": [
+          "description",
+          "output"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "description": "maximize the total distance of k pairs of universities",
+    "target": "total_distance",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "edge_crossing_upper_bound",
+        "description": "每条边被路径经过的最大次数等于该边两侧有大学城镇数量的较小值。该上限在所有边同时可达,因此最大总距离等于所有边上该上限之和。",
+        "properties": {},
+        "evidence_source": "both"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codeforces_3249c8d739df",
+    "title": "B",
+    "description": "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. \n\nIn Treeland there are 2k universities which are located in different towns. \n\nRecently, the president signed the decree to connect universities by high-speed network.The Ministry of Education understood the decree in its own way and decided that it was enough to connect each university with another one by using a cable. Formally, the decree will be done! \n\nTo have the maximum sum in the budget, the Ministry decided to divide universities into pairs so that the total length of the required cable will be maximum. In other words, the total distance between universities in k pairs should be as large as possible. \n\nHelp the Ministry to find the maximum total distance. Of course, each university should be present in only one pair. Consider that all roads have the same length which is equal to 1. \n\n\n-----Input-----\n\nThe first line of the input contains two integers n and k (2 ≤ n ≤ 200 000, 1 ≤ k ≤ n / 2) — the number of towns in Treeland and the number of university pairs. Consider that towns are numbered from 1 to n. \n\nThe second line contains 2k distinct integers u_1, u_2, ..., u_2k (1 ≤ u_{i} ≤ n) — indices of towns in which universities are located. \n\nThe next n - 1 line contains the description of roads. Each line contains the pair of integers x_{j} and y_{j} (1 ≤ x_{j}, y_{j} ≤ n), which means that the j-th road connects towns x_{j} and y_{j}. All of them are two-way roads. You can move from any town to any other using only these roads. \n\n\n-----Output-----\n\nPrint the maximum possible sum of distances in the division of universities into k pairs.\n\n\n-----Examples-----\nInput\n7 2\n1 5 6 2\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6\n\nOutput\n6\n\nInput\n9 3\n3 2 1 6 5 9\n8 9\n3 2\n2 7\n3 4\n7 6\n4 5\n2 1\n2 8\n\nOutput\n9\n\n\n\n-----Note-----\n\nThe figure below shows one of possible division into pairs in the first test. If you connect universities number 1 and 6 (marked in red) and universities number 2 and 5 (marked in blue) by using the cable, the total distance will equal 6 which will be the maximum sum in this example. \n\n [Image]",
+    "input": "7 2\n1 5 6 2\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6\n\n9 3\n3 2 1 6 5 9\n8 9\n3 2\n2 7\n3 4\n7 6\n4 5\n2 1\n2 8",
+    "output": "6\n\n9\n\n\n\n-----Note-----\n\nThe figure below shows one of possible division into pairs in the first test. If you connect universities number 1 and 6 (marked in red) and universities number 2 and 5 (marked in blue) by using the cable, the total distance will equal 6 which will be the maximum sum in this example. \n\n [Image]",
+    "constraints": "",
+    "source": "codeforces",
+    "standard_solution_code": "def main():\n\t(n, k) = list(map(int, input().split()))\n\ts = [0] * n\n\tfor i in map(int, input().split()):\n\t\ts[i - 1] = 1\n\te = [[] for _ in range(n)]\n\tfor _ in range(n - 1):\n\t\t(x, y) = (int(s) - 1 for s in input().split())\n\t\te[x].append(y)\n\t\te[y].append(x)\n\t(q, fa) = ([0], [-1] * n)\n\tfa[0] = 0\n\tfor i in range(n):\n\t\tx = q[i]\n\t\tfor y in e[x]:\n\t\t\tif fa[y] == -1:\n\t\t\t\tfa[y] = x\n\t\t\t\tq.append(y)\n\t(dp, k2) = ([0] * n, k * 2)\n\tfor x in reversed(q):\n\t\tfor y in e[x]:\n\t\t\tif fa[y] == x:\n\t\t\t\ti = s[y]\n\t\t\t\ts[x] += i\n\t\t\t\tdp[x] += dp[y] + (k2 - i if i > k else i)\n\tprint(dp[0])\n\ndef __starting_point():\n\tmain()\n__starting_point()"
+  }
+}

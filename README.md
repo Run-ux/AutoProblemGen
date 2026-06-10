@@ -162,7 +162,7 @@ artifact 会记录 `mode`、`source_problem_ids`、`applied_rule`、`rule_select
 
 总流程会在质量门槛通过后调用 `generate_verified_artifacts`，并显式传入 generation LLM 配置与执行限制。该模块不再读取本地 `.env`。
 
-验证入口会在受限子进程中执行生成代码，并把修复后的暴力解法与 checker 写回返回结果；它不自动修改上游题面，也不承担题面歧义修订。验证阶段不再设置外层总超时，而是分别使用 LLM 调用超时/重试、本地测试输入生成、暴力解和 checker 的执行超时。终端会输出 `[verification 2/7]`、`[verification 4/7]`、`[verification 5/7]`、`[verification 6/7]` 等关键阶段，以及 LLM 修复循环的当前轮次。详细说明见 [`生成测试用例和标准解法/README.md`](生成测试用例和标准解法/README.md)。
+验证入口会在受限子进程中执行生成代码，并把修复后的标准解、暴力解法与 checker 写回返回结果；它不自动修改上游题面，也不承担题面歧义修订。验证阶段不再设置外层总超时，而是分别使用 LLM 调用超时/重试、本地测试输入生成、暴力解和 checker 的执行超时；标准解 debug 另由 `STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制最大修复轮数。终端会输出 `[verification 2/7]`、`[verification 4/7]`、`[verification 5/7]`、`[verification 6/7]` 等关键阶段，以及 LLM 修复循环的当前轮次。详细说明见 [`生成测试用例和标准解法/README.md`](生成测试用例和标准解法/README.md)。
 
 ## 环境配置
 

@@ -1,0 +1,605 @@
+{
+  "overall": {
+    "status": "revise_quality",
+    "quality_score": 46.0,
+    "divergence_score": 86.6,
+    "schema_distance": 0.5609,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 3.0,
+        "rationale": "new_schema 的核心要求（目标期望匹配、操作定义、最小化）均在题面中体现，操作定义与合法性描述一致。但 notes 给出的期望计算公式与样例中的期望计算严重矛盾，导致期望计算这一核心概念落地错误，影响任务可完成性。",
+        "evidence_refs": [
+          "generated_problem.notes",
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation",
+          "new_schema.invariant.invariants[0]"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 3.0,
+        "rationale": "题面包含了任务描述、输入输出格式、约束等必要组件，但 notes 中的期望计算公式与样例解释冲突，使关键信息不可靠，读者无法确定正确的期望定义。",
+        "evidence_refs": [
+          "generated_problem.notes",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 1.0,
+        "rationale": "notes 给出的 E[v] 公式与样例中的期望值明显冲突。例如样例2：按 notes 公式，星型树期望应为 [1,2,2]，但样例说明为 [1,3,3]；链状树期望也与公式不符。该矛盾导致题面严重不一致。",
+        "evidence_refs": [
+          "generated_problem.notes",
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 1.0,
+        "rationale": "仅有 2 个样例，且样例解释中的期望计算与题目给出的公式矛盾，样例失去参考价值，无法帮助理解任务。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 3.0,
+        "rationale": "题面文本表达清晰、结构规范，但内部存在严重不一致，会明显阻碍参赛者正确理解问题。",
+        "evidence_refs": [
+          "generated_problem.notes",
+          "generated_problem.samples"
+        ]
+      }
+    ],
+    "strengths": [
+      "主题映射自然，公交场景贴合度高",
+      "操作定义与合法性约束描述准确",
+      "输出格式清晰，最小化目标明确"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5609,
+      "axis_scores": {
+        "I": 0.0374,
+        "C": 1.0,
+        "O": 0.5292,
+        "V": 0.5963
+      },
+      "components": {
+        "input_tree_distance": 0.0374,
+        "constraint_match_distance": 1.0,
+        "objective_type_distance": 0.5546,
+        "objective_text_distance": 0.4911,
+        "invariant_match_distance": 0.5963
+      }
+    },
+    "schema_distance": 0.5609,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.9,
+    "solution_transfer_risk": 0.3,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "核心任务从正向期望计算（给定树求期望）翻转为反向结构设计（给定期望求最少修改），引入了编辑操作定义、目标匹配约束和最小性证明，语义差异显著。原题标准解（树DP计算期望）仅能提供期望递推公式，无法直接用于搜索或优化操作序列，必须重新建模，解法迁移风险低。新题背景（公交重规划）与原题（城市随机DFS）完全不同，无文本或样例复用痕迹，表面换皮风险很低。",
+    "evidence_refs": [
+      "snapshots.original_problem",
+      "snapshots.generated_problem",
+      "snapshots.new_schema",
+      "divergence.schema_distance_breakdown",
+      "hard_checks[8]",
+      "hard_checks[9]",
+      "hard_checks[17]"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.56，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "期望计算公式与样例数值不一致",
+      "detail": "notes 中给出的期望计算公式为 E[v] = E[parent(v)] + 1 + (sum_{sibling s} size(s) - size(v)) / 2，但两个样例解释中给出的期望值均不符合该公式。例如样例2中星型树按公式计算期望为 [1,2,2]，样例却写为 [1,3,3]，导致题面矛盾。",
+      "evidence_refs": [
+        "generated_problem.notes",
+        "generated_problem.samples[0].explanation",
+        "generated_problem.samples[1].explanation"
+      ],
+      "fix_hint": "核实正确的期望计算公式，统一修改 notes 中的公式或修正样例中的期望值，确保两者完全一致。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "输入格式未限定 t1 必须为 1.0",
+      "detail": "new_schema 中 target_expectations 描述明确 t1 必须为 1.0，但生成题面的 input_format 仅说 t_i 为浮点数，未在输入层面强制要求，而是通过约束说明无解情况。这可能误导选手输入非法数据。",
+      "evidence_refs": [
+        "new_schema.input_structure.additional_fields.target_expectations",
+        "generated_problem.input_format",
+        "generated_problem.constraints"
+      ],
+      "fix_hint": "可在输入格式中增加说明「保证 t1 = 1.0」或保留目前处理方式但需明确允许 t1 任意，无解时输出 -1。"
+    }
+  ],
+  "suggested_revisions": [
+    "核实正确的期望计算公式，统一修改 notes 中的公式或修正样例中的期望值，确保两者完全一致。",
+    "可在输入格式中增加说明「保证 t1 = 1.0」或保留目前处理方式但需明确允许 t1 任意，无解时输出 -1。",
+    "修正期望计算公式或重算样例中的期望值，消除内部矛盾",
+    "扩充样例数量，覆盖多操作、复杂树结构等场景",
+    "若公式保留，需提供基于该公式的正确样例解释；若公式有误，改用正确的公式（如 E[v] = E[parent] + 1 + (sum sibling size)/2）并调整样例",
+    "考虑在输入要求中明确 t1 的取值约束"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "revise_quality",
+    "generated_status": "ok",
+    "quality_score": 46.0,
+    "divergence_score": 86.6,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "期望计算公式与样例数值不一致",
+        "detail": "notes 中给出的期望计算公式为 E[v] = E[parent(v)] + 1 + (sum_{sibling s} size(s) - size(v)) / 2，但两个样例解释中给出的期望值均不符合该公式。例如样例2中星型树按公式计算期望为 [1,2,2]，样例却写为 [1,3,3]，导致题面矛盾。",
+        "evidence_refs": [
+          "generated_problem.notes",
+          "generated_problem.samples[0].explanation",
+          "generated_problem.samples[1].explanation"
+        ],
+        "fix_hint": "核实正确的期望计算公式，统一修改 notes 中的公式或修正样例中的期望值，确保两者完全一致。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "输入格式未限定 t1 必须为 1.0",
+        "detail": "new_schema 中 target_expectations 描述明确 t1 必须为 1.0，但生成题面的 input_format 仅说 t_i 为浮点数，未在输入层面强制要求，而是通过约束说明无解情况。这可能误导选手输入非法数据。",
+        "evidence_refs": [
+          "new_schema.input_structure.additional_fields.target_expectations",
+          "generated_problem.input_format",
+          "generated_problem.constraints"
+        ],
+        "fix_hint": "可在输入格式中增加说明「保证 t1 = 1.0」或保留目前处理方式但需明确允许 t1 任意，无解时输出 -1。"
+      }
+    ],
+    "suggested_revisions": [
+      "核实正确的期望计算公式，统一修改 notes 中的公式或修正样例中的期望值，确保两者完全一致。",
+      "可在输入格式中增加说明「保证 t1 = 1.0」或保留目前处理方式但需明确允许 t1 任意，无解时输出 -1。",
+      "修正期望计算公式或重算样例中的期望值，消除内部矛盾",
+      "扩充样例数量，覆盖多操作、复杂树结构等场景",
+      "若公式保留，需提供基于该公式的正确样例解释；若公式有误，改用正确的公式（如 E[v] = E[parent] + 1 + (sum sibling size)/2）并调整样例",
+      "考虑在输入要求中明确 t1 的取值约束"
+    ],
+    "strengths_to_keep": [
+      "主题映射自然，公交场景贴合度高",
+      "操作定义与合法性约束描述准确",
+      "输出格式清晰，最小化目标明确"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\source\\taco_codeforces_e41b78710a22\\taco_codeforces_e41b78710a22.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\artifacts\\taco_codeforces_e41b78710a22\\taco_codeforces_e41b78710a22_urban_commute_20260609_220603_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\output\\taco_codeforces_e41b78710a22\\taco_codeforces_e41b78710a22_urban_commute_20260609_220603_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_e41b78710a22",
+      "title": "D",
+      "description": "Barney lives in country USC (United States of Charzeh). USC has n cities numbered from 1 through n and n - 1 roads between them. Cities and roads of USC form a rooted tree (Barney's not sure why it is rooted). Root of the tree is the city number 1. Thus if one will start his journey from city 1, he can visit any city he wants by following roads.\n\n<image>\n\nSome girl has stolen Barney's heart, and Barney wants to find her. He starts looking for in the root of the tree and (since he is Barney Stinson not a random guy), he uses a random DFS to search in the cities. A pseudo code of this algorithm is as follows:\n    \n    \n      \n    let starting_time be an array of length n  \n    current_time = 0  \n    dfs(v):  \n    \tcurrent_time = current_time + 1  \n    \tstarting_time[v] = current_time  \n    \tshuffle children[v] randomly (each permutation with equal possibility)  \n    \t// children[v] is vector of children cities of city v  \n    \tfor u in children[v]:  \n    \t\tdfs(u)  \n    \n\nAs told before, Barney will start his journey in the root of the tree (equivalent to call dfs(1)).\n\nNow Barney needs to pack a backpack and so he wants to know more about his upcoming journey: for every city i, Barney wants to know the expected value of starting_time[i]. He's a friend of Jon Snow and knows nothing, that's why he asked for your help.\n\nInput\n\nThe first line of input contains a single integer n (1 ≤ n ≤ 105) — the number of cities in USC.\n\nThe second line contains n - 1 integers p2, p3, ..., pn (1 ≤ pi < i), where pi is the number of the parent city of city number i in the tree, meaning there is a road between cities numbered pi and i in USC.\n\nOutput\n\nIn the first and only line of output print n numbers, where i-th number is the expected value of starting_time[i].\n\nYour answer for each city will be considered correct if its absolute or relative error does not exceed 10 - 6.\n\nExamples\n\nInput\n\n7\n1 2 1 1 4 4\n\n\nOutput\n\n1.0 4.0 5.0 3.5 4.5 5.0 5.0 \n\n\nInput\n\n12\n1 1 2 2 4 4 3 3 1 10 8\n\n\nOutput\n\n1.0 5.0 5.5 6.5 7.5 8.0 8.0 7.0 7.5 6.5 7.5 8.0",
+      "input": "The first line of input contains a single integer n (1 ≤ n ≤ 105) — the number of cities in USC.\n\nThe second line contains n - 1 integers p2, p3, ..., pn (1 ≤ pi < i), where pi is the number of the parent city of city number i in the tree, meaning there is a road between cities numbered pi and i in USC.",
+      "output": "In the first and only line of output print n numbers, where i-th number is the expected value of starting_time[i].\n\nYour answer for each city will be considered correct if its absolute or relative error does not exceed 10 - 6.",
+      "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "import sys\ninput = sys.stdin.readline\nn = int(input())\npar = [-1] + [int(i) - 1 for i in input().split()]\nchild = [[] for i in range(n)]\nfor i in range(1, n):\n\tchild[par[i]].append(i)\nsize = [1] * n\n\ndef dfs():\n\tstack = [0]\n\tvisit = [False] * n\n\twhile stack:\n\t\tu = stack[-1]\n\t\tif not visit[u]:\n\t\t\tfor v in child[u]:\n\t\t\t\tstack.append(v)\n\t\t\tvisit[u] = True\n\t\telse:\n\t\t\tfor v in child[u]:\n\t\t\t\tsize[u] += size[v]\n\t\t\tstack.pop()\nans = [0] * n\nans[0] = 1\n\ndef dfs2():\n\tstack = [0]\n\twhile stack:\n\t\tu = stack.pop()\n\t\tsm = 0\n\t\tfor v in child[u]:\n\t\t\tsm += size[v]\n\t\tfor v in child[u]:\n\t\t\tans[v] = (sm - size[v]) * 0.5 + 1 + ans[u]\n\t\t\tstack.append(v)\ndfs()\ndfs2()\nprint(*ans)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_e41b78710a22",
+        "codeforces",
+        "Barney lives in country USC (United States of Charzeh). USC has n cities numbered from 1 through n and n - 1 roads between them. Cities and roads of USC form a rooted tree (Barney's not sure why it is rooted). Root of...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "C新增目标期望值匹配约束和操作定义，O从计算期望变为最小化修改操作，V增加操作影响量化与最小性下界。",
+      "summary": "将原始的正向期望计算转换为反向最小化修改问题，要求通过最少父节点重连操作使树的期望值达到给定目标。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inverse_design_commute_expectation",
+      "source": "derived_from_forward_solution_inverse_design",
+      "input_structure": {
+        "type": "tree_and_target_array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {
+          "tree_rooted_at_1": true,
+          "acyclic": true,
+          "connected": true
+        },
+        "additional_fields": {
+          "target_expectations": {
+            "description": "Array t of length n with t_i being target expected starting time for node i. t_1 must be 1.0 (root expectation is fixed).",
+            "type": "float_array"
+          }
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        }
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "valid_operation_definition",
+            "description": "An operation consists of selecting a non-root node v and a new parent p (p != v and p not in the subtree of v) and setting parent[v] = p. The resulting graph must remain a tree rooted at 1."
+          },
+          {
+            "name": "expectation_matching_target",
+            "description": "After operations, for each node i, the expected starting time E[i] computed via the random DFS process must satisfy |E[i] - t_i| <= 1e-6."
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimization_and_construction",
+        "description": "Find the minimum number of valid operations (parent changes) such that the resulting tree's expected starting times match the target array within absolute error 1e-6. Output the minimum k followed by k lines each describing v and new_parent. If impossible, output -1."
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "expectation_recurrence_holds",
+            "description": "For any tree (rooted at 1) and any node v, E[1]=1 and E[v] = E[parent(v)] + 1 + (sum_{sibling s} size(s) - size(v))/2, where size(w) is the number of nodes in the subtree of w. This holds before and after any sequence of valid operations."
+          },
+          {
+            "name": "operation_effect_quantification",
+            "description": "Changing parent of v from p to p' changes subtree sizes along the paths from p and p' to root, and adjusts E values for v and its descendants. The change in E[u] for u in subtree of v is a function of the size differences and ancestral expectations."
+          },
+          {
+            "name": "minimality_lower_bound",
+            "description": "A lower bound on the number of operations can be derived from mismatches between original E and target t; each operation can resolve at most a constant number of independent mismatches under certain structural conditions."
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "公交期望重规划",
+      "description": "城市中有一条公交快线，共有 n 个站点，编号 1 至 n。线路以站点 1 为起点，结构为一棵树。每天清晨，一辆公交车从站点 1 出发，按照随机深度优先的顺序遍历所有站点：每当到达某个站点，它会立刻将当前时间加 1，然后随机打乱该站点所有子站点的访问顺序，并按照打乱后的顺序依次前往每个子站点。对每个站点 i，公交车到达 i 的时刻是一个随机变量，记其期望值为 E[i]。\n\n现在，公交公司希望调整线路，使得每个站点 i 的期望到达时间恰好等于给定的目标值 t_i（允许绝对误差不超过 1e-6）。调整的方式是进行“改线”操作：一次操作可以选择某个非起点的站点 v，并将其父站点改为另一个站点 p。要求 p 不能等于 v 且 p 不能位于 v 的子树中，操作后整体仍然形成一棵以 1 为根的树。\n\n你需要求出最少的操作次数，并输出一种具体的操作方案。如果无论如何也无法达到目标，则输出 -1。",
+      "input_format": "第一行一个整数 n (1 ≤ n ≤ 100000)，表示站点数量。\n第二行 n-1 个整数 p2, p3, ..., pn (1 ≤ pi < n)，pi 表示初始树中站点 i 的父站点（保证构成一棵以 1 为根的树）。\n第三行 n 个浮点数 t1, t2, ..., tn，表示每个站点的目标期望到达时间。",
+      "output_format": "若无法通过有限次操作达到目标期望，则输出一行 -1。\n否则，第一行输出一个整数 k，表示最少操作次数。\n接下来 k 行，每行输出两个整数 v 和 p，表示一次操作：将站点 v 的父站点改为 p。若存在多种可行方案，输出任意一种。",
+      "constraints": [
+        "1 ≤ n ≤ 100000",
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "输入的树保证以 1 为根，且每条边连接两个不同站点",
+        "t_i 为实数，可能为任意值；若 t_1 != 1.0，则一定无解（因为 E[1] 恒为 1）",
+        "答案允许绝对误差不超过 1e-6",
+        "操作次数 k 必须为全局最小值，且操作序列在过程合法性条件内可以任意顺序输出"
+      ],
+      "samples": [
+        {
+          "input": "3\n1 2\n1.0 3.0 3.0",
+          "output": "-1",
+          "explanation": "初始线路为链：1-2-3。根期望 E[1]=1，E[2]=2，E[3]=2.5。目标期望 [1,3,3] 无法通过任何合法操作达到。"
+        },
+        {
+          "input": "3\n1 1\n1.0 2.0 2.5",
+          "output": "1\n3 2",
+          "explanation": "初始线路为星型：1-2 和 1-3。当前期望 E = [1, 3, 3]。目标期望为 [1, 2, 2.5]。只需将站点 3 的父站点改为 2，线路变为链 1-2-3，期望值恰好变为目标。操作次数为 1，已是最少。"
+        }
+      ],
+      "notes": "对于期望值的计算，函数关系满足：E[1]=1，对任意非根站点 v，E[v] = E[parent(v)] + 1 + (sum_{u 与 v 同父} size(u) - size(v)) / 2，其中 size(w) 表示以 w 为根的子树中的站点总数。该关系在任意合法操作后依然保持。若 t_1 不等于 1.0，则可直接输出 -1。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "将原始的正向期望计算转换为反向最小化修改问题，要求通过最少父节点重连操作使树的期望值达到给定目标。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5609,
+        "axis_scores": {
+          "I": 0.0374,
+          "C": 1.0,
+          "O": 0.5292,
+          "V": 0.5963
+        },
+        "components": {
+          "input_tree_distance": 0.0374,
+          "constraint_match_distance": 1.0,
+          "objective_type_distance": 0.5546,
+          "objective_text_distance": 0.4911,
+          "invariant_match_distance": 0.5963
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "将原题每个节点的期望值计算结果绑定为反向目标数组，要求通过修改树结构达到目标",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "在核心约束和objective中引入目标期望值数组作为必须匹配的条件"
+          ],
+          "innovation_reason": "翻转求解方向，从计算已知结构的期望变成设计结构以满足目标期望",
+          "difficulty_reason": "目标驱动要求算法必须处理匹配约束，不能仅计算"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "定义修改树结构的操作集（改变一个节点的父节点），作为达到目标的手段",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在核心约束中明确操作定义和合法性，在不变量中描述操作对期望值的影响公式"
+          ],
+          "innovation_reason": "将问题从简单计算转变为组合优化，操作空间自然来自原题对象结构",
+          "difficulty_reason": "操作引入指数级搜索空间，且影响非局部，增加优化难度"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "要求输出最小操作次数及操作序列，承担最小性证明责任",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective改为最小化，不变量增加下界性质"
+          ],
+          "innovation_reason": "要求算法给出可验证的最小性证据，避免平凡构造解",
+          "difficulty_reason": "最小性证明通常需要建立强下界，显著提升复杂度"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Compute subtree sizes via post-order traversal; then compute expected starting times through a top-down pass using linear recurrence based on parent expectation and sibling subtree sizes.",
+        "reusable_subroutines": "Subtree size calculation, expectation propagation algorithm, tree traversal orders.",
+        "new_solver_core": "Identify nodes with expectation mismatches; analyze how changing parents affects expectations; formulate the problem as a minimum cover or matching problem on dependencies; derive a lower bound and construct an optimal sequence using combinatorial properties of the recurrence (e.g., independence of siblings' contributions).",
+        "new_proof_obligation": "Prove that the constructed sequence achieves the minimum number of operations, possibly by showing that the mismatch vector has a certain rank and each operation can reduce it by at most 1, and that the constructed sequence attains this reduction.",
+        "why_direct_reuse_fails": "The forward solver only computes expectations from a fixed tree; it does not provide any mechanism to select or minimize changes to meet a target array, requiring a fundamentally different optimization approach."
+      },
+      "anti_shallow_rationale": "该反向设计不是简单换皮，因为它将计算问题彻底翻转为组合优化问题，引入了设计自由度（父节点修改）和最小性证明责任，算法核心从树形DP变为需要搜索或匹配的最优化策略，原解题思路无法直接复用。"
+    }
+  }
+}

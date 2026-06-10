@@ -1,0 +1,877 @@
+{
+  "problem_id": "community_tradeoff_matching_01",
+  "source_problem_ids": [
+    "taco_codeforces_b62e2b952fda"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_b62e2b952fda",
+      "codeforces",
+      "Teachers of one programming summer school decided to make a surprise for the students by giving them names in the style of the \"Hobbit\" movie. Each student must get a pseudonym maximally similar to his own name. The p...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "约束（C）新增强制双指标耦合与支配定义；目标（O）从单一最大值改为帕累托前沿集合；不变量（V）必须保证前沿正确性与不可支配性。",
+    "summary": "引入最小 LCP 作为第二指标，定义支配关系，目标改为输出所有帕累托最优的 (min, sum) 点，要求算法动态规划维护前沿。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4062,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4062,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.5932,
+      "O": 0.5551,
+      "V": 0.4474
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.5932,
+      "objective_type_distance": 0.6164,
+      "objective_text_distance": 0.4631,
+      "invariant_match_distance": 0.4474
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "pareto_frontier",
+    "description": "找出所有帕累托最优的 (最小相似度, 总相似度) 点，即不被任何其他合法匹配支配的点集。",
+    "target": "pareto_points"
+  },
+  "rule_selection_reason": "该规则将原单目标最大化LCP和拓展为双目标权衡（引入最小LCP下界作为第二指标），形成帕累托前沿查询。第二指标与主目标天然冲突（提高最小LCP会牺牲总和），迫使核心约束、目标和不变量彻底重构，远优于仅改变答案形式的计数规则，且比逆设计规则更可控。；创新度判断：引入最小LCP下界后，原‘最大化总和’的目标义务被替换为‘对每个下界t输出能达到的最大总和’，导致Trie匹配的贪心策略从单一深度优先变为受限深度匹配。第二指标直接嵌入主约束，状态必须同时承载下界和匹配进度，输出语义从单个最优值变为一系列前沿点。；难度判断：解法需维护不同下界下的可达状态，证明不能在不同下界间独立优化；算法需设计高效方法（如扫描线或DP）批量处理所有t，否则复杂度不可接受。原题O(总长)的简单后序遍历不再适用，求解责任显著升级。；风险判断：主要风险是实现前沿算法时的复杂度爆炸：若对每个t重复跑贪心将超时，必须设计一次性聚合方法。风险可控，因为Trie深度和节点数与总长同阶，可借助后缀和或延迟匹配等技巧将复杂度控制在O(总长)或O(总长 log 总长)。",
+  "new_schema_snapshot": {
+    "problem_id": "community_tradeoff_matching_01",
+    "source": "extended_codeforces",
+    "input_structure": {
+      "type": "composite",
+      "overall_length_constraint": "所有字符串总长度不超过800000字符，仅含小写英文字母。",
+      "components": [
+        {
+          "role": "residents",
+          "role_description": "社区住户姓名列表",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "ordered": true,
+            "distinct": false
+          }
+        },
+        {
+          "role": "services",
+          "role_description": "可用服务项目名称列表",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {
+            "ordered": true,
+            "distinct": false
+          }
+        }
+      ],
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {}
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "perfect_matching",
+          "description": "每个住户恰好分配一个服务项目，每个服务项目恰好被分配一次，形成双射。",
+          "formal": "π : R → S is a bijection, |R| = |S| = n",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "lcp_based_quality",
+          "description": "匹配对的质量定义为两个字符串的最长公共前缀长度 lcp。总质量为所有对 lcp 之和，最小质量为所有对 lcp 的最小值。",
+          "formal": "For a matching π, sum_lcp(π) = Σ_{i} lcp(r_i, s_{π(i)}), min_lcp(π) = min_i lcp(r_i, s_{π(i)})",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "domination_rule",
+          "description": "匹配 π₁ 支配 π₂ 当且仅当 sum_lcp(π₁) ≥ sum_lcp(π₂) 且 min_lcp(π₁) ≥ min_lcp(π₂)，且至少一个不等号严格成立。",
+          "formal": "π₁ dominates π₂ ⇔ (sum₁ ≥ sum₂) ∧ (min₁ ≥ min₂) ∧ (sum₁>sum₂ ∨ min₁>min₂)",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "pareto_output",
+          "description": "输出所有不被任何其他匹配支配的 (min_lcp, sum_lcp) 坐标点，按 min_lcp 升序排列；若多个匹配对应同一坐标，只输出一次。",
+          "formal": "Output set P = {(min, sum) | ∃ a perfect matching π s.t. (min_lcp(π), sum_lcp(π)) = (min, sum) and no other perfect matching dominates it}",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "pareto_frontier",
+      "description": "找出所有帕累托最优的 (最小相似度, 总相似度) 点，即不被任何其他合法匹配支配的点集。",
+      "target": "pareto_points"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "trie_node_frontier_completeness",
+          "description": "对于字典树的每个节点 u，其状态维护的前沿集合 F_u 恰好包含了从 u 的子树中所有合法匹配方案能达到的 (sum, min) 帕累托最优坐标。",
+          "formal": "For node u, F_u = Pareto( {(sum(π), min(π)) for all perfect matchings π within subtree u} )",
+          "properties": {},
+          "evidence_source": "custom_design"
+        },
+        {
+          "name": "merge_correctness",
+          "description": "在合并子节点前沿并考虑当前深度匹配时，操作保持前沿的完整性和正确性，不会遗漏任何非支配点，也不会引入被支配点。",
+          "formal": "After processing node u, the resulting frontier is exactly Pareto( union of child frontiers with possible matches at depth d )",
+          "properties": {},
+          "evidence_source": "custom_proof"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "single_objective_to_tradeoff_frontier",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "在字典树上自深至浅贪心匹配学生与化名，每遇到一个节点便将剩余不同类型列表配对，保证总 LCP 和最大。",
+    "reusable_subroutines": "字典树构建、LCP 计算、字符串遍历。",
+    "new_solver_core": "自底向上动态规划：在每个节点维护所有可能 (sum, min) 的帕累托前沿，合并子节点前沿时考虑当前深度匹配，更新前沿集合。",
+    "new_proof_obligation": "需证明 DP 合并操作不丢失任何帕累托点，即证明了该算法能生成完整前沿；另外需证明前沿大小在给定约束下可接受，以保证复杂度。",
+    "why_direct_reuse_fails": "原贪心只根据当前局部最优选择配对，完全忽略最小 LCP，无法保证保留所有可能的前沿点，直接套用会丢失被支配但非前沿的点，或得到错误的前沿。"
+  },
+  "anti_shallow_rationale": "添加的第二指标与主指标真实冲突，输出从单个最优值变为帕累托前沿，单纯用原解加后处理（如统计最小 LCP）无法得到完整且正确的前沿，需要新的 DP 框架和正确性论证。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "secondary_metric_materialization",
+      "selection_reason": "必须引入与原目标冲突的第二指标才能形成权衡；最小 LCP 是匹配场景中自然的公平性指标，与总 LCP 和此消彼长。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints 增加 min_lcp 定义",
+        "objective 从 max sum 改为双指标前沿"
+      ],
+      "innovation_reason": "目标空间从一维扩展到二维，创造了真实冲突，不能仅靠优化单一目标解决。",
+      "difficulty_reason": "算法必须同时记录和比较两个维度，状态空间膨胀，需要谨慎的剪枝策略。"
+    },
+    {
+      "id": "frontier_dominance_rule",
+      "selection_reason": "需要明确比较不同方案的优劣，输出帕累托前沿而非单个最优值，定义了‘更好’的语义。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 定义变为输出帕累托点集",
+        "invariant 要求前沿完整性和不可支配性"
+      ],
+      "innovation_reason": "答案从单一数值变为结构化集合，具有比较和不可比较的语义，提高了问题深度。",
+      "difficulty_reason": "解法必须维护所有非支配状态，并证明剪枝后的前沿仍准确，增加了证明复杂度。"
+    },
+    {
+      "id": "coupled_state_expansion",
+      "selection_reason": "防止第二指标只在输出时出现，必须让状态同时承载两个指标的耦合，避免分解为两个独立子问题。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints 要求匹配时同时记录 sum 和 min",
+        "invariant 要求状态不丢失折中信息"
+      ],
+      "innovation_reason": "强制算法在内部维护多目标状态，不能先优化一个再处理另一个，真正实现多目标耦合。",
+      "difficulty_reason": "状态表示需要包含前沿信息，增大了内存和计算负担，并要求证明压缩表示的有效性。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "原题已经要求输出完整的匹配方案，且原解通过Trie树回溯即可直接得到任意方案，完全落入规则禁止的种子性质：'原题本来就要求输出完整方案'与'原解只要顺手回溯就能拿到方案'，不具备升级为规范解的空间。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.forbidden_seed_properties 明确列出：'原题本来就要求输出完整方案'、'原解只要顺手回溯就能拿到方案'。种子题原题描述直接要求输出n行匹配对，标准解法在归并时直接生成pairs并输出，属于典型回溯即得方案。",
+        "feedback": "该种子题已输出完整方案，强行添加规范性要求（如字典序最小）会导致与现有输出要求重叠，且核心算法（Trie树贪心归并）可能无需实质性改造，变更属于表面装饰，不符合output_upgrade的差异要求。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "local_obstruction_feasible",
+      "selection_reason": "原题的双射约束和Trie不变式天然支持局部冲突证据：无解可表现为某前缀下学生与化名数量失配，该矛盾能在输出中构造为可直接检查的统计对象。",
+      "risk_tags": [
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema的核心约束含有等数量双射（equal_set_sizes, bijective_matching），不变式已定义单类型剩余传递（postorder_single_type_remaining）。在此结构上，若引入额外阈值导致无解，则冲突可直接表示为某Trie节点的未匹配计数差异，满足“局部可检查”要求。",
+        "feedback": "规则要求将失败语义固化为输出对象，当前种子题的Trie遍历证明已隐含局部证据的构造路径，适合进入规划阶段进一步设计具体冲突输出格式和校验规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "clear_counting_object",
+      "selection_reason": "原题解空间为所有完美匹配，有限（n!）且去重规则清晰（按学生和化名的输入索引区分即可）。存在多个最优解，适合改为计数最优匹配个数。拆分可按Trie节点局部配对进行，与标准解法中的状态分解一致。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题约束：学生与化名数量相等且须一一对应（bijective_matching），解空间为排列，有限。目标为最大化lcp和，但最优匹配可能不唯一（题目说明输出任意答案），因此可自然转向计数。去重：输出格式要求每个学生和化名索引只出现一次，不同索引对即不同解，无需额外等价处理。不变量（postorder_single_type_remaining）揭示按Trie节点分解未匹配列表，该结构可重用于计数单元的拆分与汇总。",
+        "feedback": "需注意后续规划时不能仅保留原Trie结构后将目标换为计数，应显式重建计数状态与去重逻辑，并说明取模或有限性证明。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是固定输入的匹配最大化LCP问题，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。任何扰动都需要从外部硬造，违反规则禁忌。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为：给定学生名字列表和化名列表，求最大LCP和的完美匹配。输入结构是确定的数组，无任何变异性。核心约束（equal_set_sizes, bijective_matching, maximize_sum_lcp）均未暗示顺序或波动。标准解决方案利用trie深度贪心匹配，其不变量（postorder_single_type_remaining, matched_lcp_equals_depth）基于固定顺序处理，无扰动模型。规则要求原题自带不确定性，但此处不具有。",
+        "feedback": "建议考虑其他规则，如添加额外约束来改变问题结构。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题直接要求最大化总LCP，属于组合优化，不具备“可行性随参数单调变化”的判定结构，强行引入阈值只会形成在原解外层的机械二分，无法改变主求解目标。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“maximize Σ lcp”，约束中无任何参数可调，solution利用深度优先的贪心构造直接给出最优值，不存在‘阈值变化改变可行区域’的单调层。规则要求的‘required_seed_properties’第一条‘原题可行性随某个参数具有清晰的单调性或分层结构’完全不满足。",
+        "feedback": "本题不适合feasibility_to_extremal_threshold，因为从最大化到判定再求极值属于机械降级，没有引入新的临界性证明义务，违反正例意图。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_conflicting_metric_exists",
+      "selection_reason": "原题目标为最大化匹配对的 LCP 总和，每个学生对化名的相似度是个体满意度，而总和最优可能导致某些匹配 LCP 极小（如示例中 boris→smaug, LCP=0）。将“最差匹配的 LCP”最大化作为第二指标与总和最大化存在真实冲突，两者不能同时独立最优，需要权衡。该指标来自原题字符串匹配的自然属性，且无法从原最优解直接后处理得到整个前沿。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述强调“每个学生必须得到一个尽可能相似的化名”，但目标却为总和最大化，隐含个体公平性诉求（约束“bijective_matching”和“maximize_sum_lcp”）。不变量“matched_lcp_equals_depth”揭示了深度与 LCP 的关系，引入最小 LCP 约束会改变匹配树上的可行状态，构成预算型权衡前沿。",
+        "feedback": "建议在规划时明确定义“最差匹配 LCP 不低于 k”作为变动轴，目标仍最大化总和，并输出在多个 k 下的最优值（帕累托前沿）或给定 k 的最优解。需注意状态需承载当前最小 LCP 以支撑前沿剪枝，避免退化为独立子问题。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "reversible_output_as_target",
+      "selection_reason": "原题结果（最大LCP和及匹配方案）可直接作为反向目标，字符串的字符修改操作自然存在且与原核心规律（LCP计算）紧密相关，符合反向设计的最小修改或输入构造范式。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "Schema中objective明确输出sum_of_lcp，该值可绑定为反向目标；input_structure定义字符串数组，自然允许字符级编辑操作；invariant中的matched_lcp_equals_depth等性质可支撑最小性证明。",
+        "feedback": "规则适用性高，建议在后续规划中明确目标绑定方式（如指定target_sum）及修改操作的具体原子性（如单字符替换），以防止与原题脱节。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_decomposable_units",
+      "selection_reason": "原题要求对学生和化名进行全局一一匹配，最大化总LCP，输入仅为两个名称列表，不存在任何可自然分解的独立局部单元（如独立区间、独立查询或独立决策分量），因此无法将独立分量耦合为全局约束。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中input_structure为两个数组，core_constraints要求完全匹配且最大化总LCP，整个问题是一个整体优化，没有可分离的独立子问题。标准解法使用trie树自底向上合并，但这是算法策略，并非题目结构固有的可分解局部单元。",
+        "feedback": "此规则仅适用于原题已存在可独立处理的局部单元（如多个独立选点、多个独立背包等），并通过共享资源、全局预算或跨组件依赖进行耦合。建议选择具有这类自然结构的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "inapplicable_seed",
+      "selection_reason": "原题是静态双射匹配最大化LCP和，不存在任何轮流选择、拿取、移动或改变状态的自然操作，无法天然转化为双方最优行动的博弈；强行添加回合制只会硬造玩家，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "根据规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题核心约束是 bijective_matching 和 maximize_sum_lcp，描述为静态匹配问题，输入为两个数组，输出为排列，没有任何操作序列或状态转移。规则的 validation_contract.hard_checks 要求“博弈行动必须来自原题自然操作”，原题没有这样的操作。此外，forbidden_seed_properties 中“操作顺序固定且没有选择自由度”和 redlines 中“不能凭背景硬造玩家”都直接禁止将此类无顺序结构强转为博弈。",
+        "feedback": "当前种子题不具备可对抗化的选择过程，不符合 single_seed_extension 模式所需的核心转换条件，建议直接拒绝。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "种子题已是一个全局完美匹配问题，并非从单一路径或局部子树求解出发。将其强行改为覆盖或割会偏离原题双射匹配与 LCP 核心，语义不匹配。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束为双射匹配 (bijective_matching)，目标为最大化双射下的 LCP 和 (maximize_sum_lcp)。解法利用 Trie 子树合并实现匹配，但问题本身并非从局部对象族覆盖或割的角度提出。规则要求原题具有可从局部扩为全局覆盖的局部对象族，而种子题直接要求全局完全匹配，缺乏‘局部路径/区间/子树等结构’作为初始求解单元；Trie 节点子树仅是实现细节，不构成可独立求解的局部对象族。根据规则 required_seed_properties 中‘多个局部对象之间可以自然形成覆盖或割关系’，此处匹配关系并非典型覆盖或割，强行扩展将破坏原题语义。",
+        "feedback": "建议为规则补充更明确的适用条件：种子题应明显呈现‘先求解局部最优再组合为全局覆盖’的结构，而非直接要求全局双射。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题是最大化匹配质量和方案的优化问题，不涉及计数对象，规则要求种子题必须已有明确有限的计数对象，无法满足。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 maximize_value，约束为 bijective_matching 与 maximize_sum_lcp，不存在计数对象或计数需求。",
+        "feedback": "规则仅适用于已有稳定计数对象的题目，当前种子题为优化匹配题，应选择其他转换规则。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "原题已经要求输出完整的匹配方案，且原解通过Trie树回溯即可直接得到任意方案，完全落入规则禁止的种子性质：'原题本来就要求输出完整方案'与'原解只要顺手回溯就能拿到方案'，不具备升级为规范解的空间。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.forbidden_seed_properties 明确列出：'原题本来就要求输出完整方案'、'原解只要顺手回溯就能拿到方案'。种子题原题描述直接要求输出n行匹配对，标准解法在归并时直接生成pairs并输出，属于典型回溯即得方案。",
+        "feedback": "该种子题已输出完整方案，强行添加规范性要求（如字典序最小）会导致与现有输出要求重叠，且核心算法（Trie树贪心归并）可能无需实质性改造，变更属于表面装饰，不符合output_upgrade的差异要求。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_obstruction_feasible",
+      "message": "原题的双射约束和Trie不变式天然支持局部冲突证据：无解可表现为某前缀下学生与化名数量失配，该矛盾能在输出中构造为可直接检查的统计对象。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema的核心约束含有等数量双射（equal_set_sizes, bijective_matching），不变式已定义单类型剩余传递（postorder_single_type_remaining）。在此结构上，若引入额外阈值导致无解，则冲突可直接表示为某Trie节点的未匹配计数差异，满足“局部可检查”要求。",
+        "feedback": "规则要求将失败语义固化为输出对象，当前种子题的Trie遍历证明已隐含局部证据的构造路径，适合进入规划阶段进一步设计具体冲突输出格式和校验规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_object",
+      "message": "原题解空间为所有完美匹配，有限（n!）且去重规则清晰（按学生和化名的输入索引区分即可）。存在多个最优解，适合改为计数最优匹配个数。拆分可按Trie节点局部配对进行，与标准解法中的状态分解一致。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "种子题约束：学生与化名数量相等且须一一对应（bijective_matching），解空间为排列，有限。目标为最大化lcp和，但最优匹配可能不唯一（题目说明输出任意答案），因此可自然转向计数。去重：输出格式要求每个学生和化名索引只出现一次，不同索引对即不同解，无需额外等价处理。不变量（postorder_single_type_remaining）揭示按Trie节点分解未匹配列表，该结构可重用于计数单元的拆分与汇总。",
+        "feedback": "需注意后续规划时不能仅保留原Trie结构后将目标换为计数，应显式重建计数状态与去重逻辑，并说明取模或有限性证明。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是固定输入的匹配最大化LCP问题，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源。任何扰动都需要从外部硬造，违反规则禁忌。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为：给定学生名字列表和化名列表，求最大LCP和的完美匹配。输入结构是确定的数组，无任何变异性。核心约束（equal_set_sizes, bijective_matching, maximize_sum_lcp）均未暗示顺序或波动。标准解决方案利用trie深度贪心匹配，其不变量（postorder_single_type_remaining, matched_lcp_equals_depth）基于固定顺序处理，无扰动模型。规则要求原题自带不确定性，但此处不具有。",
+        "feedback": "建议考虑其他规则，如添加额外约束来改变问题结构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题直接要求最大化总LCP，属于组合优化，不具备“可行性随参数单调变化”的判定结构，强行引入阈值只会形成在原解外层的机械二分，无法改变主求解目标。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为“maximize Σ lcp”，约束中无任何参数可调，solution利用深度优先的贪心构造直接给出最优值，不存在‘阈值变化改变可行区域’的单调层。规则要求的‘required_seed_properties’第一条‘原题可行性随某个参数具有清晰的单调性或分层结构’完全不满足。",
+        "feedback": "本题不适合feasibility_to_extremal_threshold，因为从最大化到判定再求极值属于机械降级，没有引入新的临界性证明义务，违反正例意图。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "natural_conflicting_metric_exists",
+      "message": "原题目标为最大化匹配对的 LCP 总和，每个学生对化名的相似度是个体满意度，而总和最优可能导致某些匹配 LCP 极小（如示例中 boris→smaug, LCP=0）。将“最差匹配的 LCP”最大化作为第二指标与总和最大化存在真实冲突，两者不能同时独立最优，需要权衡。该指标来自原题字符串匹配的自然属性，且无法从原最优解直接后处理得到整个前沿。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述强调“每个学生必须得到一个尽可能相似的化名”，但目标却为总和最大化，隐含个体公平性诉求（约束“bijective_matching”和“maximize_sum_lcp”）。不变量“matched_lcp_equals_depth”揭示了深度与 LCP 的关系，引入最小 LCP 约束会改变匹配树上的可行状态，构成预算型权衡前沿。",
+        "feedback": "建议在规划时明确定义“最差匹配 LCP 不低于 k”作为变动轴，目标仍最大化总和，并输出在多个 k 下的最优值（帕累托前沿）或给定 k 的最优解。需注意状态需承载当前最小 LCP 以支撑前沿剪枝，避免退化为独立子问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reversible_output_as_target",
+      "message": "原题结果（最大LCP和及匹配方案）可直接作为反向目标，字符串的字符修改操作自然存在且与原核心规律（LCP计算）紧密相关，符合反向设计的最小修改或输入构造范式。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "Schema中objective明确输出sum_of_lcp，该值可绑定为反向目标；input_structure定义字符串数组，自然允许字符级编辑操作；invariant中的matched_lcp_equals_depth等性质可支撑最小性证明。",
+        "feedback": "规则适用性高，建议在后续规划中明确目标绑定方式（如指定target_sum）及修改操作的具体原子性（如单字符替换），以防止与原题脱节。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "no_decomposable_units",
+      "message": "原题要求对学生和化名进行全局一一匹配，最大化总LCP，输入仅为两个名称列表，不存在任何可自然分解的独立局部单元（如独立区间、独立查询或独立决策分量），因此无法将独立分量耦合为全局约束。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中input_structure为两个数组，core_constraints要求完全匹配且最大化总LCP，整个问题是一个整体优化，没有可分离的独立子问题。标准解法使用trie树自底向上合并，但这是算法策略，并非题目结构固有的可分解局部单元。",
+        "feedback": "此规则仅适用于原题已存在可独立处理的局部单元（如多个独立选点、多个独立背包等），并通过共享资源、全局预算或跨组件依赖进行耦合。建议选择具有这类自然结构的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "inapplicable_seed",
+      "message": "原题是静态双射匹配最大化LCP和，不存在任何轮流选择、拿取、移动或改变状态的自然操作，无法天然转化为双方最优行动的博弈；强行添加回合制只会硬造玩家，违反红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "根据规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题核心约束是 bijective_matching 和 maximize_sum_lcp，描述为静态匹配问题，输入为两个数组，输出为排列，没有任何操作序列或状态转移。规则的 validation_contract.hard_checks 要求“博弈行动必须来自原题自然操作”，原题没有这样的操作。此外，forbidden_seed_properties 中“操作顺序固定且没有选择自由度”和 redlines 中“不能凭背景硬造玩家”都直接禁止将此类无顺序结构强转为博弈。",
+        "feedback": "当前种子题不具备可对抗化的选择过程，不符合 single_seed_extension 模式所需的核心转换条件，建议直接拒绝。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "种子题已是一个全局完美匹配问题，并非从单一路径或局部子树求解出发。将其强行改为覆盖或割会偏离原题双射匹配与 LCP 核心，语义不匹配。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束为双射匹配 (bijective_matching)，目标为最大化双射下的 LCP 和 (maximize_sum_lcp)。解法利用 Trie 子树合并实现匹配，但问题本身并非从局部对象族覆盖或割的角度提出。规则要求原题具有可从局部扩为全局覆盖的局部对象族，而种子题直接要求全局完全匹配，缺乏‘局部路径/区间/子树等结构’作为初始求解单元；Trie 节点子树仅是实现细节，不构成可独立求解的局部对象族。根据规则 required_seed_properties 中‘多个局部对象之间可以自然形成覆盖或割关系’，此处匹配关系并非典型覆盖或割，强行扩展将破坏原题语义。",
+        "feedback": "建议为规则补充更明确的适用条件：种子题应明显呈现‘先求解局部最优再组合为全局覆盖’的结构，而非直接要求全局双射。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题是最大化匹配质量和方案的优化问题，不涉及计数对象，规则要求种子题必须已有明确有限的计数对象，无法满足。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题目标类型为 maximize_value，约束为 bijective_matching 与 maximize_sum_lcp，不存在计数对象或计数需求。",
+        "feedback": "规则仅适用于已有稳定计数对象的题目，当前种子题为优化匹配题，应选择其他转换规则。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "pass",
+      "reason_code": "contract_fulfilled",
+      "message": "规划成功将单目标最大 LCP 和扩展为双指标帕累托前沿，引入了第二指标 min_lcp 并定义了支配关系，三个 helper 均被完整兑现，没有退化为独立最优值。",
+      "details": {
+        "review_role": "你扮演一名权衡前沿规划审查官，重点确认规划是否形成预算、收益、风险等指标之间的真实耦合。",
+        "review_brief": "确认规划是否定义第二指标、支配关系或预算口径，并阻止退化成两个独立最优值。",
+        "evidence": "candidate schema 中 core_constraints 新增 lcp_based_quality（同时定义 sum_lcp 和 min_lcp）和 domination_rule，objective 改为 pareto_frontier，invariant 新增 trie_node_frontier_completeness 和 merge_correctness；applied_helpers 中三个 helper 均有对应的 schema_changes 且复现于 new_schema；源 schema 仅含 maximize_sum_lcp 单目标，规划实现了从单目标到权衡前沿的核心变换。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "种子题贪心解法得到的匹配可以简单计算其最小LCP，从而得到唯一的非支配点，原题选手无需动态规划前沿，直接复用贪心即可。",
+    "feedback": "在现有约束和字符串匹配特性下，双目标帕累托前沿退化为单点，无法构成真正的权衡，选手仍可用贪心解决。"
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_b62e2b952fda_community_services_20260609_193250",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

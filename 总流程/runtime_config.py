@@ -22,6 +22,7 @@ DEFAULT_BRUTEFORCE_TIMEOUT_SECONDS = 5.0
 DEFAULT_BRUTEFORCE_MEMORY_LIMIT_MB = 512
 DEFAULT_CHECKER_TIMEOUT_SECONDS = 5.0
 DEFAULT_CHECKER_MEMORY_LIMIT_MB = 512
+DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS = 5
 
 DEFAULT_LLM_CASE_MAX_CHARS = 40_000
 DEFAULT_LLM_CASE_INPUT_MAX_CHARS = 24_000
@@ -107,6 +108,7 @@ class ExecutionLimits:
     bruteforce_memory_limit_mb: int = DEFAULT_BRUTEFORCE_MEMORY_LIMIT_MB
     checker_timeout_seconds: float = DEFAULT_CHECKER_TIMEOUT_SECONDS
     checker_memory_limit_mb: int = DEFAULT_CHECKER_MEMORY_LIMIT_MB
+    standard_solution_max_repair_iterations: int = DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS
 
     @classmethod
     def from_values(cls, values: dict[str, str], *, source: str) -> "ExecutionLimits":
@@ -147,6 +149,12 @@ class ExecutionLimits:
                 DEFAULT_CHECKER_MEMORY_LIMIT_MB,
                 source=source,
             ),
+            standard_solution_max_repair_iterations=_read_positive_int(
+                values,
+                "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS",
+                DEFAULT_STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS,
+                source=source,
+            ),
         )
 
     @classmethod
@@ -181,6 +189,11 @@ class ExecutionLimits:
                 payload,
                 "checker_memory_limit_mb",
                 "EXECUTION_CHECKER_MEMORY_LIMIT_MB",
+            ),
+            "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS": _payload_text(
+                payload,
+                "standard_solution_max_repair_iterations",
+                "STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS",
             ),
         }
         return cls.from_values(values, source=source)

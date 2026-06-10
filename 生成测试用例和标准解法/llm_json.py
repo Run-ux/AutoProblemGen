@@ -131,6 +131,14 @@ def validate_code_repair_response(payload: dict[str, Any], *, task_name: str) ->
     return payload
 
 
+def validate_standard_solution_repair_response(payload: dict[str, Any], *, task_name: str) -> dict[str, Any]:
+    _require_keys(payload, ("analysis", "fix_plan", "code"), task_name)
+    _require_non_empty_string(payload, "analysis", task_name)
+    _require_non_empty_string(payload, "fix_plan", task_name)
+    _require_non_empty_string(payload, "code", task_name)
+    return payload
+
+
 def validate_checker_repair_response(payload: dict[str, Any], *, task_name: str) -> dict[str, Any]:
     _require_keys(payload, ("analysis", "fix_plan", "checker_code"), task_name)
     _require_non_empty_string(payload, "analysis", task_name)

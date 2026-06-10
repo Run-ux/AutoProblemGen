@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
+from pathlib import Path
 
 from orchestrator import WorkflowConfig, run_workflow
 from runtime_config import RuntimeConfigError
@@ -9,6 +11,10 @@ from runtime_config import RuntimeConfigError
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="AutoProblemGen 端到端总流程")
     parser.add_argument("--workflow-config", required=True, help="总流程配置文件路径")
+    parser.add_argument(
+        "--input-path",
+        help="仅本次运行覆盖 workflow.env 中的 INPUT_PATH，可指向单个 JSON 文件或题目 JSON 目录。",
+    )
     parser.add_argument(
         "--skip-previous-failures",
         action="store_true",
@@ -33,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
         config = WorkflowConfig.from_file(args.workflow_config)
     except RuntimeConfigError as exc:
         parser.error(str(exc))
+    if args.input_path:
+        config = replace(config, input_path=Path(args.input_path).resolve())
     validate_config(parser, config)
 
     summary = run_workflow(config, skip_previous_failures=args.skip_previous_failures)

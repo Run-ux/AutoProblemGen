@@ -1,0 +1,122 @@
+{
+  "problem_id": "taco_leetcode_180d25df7224",
+  "source": "leetcode",
+  "input_structure": {
+    "type": "tuple",
+    "length": {
+      "min": 2,
+      "max": 2
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {},
+    "components": [
+      {
+        "role": "first_input_string",
+        "role_description": "The first string representing a non-negative rational number, with optional repeating decimal part in parentheses",
+        "type": "string",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      {
+        "role": "second_input_string",
+        "role_description": "The second string representing a non-negative rational number, with optional repeating decimal part in parentheses",
+        "type": "string",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "input_string_format",
+        "description": "The input string must follow one of three patterns: <IntegerPart>; <IntegerPart>.<NonRepeatingPart>; or <IntegerPart>.<NonRepeatingPart>(<RepeatingPart>).",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "integer_part_leading_zero_limit",
+        "description": "The integer part must not begin with two or more zeros.",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "part_characters_digit_only",
+        "description": "Each part (integer, non-repeating, repeating) consists only of digits.",
+        "formal": "",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "part_length_range",
+        "description": "Length of the integer part is between 1 and 4 inclusive. Length of the non-repeating part is between 0 and 4 inclusive. Length of the repeating part is between 1 and 4 inclusive.",
+        "formal": "1 ≤ |IntegerPart| ≤ 4, 0 ≤ |NonRepeatingPart| ≤ 4, 1 ≤ |RepeatingPart| ≤ 4",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "decision",
+    "description": "判断两个字符串表示的有理数是否相等",
+    "target": "equality",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "expansion_preserves_value",
+        "description": "Processing a string by removing parentheses and repeating the repetend a finite number of times yields a decimal string that represents the same rational number.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "repeating_nines_implies_finite",
+        "description": "A repeating part consisting entirely of '9's indicates that the number is equal to a finite decimal representation. The algorithm extracts this property and uses it to trigger rounding-based comparison.",
+        "properties": {},
+        "evidence_source": "both"
+      },
+      {
+        "name": "bounded_prefix_uniqueness",
+        "description": "For the given input size constraints, two distinct rational numbers will differ within the first 17 digits of their expanded decimal strings, so comparing prefixes of length 17 is sufficient to decide equality.",
+        "properties": {
+          "prefix_length": 17
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_leetcode_180d25df7224",
+    "title": "equal rational numbers",
+    "description": "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the rational number.\nIn general a rational number can be represented using up to three parts: an integer part, a non-repeating part, and a repeating part. The number will be represented in one of the following three ways:\n\n<IntegerPart> (e.g. 0, 12, 123)\n<IntegerPart><.><NonRepeatingPart>  (e.g. 0.5, 1., 2.12, 2.0001)\n<IntegerPart><.><NonRepeatingPart><(><RepeatingPart><)> (e.g. 0.1(6), 0.9(9), 0.00(1212))\n\nThe repeating portion of a decimal expansion is conventionally denoted within a pair of round brackets.  For example:\n1 / 6 = 0.16666666... = 0.1(6) = 0.1666(6) = 0.166(66)\nBoth 0.1(6) or 0.1666(6) or 0.166(66) are correct representations of 1 / 6.\n \nExample 1:\nInput: S = \"0.(52)\", T = \"0.5(25)\"\nOutput: true\nExplanation:\nBecause \"0.(52)\" represents 0.52525252..., and \"0.5(25)\" represents 0.52525252525..... , the strings represent the same number.\n\n\nExample 2:\nInput: S = \"0.1666(6)\", T = \"0.166(66)\"\nOutput: true\n\n\nExample 3:\nInput: S = \"0.9(9)\", T = \"1.\"\nOutput: true\nExplanation: \n\"0.9(9)\" represents 0.999999999... repeated forever, which equals 1.  [See this link for an explanation.]\n\"1.\" represents the number 1, which is formed correctly: (IntegerPart) = \"1\" and (NonRepeatingPart) = \"\".\n \n\n\nNote:\n\nEach part consists only of digits.\nThe <IntegerPart> will not begin with 2 or more zeros.  (There is no other restriction on the digits of each part.)\n1 <= <IntegerPart>.length <= 4 \n0 <= <NonRepeatingPart>.length <= 4 \n1 <= <RepeatingPart>.length <= 4",
+    "input": "",
+    "output": "",
+    "constraints": "",
+    "source": "leetcode",
+    "standard_solution_code": "import math\n\nclass Solution:\n\n\tdef isRationalEqual(self, S: str, T: str) -> bool:\n\t\tif len(S) == 0 or len(T) == 0:\n\t\t\treturn False\n\n\t\tdef process(s):\n\t\t\tif s[-1] == '.':\n\t\t\t\ts = s[:-1]\n\t\t\t(stack, repeat_9) = ([], False)\n\t\t\tfor (i, x) in enumerate(s):\n\t\t\t\tif x != ')':\n\t\t\t\t\tstack.append(x)\n\t\t\t\telse:\n\t\t\t\t\ttmp = ''\n\t\t\t\t\twhile stack[-1] != '(':\n\t\t\t\t\t\ttmp += stack.pop()\n\t\t\t\t\tif len(tmp) == tmp.count('9'):\n\t\t\t\t\t\trepeat_9 = True\n\t\t\t\t\tstack.pop()\n\t\t\t\t\treturn (''.join(stack) + tmp[::-1] * (24 // len(tmp)), repeat_9)\n\t\t\treturn (''.join(stack), repeat_9)\n\t\t(x, y) = (process(S), process(T))\n\t\tif x[0].count('.') == 0 or y[0].count('.') == 0:\n\t\t\treturn float(x[0]) == float(y[0])\n\t\tl = max(len(x[0]), len(y[0]))\n\t\tif x[0][:17] == y[0][:17]:\n\t\t\treturn True\n\t\tif x[1] or y[1]:\n\t\t\tm = min(len(x[0].split('.')[1]), len(y[0].split('.')[1]))\n\t\t\tif round(float(x[0]), m) == round(float(y[0]), m):\n\t\t\t\treturn True\n\t\treturn False"
+  }
+}

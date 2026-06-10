@@ -1,0 +1,694 @@
+{
+  "overall": {
+    "status": "revise_quality",
+    "quality_score": 59.0,
+    "divergence_score": 72.4,
+    "schema_distance": 0.3783,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 4.0,
+        "rationale": "new_schema 的核心输入字段（formula, target_digit）、编辑操作合同、修改后约束、目标函数与存在性处理均在题面中落地。但编辑证书以输出完整等式替代详细位置列表，与规范略有偏差；且未提及表达式可包含多个运算符，可能影响实现复杂度。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints.edit_operation_contract",
+          "new_schema.core_constraints.modified_expression_constraints",
+          "new_schema.objective",
+          "generated_problem.input_format",
+          "generated_problem.constraints",
+          "generated_problem.output_format"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 3.0,
+        "rationale": "题面提供了任务说明、输入输出格式、主要约束和样例，但缺少负号与减号区分规则、多运算符表达式可能性说明，对解题必备的表达式解析规则界定不清，选手需自行猜测负号边界，可能影响独立做题。",
+        "evidence_refs": [
+          "new_schema.core_constraints.expression_grammar",
+          "generated_problem.description",
+          "generated_problem.constraints",
+          "generated_problem.samples[3]"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 2.0,
+        "rationale": "样例4输入 '-1+?=?' 输出 '0+1=1' 长度不匹配，违反‘不能增删字符’约束；且负号删除未解释，与约束矛盾，严重不一致。其他部分大体一致，但这一错误直接影响理解。",
+        "evidence_refs": [
+          "generated_problem.constraints[2]",
+          "generated_problem.samples[3].input",
+          "generated_problem.samples[3].output",
+          "generated_problem.samples[3].explanation"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 2.0,
+        "rationale": "样例数量尚可，覆盖常见情况，但样例4存在输出长度不一致的错误，会严重误导选手对操作规则的理解，且未覆盖多运算符情形，整体质量下降。",
+        "evidence_refs": [
+          "generated_problem.samples[3]",
+          "generated_problem.constraints[2]"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 3.0,
+        "rationale": "题面结构清晰、语言流畅，符合OJ习惯。但样例4的明显错误破坏了规则的可信度，且负号规则不明确会增加阅读障碍，需修正后提升可读性。",
+        "evidence_refs": [
+          "generated_problem.samples[3]",
+          "generated_problem.constraints"
+        ]
+      }
+    ],
+    "strengths": [
+      "问题翻转设计新颖，从正向求解转为反向输入设计，富有挑战性。",
+      "背景故事（公交班次修正）贴合日常生活，易于理解。",
+      "约束描述详细，涵盖了数值范围、前导零、数字互斥等关键点。",
+      "样例覆盖了无解、零次修改和多次修改的基本场景。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3783,
+      "axis_scores": {
+        "I": 0.0201,
+        "C": 0.4208,
+        "O": 0.4282,
+        "V": 0.7
+      },
+      "components": {
+        "input_tree_distance": 0.0201,
+        "constraint_match_distance": 0.4208,
+        "objective_type_distance": 0.5145,
+        "objective_text_distance": 0.2987,
+        "invariant_match_distance": 0.7
+      }
+    },
+    "schema_distance": 0.3783,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.8,
+    "solution_transfer_risk": 0.2,
+    "surface_retheme_risk": 0.1,
+    "verdict": "pass",
+    "rationale": "原题要求找出使等式成立的最小未知数字（正向求解），新题则给定目标数字，要求计算最小编辑次数以修改表达式使其成立（逆向设计）。核心任务从“枚举答案”翻转为“搜索编辑空间”，约束中新增编辑操作合同、目标数字绑定及最小性证书，必迫使解题者重新建模（如 BFS/DP），原题仅枚举 10 个数字的解法几乎无法直接迁移。背景故事由考古完全换成公交调度，标题与描述无复用痕迹，表层换皮风险极低。尽管输入格式相似且表达式求值等子程序可部分复用，但整体语义差异显著，解法迁移风险很低，故可通过。",
+    "evidence_refs": [
+      "new_schema.core_constraints.constraints[2].name",
+      "new_schema.core_constraints.constraints[3].name",
+      "new_schema.objective.type",
+      "new_schema.objective.description",
+      "generated_problem.description",
+      "hard_checks[8].check_id",
+      "hard_checks[9].check_id",
+      "hard_checks[10].check_id"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.38，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=4。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例4输出长度与输入不一致",
+      "detail": "样例4输入为 '-1+?=?' 长度6，输出为 '0+1=1' 长度5，违反了约束“不能增删字符”。同时负号被无故删除，与编辑操作合同矛盾。",
+      "evidence_refs": [
+        "generated_problem.samples[3].input",
+        "generated_problem.samples[3].output",
+        "generated_problem.constraints[2]"
+      ],
+      "fix_hint": "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "负号与减号区分规则缺失",
+      "detail": "题面未明确如何区分前缀负号与运算符减号，选手无法确定哪些 '-' 是不可修改的负号，影响解析与操作实现。",
+      "evidence_refs": [
+        "generated_problem.description",
+        "generated_problem.constraints",
+        "new_schema.core_constraints.expression_grammar"
+      ],
+      "fix_hint": "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "表达式运算符数量未明确说明",
+      "detail": "描述仅以‘A+B=C’举例，可能让选手误认为只有两个操作数，而实际约束只限制了总长度，允许多运算符。",
+      "evidence_refs": [
+        "generated_problem.description",
+        "new_schema.core_constraints.expression_grammar.formal"
+      ],
+      "fix_hint": "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。"
+    }
+  ],
+  "suggested_revisions": [
+    "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。",
+    "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。",
+    "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。",
+    "修正样例4的输出字符串为 '-0+1=1' 或等效形式，并重新梳理解释文本。",
+    "在输入格式部分明确负号的判定规则，或将负号与数字视为整体Token，消除歧义。",
+    "在约束或描述中指明表达式可包含任意数量的运算符，不受限于两个操作数。",
+    "考虑增加一个至少包含两个运算符的样例，以展示更复杂的表达式结构。"
+  ],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "revise_quality",
+    "generated_status": "ok",
+    "quality_score": 59.0,
+    "divergence_score": 72.4,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例4输出长度与输入不一致",
+        "detail": "样例4输入为 '-1+?=?' 长度6，输出为 '0+1=1' 长度5，违反了约束“不能增删字符”。同时负号被无故删除，与编辑操作合同矛盾。",
+        "evidence_refs": [
+          "generated_problem.samples[3].input",
+          "generated_problem.samples[3].output",
+          "generated_problem.constraints[2]"
+        ],
+        "fix_hint": "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "负号与减号区分规则缺失",
+        "detail": "题面未明确如何区分前缀负号与运算符减号，选手无法确定哪些 '-' 是不可修改的负号，影响解析与操作实现。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.constraints",
+          "new_schema.core_constraints.expression_grammar"
+        ],
+        "fix_hint": "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "表达式运算符数量未明确说明",
+        "detail": "描述仅以‘A+B=C’举例，可能让选手误认为只有两个操作数，而实际约束只限制了总长度，允许多运算符。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "new_schema.core_constraints.expression_grammar.formal"
+        ],
+        "fix_hint": "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。"
+      }
+    ],
+    "suggested_revisions": [
+      "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。",
+      "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。",
+      "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。",
+      "修正样例4的输出字符串为 '-0+1=1' 或等效形式，并重新梳理解释文本。",
+      "在输入格式部分明确负号的判定规则，或将负号与数字视为整体Token，消除歧义。",
+      "在约束或描述中指明表达式可包含任意数量的运算符，不受限于两个操作数。",
+      "考虑增加一个至少包含两个运算符的样例，以展示更复杂的表达式结构。"
+    ],
+    "strengths_to_keep": [
+      "问题翻转设计新颖，从正向求解转为反向输入设计，富有挑战性。",
+      "背景故事（公交班次修正）贴合日常生活，易于理解。",
+      "约束描述详细，涵盖了数值范围、前导零、数字互斥等关键点。",
+      "样例覆盖了无解、零次修改和多次修改的基本场景。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\source\\taco_codewars_24712bdb68a7\\taco_codewars_24712bdb68a7.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\artifacts\\taco_codewars_24712bdb68a7\\taco_codewars_24712bdb68a7_urban_commute_20260609_191606_round2.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\output\\taco_codewars_24712bdb68a7\\taco_codewars_24712bdb68a7_urban_commute_20260609_191606_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codewars_24712bdb68a7",
+      "title": "546d15cebed2e10334000ed9",
+      "description": "To give credit where credit is due: This problem was taken from the ACMICPC-Northwest Regional Programming Contest. Thank you problem writers.\n\nYou are helping an archaeologist decipher some runes. He knows that this ancient society used a Base 10 system, and that they never start a number with a leading zero. He's figured out most of the digits as well as a few operators, but he needs your help to figure out the rest.\n\nThe professor will give you a simple math expression, of the form\n\n```\n[number][op][number]=[number]\n```\n\nHe has converted all of the runes he knows into digits. The only operators he knows are addition (`+`),subtraction(`-`), and multiplication (`*`), so those are the only ones that will appear. Each number will be in the range from -1000000 to 1000000, and will consist of only the digits 0-9, possibly a leading -, and maybe a few ?s. If there are ?s in an expression, they represent a digit rune that the professor doesn't know (never an operator, and never a leading -). All of the ?s in an expression will represent the same digit (0-9), and it won't be one of the other given digits in the expression. No number will begin with a 0 unless the number itself is  0, therefore 00 would not be a valid number. \n\nGiven an expression, figure out the value of the rune represented by the question mark. If more than one digit works, give the lowest one. If no digit works, well, that's bad news for the professor - it means that he's got some of his runes wrong. output -1 in that case.\n\nComplete the method to solve the expression to find the value of the unknown rune. The method takes a string as a paramater repressenting the expression and will return an int value representing the unknown rune or -1 if no such rune exists.\n\n~~~if:php\n**Most of the time, the professor will be able to figure out most of the runes himself, but sometimes, there may be exactly 1 rune present in the expression that the professor cannot figure out (resulting in all question marks where the digits are in the expression) so be careful ;)**\n~~~",
+      "input": "",
+      "output": "",
+      "constraints": "",
+      "source": "codewars",
+      "standard_solution_code": "import re\n\ndef solve_runes(runes):\n\tfor d in sorted(set('0123456789') - set(runes)):\n\t\ttoTest = runes.replace('?', d)\n\t\tif re.search('([^\\\\d]|\\\\b)0\\\\d+', toTest):\n\t\t\tcontinue\n\t\t(l, r) = toTest.split('=')\n\t\tif eval(l) == eval(r):\n\t\t\treturn int(d)\n\treturn -1"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codewars_24712bdb68a7",
+        "546d15cebed2e10334000ed9",
+        "codewars",
+        "To give credit where credit is due: This problem was taken from the ACMICPC-Northwest Regional Programming Contest. Thank you problem writers. You are helping an archaeologist decipher some runes. He knows that this a...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束从“找出满足所有条件的未知数字”变为“通过修改已知数字使给定 d 成为解并证明最小性”，引入了编辑操作空间和一套操作合法性条件；目标从最小化 d 变为最小化修改次数，并要求输出具体修改方案作为证书；不变量从升序枚举 d 变为按编辑距离递增的广度优先状态探索。",
+      "summary": "主要变化：1) 反向目标绑定到指定的未知数字 d；2) 定义编辑操作合同（单数字替换）并限制操作空间；3) 目标要求最小修改次数及证书，承担最优性证明责任；4) 不变量转为编辑距离递增探索与状态不变性。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_codewars_24712bdb68a7_inverse_design_v2",
+      "source": "inverse_design_from_codewars",
+      "input_structure": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "formula",
+            "type": "string",
+            "description": "形如 [number][op][number]=[number] 的表达式，包含数字 0-9、运算符 + - *、未知数字占位符 ? 以及可能的前导负号，与种子题格式一致。"
+          },
+          {
+            "name": "target_digit",
+            "type": "integer",
+            "value_range": {
+              "min": 0,
+              "max": 9
+            },
+            "description": "我们希望所有 ? 代表的数字 d（0-9），即反向设计要达成的目标数字。"
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "expression_grammar",
+            "description": "运算符仅限于 +、-、*；数字序列符合十进制表示，可能带前导负号；? 仅出现在数字内部，不表示运算符或负号；等号左右各有一个有效算术表达式。",
+            "formal": "formula matches regex ^[+-]?\\d+([-+*][+-]?\\d+)*=[+-]?\\d+$"
+          },
+          {
+            "name": "target_digit_binding",
+            "description": "target_digit d 必须是一个 0-9 的整数，且最终所有 ? 将被替换为 d。d 作为反向目标，是原题解的角色翻转。",
+            "formal": "d ∈ {0,…,9} ∧ ∀ occurrences of '?' in formula are substituted by d in the evaluation."
+          },
+          {
+            "name": "edit_operation_contract",
+            "description": "允许的编辑操作：选择表达式中一个已知数字字符（即不是 '?'、'-'、运算符、等号）将其替换为另一个数字 '0'-'9'，每次替换计为一次修改。不能增删字符，不能改变字符类型或位置，运算符和负号不可修改。操作保持表达式字符串长度和结构完全不变。",
+            "formal": "Op: substitute a character at index i where formula[i] ∈ '0'-'9' and is not a negation sign and is not part of '?' with a digit d' ∈ '0'-'9'. After each op, length(formula) unchanged, and the positions of '=', operators, and '-' (as negation) preserved."
+          },
+          {
+            "name": "modified_expression_constraints",
+            "description": "修改后的表达式每个数字必须无前导零（除非该数字本身就是 0）；每个数字的绝对值在 1 到 1,000,000 之间；d 不得出现在最终表达式任何已知数字里（即除 ? 位置外，不能有数字等于 d）。",
+            "formal": "For each number token: if len(token) > 1 and token[0]=='0' then token == 0; |value| ≤ 1,000,000; d ∉ set of digits appearing in the modified formula outside of '?' positions."
+          },
+          {
+            "name": "existence_handling",
+            "description": "若不存在任何编辑序列能使公式在将 ? 替换为 d 后算术相等且满足所有约束，则答案为 -1；否则答案是最小修改次数。",
+            "formal": "if no valid sequence exists, answer = -1; else answer = min |ops| over all valid sequences."
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize_edit_count",
+        "description": "计算最小的数字替换次数 k，使得可以通过恰好 k 次操作将表达式变形为一个合法表达式，该表达式在把 ? 统一替换为目标数字 d 后算术等式成立且满足所有修改后约束。若 k 存在，额外提供一种具体的修改方案（指明哪些位置改成什么数字）作为存在性证书；如果无法达成，输出 -1。算法必须保证输出的 k 是全局最小值。",
+        "target": "minimum number of digit substitutions, plus an executable edit script when k ≥ 0.",
+        "requires_solution": true,
+        "certificate": "输出具体的替换位置和替换后数字序列，可验证。"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "breadth_first_minimality",
+            "description": "算法采用宽度优先的顺序探索编辑空间：先检查所有零次修改（原始表达式），若失败则检查所有一次修改产生的表达式，依此类推，首次遇到的满足全部约束且等式成立的表达式对应的修改次数即为最小次数。该性质确保无需探索更深层次即可返回最优。",
+            "properties": {
+              "exploration_order": "non-decreasing edit distance"
+            },
+            "evidence_source": "algorithm"
+          },
+          {
+            "name": "edit_locality",
+            "description": "每次编辑操作仅孤立地改变单一已知数字字符的值，不影响操作符、负号、等号及其他数字位，因此状态转移具有局部性，搜索时可重用大部分求值结果（如缓存每个子表达式的值）。",
+            "properties": {
+              "locality": "single character replacement, others unchanged"
+            }
+          },
+          {
+            "name": "operator_structure_preservation",
+            "description": "编辑过程决不变动运算符、等号、负号的位置和数量，因此表达式语法树的结构在整个搜索中保持不变，等式两侧的项数固定。",
+            "properties": {
+              "invariance": "operator/equal/negation positions constant"
+            }
+          },
+          {
+            "name": "digit_disjointness_guarantee",
+            "description": "在任何被考虑的候选表达式中，目标数字 d 均不出现在已知数字部分，保证解的唯一标识性。该约束由编辑过滤器在生成状态时主动施加。",
+            "properties": {
+              "constraint": "d ∉ known digits in candidate"
+            }
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "公交班次修正",
+      "description": "小明是公交公司的调度员，最近发现某条线路的运行时间记录出现了问题。记录采用形如“A+B=C”的等式，例如“12+34=46”，表示第一段耗时12分钟，第二段耗时34分钟，总耗时为46分钟。然而部分记录被墨水弄脏，一些数字变得模糊不清，用问号‘?’代替。根据其他班次的信息，小明推断所有这些污损数字其实都是同一个数字d。但即便把‘?’都换成d，等式通常也不成立，这说明记录中还有一些原本清晰的数字其实是错误的。为此，小明可以修改等式里任意已知数字（每次只能改动一个数字，将其变成另一个数字），但他希望改动次数越少越好。此外，修改完成后，数字d不能再出现在等式的任何已知位置上——毕竟d是当初被弄脏的数字，如果修改后它又出现在了清晰的位置，就自相矛盾了。请你帮小明算出最少需要修改几个数字，并给出修改后的完整等式（所有‘?’均已替换成d）。如果无论如何修改都无法满足要求，则直接指出无法做到。",
+      "input_format": "输入包含两行。第一行是一个字符串，表示带有‘?’的等式，格式为合法的数学表达式，只包含数字0-9、问号‘?’、加号‘+’、减号‘-’、乘号‘*’和等号‘=’，且可能出现在数字前的前缀负号。第二行是一个整数d（0 ≤ d ≤ 9），表示所有‘?’代表的数字。",
+      "output_format": "如果不存在符合要求的修改方案，输出一行-1。否则，第一行输出一个整数k，表示最少的修改次数；第二行输出一个字符串，表示修改完成且将所有‘?’替换为d之后的完整等式。该等式可直接作为修改方案的证明。",
+      "constraints": [
+        "等式字符串的长度不超过30。",
+        "所有‘?’代表同一个数字d，0 ≤ d ≤ 9。",
+        "修改操作：每次可以选择一个已知数字字符（即非‘?’、非运算符、非等号、非负号的数字），将其改为另一个数字（0-9）。不能增删字符，不能修改运算符、等号和负号的位置。",
+        "修改后，等式中的每个数字序列不能有前导零（除非该数字本身就是0），且每个数字的绝对值不超过1,000,000。",
+        "修改后，数字d不得出现在等式中的任何已知数字位置上（即除‘?’所在位置外，不应含有数字d）。",
+        "时间限制：2000ms，空间限制：256MB。"
+      ],
+      "samples": [
+        {
+          "input": "?+?=10\n5",
+          "output": "0\n5+5=10",
+          "explanation": "将‘?’全部替换为5后得到“5+5=10”，等式自然成立，且5不在已知数字{1,0}中，无需任何修改。最少修改次数为0，直接输出替换后的等式。"
+        },
+        {
+          "input": "?+?=??\n5",
+          "output": "2\n5+5=10",
+          "explanation": "直接替换后为“5+5=55”，但等式不成立且已知数字包含5（与d=5冲突）。需修改结果中的两个‘5’：把它们分别改为1和0，得到“5+5=10”，等式成立且已知数字{1,0}不含5。共修改2次，为最小方案。"
+        },
+        {
+          "input": "?*?=??\n2",
+          "output": "-1",
+          "explanation": "原等式只有问号，没有任何已知数字可以修改。替换为2后得到“2*2=22”，等式不成立。由于无法进行任何修改操作，不存在满足要求的解，故输出-1。"
+        },
+        {
+          "input": "-1+?=?\n1",
+          "output": "1\n0+1=1",
+          "explanation": "将‘?’替换为1后得到“-1+1=1”，等式不成立（-1+1=0≠1），且已知数字1出现在-1中，与d=1冲突。将-1中的数字1改为0，得到“0+1=1”，等式成立且已知数字{0}不含1。仅需1次修改，为最小次数。"
+        }
+      ],
+      "notes": "当有解时，输出的第二行字符串即为修改后的等式，它已经将所有‘?’换成d。将该字符串与原输入对比，即可知道哪些位置的数字被更改，从而还原具体的修改方案。如果无解，只输出-1。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "主要变化：1) 反向目标绑定到指定的未知数字 d；2) 定义编辑操作合同（单数字替换）并限制操作空间；3) 目标要求最小修改次数及证书，承担最优性证明责任；4) 不变量转为编辑距离递增探索与状态不变性。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3783,
+        "axis_scores": {
+          "I": 0.0201,
+          "C": 0.4208,
+          "O": 0.4282,
+          "V": 0.7
+        },
+        "components": {
+          "input_tree_distance": 0.0201,
+          "constraint_match_distance": 0.4208,
+          "objective_type_distance": 0.5145,
+          "objective_text_distance": 0.2987,
+          "invariant_match_distance": 0.7
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "原题结果 d 是使表达式成立的未知数字，直接绑定为新题的反向目标，驱动整个算法围绕如何‘达到该目标’来设计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints: 新增 target_digit_binding 约束，锁定 d 为常量而非待求解变量",
+            "objective: 从求解 d 翻转为在给定 d 下求最小修改次数，目标主体由变量变为编辑操作"
+          ],
+          "innovation_reason": "将算法设计的出发点从‘枚举可能答案’扭转为‘满足固定输出前提下的输入设计’，直接改变问题结构。",
+          "difficulty_reason": "因为 d 固定，无法通过试错 d 来逃逸，必须真正在编辑空间中进行搜索，显著提升难度。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "已知数字是表达式中唯一可修改的成分，定义单字符数字替换为合法操作，为逆设计提供明确且有限的动作空间。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints: 添加 edit_operation_contract 约束，严格定义操作范围与代价",
+            "invariant: 新增 edit_locality 和 operator_structure_preservation 不变量，保证状态转移的局部性和结构稳定性"
+          ],
+          "innovation_reason": "把抽象的‘设计输入’落地为可枚举的组合编辑动作，赋予问题具体的搜索图结构。",
+          "difficulty_reason": "编辑操作引入组合爆炸，简单的贪心或随机搜索不能保证最优，强制需要系统性搜索与最小性论证。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "要求输出最小修改次数或可验证的设计方案，强制答案承担最优性与正确性双重责任。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective: 明确输出为最小次数+编辑证书，不能只返回可行解",
+            "invariant: 引入 breadth_first_minimality 和 digit_disjointness_guarantee，从算法行为保证最小性与约束合规"
+          ],
+          "innovation_reason": "将最优性证明内化为问题的一部分，引领算法必须按层探索或设计 DP 以保证全局最小。",
+          "difficulty_reason": "仅求可行解相对容易，但要求最小性迫使状态空间全遍历，难度跃升。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "遍历候选数字 0-9（排除已知数字），逐个替换并 eval 检查等式成立，首次成功则返回。",
+        "reusable_subroutines": "表达式求值函数（可处理大整数，但数值范围不大），前导零的合法性检查，已知数字集合抽取。",
+        "new_solver_core": "以原表达式和目标数字 d 为起点，通过广度优先搜索（BFS）逐层生成所有可能的单数字替换表达式。每层尝试将所有已知数字逐一替换为 0-9（且不等于 d 以避免冲突），对新表达式进行约束检查（前导零、数值范围、数字不相交）和算术求值，若等式成立且符合约束，则当前层数即为最小修改次数。若搜索完所有可能深度（最多所有已知数字位数的乘积）仍无解，返回 -1。",
+        "new_proof_obligation": "1) BFS 按层遍历确保首次找到的解即为最少编辑次数，需证明任何可行解对应的编辑序列长度至少为 BFS 最先发现该状态的层数；2) 搜索空间有限，由已知数字位置数量和每位可能替换值（0-9 且排除 d）的积决定，因此算法终止；3) 当提供证书时，需证明其满足所有约束且编辑次数确实最少；4) 需要额外论证目标数字 d 不能出现在已知数字中的过滤操作不会错误排除最小值解，即最小值解中 d 不会作为已知数字出现，否则违反 disjointness 约束。",
+        "why_direct_reuse_fails": "原解法仅在固定的表达式上尝试 10 种未知数字取值，搜索空间极小；新题中未知量由单一变量 d 变成指数级编辑序列，直接重用原枚举-求值框架无法覆盖编辑组合，且不能保证最小性。必须在新的状态扩展和最优性保证下设计算法。"
+      },
+      "anti_shallow_rationale": "新题完全翻转了求解方向：从“给定含一个变量的表达式，求出使等式成立的最小变量值”变为“给定一个变量目标值，求最少需修改多少个已知数字才能使表达式成立”。这一转换引入了编辑操作的定义空间、指数级搜索、最优性证明和可行性证书等全新核心责任，绝非仅换背景或调整参数问法，而是典型的不适定逆问题。"
+    }
+  }
+}

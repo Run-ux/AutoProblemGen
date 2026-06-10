@@ -1,0 +1,986 @@
+{
+  "problem_id": "construct_or_obstruction_campus_001",
+  "source_problem_ids": [
+    "taco_leetcode_180d25df7224"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_leetcode_180d25df7224",
+      "equal rational numbers",
+      "leetcode",
+      "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the ration...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "目标从决策转为双分支输出，需要新增输出格式约束、新的目标描述和新的不变量以支持证据的局部可检查性。核心约束必须包含证据结构和验证义务。",
+    "summary": "核心变化在三个轴：core_constraints 加入输出格式规范、证据自足性与规范表示有效性约束；objective 从 decision 改为 construct_or_obstruction 并明确定义双分支；invariant 引入表示等价性、证据正确性和本地可验证性。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3676,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3676,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.4286,
+      "O": 0.4917,
+      "V": 0.5806
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.4286,
+      "objective_type_distance": 0.622,
+      "objective_text_distance": 0.2963,
+      "invariant_match_distance": 0.5806
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "construct_or_obstruction",
+    "description": "Determine if the two rational numbers are equal. If equal, produce a canonical representation string; if not equal, produce a localized conflict evidence object that allows O(1) verification of inequality.",
+    "target": "construction_or_certificate",
+    "requires_solution": true,
+    "output_specification": "JSON object with type field indicating branch and corresponding payload.",
+    "success_branch": "type='equal', 'representation' is a canonical decimal string.",
+    "failure_branch": "type='conflict', 'position', 'digit1', 'digit2' as described."
+  },
+  "rule_selection_reason": "直接匹配原题的二元判定结构：相等时输出规范表示（如最简分数或规范小数），不相等时输出可局部检查的冲突证据（如第一个不同小数位）。相比 canonical_witness 在两个输入下需额外处理不等情形，以及 inverse_design 可能偏离核心判定带来设计风险，本规则天然将判定升级为构造/证据双分支，高创新且落地性强。；创新度判断：将原题的布尔判定输出替换为两种结构化输出对象，核心义务从“是否相等”转变为“相等时输出可验证的规范表示，不相等时输出带校验的冲突证据”，脱离了原题只输出 True/False 的表面责任。；难度判断：主求解责任从简单的前缀比较上升到需要同时构造规范性表示（需处理最简分数或最小循环节等数学化简）和捕获冲突证据（如精确定位差异位并使其可独立验证），显著增加算法实现复杂度与数学深度。；风险判断：主要风险在于冲突证据的设计可能退化为只输出差异位置描述，但通过要求证据局部可检查（如给出前缀与不同位的具体数值）和规范表示的确定性（如强制最简分数），可避免浅改，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "construct_or_obstruction_campus_001",
+    "source": "algorithmic_recast",
+    "input_structure": {
+      "type": "tuple",
+      "length": {
+        "min": 2,
+        "max": 2
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "first_input_string",
+          "role_description": "The first string representing a non-negative rational number (interpretable as a classroom scheduling pattern), with optional repeating decimal part in parentheses.",
+          "type": "string",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        },
+        {
+          "role": "second_input_string",
+          "role_description": "The second string representing a non-negative rational number, with optional repeating decimal part in parentheses.",
+          "type": "string",
+          "length": {
+            "min": null,
+            "max": null
+          },
+          "value_range": {
+            "min": null,
+            "max": null
+          },
+          "properties": {}
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "input_string_format",
+          "description": "The input string must follow one of three patterns: <IntegerPart>; <IntegerPart>.<NonRepeatingPart>; or <IntegerPart>.<NonRepeatingPart>(<RepeatingPart>).",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "integer_part_leading_zero_limit",
+          "description": "The integer part must not begin with two or more zeros.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "part_characters_digit_only",
+          "description": "Each part (integer, non-repeating, repeating) consists only of digits.",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "part_length_range",
+          "description": "Length of the integer part is between 1 and 4 inclusive. Length of the non-repeating part is between 0 and 4 inclusive. Length of the repeating part is between 1 and 4 inclusive.",
+          "formal": "1 ≤ |IntegerPart| ≤ 4, 0 ≤ |NonRepeatingPart| ≤ 4, 1 ≤ |RepeatingPart| ≤ 4",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "output_branch_specification",
+          "description": "Output must be a JSON object with exactly one of two structures. 1) If the inputs represent the same rational number, output {type: 'equal', representation: <string>} where <string> is a canonical representation in the same decimal format. 2) Otherwise, output {type: 'conflict', position: <int>, digit1: <char>, digit2: <char>}.",
+          "formal": "",
+          "source_sections": [
+            "derived"
+          ]
+        },
+        {
+          "name": "conflict_evidence_self_contained",
+          "description": "The conflict evidence must allow O(1) verification of inequality by examining only the given position and the two digits, without re‑expanding the inputs beyond that point or performing a global comparison.",
+          "formal": "",
+          "source_sections": [
+            "derived"
+          ]
+        },
+        {
+          "name": "canonical_representation_validity",
+          "description": "The representation string in the equal branch must itself adhere to the input string format (it must be a valid decimal string with optional repetend) and must denote the same rational number as both inputs.",
+          "formal": "",
+          "source_sections": [
+            "derived"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "construct_or_obstruction",
+      "description": "Determine if the two rational numbers are equal. If equal, produce a canonical representation string; if not equal, produce a localized conflict evidence object that allows O(1) verification of inequality.",
+      "target": "construction_or_certificate",
+      "requires_solution": true,
+      "output_specification": "JSON object with type field indicating branch and corresponding payload.",
+      "success_branch": "type='equal', 'representation' is a canonical decimal string.",
+      "failure_branch": "type='conflict', 'position', 'digit1', 'digit2' as described."
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "representation_value_equivalence",
+          "description": "In the equal case, the output representation denotes the same rational number as both inputs and adheres to the canonical form (shortest repetend, no unnecessary leading/trailing zeros).",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "conflict_evidence_correctness",
+          "description": "In the conflict case, the output position is the smallest index where the sufficiently expanded strings differ, and digit1/digit2 match the digits at that position.",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "conflict_evidence_local_verifiability",
+          "description": "Given the inputs and the conflict evidence, an independent checker can verify inequality in O(1) time by examining only the indicated position and the characters there, without full expansion or global comparison.",
+          "properties": {},
+          "evidence_source": "derived"
+        },
+        {
+          "name": "normative_representation_uniqueness",
+          "description": "The canonical representation function is deterministic: equal numbers always map to exactly the same output string.",
+          "properties": {},
+          "evidence_source": "derived"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "construct_or_obstruction",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "Parse strings into decimal structures, expand repeating decimals to a fixed length (17 digits), and compare the expanded strings for equality.",
+    "reusable_subroutines": "Parsing input strings, expanding repeating parts to bounded length, comparing prefixes.",
+    "new_solver_core": "After determining equality, if equal, construct a canonical representation by converting the expanded number to a fraction and then back to the shortest repeating decimal; if not equal, record the index of the first differing digit and the two characters as conflict evidence. The algorithm unifies both branches using the same parsing and expansion routines.",
+    "new_proof_obligation": "Prove that the canonical representation is correct (represents the same value) and minimal (shortest repetend, no redundant zeros); prove that the conflict position is indeed the first point of difference, and that the evidence suffices for O(1) deterministic verification of inequality without full re-expansion.",
+    "why_direct_reuse_fails": "The seed solution only returns a boolean; it lacks the logic to construct a canonical representation or to output a structured conflict certificate. The new solver must integrate these construction steps, which require additional reasoning about fraction conversion and minimal representation."
+  },
+  "anti_shallow_rationale": "The transformation fundamentally changes the algorithm's output obligation: from a single decision to a dual-branch construction/certificate requirement. Merely changing the story or input format would not introduce the new proof obligations of canonical representation and local evidence verifiability, which force a redesign of the solution core.",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "local_certificate_design",
+      "selection_reason": "Required by rule to define a failure output that is a local, checkable evidence object.",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "Added output_branch_specification and conflict_evidence_self_contained constraints in core_constraints.",
+        "Objective now demands a structured conflict certificate.",
+        "Invariants guarantee correctness and O(1) local verifiability of certificate."
+      ],
+      "innovation_reason": "Transforms failure semantics from an implicit boolean to an explicit, self-contained evidence object that embeds the reason of inequality in a directly checkable manner.",
+      "difficulty_reason": "Requires the solver to not only detect inequality but also capture the precise position and digits for the certificate, and to design the verification procedure."
+    },
+    {
+      "id": "failure_branch_symmetry",
+      "selection_reason": "Required to ensure the failure branch is a first-class output, not an afterthought.",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "Core_constraints equally specify success and failure output formats (output_branch_specification).",
+        "Objective clearly defines both branches with symmetric importance and output_specification."
+      ],
+      "innovation_reason": "Elevates the failure case to an equal contract, forcing the algorithm to handle both paths with comparable rigor and output generation.",
+      "difficulty_reason": "Solver must build a unified flow that branches cleanly into two distinct output generators, avoiding ad-hoc special-casing."
+    },
+    {
+      "id": "obstruction_embedding",
+      "selection_reason": "Required to make conflict evidence directly stem from the core constraint (digit-wise comparison of expanded numbers).",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "Core_constraints tie the conflict certificate to the first differing digit (conflict_evidence_self_contained, canonical_representation_validity).",
+        "Invariants state that evidence is derived solely from the primary inequality (conflict_evidence_correctness) and is locally verifiable."
+      ],
+      "innovation_reason": "The obstruction is embedded inside the main solving procedure: the very operation that uncovers inequality also constructs the evidence, preventing disconnected failure handling.",
+      "difficulty_reason": "The solver must interweave evidence extraction into the normal execution path, maintaining the ability to produce a certificate without disruptive special logic."
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "seed_satisfies_required_properties",
+      "selection_reason": "原题是决策问题，有理数对象明确，且存在多种表示，可定义字典序或正则表示作为规范输出，满足规则要求的解对象与自然顺序条件。",
+      "risk_tags": [
+        "shared_core_risk",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题目标为判断两字符串表示的有理数是否相等（决策型），并不要求输出方案；解对象即有理数值，其表示有多种合法形式（如0.9(9)与1.）；原题不变量包含重复9处理与有界前缀唯一性，可为定义规范形式提供基础。符合规则所需的种子特性。",
+        "feedback": "可升级性强，但需注意防止新题沦为简单格式化输出；应确保规范要求深度融入约束与状态转移，避免后处理式解法。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "local_obstruction_available",
+      "selection_reason": "种子题的不相等情形天然可通过有限前缀差异构造局部可检查的冲突证据，且bounded_prefix_uniqueness提供了明确证据边界，适合改造为构造或输出阻碍证书的问题。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题core_constraints和invariant中的bounded_prefix_uniqueness指出前17位决定相等，不相等时差异必然出现，可转化为局部证据；validation_contract的硬检查要求冲突证据可局部检查，与此一致。",
+        "feedback": "规则可行，建议进一步明确成功方案的合法输出格式与冲突证据的数据结构。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题为决策问题，目标类型为decision，无解空间概念，不满足规则所需的解空间有限、去重规则清晰等前置条件，且规则主要针对存在性或最优值问题，种子题不属于此类。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中objective.type为'decision'，描述为'判断两个字符串表示的有理数是否相等'，原始问题只要求返回布尔值，不存在多解、构造或计数对象。规则eligibility.required_seed_properties明确要求'解空间有限'、'不同解之间的等价关系能说清楚'，但本题不产生解，无法定义计数对象和去重规则。",
+        "feedback": "建议更换种子题，选择具有明确构造解空间的存在性判定或最优值问题，如最短路径、方案存在性等，再应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.3,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题已内置固定前缀保证（17位），将其直接变为最小化该阈值的问题仅改变目标，核心处理逻辑（展开、前缀比较）高度复用，差异不足，且极易沦为纯数学推导或外层二分，无法形成真正的算法最坏情况责任。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题 invariant 中明确有 bounded_prefix_uniqueness（17位前缀保证），standard_solution 已利用该性质。将存在性判断改为求最小 k 仅是将隐含常数显式化，并未引入新的核心约束或算法状态，不符合规则要求的“补上强化不变量”以及“保底阈值与主约束耦合”。",
+        "feedback": "原题的表示扰动已被当前解法完全覆盖，不宜作为保底优化放大。可考虑寻找真实时间约束、在线到达顺序或部分信息等更具动态性的扰动来源。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_threshold_parameter",
+      "selection_reason": "原题是纯粹的有理数相等判定，其可行性不依赖于任何可变参数，没有可自然升级为临界阈值（如最小容量、最大允许误差等）的单调结构。尝试引入阈值将脱离原核心规律，变成额外的元分析问题，违反全局红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子 schema 的目标类型为 decision，核心约束仅涉及输入字符串格式（如长度范围、字符组成），不变量 bounded_prefix_uniqueness 使用固定前缀长度 17，没有任何参数可调。规则要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，本题中不存在这样的参数。",
+        "feedback": "此题缺少可优化的自然临界参数，强行套用阈值规则只会产生机械二分包装，不符合规则本质。建议寻找原题本身含有容量、误差、资源限制等可变维度的问题作为种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_not_optimization_problem",
+      "selection_reason": "种子题为判断两个有理数字符串是否相等的决策问题，不存在优化目标或单一评价指标，无法引入冲突的第二指标。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 decision，描述为“判断两个字符串表示的有理数是否相等”，不涉及最大化或最小化任何指标。",
+        "feedback": "该规则仅适用于原题目标附近存在自然第二指标的单目标最优问题，当前种子题缺乏可扩展的第一指标。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "eligible_reason",
+      "selection_reason": "原题输出（判断两数是否相等）可作为反向目标（如要求使两数相等），字符串表示允许自然的编辑操作（增删改字符、移动括号），可定义最小修改代价并证明，满足反向设计对目标、修改操作和最小性责任的要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题 objective.type='decision', target='equality' 可直接用作反向目标；core_constraints 中字符串格式允许对字符、括号的修改；invariant 中 expansion_preserves_value 等可支撑修改后的相等验证；原题 solution_code 已展示比较逻辑，新题可复用但引入最小操作证明。",
+        "feedback": "该种子题适合作为反向设计基础，可从修改字符串达成相等的最小编辑距离角度构造新题。需注意明确编辑操作集合并保留格式约束。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是两个有理数字符串的等价判断，不存在可分解的局部单元，无法通过共享资源或全局守恒自然绑定，不满足规则所需属性。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在可分解的局部单元且单元间能通过共享资源自然耦合；原题摘要及输入结构均为两个字符串的比较，无独立可分解组件。核心约束仅为字符串格式，目标为二值判断，不存在多个局部独立求解单元。",
+        "feedback": "该规则不适用于此类单对比较问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_operation_for_adversarial_game",
+      "selection_reason": "原题是判断两个有理数字符串是否相等的确定性比较问题，没有可轮流选择或改变状态的自然操作，无法在不硬造背景的前提下转化为双方博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为两个字符串，输出为布尔值，核心操作是解析和比较展开后的十进制表示；state 和 invariant 均围绕数值等价性，不存在玩家、行动或状态转移的对抗语义。",
+        "feedback": "该规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但原题仅涉及字符串处理与数值比较，强行引入玩家将仅成为故事背景，违背硬约束。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_local_objects",
+      "selection_reason": "种子题为字符串相等性判定，不存在路径、区间、子树等局部结构，更无可组合的局部对象族，完全不满足规则要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 'equal rational numbers' 的核心对象是两个有理数字符串，目标是比较相等；其约束（格式、长度限制）和不变式（展开保序、前缀唯一性）均无路径或区间概念。规则要求种子题具有路径、区间、子树等局部结构，且多对象可形成覆盖/割关系，但原题完全缺失此类结构。",
+        "feedback": "规则 application 的前提是种子题具备可扩展为全局覆盖的局部对象族，此题没有适用点。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是决策题，不包含任何计数对象，无法满足规则要求“原题已经有明确有限的计数对象”。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为'decision'，描述为“判断两个字符串表示的有理数是否相等”。整个问题没有组合计数、方案数或计数对象。原文摘要及约束均未涉及计数。规则eligibility.required_seed_properties第一条即要求明确有限的计数对象，此条件不满足。",
+        "feedback": "规则针对计数题设计，当前种子题是完全不同的问题类型，无法应用权重或分布计数。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "seed_satisfies_required_properties",
+      "message": "原题是决策问题，有理数对象明确，且存在多种表示，可定义字典序或正则表示作为规范输出，满足规则要求的解对象与自然顺序条件。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "原题目标为判断两字符串表示的有理数是否相等（决策型），并不要求输出方案；解对象即有理数值，其表示有多种合法形式（如0.9(9)与1.）；原题不变量包含重复9处理与有界前缀唯一性，可为定义规范形式提供基础。符合规则所需的种子特性。",
+        "feedback": "可升级性强，但需注意防止新题沦为简单格式化输出；应确保规范要求深度融入约束与状态转移，避免后处理式解法。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "local_obstruction_available",
+      "message": "种子题的不相等情形天然可通过有限前缀差异构造局部可检查的冲突证据，且bounded_prefix_uniqueness提供了明确证据边界，适合改造为构造或输出阻碍证书的问题。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "种子题core_constraints和invariant中的bounded_prefix_uniqueness指出前17位决定相等，不相等时差异必然出现，可转化为局部证据；validation_contract的硬检查要求冲突证据可局部检查，与此一致。",
+        "feedback": "规则可行，建议进一步明确成功方案的合法输出格式与冲突证据的数据结构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题为决策问题，目标类型为decision，无解空间概念，不满足规则所需的解空间有限、去重规则清晰等前置条件，且规则主要针对存在性或最优值问题，种子题不属于此类。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema中objective.type为'decision'，描述为'判断两个字符串表示的有理数是否相等'，原始问题只要求返回布尔值，不存在多解、构造或计数对象。规则eligibility.required_seed_properties明确要求'解空间有限'、'不同解之间的等价关系能说清楚'，但本题不产生解，无法定义计数对象和去重规则。",
+        "feedback": "建议更换种子题，选择具有明确构造解空间的存在性判定或最优值问题，如最短路径、方案存在性等，再应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题已内置固定前缀保证（17位），将其直接变为最小化该阈值的问题仅改变目标，核心处理逻辑（展开、前缀比较）高度复用，差异不足，且极易沦为纯数学推导或外层二分，无法形成真正的算法最坏情况责任。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.3,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题 invariant 中明确有 bounded_prefix_uniqueness（17位前缀保证），standard_solution 已利用该性质。将存在性判断改为求最小 k 仅是将隐含常数显式化，并未引入新的核心约束或算法状态，不符合规则要求的“补上强化不变量”以及“保底阈值与主约束耦合”。",
+        "feedback": "原题的表示扰动已被当前解法完全覆盖，不宜作为保底优化放大。可考虑寻找真实时间约束、在线到达顺序或部分信息等更具动态性的扰动来源。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "no_natural_threshold_parameter",
+      "message": "原题是纯粹的有理数相等判定，其可行性不依赖于任何可变参数，没有可自然升级为临界阈值（如最小容量、最大允许误差等）的单调结构。尝试引入阈值将脱离原核心规律，变成额外的元分析问题，违反全局红线。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子 schema 的目标类型为 decision，核心约束仅涉及输入字符串格式（如长度范围、字符组成），不变量 bounded_prefix_uniqueness 使用固定前缀长度 17，没有任何参数可调。规则要求‘原题可行性随某个参数具有清晰的单调性或分层结构’，本题中不存在这样的参数。",
+        "feedback": "此题缺少可优化的自然临界参数，强行套用阈值规则只会产生机械二分包装，不符合规则本质。建议寻找原题本身含有容量、误差、资源限制等可变维度的问题作为种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "seed_not_optimization_problem",
+      "message": "种子题为判断两个有理数字符串是否相等的决策问题，不存在优化目标或单一评价指标，无法引入冲突的第二指标。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 schema 中 objective 类型为 decision，描述为“判断两个字符串表示的有理数是否相等”，不涉及最大化或最小化任何指标。",
+        "feedback": "该规则仅适用于原题目标附近存在自然第二指标的单目标最优问题，当前种子题缺乏可扩展的第一指标。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible_reason",
+      "message": "原题输出（判断两数是否相等）可作为反向目标（如要求使两数相等），字符串表示允许自然的编辑操作（增删改字符、移动括号），可定义最小修改代价并证明，满足反向设计对目标、修改操作和最小性责任的要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "种子题 objective.type='decision', target='equality' 可直接用作反向目标；core_constraints 中字符串格式允许对字符、括号的修改；invariant 中 expansion_preserves_value 等可支撑修改后的相等验证；原题 solution_code 已展示比较逻辑，新题可复用但引入最小操作证明。",
+        "feedback": "该种子题适合作为反向设计基础，可从修改字符串达成相等的最小编辑距离角度构造新题。需注意明确编辑操作集合并保留格式约束。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是两个有理数字符串的等价判断，不存在可分解的局部单元，无法通过共享资源或全局守恒自然绑定，不满足规则所需属性。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题存在可分解的局部单元且单元间能通过共享资源自然耦合；原题摘要及输入结构均为两个字符串的比较，无独立可分解组件。核心约束仅为字符串格式，目标为二值判断，不存在多个局部独立求解单元。",
+        "feedback": "该规则不适用于此类单对比较问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_operation_for_adversarial_game",
+      "message": "原题是判断两个有理数字符串是否相等的确定性比较问题，没有可轮流选择或改变状态的自然操作，无法在不硬造背景的前提下转化为双方博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "原题输入为两个字符串，输出为布尔值，核心操作是解析和比较展开后的十进制表示；state 和 invariant 均围绕数值等价性，不存在玩家、行动或状态转移的对抗语义。",
+        "feedback": "该规则要求原题存在可轮流选择、拿取、移动或改变状态的自然操作，但原题仅涉及字符串处理与数值比较，强行引入玩家将仅成为故事背景，违背硬约束。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_local_objects",
+      "message": "种子题为字符串相等性判定，不存在路径、区间、子树等局部结构，更无可组合的局部对象族，完全不满足规则要求。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 'equal rational numbers' 的核心对象是两个有理数字符串，目标是比较相等；其约束（格式、长度限制）和不变式（展开保序、前缀唯一性）均无路径或区间概念。规则要求种子题具有路径、区间、子树等局部结构，且多对象可形成覆盖/割关系，但原题完全缺失此类结构。",
+        "feedback": "规则 application 的前提是种子题具备可扩展为全局覆盖的局部对象族，此题没有适用点。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是决策题，不包含任何计数对象，无法满足规则要求“原题已经有明确有限的计数对象”。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective.type为'decision'，描述为“判断两个字符串表示的有理数是否相等”。整个问题没有组合计数、方案数或计数对象。原文摘要及约束均未涉及计数。规则eligibility.required_seed_properties第一条即要求明确有限的计数对象，此条件不满足。",
+        "feedback": "规则针对计数题设计，当前种子题是完全不同的问题类型，无法应用权重或分布计数。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "rule_contract_satisfied",
+      "message": "规划已将决策问题变为构造/证据双分支输出，冲突证据被定义为局部可检查对象（位置和数字），满足规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据规划审查官，重点确认规划是否同时定义了解分支和可局部检查的失败证据。",
+        "review_brief": "确认规划是否把无解分支写成可直接检查的局部阻碍证据，而不是解释性说明。",
+        "evidence": "candidate schema 的 core_constraints 新增 output_branch_specification 和 conflict_evidence_self_contained，objective 改为 construct_or_obstruction 并定义了双分支输出，invariant 包含 conflict_evidence_local_verifiability。applied_helpers 全部使用，无 redline 违反。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "rule_commitment_fulfilled",
+      "message": "题面明确要求在不相等时输出结构化冲突证据（position、digit1、digit2），并声明该证据可O(1)局部检查且自包含，未退化为解释文本，成功与失败分支对称定义，证据直接来自主约束的逐位比较，完全兑现了规则专属合同。",
+      "details": {
+        "review_role": "你扮演一名阻碍证据题面审查官，重点确认题面是否写清失败输出和证据的检查语义。",
+        "review_brief": "确认题面是否要求在无解时输出一个可局部检查的冲突证据，而不是仅仅解释为什么无解。",
+        "evidence": "题面描述：“输出：{\"type\":\"conflict\",\"position\":<整数>,\"digit1\":\"<字符>\",\"digit2\":\"<字符>\"}。该证据是自我完整的：任何检查者只需查看该位置上的两个字符即可验证两个模式不等，无需进行全展开或复杂的数值比较。” Notes：“证据的自包含性意味着仅凭position和两个digit字符，即可判定两个模式不等，无需获取其他任何信息。” 在new_schema的core_constraints中有conflict_evidence_self_contained约束，objective要求construct_or_obstruction双分支输出，invariant定义了局部可验证性。样本解释展示了如何从主比较中提取位置和数字。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "规划成功：将 equal rational numbers 从判定问题转换为构造或冲突证据输出问题，符合 construct_or_obstruction 规则，且已落实校园运营主题。",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "construct_or_obstruction",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "教室调度模式比较",
+    "description": "阳光大学的社团活动非常丰富，每个社团都需要提前向教务处申请教室使用时间。教务处使用一种特殊的格式来记录教室的占用模式，能够简洁地表示重复的周期安排。这种格式类似于小数的循环表示：可以用圆括号标明无限重复的部分。例如，“0.1(6)”表示从0.1开始，然后无限重复'6'，即占用模式在时间轴上的分布类似于0.1666...（与实际时间无关，仅用作模式表示）。\n\n现在，两个社团提交了他们的教室占用模式记录，但可能用了不同的表达方式。你的任务是编写程序，比较这两种模式记录是否实质相同（即它们代表同一个教室占用模式）。如果相同，你需要输出该模式的一种“规范格式”（最简表示）；如果不同，你需要精确指出从哪一时刻开始，两个模式首次出现不一致，并提供该时刻的两个数字，以便教务老师能够快速、独立地验证你的判断，而无需重新进行全周期的复杂计算。\n\n输入字符串的格式必须符合以下规则：\n- 模式记录由三部分组成：整数部分、非重复小数部分（可选）、循环部分（可选）。\n- 具体格式：只有整数部分；或整数部分后跟一个小数点和一个非重复部分；或整数部分后跟一个小数点、一个非重复部分，再跟一对圆括号括起来的循环部分。\n- 整数部分不能有多余的前导零（除非整数部分就是0本身），且长度在1到4之间。\n- 非重复部分长度在0到4之间，循环部分长度在1到4之间（如果存在）。\n- 所有部分仅包含数字字符。\n\n输出必须是严格的JSON对象，包含以下两种可能结构之一：\n• 如果两个模式相同，输出：{\"type\":\"equal\",\"representation\":\"<规范表示>\"}，其中<规范表示>是一个符合上述输入格式的字符串，且是该模式的最简规范表示（定义见后）。\n• 如果两个模式不同，输出：{\"type\":\"conflict\",\"position\":<整数>,\"digit1\":\"<字符>\",\"digit2\":\"<字符>\"}。这里的position表示在将两个模式都完全展开为纯数字序列后（将循环部分重复足够多次以暴露差异），从0开始计数的第一个不同数字的位置。digit1为第一个模式在该位置的数字，digit2为第二个模式在该位置的数字。该证据是自我完整的：任何检查者只需查看该位置上的两个字符即可验证两个模式不等，无需进行全展开或复杂的数值比较。\n\n规范表示的定义（保证唯一且最简）：\n- 整数部分没有多余前导零（0本身除外）。\n- 如果有小数部分，不会以循环的'9'结尾（意味着不会出现形如0.9(9)的表示，这种表示会转化为有限小数）。\n- 优先选择非重复部分最短的表示；在等长的循环长度中，尽量使得循环部分不会以0开始（除非整个循环就是0，此时表示为有限小数）。\n- 如果某种模式可以用有限小数准确表示（即没有循环或循环部分等效为0），则不允许出现循环括号。\n- 值0的规范表示为\"0\"。",
+    "input_format": "两行，每行一个字符串，分别代表两个社团的教室占用模式记录。",
+    "output_format": "一行，一个JSON对象，结构如上所述。",
+    "constraints": [
+      "时间限制：1秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "0.(52)\n0.5(25)",
+        "output": "{\"type\":\"equal\",\"representation\":\"0.(52)\"}",
+        "explanation": "两个模式都表示循环小数0.525252...，规范表示中非重复部分应为空，因此输出\"0.(52)\"。"
+      },
+      {
+        "input": "0.(3)\n0.1(2)",
+        "output": "{\"type\":\"conflict\",\"position\":1,\"digit1\":\"3\",\"digit2\":\"2\"}",
+        "explanation": "将两个模式转换为纯数字序列：第一个为'0' + '3'重复 → \"03333...\"，第二个为'0' + '1222...' → \"01222...\"。在索引0（整数部分的0）处相同，索引1处出现第一次不同：第一个模式的数字是'3'，第二个模式的数字是'2'。因此冲突证据为position=1，digit1='3'，digit2='2'。验证者只需检查这两个字符即可确认它们不等，无需完整展开。"
+      }
+    ],
+    "notes": "冲突证据中的position索引基于以下规则：将每个模式记录转换为纯数字序列，转换方法为保留整数部分原样，若有小数部分则去掉括号并将循环节重复至长度L（本题保证L=20足够），然后将得到的小数数字串接在整数部分后面。索引0始终对应原整数部分的最左边数字。例如，输入“0.(52)”展开为“052525252...”，输入“123.0(1)”展开为“123010101...”。若两个序列长度不同（比如一个没有小数部分），则较短序列的小数部分视为后续全0。证据的自包含性意味着仅凭position和两个digit字符，即可判定两个模式不等，无需获取其他任何信息。\n规范表示的算法需要保证相同数值的模式一定映射到完全相同的字符串。例如，0的规范表示为“0”；0.0和0.00等非法（因为不符合输入格式），0.9(9)的规范表示为“1.”。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_leetcode_180d25df7224_campus_ops_20260609_193718",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}

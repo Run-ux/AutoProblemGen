@@ -1,0 +1,635 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 97.0,
+    "divergence_score": 77.1,
+    "schema_distance": 0.4419,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中的输入结构（item_count, original_items, target_total_cost）、核心约束（original_coverage_after_modifications, allowed_modifications, target_minimum_payment_condition）和目标（inverse_design_with_target）均已准确落地到 generated_problem 的 description、input_format、output_format 和 constraints 中，无遗漏或冲突。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "hard_checks.objective_alignment",
+          "hard_checks.structural_option_alignment"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面包含了任务说明、修改代价定义、目标最小支付条件、输入输出格式、约束范围（包括修改后属性的限制）、注意事项（使用64位整数）等所有独立做题所需的关键信息，无重大遗漏。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints 和 samples 之间在字段数量、目标定义、数据范围、修改规则上完全一致，没有出现矛盾或歧义。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 4.0,
+        "rationale": "样例数量为3，覆盖了不需要修改、需要复杂修改、简单费用调整等多种场景，输入输出与题意匹配。但样例1的解释中“覆盖条件为 ti ≥ 0，任意子集均满足”表述不严谨（空集事实上不满足条件，虽然题目隐含支付子集非空），可能对部分选手造成轻微误导。",
+        "evidence_refs": [
+          "generated_problem.samples[0].explanation",
+          "hard_checks.sample_count"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，分段合理，用词明确，无来源污染，符合常见 OJ 题面的表达习惯，便于参赛者快速准确理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes",
+          "hard_checks.source_leakage"
+        ]
+      }
+    ],
+    "strengths": [
+      "全面准确地实现了 new_schema 定义的反向设计任务，任务描述清晰。",
+      "输入输出格式规范，约束范围完整，样例丰富且解释较详细。",
+      "题面无来源泄露，结构清楚，符合 OJ 习惯，可读性强。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4419,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.7857,
+        "O": 0.5087,
+        "V": 0.3953
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.7857,
+        "objective_type_distance": 0.5269,
+        "objective_text_distance": 0.4814,
+        "invariant_match_distance": 0.3953
+      }
+    },
+    "schema_distance": 0.4419,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.8,
+    "solution_transfer_risk": 0.2,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "The new problem transforms the task from forward optimization (compute minimal payment for given items) to inverse design (modify items so that the minimal payment equals a target value). This changes the input (addition of target K), the objective (minimizing modification cost instead of payment), and the solution space substantially. The original DP can only serve as a verification subroutine; the main solver must search over modifications, requiring a completely new algorithm. The underlying coverage constraint is retained, but the core problem semantics and algorithmic demands are fundamentally different. The narrative and theme are distinct, with no direct textual reuse.",
+    "evidence_refs": [
+      "original_schema.objective",
+      "new_schema.objective",
+      "original_schema.core_constraints",
+      "new_schema.core_constraints",
+      "generated_problem.description",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.44，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例1解释不严谨",
+      "detail": "样例1解释中写“由于 n=1，覆盖条件为 ti ≥ 0，任意子集均满足”，实际上空子集不满足条件（因为 0 ≥ 1 不成立）。虽然做题者能理解支付子集通常指非空子集，但表述可能引起困惑。",
+      "evidence_refs": [
+        "generated_problem.samples[0].explanation"
+      ],
+      "fix_hint": "将解释改为例如“只支付那件物品，覆盖条件满足，因此最小支付为5”，明确支付子集包含该物品。"
+    }
+  ],
+  "suggested_revisions": [
+    "将解释改为例如“只支付那件物品，覆盖条件满足，因此最小支付为5”，明确支付子集包含该物品。",
+    "修正样例1的解释，消除关于“任意子集”的不严谨表述。"
+  ],
+  "revision_brief": {
+    "round_index": 4,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 97.0,
+    "divergence_score": 77.1,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例1解释不严谨",
+        "detail": "样例1解释中写“由于 n=1，覆盖条件为 ti ≥ 0，任意子集均满足”，实际上空子集不满足条件（因为 0 ≥ 1 不成立）。虽然做题者能理解支付子集通常指非空子集，但表述可能引起困惑。",
+        "evidence_refs": [
+          "generated_problem.samples[0].explanation"
+        ],
+        "fix_hint": "将解释改为例如“只支付那件物品，覆盖条件满足，因此最小支付为5”，明确支付子集包含该物品。"
+      }
+    ],
+    "suggested_revisions": [
+      "将解释改为例如“只支付那件物品，覆盖条件满足，因此最小支付为5”，明确支付子集包含该物品。",
+      "修正样例1的解释，消除关于“任意子集”的不严谨表述。"
+    ],
+    "strengths_to_keep": [
+      "全面准确地实现了 new_schema 定义的反向设计任务，任务描述清晰。",
+      "输入输出格式规范，约束范围完整，样例丰富且解释较详细。",
+      "题面无来源泄露，结构清楚，符合 OJ 习惯，可读性强。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\source\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\artifacts\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d_campus_ops_20260609_202814_round4.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_289_311_d10df14e\\generation\\output\\taco_codeforces_359a62b3c24d\\taco_codeforces_359a62b3c24d_campus_ops_20260609_202814_round4.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_359a62b3c24d",
+      "title": "B",
+      "description": "Bob came to a cash & carry store, put n items into his trolley, and went to the checkout counter to pay. Each item is described by its price ci and time ti in seconds that a checkout assistant spends on this item. While the checkout assistant is occupied with some item, Bob can steal some other items from his trolley. To steal one item Bob needs exactly 1 second. What is the minimum amount of money that Bob will have to pay to the checkout assistant? Remember, please, that it is Bob, who determines the order of items for the checkout assistant.\n\nInput\n\nThe first input line contains number n (1 ≤ n ≤ 2000). In each of the following n lines each item is described by a pair of numbers ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 109). If ti is 0, Bob won't be able to steal anything, while the checkout assistant is occupied with item i.\n\nOutput\n\nOutput one number — answer to the problem: what is the minimum amount of money that Bob will have to pay.\n\nExamples\n\nInput\n\n4\n2 10\n0 20\n1 5\n1 3\n\n\nOutput\n\n8\n\n\nInput\n\n3\n0 1\n0 10\n0 100\n\n\nOutput\n\n111",
+      "input": "The first input line contains number n (1 ≤ n ≤ 2000). In each of the following n lines each item is described by a pair of numbers ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 109). If ti is 0, Bob won't be able to steal anything, while the checkout assistant is occupied with item i.",
+      "output": "Output one number — answer to the problem: what is the minimum amount of money that Bob will have to pay.",
+      "constraints": "time limit: 1.0 seconds\nmemory limit: 256.0 megabytes",
+      "source": "codeforces",
+      "standard_solution_code": "n = int(input())\nar = [float('inf')] * (n + 1)\nar[0] = 0\nfor i in range(n):\n\t(t, c) = map(int, input().split())\n\tfor j in range(n - 1, -1, -1):\n\t\tw = min(j + t + 1, n)\n\t\tar[w] = min(ar[w], ar[j] + c)\nprint(ar[n])"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_359a62b3c24d",
+        "codeforces",
+        "Bob came to a cash & carry store, put n items into his trolley, and went to the checkout counter to pay. Each item is described by its price ci and time ti in seconds that a checkout assistant spends on this item. Whi...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "必须改变核心约束以引入修改操作和目标支付条件；目标从最小化支付转为最小化修改代价并输出方案；不变量从原 DP 最优子结构更新为逆向设计最优性的证明结构。",
+      "summary": "从正向求解变为反向设计，需要搜索数据修改空间而非解空间。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inv_home_organization_target_cost",
+      "source": "derived_from_codeforces_359a62b3c24d_home_organization",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": 1,
+          "max": 2000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "item_count",
+            "role_description": "number of items to organize",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 2000
+            },
+            "properties": {}
+          },
+          {
+            "role": "original_items",
+            "role_description": "list of items, each given by its space occupation ti and organization cost ci",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 2000
+            },
+            "value_range": {
+              "ti": {
+                "min": 0,
+                "max": 2000
+              },
+              "ci": {
+                "min": 1,
+                "max": 1000000000
+              }
+            },
+            "properties": {}
+          },
+          {
+            "role": "target_total_cost",
+            "role_description": "the target minimum total organization cost K that must be achieved after modifications",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 1000000000
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "original_coverage_after_modifications",
+            "description": "After modifications, there must exist a subset P of items so that if you pay to organize them, the total time spent (ti) is at least the number of items you can steal (i.e., n - |P|). Formally, ∑_{i∈P} ti ≥ n - |P|.",
+            "formal": "∃ P ⊆ {1..n} : ∑_{i∈P} ti ≥ n - |P|",
+            "source_sections": [
+              "derived from original problem"
+            ]
+          },
+          {
+            "name": "allowed_modifications",
+            "description": "For each item i, you may change its space ti to any non‑negative integer and its cost ci to any positive integer. The cost of modifying item i is |new_ti - old_ti| + |new_ci - old_ci|. The total modification cost is the sum over all items.",
+            "formal": "Let Δt_i = new_ti - ti, Δc_i = new_ci - ci. Modification cost = ∑_{i=1..n} (|Δt_i| + |Δc_i|). All new_ti ≥ 0, new_ci ≥ 1.",
+            "source_sections": [
+              "constructed"
+            ]
+          },
+          {
+            "name": "target_minimum_payment_condition",
+            "description": "The modified item set must satisfy: its minimum possible total organization cost (i.e., the optimal payment over all valid subsets P) is exactly K. That is, min_{P : ∑ti ≥ n - |P|} ∑_{i∈P} ci = K.",
+            "formal": "min_pay = min_{P : ∑ti ≥ n - |P|} ∑_{i∈P} ci == K",
+            "source_sections": [
+              "constructed"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "inverse_design_with_target",
+        "description": "Minimize the total modification cost under the condition that the modified item set achieves target minimum payment K. Output the minimum modification cost; if impossible, output -1. Additionally, if feasible, output one optimal modification scheme (new values of ti and ci for each item).",
+        "target": "optimal_modification_scheme",
+        "requires_solution": true
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "modification_dp_optimality",
+            "description": "During the algorithm, a dynamic programming state tracks (prefix of items, coverage volume, total payment) and the minimal modification cost to achieve it. The invariant guarantees that the found modification scheme makes the minimum payment exactly K, and no other modification with lower total cost can achieve the same. The DP optimal substructure is maintained by considering each possible combination of modification choices for each item and updating the minimal cost boundaries.",
+            "properties": {
+              "state": "dp[i][j][c] = minimal modification cost for first i items to reach coverage at least j and total payment exactly c under optimal selection of paid items",
+              "compression": "due to large c, the DP may compress payment dimensions using the property that only minimal payment for each coverage level matters in the original problem, or employ a branch‑and‑bound with bounding on modification cost."
+            },
+            "evidence_source": "newly designed algorithm"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "储物柜整理挑战",
+      "description": "小明正在整理他的储物柜，柜子里有 n 件物品。每件物品有两个属性：占用格子数 ti 和整理费用 ci。ti 是一个非负整数，ci 是一个正整数。\n\n小明可以选择一些物品并支付它们的整理费用。只要所有被支付物品的总占用格子数不少于未被支付物品的数量，他就能成功整理所有物品。换句话说，对于一个支付集合 P，必须满足 ∑_{i∈P} ti ≥ n - |P|，此时总支付为 ∑_{i∈P} ci。\n\n然而，今天小明希望先调整这些物品的属性，使得在后续的最优整理方案中，最小总支付恰好等于指定的目标 K。他可以对每件物品进行修改：将占用格子数改为 0 到 2000 之间的任意整数 new_ti，将整理费用改为 1 到 10^9 之间的任意整数 new_ci。每次修改的代价为 |new_ti - ti| + |new_ci - ci|。总修改代价是所有单件物品修改代价之和。\n\n请判断是否存在一种修改方案，使得修改后的物品集合在最优整理策略下（即满足覆盖约束并使总支付最小）的最小支付恰好等于 K。如果存在，请输出最小的总修改代价，并给出一种具体的修改方案；如果不可能，则输出 -1。",
+      "input_format": "第一行一个整数 n (1 ≤ n ≤ 2000)，表示物品的数量。\n接下来 n 行，每行两个整数 ti, ci (0 ≤ ti ≤ 2000, 1 ≤ ci ≤ 10^9)，描述每件物品原始的占用格子数和整理费用。\n最后一行一个整数 K (1 ≤ K ≤ 10^9)，表示目标最小总支付。",
+      "output_format": "如果无法通过修改使得最小支付恰好为 K，只输出一个整数 -1。\n否则，第一行输出一个整数，表示最小的总修改代价。\n接下来 n 行，每行输出两个整数 new_ti, new_ci，表示第 i 件物品修改后的占用格子数和整理费用。若有多种最优修改方案，输出任意一种即可。",
+      "constraints": [
+        "时间限制：2 秒",
+        "空间限制：256 MB",
+        "1 ≤ n ≤ 2000",
+        "0 ≤ ti ≤ 2000，1 ≤ ci ≤ 10^9",
+        "1 ≤ K ≤ 10^9",
+        "修改后的 new_ti 必须满足 0 ≤ new_ti ≤ 2000，new_ci 必须满足 1 ≤ new_ci ≤ 10^9"
+      ],
+      "samples": [
+        {
+          "input": "1\n0 5\n5",
+          "output": "0\n0 5",
+          "explanation": "只有一件物品，占用格子数为 0，整理费用为 5。由于 n=1，覆盖条件为 ti ≥ 0，任意子集均满足，因此最小支付即为该物品的费用 5，恰好等于目标 K=5。不需要任何修改，总代价为 0，输出原始属性即可。"
+        },
+        {
+          "input": "2\n2 10\n0 20\n8",
+          "output": "24\n0 1\n0 7",
+          "explanation": "有两件物品，原始属性为 (2,10) 和 (0,20)，目标 K=8。若不做修改，第一件物品单独即可满足 ∑ti=2 ≥ 1，因此最小支付为 10，不为 8。为了让最小支付恰好为 8，必须使任何单件物品都不能单独满足条件，即 new_t1 和 new_t2 都必须为 0。这样，唯一满足覆盖条件的子集是全集 {1,2}，其总费用必须等于 8。一种代价最小的修改方案是将第一件改为 (0,1)，第二件改为 (0,7)，总修改代价为 |0-2|+|1-10| + |0-0|+|7-20| = 2+9+0+13 = 24。可以证明不存在总代价更小的方案。"
+        },
+        {
+          "input": "3\n3 5\n1 8\n0 2\n7",
+          "output": "2\n3 7\n1 8\n0 2",
+          "explanation": "有三件物品，原始属性为 (3,5), (1,8), (0,2)，目标 K=7。原始最小支付为 5（只支付第一件即可，因为 3 ≥ 3-1=2）。要使最小支付变为 7，最经济的做法是将第一件物品的费用提高到 7，其他属性不变。此时支付第一件的费用为 7，而其他子集（如仅支付第三件，需满足 0 ≥ 3-1=2，不成立）均不可行，因此最小支付恰好为 7。总修改代价为 |7-5| = 2。不存在比 2 更小的修改代价。"
+        }
+      ],
+      "notes": "请注意答案可能超出 32 位整数范围，建议使用 64 位整数类型。如果存在多种最优修改方案，输出任意一种即可。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "从正向求解变为反向设计，需要搜索数据修改空间而非解空间。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4419,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.7857,
+          "O": 0.5087,
+          "V": 0.3953
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.7857,
+          "objective_type_distance": 0.5269,
+          "objective_text_distance": 0.4814,
+          "invariant_match_distance": 0.3953
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "The original problem’s minimal payment naturally becomes the inverse design target. Binding it as the target K is the first essential step.",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "Flips the direction from computing an optimal value to designing input that produces a prescribed optimal value, introducing a constructive feasibility challenge.",
+          "difficulty_reason": "Requires the algorithm to handle an external target constraint that couples the traditional DP state with a goal value, forcing search in a larger space."
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "Concrete modification operations are necessary to define the action space of the inverse design; otherwise the problem would be ill‑defined.",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "Formalizes atomic actions on items, turning an open‑ended construction into an enumerable optimization over editing sequences.",
+          "difficulty_reason": "The trade‑off between operation cost and target payment creates a multi‑objective optimization that must be proven correct with respect to the original coverage rule."
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "Without requiring minimal modification cost, the problem reduces to finding any feasible modification, which is much easier and less interesting.",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [],
+          "innovation_reason": "Imposes an optimality proof obligation, elevating the problem from mere existence to genuine optimization with a lower bound argument.",
+          "difficulty_reason": "The algorithm must not only meet the target constraint but also certify that no cheaper modification exists, which typically requires a DP with optimal substructure and a contradiction proof."
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "Original DP: iterate items, maintain for each coverage volume j the minimum total payment ar[j]; transition ar[min(j+ti+1, n)] = min(ar[min(j+ti+1, n)], ar[j] + ci); answer is ar[n].",
+        "reusable_subroutines": "The original DP can be used as a subroutine to verify that a given modified item set yields minimum payment exactly K (by computing its min payment and comparing to K).",
+        "new_solver_core": "A new DP is designed that extends the state to incorporate modification cost. For each item, we iterate over all possible modifications of ti and ci within feasible ranges, and update a multi‑dimensional DP table that records the minimal modification cost to achieve every jointly reachable (coverage, payment) pair. The answer is the minimum modification cost among states that satisfy the target payment K.",
+        "new_proof_obligation": "Must prove: (1) the constructed modified instance satisfies the coverage constraint and has min payment equal to K; (2) no modification with strictly smaller total cost can achieve min payment exactly K. The proof relies on the optimal substructure of the extended DP, where each state stores the minimal modification cost for a given (coverage, payment) pair, and a contradiction argument that if a better modification existed it would have been found by the DP.",
+        "why_direct_reuse_fails": "The original DP only computes the minimum payment for a fixed input; it cannot search over modifications of the input items. Direct reuse would merely evaluate candidate modifications one by one, leading to an exponential search space without dynamic programming over the modification decisions."
+      },
+      "anti_shallow_rationale": "The problem reverses the causal direction: from 'given input, find minimal output' to 'given target output, find minimal input change to achieve that output'. This forces the algorithm to operate in the data‑editing space, not merely in the solution space. The original DP is demoted to a verification tool, while the dominant solving loop must decide how to adjust items to hit a prescribed optimal value. This goes far beyond thematic rewriting or shallow objective swapping."
+    }
+  }
+}

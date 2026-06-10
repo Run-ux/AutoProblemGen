@@ -1,0 +1,1109 @@
+{
+  "problem_id": "taco_campus_turnstile_pairing_count",
+  "source_problem_ids": [
+    "taco_codeforces_3249c8d739df"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 3,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "campus_ops",
+    "name": "校园运营"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codeforces_3249c8d739df",
+      "codeforces",
+      "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. In Treeland there are 2k universities which are located in different tow...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "目标(O)从最大化数值变为计数；约束(C)中增加计数定义、去重规则和流量上限的强制要求；不变量(V)从全局最大流量的可达性变为每个子树必须满足的闸机外部需求数量，支撑DP分解。",
+    "summary": "目标维度完全切换为计数，约束中显式给出方案等价关系与流量上限的强制性，不变量转化为子树状态转移规则。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4022,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4022,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.583,
+      "O": 0.5244,
+      "V": 0.4808
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.583,
+      "objective_type_distance": 0.5645,
+      "objective_text_distance": 0.4643,
+      "invariant_match_distance": 0.4808
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "count_solutions",
+    "description": "计算满足每条边流量达到上限的闸机配对方案总数，并对10^9+7取模。",
+    "target": "total_count",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "existence_to_counting 将最大化问题改造为计数最优方案数，需重构树形DP处理等价类与去重，解法从简单边贡献求和升级为组合计数，创新度与难度显著提升；canonical_witness 仅增加方案输出，主要算法不变，易成浅改；inverse_design 难以定义自然的最小修改操作；global_coupling 因原题已有全局耦合而不适用。；创新度判断：原题核心是计算每条边贡献上限并求和，新题要求计数所有达到最大总距离的配对方案，主义务从“求单一数值”转为“计数等价类”，目标由最大化变为准确计数，约束需明确去重规则，状态设计必须支持子树组合计数，彻底改变算法框架。；难度判断：原题O(n)后序遍历求和即可，新题需要树形DP对配对方案进行组合计数，涉及子树间配对方式的枚举或卷积，需处理大规模组合数取模与去重证明，难度可从简单题跃升至省选/Codeforces 2400+级别。；风险判断：计数DP若设计不当可能退化为暴力枚举，去重规则若定义不清将导致歧义，但通过明确等价关系（无序对的无序集合）并设计多项式计数DP可有效控制风险。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_campus_turnstile_pairing_count",
+    "source": "derived",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {
+        "connected": true,
+        "acyclic": true,
+        "directed": false,
+        "simple": true
+      },
+      "components": [
+        {
+          "role": "config",
+          "role_description": "两个整数：节点数n和闸机对数k",
+          "type": "tuple",
+          "length": {
+            "min": 2,
+            "max": 2
+          },
+          "value_range": {
+            "min": 2,
+            "max": 2000
+          },
+          "properties": {}
+        },
+        {
+          "role": "turnstiles",
+          "role_description": "2k个互不相同的节点编号，表示闸机所在位置",
+          "type": "array",
+          "length": {
+            "min": 2,
+            "max": 2000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 2000
+          },
+          "properties": {
+            "distinct": true
+          }
+        },
+        {
+          "role": "edges",
+          "role_description": "n-1条无向边构成树",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 1999
+          },
+          "value_range": {
+            "min": 1,
+            "max": 2000
+          },
+          "properties": {
+            "directed": false
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "complete_pairing",
+          "description": "2k个闸机必须恰好配成k个不相交的无序对，每个闸机恰出现在一对中。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "distinct_nodes_for_turnstiles",
+          "description": "所有闸机位于互不相同的节点上。",
+          "formal": "",
+          "source_sections": [
+            "description",
+            "input"
+          ]
+        },
+        {
+          "name": "unit_edge_weight",
+          "description": "每条通道（边）的长度均为1，两个闸机之间的路径长度等于它们之间边的条数。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "flow_upper_bound",
+          "description": "对于一个配对方案，每条边被所有配对的路径经过的次数等于该边一侧子树内的闸机数量s与另一侧2k-s的较小值min(s,2k-s)。题目要求方案必须达到该上限（即总距离最大）。",
+          "formal": "",
+          "source_sections": [
+            "description",
+            "output"
+          ]
+        },
+        {
+          "name": "counting_definition",
+          "description": "一个配对方案定义为2k个闸机集合的一个划分，分成k个两两不相交的二元子集（无序）。两个方案不同当且仅当存在至少一对闸机在一个方案中被分在同一个对中，而在另一个方案中没有。不考虑对内的顺序或对的顺序。",
+          "formal": "",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "modulo",
+          "description": "答案可能很大，需要对质数M=10^9+7取模输出。",
+          "formal": "",
+          "source_sections": [
+            "output"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "count_solutions",
+      "description": "计算满足每条边流量达到上限的闸机配对方案总数，并对10^9+7取模。",
+      "target": "total_count",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "subtree_external_need",
+          "description": "对于树中任意节点v的子树，设其内部闸机数为s。任何有效方案中，v与其父节点相连的边被使用的次数必须恰为min(s, 2k-s)。该值决定了子树内必须有多少个闸机与外部配对，从而将问题拆分为可动态规划的计数单元。",
+          "properties": {},
+          "evidence_source": "both"
+        }
+      ]
+    },
+    "theme": {
+      "id": "campus_ops",
+      "name": "校园运营",
+      "tone": "日常、轻松、贴近现实",
+      "keywords": [
+        "社团",
+        "教室",
+        "队伍",
+        "课表",
+        "仓库",
+        "窗口"
+      ],
+      "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "existence_to_counting",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "一次DFS计算每条边两侧的闸机数，贡献min(s,2k-s)，求和得到最大总距离。",
+    "reusable_subroutines": "树的DFS遍历，统计子树闸机数量。",
+    "new_solver_core": "树上动态规划：设dp[v][j]为在v的子树内，有j个闸机尚未配对（即需要与v的祖先或兄弟子树中的闸机配对）的方案数。转移时合并子节点，根据v本身是否为闸机以及子树的未配对需求来更新状态，最终答案在dp[root][0]（或根据根的情况）。",
+    "new_proof_obligation": "需证明DP状态转移完整覆盖了所有满足流量上限的配对方案，无重复计数；证明每条边的流量上限等价于子树外部需求等于min(s,2k-s)，从而给出DP的边界条件和转移合法性；证明取模不影响计数正确性。",
+    "why_direct_reuse_fails": "原算法只求和，状态仅需一个整数值；计数需要在整个配对组合空间上枚举，必须跟踪未配对闸机的具体数量，状态维度从0维升级为1维（甚至多子合并时需卷积），原算法无法直接套用。"
+  },
+  "anti_shallow_rationale": "改动不仅将答案从数值换成计数，更彻底重构了求解义务：原题通过贪心计算边贡献即可；新题要求在所有最大化方案上计数，引入了子树未配对闸机这一核心状态，迫使算法采用DP并处理组合合并，难度和正确性证明远高于原题。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "counting_unit_definition",
+      "selection_reason": "必须明确计数对象和去重规则，否则计数目标模糊。",
+      "affected_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "在core_constraints中添加counting_definition和modulo约束",
+        "将objective改为count_solutions类型",
+        "在invariant中隐含方案等价性"
+      ],
+      "innovation_reason": "将原题的存在性/数值型答案升级为组合计数，需定义何为一个方案、何时两个方案不同，从而要求更严格的分析。",
+      "difficulty_reason": "去重规则迫使解法必须精确区分方案，不能简单沿用构造性方法，增加了组合验证负担。"
+    },
+    {
+      "id": "state_factorization",
+      "selection_reason": "解空间是2k个闸机的完美匹配，必须拆分为子树状态才能有效计数。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在core_constraints中添加flow_upper_bound强制要求",
+        "在invariant中引入subtree_external_need，将问题分解为子树未配对闸机数"
+      ],
+      "innovation_reason": "通过边流量上限将整体配对方案计数转化为子树状态的聚合，提供了DP求解的基础，完全改变了求解视角。",
+      "difficulty_reason": "要求设计带一维状态的树上DP，并处理多子树的合并（可能涉及卷积或背包），较原题单值聚合大幅提升复杂度。"
+    },
+    {
+      "id": "counting_obligation_lock",
+      "selection_reason": "确保计数是主求解目标，而非在原最大化问题后顺手统计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "objective直接设为计数，不再保留原最大化目标",
+        "core_constraints中flow_upper_bound作为方案有效性前提，与计数目标绑定"
+      ],
+      "innovation_reason": "完全替换原题目标，使题目从“求最大值”变为“数方案”，性质根本改变。",
+      "difficulty_reason": "解法不能使用原贪心或简单DP，必须直接针对计数设计状态和转移，且需处理取模，难度显著提高。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "eligible_sufficient_difference",
+      "selection_reason": "原题只输出最大总距离，未要求输出配对方案，但存在明确的配对方案作为解对象，且方案可定义自然规范顺序（如字典序最小配对列表）。增加规范解输出将迫使解法构造具体配对并证明最优性，明显改变核心约束与验证责任，符合规范解审查要求。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述仅要求输出最大距离，标准解法通过边贡献计算和，不涉及配对构造（见standard_solution_code）。规则eligible要求‘原题本身有明确的解对象，或者答案可以恢复成方案’成立；禁止项‘原题本来就要求输出完整方案’不成立。Helper 'canonical_order_pressure' 和 'proof_bearing_output' 可将规范顺序和证明责任推入主状态演化，避免退化为简单后处理。",
+        "feedback": "原题存在未显式的配对方案，且可定义规范顺序，有升级空间。但需注意新题可能与原题共享边贡献分析的核心，需确保规范要求充分渗透到约束和目标中，避免表面改动。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是树上的最大距离配对问题，始终存在可行解且目标上界恒可达，没有‘做不到’的无解状态，无法产生可局部检查的冲突证据，规则要求的双分支输出语义（方案或证据）会退化成单纯输出方案，不能体现证书审查的意图。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题输入保证2k个大学位于互异节点，树连通，因此任意配对总是可行；约束'unit_edge_weight'和'maximize_total_pairwise_distance'指出目标是最大化总距离，不涉及无解情形。规则'construct_or_obstruction'要求输出方案或局部冲突证据，但原题不存在‘做不到’的原因，无法满足‘做不到的原因可以用局部证据表示’的种子属性要求。",
+        "feedback": "该规则的核心创新在于将失败语义固化为可检查的输出对象，而当前种子题天然不存在无解场景，强行应用只会得到单纯输出方案的变形，既未触发‘冲突证据’的构造，也违反‘不能只换故事背景’的红线。建议更换具有明确阻塞结构（如组合约束导致不可行）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.07,
+      "reason_code": "criteria_met",
+      "selection_reason": "种子题输出单一最大值，解空间为所有大学配对方式，有限且等价关系清晰（配对无序）。最优解计数目标明确，可基于边贡献上限按子树单元拆分与汇总，完全满足计数化规则要求的有限性、去重和可拆分条件。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题约束`distinct_nodes_for_universities`确保大学位于不同节点，`complete_pairing`定义配对划分，等价关系隐含其中；`maximize_total_pairwise_distance`给出单一最优值目标；不变量`edge_crossing_upper_bound`表明最大总距离等于各边贡献上限之和，说明可按边/子树单元分解并汇总；解空间大小为有限组合数，可计数并取模。",
+        "feedback": "建议在规划阶段明确定义‘不同配对’的去重口径（如配对划分为无序集合），并将计数责任直接写入目标，避免仅附加取模处理。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是一个确定性组合优化问题：给定固定树和固定大学集合，求最大配对距离。不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法自然引出扰动模型，强行添加扰动属于硬造对手，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "schema中core_constraints包括complete_pairing（固定配对要求）、unit_edge_weight（所有边权为1）、maximize_total_pairwise_distance（确定性目标）；invariant为边贡献上限同时可达，无任何概率或顺序不确定因素。原题描述无任何暗示存在可变条件或扰动。",
+        "feedback": "该种子不具备规则要求的原生扰动语义，若强行使用会变成故事背景硬造对手，建议寻找其他包含真正不确定性的种子（如调度顺序、资源可回收等场景）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "semantic_mismatch",
+      "selection_reason": "原题是最大化总距离的组合优化问题，并非可行性判定，缺少“可行性随参数单调变化”这一必要结构，无法自然扩展为阈值优化题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective为maximize_value，core_constraints为完全配对与单位边权，无任何基于阈值的可行区域定义；规则要求required_seed_properties需包含“原题可行性随某个参数具有清晰的单调性或分层结构”，但原题无此类性质。",
+        "feedback": "该题不具备从可行性升级为临界阈值的自然接口，建议选择具有单调可行域（如判定是否存在满足某条件的解）的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_natural_second_objective",
+      "selection_reason": "种子题为树上的大学配对问题，仅要求最大化配对总距离，不存在自然的第二评价指标（如预算、风险或最小化某类成本），强行引入会违背原题结构，不符合规则要求的“原题目标附近存在自然的第二评价指标”。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为单目标最大化总距离（maximize total distance），core_constraints 和 invariant 均围绕此单一目标设计，无任何第二指标的描述；原题答案仅输出一个最大总和值。",
+        "feedback": "该规则要求种子题存在与主目标冲突的自然第二指标，但本题无任何冲突维度，不适合扩展为多目标权衡前沿题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "reverse_design_natural",
+      "selection_reason": "原题输出最大总距离可作为反向目标数值；修改大学位置是输入结构中的自然操作，与原核心边贡献规律直接相关，形成可验证的最小修改设计问题。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题目标为最大化大学配对总距离，输出为数值，符合target_result_binding要求；原题输入包含大学位置数组，允许定义移动大学的编辑操作，符合edit_operation_contract；边贡献上限不变性支持最小性论证，满足minimality_or_certificate_lock。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_coupling_via_edge_capacity",
+      "selection_reason": "原题将每条边的贡献视为独立局部单元（min(子树大学数, 总大学数-子树大学数)），且这些单元通过树上的大学分布自然关联。添加边容量（共享资源）后，各路径的选择相互制约，不能再独立求解每条边的最优值，必须进行全局耦合优化，因此规则适用。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示核心约束包括complete_pairing和maximize_total_pairwise_distance，invariant指出每条边贡献上限可同时达到，表明原题具有可分解的局部单元。规则要求的required_axis_changes (C,O,V) 可通过添加边容量约束、调整目标为在容量下最大化距离、并建立新的容量不变量来实现，满足helper 'shared_resource_constraint' 的prompt和红线。",
+        "feedback": "变换后需注意新目标的合理性（例如仍为最大化总距离，但增加边容量上界），避免与原有最优解矛盾。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_natural_adversarial_operation",
+      "selection_reason": "原题是静态配对优化，没有可转化的轮流选择或移动操作，强行引入玩家将违反‘不能硬造玩家’红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘分成对使得总距离最大’，输入给出大学位置和树边，没有顺序操作；核心约束仅要求完全配对和目标最大化，无决策过程；规则要求‘可轮流选择、拿取、移动或改变状态的自然操作’，原题无此属性。",
+        "feedback": "该规则不适用于当前种子题，因为不存在自然对抗化操作。考虑选择具有显式顺序决策过程的题目。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "种子题是树上的配对优化，其核心对象是大学节点和配对决策，不存在可组合的局部路径或区间族，因此无法自然地扩展为覆盖、割或支配问题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题具有路径、区间、子树等局部结构且多个局部对象可自然形成覆盖关系。种子题中大学位于节点，但不存在预定义的路径族；配对形成的路径是决策结果而非输入对象。因此不满足 `required_seed_properties`。",
+        "feedback": "建议寻找具有明确局部结构（如给定路径集、区间集合或子树族）且其组合能产生覆盖约束的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_not_counting_problem",
+      "selection_reason": "原题是最大化总距离的优化问题，输出单一数值，没有明确的有限计数对象，不满足规则要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective类型为maximize_value，core_constraints描述的是最大化总距离的配对，invariant给出边贡献上界，整个问题没有计数对象。",
+        "feedback": "规则要求原题已有明确有限的计数对象，但此种子题为最优化问题，无法应用带权计数扩展。无法定义自然权重或统计量。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "pass",
+      "reason_code": "eligible_sufficient_difference",
+      "message": "原题只输出最大总距离，未要求输出配对方案，但存在明确的配对方案作为解对象，且方案可定义自然规范顺序（如字典序最小配对列表）。增加规范解输出将迫使解法构造具体配对并证明最优性，明显改变核心约束与验证责任，符合规范解审查要求。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.82,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "eligible",
+        "evidence": "种子题描述仅要求输出最大距离，标准解法通过边贡献计算和，不涉及配对构造（见standard_solution_code）。规则eligible要求‘原题本身有明确的解对象，或者答案可以恢复成方案’成立；禁止项‘原题本来就要求输出完整方案’不成立。Helper 'canonical_order_pressure' 和 'proof_bearing_output' 可将规范顺序和证明责任推入主状态演化，避免退化为简单后处理。",
+        "feedback": "原题存在未显式的配对方案，且可定义规范顺序，有升级空间。但需注意新题可能与原题共享边贡献分析的核心，需确保规范要求充分渗透到约束和目标中，避免表面改动。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是树上的最大距离配对问题，始终存在可行解且目标上界恒可达，没有‘做不到’的无解状态，无法产生可局部检查的冲突证据，规则要求的双分支输出语义（方案或证据）会退化成单纯输出方案，不能体现证书审查的意图。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题输入保证2k个大学位于互异节点，树连通，因此任意配对总是可行；约束'unit_edge_weight'和'maximize_total_pairwise_distance'指出目标是最大化总距离，不涉及无解情形。规则'construct_or_obstruction'要求输出方案或局部冲突证据，但原题不存在‘做不到’的原因，无法满足‘做不到的原因可以用局部证据表示’的种子属性要求。",
+        "feedback": "该规则的核心创新在于将失败语义固化为可检查的输出对象，而当前种子题天然不存在无解场景，强行应用只会得到单纯输出方案的变形，既未触发‘冲突证据’的构造，也违反‘不能只换故事背景’的红线。建议更换具有明确阻塞结构（如组合约束导致不可行）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "criteria_met",
+      "message": "种子题输出单一最大值，解空间为所有大学配对方式，有限且等价关系清晰（配对无序）。最优解计数目标明确，可基于边贡献上限按子树单元拆分与汇总，完全满足计数化规则要求的有限性、去重和可拆分条件。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.07,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "原题约束`distinct_nodes_for_universities`确保大学位于不同节点，`complete_pairing`定义配对划分，等价关系隐含其中；`maximize_total_pairwise_distance`给出单一最优值目标；不变量`edge_crossing_upper_bound`表明最大总距离等于各边贡献上限之和，说明可按边/子树单元分解并汇总；解空间大小为有限组合数，可计数并取模。",
+        "feedback": "建议在规划阶段明确定义‘不同配对’的去重口径（如配对划分为无序集合），并将计数责任直接写入目标，避免仅附加取模处理。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是一个确定性组合优化问题：给定固定树和固定大学集合，求最大配对距离。不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法自然引出扰动模型，强行添加扰动属于硬造对手，违反红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "schema中core_constraints包括complete_pairing（固定配对要求）、unit_edge_weight（所有边权为1）、maximize_total_pairwise_distance（确定性目标）；invariant为边贡献上限同时可达，无任何概率或顺序不确定因素。原题描述无任何暗示存在可变条件或扰动。",
+        "feedback": "该种子不具备规则要求的原生扰动语义，若强行使用会变成故事背景硬造对手，建议寻找其他包含真正不确定性的种子（如调度顺序、资源可回收等场景）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "semantic_mismatch",
+      "message": "原题是最大化总距离的组合优化问题，并非可行性判定，缺少“可行性随参数单调变化”这一必要结构，无法自然扩展为阈值优化题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective为maximize_value，core_constraints为完全配对与单位边权，无任何基于阈值的可行区域定义；规则要求required_seed_properties需包含“原题可行性随某个参数具有清晰的单调性或分层结构”，但原题无此类性质。",
+        "feedback": "该题不具备从可行性升级为临界阈值的自然接口，建议选择具有单调可行域（如判定是否存在满足某条件的解）的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_objective",
+      "message": "种子题为树上的大学配对问题，仅要求最大化配对总距离，不存在自然的第二评价指标（如预算、风险或最小化某类成本），强行引入会违背原题结构，不符合规则要求的“原题目标附近存在自然的第二评价指标”。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 objective 为单目标最大化总距离（maximize total distance），core_constraints 和 invariant 均围绕此单一目标设计，无任何第二指标的描述；原题答案仅输出一个最大总和值。",
+        "feedback": "该规则要求种子题存在与主目标冲突的自然第二指标，但本题无任何冲突维度，不适合扩展为多目标权衡前沿题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "reverse_design_natural",
+      "message": "原题输出最大总距离可作为反向目标数值；修改大学位置是输入结构中的自然操作，与原核心边贡献规律直接相关，形成可验证的最小修改设计问题。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题目标为最大化大学配对总距离，输出为数值，符合target_result_binding要求；原题输入包含大学位置数组，允许定义移动大学的编辑操作，符合edit_operation_contract；边贡献上限不变性支持最小性论证，满足minimality_or_certificate_lock。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "pass",
+      "reason_code": "natural_coupling_via_edge_capacity",
+      "message": "原题将每条边的贡献视为独立局部单元（min(子树大学数, 总大学数-子树大学数)），且这些单元通过树上的大学分布自然关联。添加边容量（共享资源）后，各路径的选择相互制约，不能再独立求解每条边的最优值，必须进行全局耦合优化，因此规则适用。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "eligible",
+        "evidence": "种子题schema显示核心约束包括complete_pairing和maximize_total_pairwise_distance，invariant指出每条边贡献上限可同时达到，表明原题具有可分解的局部单元。规则要求的required_axis_changes (C,O,V) 可通过添加边容量约束、调整目标为在容量下最大化距离、并建立新的容量不变量来实现，满足helper 'shared_resource_constraint' 的prompt和红线。",
+        "feedback": "变换后需注意新目标的合理性（例如仍为最大化总距离，但增加边容量上界），避免与原有最优解矛盾。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_operation",
+      "message": "原题是静态配对优化，没有可转化的轮流选择或移动操作，强行引入玩家将违反‘不能硬造玩家’红线。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为‘分成对使得总距离最大’，输入给出大学位置和树边，没有顺序操作；核心约束仅要求完全配对和目标最大化，无决策过程；规则要求‘可轮流选择、拿取、移动或改变状态的自然操作’，原题无此属性。",
+        "feedback": "该规则不适用于当前种子题，因为不存在自然对抗化操作。考虑选择具有显式顺序决策过程的题目。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "种子题是树上的配对优化，其核心对象是大学节点和配对决策，不存在可组合的局部路径或区间族，因此无法自然地扩展为覆盖、割或支配问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "规则要求原题具有路径、区间、子树等局部结构且多个局部对象可自然形成覆盖关系。种子题中大学位于节点，但不存在预定义的路径族；配对形成的路径是决策结果而非输入对象。因此不满足 `required_seed_properties`。",
+        "feedback": "建议寻找具有明确局部结构（如给定路径集、区间集合或子树族）且其组合能产生覆盖约束的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "seed_not_counting_problem",
+      "message": "原题是最大化总距离的优化问题，输出单一数值，没有明确的有限计数对象，不满足规则要求。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "schema中objective类型为maximize_value，core_constraints描述的是最大化总距离的配对，invariant给出边贡献上界，整个问题没有计数对象。",
+        "feedback": "规则要求原题已有明确有限的计数对象，但此种子题为最优化问题，无法应用带权计数扩展。无法定义自然权重或统计量。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "ok",
+      "message": "规则“existence_to_counting”已兑现：规划明确定义了计数对象与去重规则（counting_definition），通过子树外部需求拆分解空间（subtree_external_need），并将计数锁定为主目标（objective改为count_solutions），所有 helpers 均已应用且满足红线和提示。",
+      "details": {
+        "review_role": "你扮演一名计数规划审查官，重点确认规划是否真正把目标升级为对象明确的计数任务。",
+        "review_brief": "确认规划是否定义了计数对象、去重口径、有限性来源，以及需要时的取模约定。",
+        "evidence": "candidate_schema中core_constraints包含counting_definition约束明确定义方案不同条件，并包含modulo约束；objective类型为count_solutions；invariant引入subtree_external_need分解为计数单元；planner_payload中applied_helpers逐一对应每个helper的schema_changes。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "counting_rules_established",
+      "message": "题面完整兑现了计数目标：定义了配对方案的去重规则、给出了取模方式，并通过边的流量上限条件隐式提供了将解空间拆分为计数单元的接口。",
+      "details": {
+        "review_role": "你扮演一名计数题面审查官，重点确认题面是否完整兑现计数目标与去重规则。",
+        "review_brief": "确认题面是否明确写出统计对象、等价关系、不同答案的判定口径，以及必要的模数约定。",
+        "evidence": "题面定义方案不同仅由闸机分配决定，排除对内和对间顺序；输出要求对 10^9+7 取模；并给出‘对于任意一条走廊，它被路径经过的次数恰好等于该走廊两侧闸机数中较少的那一侧的闸机数量’的强制条件，从而将整体计数分解为每条边的局部约束，为子树状态拆分提供了明确入口。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.07,
+      "accepted": true,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "",
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "校园闸机配对计数",
+    "description": "某大学校园里有 n 间教室，教室之间由 n−1 条走廊连接，形成一棵树，任意两间教室可以互相到达。学校在 2k 间不同教室里安装了闸机，现在计划将这些闸机恰好配成 k 对，每一对的两台闸机之间通过走廊建立一条直达通道。每种配对方案的总距离定义为这 k 条路径所经过的走廊总长度（每条走廊的长度均为 1）。\n\n根据分析，要使总距离达到最大，必须满足：对于任意一条走廊，它被路径经过的次数恰好等于该走廊两侧闸机数中较少的那一侧的闸机数量（即流量达到上限）。\n\n请你计算共有多少种不同的闸机配对方案能够使总距离达到这个最大值。由于方案数可能很大，请对 1000000007 (10^9+7) 取模后输出。\n\n配对方案的不同仅由哪些闸机被分到同一对决定，不考虑对内的顺序，也不考虑 k 个对之间的排列顺序。",
+    "input_format": "第一行包含两个整数 n 和 k，分别表示教室数量和需要配对的闸机对数。\n第二行包含 2k 个互不相同的整数，表示安装了闸机的教室编号，编号从 1 到 n。\n接下来的 n−1 行，每行包含两个整数 u 和 v，表示编号为 u 的教室和编号为 v 的教室之间有一条走廊。",
+    "output_format": "输出一个整数，表示使总距离达到最大值的闸机配对方案数量对 1000000007 取模的结果。",
+    "constraints": [
+      "2 ≤ n ≤ 2000",
+      "1 ≤ k ≤ n/2",
+      "1 ≤ 闸机编号 ≤ n，且所有闸机编号互不相同",
+      "保证输入的走廊构成一棵树",
+      "时间限制：2 秒",
+      "空间限制：256 MB"
+    ],
+    "samples": [
+      {
+        "input": "4 1\n1 4\n1 2\n2 3\n3 4",
+        "output": "1",
+        "explanation": "只有一种配对方案：将教室 1 和教室 4 的闸机配对，路径为 1–2–3–4，总距离为 3，达到最大值，因此方案数为 1。"
+      },
+      {
+        "input": "7 2\n1 2 5 6\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6",
+        "output": "2",
+        "explanation": "闸机位于教室 1, 2, 5, 6，可以算出最大总距离为 6。满足这一最大值的配对方案共有两种：(1,5) 和 (2,6) 配对，或者 (1,6) 和 (2,5) 配对。其余配对方式总距离都小于 6，不计入答案。"
+      }
+    ],
+    "notes": "输入保证 2k ≤ n。如果某条走廊某一侧没有闸机，则该走廊不会被任何路径经过。方案计数时，对内的两个闸机无顺序之分，对之间的顺序也不影响方案是否相同。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codeforces_3249c8d739df_urban_commute_20260609_201208",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df_urban_commute_20260609_201208_round1.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\reports\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df_urban_commute_20260609_201208_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "reject_as_retheme",
+      "generated_status": "ok",
+      "quality_score": 95.0,
+      "divergence_score": 68.0,
+      "failed_hard_checks": [
+        {
+          "check_id": "source_leakage",
+          "severity": "blocker",
+          "category": "retheme_issue",
+          "message": "检测到原题标识或标题片段泄露：b",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "issue_type": "retheme_issue",
+          "severity": "blocker",
+          "title": "source leakage",
+          "detail": "检测到原题标识或标题片段泄露：b",
+          "evidence_refs": [
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ],
+          "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "原题标识泄露风险",
+          "detail": "hard_check source_leakage 未通过，提示检测到原题片段“b”，可能存在来源污染，影响 retheme 彻底性，但在当前题面文本中未见明显表现。",
+          "evidence_refs": [
+            "hard_checks[11].message",
+            "snapshots.original_problem",
+            "snapshots.generated_problem"
+          ],
+          "fix_hint": "检查 generated_problem 全文，移除任何可能残留的原题特定标识（如变量名“b”），确保彻底替换为城市通勤主题表述。"
+        }
+      ],
+      "suggested_revisions": [
+        "删除原题编号、题源、标题和明显句式复用。",
+        "检查 generated_problem 全文，移除任何可能残留的原题特定标识（如变量名“b”），确保彻底替换为城市通勤主题表述。",
+        "建议增加一个 k=1 或 n 较小的样例，以展示边界行为。",
+        "可考虑在备注中补充“输入保证 2k ≤ n”，明确闸机数量上限。"
+      ],
+      "strengths_to_keep": [
+        "准确实现了从存在性到计数的变体，等价规则定义清晰，避免二义性。",
+        "通过边流量条件将最大化转化为组合计数，降低了理解难度。",
+        "样例覆盖了不同树形，解释详尽，有助于快速验证。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "reject_as_retheme",
+            "generated_status": "ok",
+            "quality_score": 95.0,
+            "divergence_score": 68.0,
+            "failed_hard_checks": [
+              {
+                "check_id": "source_leakage",
+                "severity": "blocker",
+                "category": "retheme_issue",
+                "message": "检测到原题标识或标题片段泄露：b",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_type": "retheme_issue",
+                "severity": "blocker",
+                "title": "source leakage",
+                "detail": "检测到原题标识或标题片段泄露：b",
+                "evidence_refs": [
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ],
+                "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "原题标识泄露风险",
+                "detail": "hard_check source_leakage 未通过，提示检测到原题片段“b”，可能存在来源污染，影响 retheme 彻底性，但在当前题面文本中未见明显表现。",
+                "evidence_refs": [
+                  "hard_checks[11].message",
+                  "snapshots.original_problem",
+                  "snapshots.generated_problem"
+                ],
+                "fix_hint": "检查 generated_problem 全文，移除任何可能残留的原题特定标识（如变量名“b”），确保彻底替换为城市通勤主题表述。"
+              }
+            ],
+            "suggested_revisions": [
+              "删除原题编号、题源、标题和明显句式复用。",
+              "检查 generated_problem 全文，移除任何可能残留的原题特定标识（如变量名“b”），确保彻底替换为城市通勤主题表述。",
+              "建议增加一个 k=1 或 n 较小的样例，以展示边界行为。",
+              "可考虑在备注中补充“输入保证 2k ≤ n”，明确闸机数量上限。"
+            ],
+            "strengths_to_keep": [
+              "准确实现了从存在性到计数的变体，等价规则定义清晰，避免二义性。",
+              "通过边流量条件将最大化转化为组合计数，降低了理解难度。",
+              "样例覆盖了不同树形，解释详尽，有助于快速验证。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "reject_as_retheme",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 95.0,
+        "latest_divergence_score": 68.0,
+        "suggested_revisions": [
+          "删除原题编号、题源、标题和明显句式复用。",
+          "检查 generated_problem 全文，移除任何可能残留的原题特定标识（如变量名“b”），确保彻底替换为城市通勤主题表述。",
+          "建议增加一个 k=1 或 n 较小的样例，以展示边界行为。",
+          "可考虑在备注中补充“输入保证 2k ≤ n”，明确闸机数量上限。"
+        ],
+        "issues": [
+          {
+            "issue_type": "retheme_issue",
+            "severity": "blocker",
+            "title": "source leakage",
+            "detail": "检测到原题标识或标题片段泄露：b",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ],
+            "fix_hint": "删除原题编号、题源、标题和明显句式复用。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "原题标识泄露风险",
+            "detail": "hard_check source_leakage 未通过，提示检测到原题片段“b”，可能存在来源污染，影响 retheme 彻底性，但在当前题面文本中未见明显表现。",
+            "evidence_refs": [
+              "hard_checks[11].message",
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ],
+            "fix_hint": "检查 generated_problem 全文，移除任何可能残留的原题特定标识（如变量名“b”），确保彻底替换为城市通勤主题表述。"
+          }
+        ],
+        "strengths_to_keep": [
+          "准确实现了从存在性到计数的变体，等价规则定义清晰，避免二义性。",
+          "通过边流量条件将最大化转化为组合计数，降低了理解难度。",
+          "样例覆盖了不同树形，解释详尽，有助于快速验证。"
+        ],
+        "failed_hard_checks": [
+          {
+            "check_id": "source_leakage",
+            "severity": "blocker",
+            "category": "retheme_issue",
+            "message": "检测到原题标识或标题片段泄露：b",
+            "evidence_refs": [
+              "snapshots.original_problem",
+              "snapshots.generated_problem"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

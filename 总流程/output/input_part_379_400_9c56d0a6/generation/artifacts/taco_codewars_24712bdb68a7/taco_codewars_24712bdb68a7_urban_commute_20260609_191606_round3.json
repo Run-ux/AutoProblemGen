@@ -1,0 +1,1379 @@
+{
+  "problem_id": "taco_codewars_24712bdb68a7_inverse_design_v2",
+  "source_problem_ids": [
+    "taco_codewars_24712bdb68a7"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 2,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "urban_commute",
+    "name": "城市通勤"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codewars_24712bdb68a7",
+      "546d15cebed2e10334000ed9",
+      "codewars",
+      "To give credit where credit is due: This problem was taken from the ACMICPC-Northwest Regional Programming Contest. Thank you problem writers. You are helping an archaeologist decipher some runes. He knows that this a...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "核心约束从“找出满足所有条件的未知数字”变为“通过修改已知数字使给定 d 成为解并证明最小性”，引入了编辑操作空间和一套操作合法性条件；目标从最小化 d 变为最小化修改次数，并要求输出具体修改方案作为证书；不变量从升序枚举 d 变为按编辑距离递增的广度优先状态探索。",
+    "summary": "主要变化：1) 反向目标绑定到指定的未知数字 d；2) 定义编辑操作合同（单数字替换）并限制操作空间；3) 目标要求最小修改次数及证书，承担最优性证明责任；4) 不变量转为编辑距离递增探索与状态不变性。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.3783,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.3783,
+    "axis_scores": {
+      "I": 0.0201,
+      "C": 0.4208,
+      "O": 0.4282,
+      "V": 0.7
+    },
+    "components": {
+      "input_tree_distance": 0.0201,
+      "constraint_match_distance": 0.4208,
+      "objective_type_distance": 0.5145,
+      "objective_text_distance": 0.2987,
+      "invariant_match_distance": 0.7
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize_edit_count",
+    "description": "计算最小的数字替换次数 k，使得可以通过恰好 k 次操作将表达式变形为一个合法表达式，该表达式在把 ? 统一替换为目标数字 d 后算术等式成立且满足所有修改后约束。若 k 存在，额外提供一种具体的修改方案（指明哪些位置改成什么数字）作为存在性证书；如果无法达成，输出 -1。算法必须保证输出的 k 是全局最小值。",
+    "target": "minimum number of digit substitutions, plus an executable edit script when k ≥ 0.",
+    "requires_solution": true,
+    "certificate": "输出具体的替换位置和替换后数字序列，可验证。"
+  },
+  "rule_selection_reason": "forward_solution_to_inverse_design 能真正翻转求解方向，将原题的正向搜索变成以目标驱动的逆向设计，相比 existence_to_counting 仅作目标浅改、construct_or_obstruction 主要变更输出格式，更能拉离原题核心义务，带来显著的新复杂度与创新度。；创新度判断：原题是给定表达式求最小未知数字，该规则将核心义务改为给定目标数字后求最小修改操作（如修改已知数字或运算符），强制定义修改合同与目标绑定，使算法必须围绕目标约束反推状态，而非简单遍历。；难度判断：在原题只需枚举有限候选数字的基础上，新增修改操作空间与最小性证明义务，要求解法同时处理修改组合、约束传播和代价优化，大幅抬高求解责任。；风险判断：风险在于修改操作若定义不当可能脱离原题核心结构，且最小性证明可能引入超线性搜索；但借助 edit_operation_contract 与 minimality_or_certificate_lock 助手可将其锁入主约束与不变量，确保可控。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codewars_24712bdb68a7_inverse_design_v2",
+    "source": "inverse_design_from_codewars",
+    "input_structure": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "formula",
+          "type": "string",
+          "description": "形如 [number][op][number]=[number] 的表达式，包含数字 0-9、运算符 + - *、未知数字占位符 ? 以及可能的前导负号，与种子题格式一致。"
+        },
+        {
+          "name": "target_digit",
+          "type": "integer",
+          "value_range": {
+            "min": 0,
+            "max": 9
+          },
+          "description": "我们希望所有 ? 代表的数字 d（0-9），即反向设计要达成的目标数字。"
+        }
+      ],
+      "length": {
+        "min": null,
+        "max": null
+      },
+      "value_range": {
+        "min": null,
+        "max": null
+      },
+      "properties": {}
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "expression_grammar",
+          "description": "运算符仅限于 +、-、*；数字序列符合十进制表示，可能带前导负号；? 仅出现在数字内部，不表示运算符或负号；等号左右各有一个有效算术表达式。",
+          "formal": "formula matches regex ^[+-]?\\d+([-+*][+-]?\\d+)*=[+-]?\\d+$"
+        },
+        {
+          "name": "target_digit_binding",
+          "description": "target_digit d 必须是一个 0-9 的整数，且最终所有 ? 将被替换为 d。d 作为反向目标，是原题解的角色翻转。",
+          "formal": "d ∈ {0,…,9} ∧ ∀ occurrences of '?' in formula are substituted by d in the evaluation."
+        },
+        {
+          "name": "edit_operation_contract",
+          "description": "允许的编辑操作：选择表达式中一个已知数字字符（即不是 '?'、'-'、运算符、等号）将其替换为另一个数字 '0'-'9'，每次替换计为一次修改。不能增删字符，不能改变字符类型或位置，运算符和负号不可修改。操作保持表达式字符串长度和结构完全不变。",
+          "formal": "Op: substitute a character at index i where formula[i] ∈ '0'-'9' and is not a negation sign and is not part of '?' with a digit d' ∈ '0'-'9'. After each op, length(formula) unchanged, and the positions of '=', operators, and '-' (as negation) preserved."
+        },
+        {
+          "name": "modified_expression_constraints",
+          "description": "修改后的表达式每个数字必须无前导零（除非该数字本身就是 0）；每个数字的绝对值在 1 到 1,000,000 之间；d 不得出现在最终表达式任何已知数字里（即除 ? 位置外，不能有数字等于 d）。",
+          "formal": "For each number token: if len(token) > 1 and token[0]=='0' then token == 0; |value| ≤ 1,000,000; d ∉ set of digits appearing in the modified formula outside of '?' positions."
+        },
+        {
+          "name": "existence_handling",
+          "description": "若不存在任何编辑序列能使公式在将 ? 替换为 d 后算术相等且满足所有约束，则答案为 -1；否则答案是最小修改次数。",
+          "formal": "if no valid sequence exists, answer = -1; else answer = min |ops| over all valid sequences."
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize_edit_count",
+      "description": "计算最小的数字替换次数 k，使得可以通过恰好 k 次操作将表达式变形为一个合法表达式，该表达式在把 ? 统一替换为目标数字 d 后算术等式成立且满足所有修改后约束。若 k 存在，额外提供一种具体的修改方案（指明哪些位置改成什么数字）作为存在性证书；如果无法达成，输出 -1。算法必须保证输出的 k 是全局最小值。",
+      "target": "minimum number of digit substitutions, plus an executable edit script when k ≥ 0.",
+      "requires_solution": true,
+      "certificate": "输出具体的替换位置和替换后数字序列，可验证。"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "breadth_first_minimality",
+          "description": "算法采用宽度优先的顺序探索编辑空间：先检查所有零次修改（原始表达式），若失败则检查所有一次修改产生的表达式，依此类推，首次遇到的满足全部约束且等式成立的表达式对应的修改次数即为最小次数。该性质确保无需探索更深层次即可返回最优。",
+          "properties": {
+            "exploration_order": "non-decreasing edit distance"
+          },
+          "evidence_source": "algorithm"
+        },
+        {
+          "name": "edit_locality",
+          "description": "每次编辑操作仅孤立地改变单一已知数字字符的值，不影响操作符、负号、等号及其他数字位，因此状态转移具有局部性，搜索时可重用大部分求值结果（如缓存每个子表达式的值）。",
+          "properties": {
+            "locality": "single character replacement, others unchanged"
+          }
+        },
+        {
+          "name": "operator_structure_preservation",
+          "description": "编辑过程决不变动运算符、等号、负号的位置和数量，因此表达式语法树的结构在整个搜索中保持不变，等式两侧的项数固定。",
+          "properties": {
+            "invariance": "operator/equal/negation positions constant"
+          }
+        },
+        {
+          "name": "digit_disjointness_guarantee",
+          "description": "在任何被考虑的候选表达式中，目标数字 d 均不出现在已知数字部分，保证解的唯一标识性。该约束由编辑过滤器在生成状态时主动施加。",
+          "properties": {
+            "constraint": "d ∉ known digits in candidate"
+          }
+        }
+      ]
+    },
+    "theme": {
+      "id": "urban_commute",
+      "name": "城市通勤",
+      "tone": "日常、节奏明确、强调路线与时段",
+      "keywords": [
+        "公交",
+        "站点",
+        "换乘",
+        "班次",
+        "通勤",
+        "闸机"
+      ],
+      "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+    },
+    "difficulty": "hard"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "遍历候选数字 0-9（排除已知数字），逐个替换并 eval 检查等式成立，首次成功则返回。",
+    "reusable_subroutines": "表达式求值函数（可处理大整数，但数值范围不大），前导零的合法性检查，已知数字集合抽取。",
+    "new_solver_core": "以原表达式和目标数字 d 为起点，通过广度优先搜索（BFS）逐层生成所有可能的单数字替换表达式。每层尝试将所有已知数字逐一替换为 0-9（且不等于 d 以避免冲突），对新表达式进行约束检查（前导零、数值范围、数字不相交）和算术求值，若等式成立且符合约束，则当前层数即为最小修改次数。若搜索完所有可能深度（最多所有已知数字位数的乘积）仍无解，返回 -1。",
+    "new_proof_obligation": "1) BFS 按层遍历确保首次找到的解即为最少编辑次数，需证明任何可行解对应的编辑序列长度至少为 BFS 最先发现该状态的层数；2) 搜索空间有限，由已知数字位置数量和每位可能替换值（0-9 且排除 d）的积决定，因此算法终止；3) 当提供证书时，需证明其满足所有约束且编辑次数确实最少；4) 需要额外论证目标数字 d 不能出现在已知数字中的过滤操作不会错误排除最小值解，即最小值解中 d 不会作为已知数字出现，否则违反 disjointness 约束。",
+    "why_direct_reuse_fails": "原解法仅在固定的表达式上尝试 10 种未知数字取值，搜索空间极小；新题中未知量由单一变量 d 变成指数级编辑序列，直接重用原枚举-求值框架无法覆盖编辑组合，且不能保证最小性。必须在新的状态扩展和最优性保证下设计算法。"
+  },
+  "anti_shallow_rationale": "新题完全翻转了求解方向：从“给定含一个变量的表达式，求出使等式成立的最小变量值”变为“给定一个变量目标值，求最少需修改多少个已知数字才能使表达式成立”。这一转换引入了编辑操作的定义空间、指数级搜索、最优性证明和可行性证书等全新核心责任，绝非仅换背景或调整参数问法，而是典型的不适定逆问题。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题结果 d 是使表达式成立的未知数字，直接绑定为新题的反向目标，驱动整个算法围绕如何‘达到该目标’来设计。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "core_constraints: 新增 target_digit_binding 约束，锁定 d 为常量而非待求解变量",
+        "objective: 从求解 d 翻转为在给定 d 下求最小修改次数，目标主体由变量变为编辑操作"
+      ],
+      "innovation_reason": "将算法设计的出发点从‘枚举可能答案’扭转为‘满足固定输出前提下的输入设计’，直接改变问题结构。",
+      "difficulty_reason": "因为 d 固定，无法通过试错 d 来逃逸，必须真正在编辑空间中进行搜索，显著提升难度。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "已知数字是表达式中唯一可修改的成分，定义单字符数字替换为合法操作，为逆设计提供明确且有限的动作空间。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "core_constraints: 添加 edit_operation_contract 约束，严格定义操作范围与代价",
+        "invariant: 新增 edit_locality 和 operator_structure_preservation 不变量，保证状态转移的局部性和结构稳定性"
+      ],
+      "innovation_reason": "把抽象的‘设计输入’落地为可枚举的组合编辑动作，赋予问题具体的搜索图结构。",
+      "difficulty_reason": "编辑操作引入组合爆炸，简单的贪心或随机搜索不能保证最优，强制需要系统性搜索与最小性论证。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小修改次数或可验证的设计方案，强制答案承担最优性与正确性双重责任。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective: 明确输出为最小次数+编辑证书，不能只返回可行解",
+        "invariant: 引入 breadth_first_minimality 和 digit_disjointness_guarantee，从算法行为保证最小性与约束合规"
+      ],
+      "innovation_reason": "将最优性证明内化为问题的一部分，引领算法必须按层探索或设计 DP 以保证全局最小。",
+      "difficulty_reason": "仅求可行解相对容易，但要求最小性迫使状态空间全遍历，难度跃升。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "forbidden_seed_property",
+      "selection_reason": "种子题的解对象是单一数字，答案恢复为完整表达式的操作仅需简单替换，原标准解法在找到最小合法数字后即可顺手输出表达式，属于‘原解只要顺手回溯就能拿到的方案’，违反规则禁止条件。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题要求返回最小的未知数字（int），标准解法（枚举候选数字，替换?号，eval验证）在确定最小数字后已持有完整表达式对象，输出该表达式仅需一次字符串替换。规则 eligibility 的 forbidden_seed_properties 明确禁止‘原解只要顺手回溯就能拿到方案’。原题核心是数值求解，没有构造型解对象，强行改为输出规范表达式只会停留在输出格式变化，无法将规范性要求融入主要状态设计和约束主次关系，难以满足 required_axis_changes 对 C、O、V 的实质性变化要求。",
+        "feedback": "该种子题缺乏适合做规范化的构造解对象，改动易退化为表面格式修改，不符合 canonical_witness 规则的准入条件，建议寻找具有多解方案且需在算法阶段选择规范解的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "finitely_enumerable_certificate_domain",
+      "selection_reason": "原题的无解原因可以通过枚举所有候选数字（最多10个）及其违反的约束（如前导零或等式不成立）构造为可局部检查的冲突证据集合。候选域极小，证据结构稳定且无需全局搜索即可验证，满足规则对局部证据的要求。同时，改变输出目标、核心约束（引入证据结构）和不变量（证据一致性）可实质性满足必改轴。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束中要求问号代表的数字d ∈ {0,…,9}且d与已知数字不相交，无解原因本质是有限候选域内所有赋值均违反至少一条局部可检查约束（如no_leading_zero除非自身是0，或eval(left)≠eval(right)）。规则要求‘做不到的原因可以用局部证据表示’，positive示例为‘输出一个最小冲突集合’，此处输出{d: violation_reason}的集合天然可枚举且每个违反均可通过替换求值独立检查，符合局部性。同时，schema中objective原为minimize value，规则要求改为construct_or_obstruction，需要新增O、V、C轴变化，可通过定义证据输出格式和检查契约实现实质性转变，而非纯格式变化。",
+        "feedback": "注意避免将冲突证据退化为所有候选的简单枚举列表，可尝试提取最小冲突集（如两个覆盖所有情形的代表性违反）以提升证据质量，但即使全枚举也满足基本合格要求。需确保证据结构在核心约束中明确定义，使失败分支与成功分支对称承担输出责任。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "clear_counting_space",
+      "selection_reason": "种子题解空间为有限集合{0..9}减去已知数字，去重规则基于数字值自然明确，有限性显然，可通过计数所有合法数字满足计数化要求。计数单元为每个候选数字，汇总无需特殊处理。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema中core_constraints定义了候选数字合法性，解空间有限，objective为最小化，invariant为升序枚举，可直接转为计数所有合法数字，解答义务明确。",
+        "feedback": "请注意，尽管解空间清晰，但需确保规划时遵守helper红线，改变状态结构并锁定计数主目标，避免仅改目标形式。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_native_perturbation",
+      "selection_reason": "原题是静态表达式求未知数字，无顺序不确定、资源波动或局部选择差异，无法提取符合原题语义的扰动模型，硬加扰动即违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints 仅包含运算符限制、未知数字统一且不重复、无前导零等静态约束；original_problem.description 描述了解读古代符文、表达式形式固定，无任何不确定性来源；required_seed_properties 第一条要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，原题中不存在。",
+        "feedback": "种子题缺乏可被放大的原生扰动来源，强行改为最小保底优化将脱离原题语义，建议放弃此规则对该题的申请。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题已经是求最小可行数字的极值优化问题，并非纯判定问题；且未知数字的可行性没有单调性，无法引入一个连续的阈值参数来形成新的极值问题，扩展只会是在原判定外层机械二分或改变不相关的参数，不符合规则要求的自然临界参数升级。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中objective为'minimize_value'，目标已是求最小未知数字；core_constraints中未知数字约束为离散枚举，可行性随该参数不具单调性；invariant仅描述升序枚举得出最小，无临界边界结构；原题描述未提供其他可优化的连续参数。",
+        "feedback": "原题已直接求解极值，规则要求从判定扩展为极值，但种子缺乏待转化的判定层，且无自然阈值参数可利用。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "no_natural_second_objective",
+      "selection_reason": "原题目标为求最小未知数字，候选集仅为0-9离散值且核心约束为等式成立，不存在与该目标真实冲突的自然第二评价指标；任何第二指标要么退化为最小化的同义改写，要么可通过先求所有解再后处理排序获得，违反规则禁止的‘权衡关系可由原答案直接后处理得到’。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为‘find the smallest unknown digit that makes the expression true’，约束中明确‘如果有多个数字满足所有约束，选择最小的一个’，可见原题仅需在固定约束下返回单一最优值，未隐含可形成冲突前沿的第二个维度。",
+        "feedback": "建议寻找本身包含多目标权衡（如成本与收益、时间与精度）的种子题，本种子题的结构过于简单且离散，强行扩展前沿会导致两个指标独立优化，违背规则红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "sufficient_reversal_properties",
+      "selection_reason": "原题结果（未知数字）可明确作为反向设计的目标值，且存在自然修改操作（如改变已知数字、运算符或问号位置）与核心算术约束相关，满足反向设计条件。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中包含带问号的表达式修改操作空间（数字、运算符可改动），且输出为单一整数0-9或-1，适合作为目标绑定；核心约束（运算符、前导零等）在修改操作下仍可验证。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_required_seed_property:no_decomposable_local_units",
+      "selection_reason": "种子题中所有问号代表同一个全局变量，不存在可独立处理的局部单元，无法通过共享资源或全局约束自然耦合，因为原题已经是全局耦合的。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 unknown_digit_uniform_and_distinct 明确 '所有问号代表同一个十进制数字'，保证全局一致性；没有多个可分解的局部单元。规则 required_seed_properties 第一款要求 '原题存在可分解的局部单元'，本题不满足。",
+        "feedback": "该种子题本身已具备全局耦合性质（未知数字同时出现在表达式的多个位置且必须一致），无法再引入从独立分量到全局耦合的转变。建议选择包含多个可独立求解的子问题作为种子。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_adversarial_structure",
+      "selection_reason": "原题核心操作是单次枚举候选数字并检查表达式合法性，不存在可轮流选择、拿取或改变状态的自然操作，无法在不硬造玩家的情况下转化为双方博弈。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 中 core_constraints 均为对表达式和未知数字的静态约束，objective 要求输出最小满足数字，原题操作无任何交互性或状态转移；rule_under_review 的 required_seed_properties 明确要求'原题存在可轮流选择、拿取、移动或改变状态的自然操作'，本种子题完全不满足。",
+        "feedback": "原题是典型的约束满足搜索问题，强行加入双方轮流选择会破坏原约束（如所有?必须同数字），且只能依赖背景硬造玩家，不符合博弈化规则的红线。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_local_object_family",
+      "selection_reason": "原题是一个单一代数表达式的未知数字求解问题，其核心结构为单个方程和统一未知数字赋值约束，不存在多个可以自然形成覆盖或割关系的局部对象（如路径、区间、子树、集合族）。规则要求的种子属性“原题核心对象具有路径、区间、子树、集合等局部结构”及“多个局部对象之间可以自然形成覆盖或割关系”均不满足，无法通过本规则进行全局覆盖扩展。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema的core_constraints仅包含单个表达式内的运算符限制、统一未知数字赋值、前导零和数值范围约束，不涉及任何可独立区分的局部子结构；objective为寻找满足整个表达式的最小未知数字，无多对象选择或覆盖义务；invariant仅保证候选数字有序且与已知数字不交，不描述对象族之间的一致性。因此，缺失规则要求的局部对象族和覆盖/割关系的种子基础。",
+        "feedback": "本题不具备扩展为覆盖、割或支配问题的局部结构基础，强行应用本规则会导致结果与种子毫无关联，建议寻找其他更适合的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_counting_seed",
+      "selection_reason": "原题是寻找满足约束的最小未知数字，属于判定/搜索问题，不存在明确的有限计数对象，不符合规则要求的“原题已经有明确有限的计数对象”。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "no_counting_seed"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为minimize_value，输出一个数字或-1，schema中无任何计数相关的约束、状态或输出，original_problem描述为“figure out the value of the rune represented by the question mark”，解法为遍历候选数字并验证，不是统计方案数量。",
+        "feedback": "该规则仅适用于已有稳定计数对象的题目（如组合计数、方案计数），当前种子题不属于计数类题目，无法进行带权或分布计数扩展。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "forbidden_seed_property",
+      "message": "种子题的解对象是单一数字，答案恢复为完整表达式的操作仅需简单替换，原标准解法在找到最小合法数字后即可顺手输出表达式，属于‘原解只要顺手回溯就能拿到的方案’，违反规则禁止条件。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "原题要求返回最小的未知数字（int），标准解法（枚举候选数字，替换?号，eval验证）在确定最小数字后已持有完整表达式对象，输出该表达式仅需一次字符串替换。规则 eligibility 的 forbidden_seed_properties 明确禁止‘原解只要顺手回溯就能拿到方案’。原题核心是数值求解，没有构造型解对象，强行改为输出规范表达式只会停留在输出格式变化，无法将规范性要求融入主要状态设计和约束主次关系，难以满足 required_axis_changes 对 C、O、V 的实质性变化要求。",
+        "feedback": "该种子题缺乏适合做规范化的构造解对象，改动易退化为表面格式修改，不符合 canonical_witness 规则的准入条件，建议寻找具有多解方案且需在算法阶段选择规范解的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "pass",
+      "reason_code": "finitely_enumerable_certificate_domain",
+      "message": "原题的无解原因可以通过枚举所有候选数字（最多10个）及其违反的约束（如前导零或等式不成立）构造为可局部检查的冲突证据集合。候选域极小，证据结构稳定且无需全局搜索即可验证，满足规则对局部证据的要求。同时，改变输出目标、核心约束（引入证据结构）和不变量（证据一致性）可实质性满足必改轴。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "eligible",
+        "evidence": "原题核心约束中要求问号代表的数字d ∈ {0,…,9}且d与已知数字不相交，无解原因本质是有限候选域内所有赋值均违反至少一条局部可检查约束（如no_leading_zero除非自身是0，或eval(left)≠eval(right)）。规则要求‘做不到的原因可以用局部证据表示’，positive示例为‘输出一个最小冲突集合’，此处输出{d: violation_reason}的集合天然可枚举且每个违反均可通过替换求值独立检查，符合局部性。同时，schema中objective原为minimize value，规则要求改为construct_or_obstruction，需要新增O、V、C轴变化，可通过定义证据输出格式和检查契约实现实质性转变，而非纯格式变化。",
+        "feedback": "注意避免将冲突证据退化为所有候选的简单枚举列表，可尝试提取最小冲突集（如两个覆盖所有情形的代表性违反）以提升证据质量，但即使全枚举也满足基本合格要求。需确保证据结构在核心约束中明确定义，使失败分支与成功分支对称承担输出责任。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "clear_counting_space",
+      "message": "种子题解空间为有限集合{0..9}减去已知数字，去重规则基于数字值自然明确，有限性显然，可通过计数所有合法数字满足计数化要求。计数单元为每个候选数字，汇总无需特殊处理。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.92,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "schema中core_constraints定义了候选数字合法性，解空间有限，objective为最小化，invariant为升序枚举，可直接转为计数所有合法数字，解答义务明确。",
+        "feedback": "请注意，尽管解空间清晰，但需确保规划时遵守helper红线，改变状态结构并锁定计数主目标，避免仅改目标形式。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "no_native_perturbation",
+      "message": "原题是静态表达式求未知数字，无顺序不确定、资源波动或局部选择差异，无法提取符合原题语义的扰动模型，硬加扰动即违反红线。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema.core_constraints 仅包含运算符限制、未知数字统一且不重复、无前导零等静态约束；original_problem.description 描述了解读古代符文、表达式形式固定，无任何不确定性来源；required_seed_properties 第一条要求“原题里本来就有顺序不确定、资源波动或局部选择差异”，原题中不存在。",
+        "feedback": "种子题缺乏可被放大的原生扰动来源，强行改为最小保底优化将脱离原题语义，建议放弃此规则对该题的申请。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题已经是求最小可行数字的极值优化问题，并非纯判定问题；且未知数字的可行性没有单调性，无法引入一个连续的阈值参数来形成新的极值问题，扩展只会是在原判定外层机械二分或改变不相关的参数，不符合规则要求的自然临界参数升级。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子schema中objective为'minimize_value'，目标已是求最小未知数字；core_constraints中未知数字约束为离散枚举，可行性随该参数不具单调性；invariant仅描述升序枚举得出最小，无临界边界结构；原题描述未提供其他可优化的连续参数。",
+        "feedback": "原题已直接求解极值，规则要求从判定扩展为极值，但种子缺乏待转化的判定层，且无自然阈值参数可利用。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_second_objective",
+      "message": "原题目标为求最小未知数字，候选集仅为0-9离散值且核心约束为等式成立，不存在与该目标真实冲突的自然第二评价指标；任何第二指标要么退化为最小化的同义改写，要么可通过先求所有解再后处理排序获得，违反规则禁止的‘权衡关系可由原答案直接后处理得到’。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为‘find the smallest unknown digit that makes the expression true’，约束中明确‘如果有多个数字满足所有约束，选择最小的一个’，可见原题仅需在固定约束下返回单一最优值，未隐含可形成冲突前沿的第二个维度。",
+        "feedback": "建议寻找本身包含多目标权衡（如成本与收益、时间与精度）的种子题，本种子题的结构过于简单且离散，强行扩展前沿会导致两个指标独立优化，违背规则红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "sufficient_reversal_properties",
+      "message": "原题结果（未知数字）可明确作为反向设计的目标值，且存在自然修改操作（如改变已知数字、运算符或问号位置）与核心算术约束相关，满足反向设计条件。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.92,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题描述中包含带问号的表达式修改操作空间（数字、运算符可改动），且输出为单一整数0-9或-1，适合作为目标绑定；核心约束（运算符、前导零等）在修改操作下仍可验证。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "missing_required_seed_property:no_decomposable_local_units",
+      "message": "种子题中所有问号代表同一个全局变量，不存在可独立处理的局部单元，无法通过共享资源或全局约束自然耦合，因为原题已经是全局耦合的。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题核心约束 unknown_digit_uniform_and_distinct 明确 '所有问号代表同一个十进制数字'，保证全局一致性；没有多个可分解的局部单元。规则 required_seed_properties 第一款要求 '原题存在可分解的局部单元'，本题不满足。",
+        "feedback": "该种子题本身已具备全局耦合性质（未知数字同时出现在表达式的多个位置且必须一致），无法再引入从独立分量到全局耦合的转变。建议选择包含多个可独立求解的子问题作为种子。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_structure",
+      "message": "原题核心操作是单次枚举候选数字并检查表达式合法性，不存在可轮流选择、拿取或改变状态的自然操作，无法在不硬造玩家的情况下转化为双方博弈。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "seed_schema 中 core_constraints 均为对表达式和未知数字的静态约束，objective 要求输出最小满足数字，原题操作无任何交互性或状态转移；rule_under_review 的 required_seed_properties 明确要求'原题存在可轮流选择、拿取、移动或改变状态的自然操作'，本种子题完全不满足。",
+        "feedback": "原题是典型的约束满足搜索问题，强行加入双方轮流选择会破坏原约束（如所有?必须同数字），且只能依赖背景硬造玩家，不符合博弈化规则的红线。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "no_local_object_family",
+      "message": "原题是一个单一代数表达式的未知数字求解问题，其核心结构为单个方程和统一未知数字赋值约束，不存在多个可以自然形成覆盖或割关系的局部对象（如路径、区间、子树、集合族）。规则要求的种子属性“原题核心对象具有路径、区间、子树、集合等局部结构”及“多个局部对象之间可以自然形成覆盖或割关系”均不满足，无法通过本规则进行全局覆盖扩展。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题schema的core_constraints仅包含单个表达式内的运算符限制、统一未知数字赋值、前导零和数值范围约束，不涉及任何可独立区分的局部子结构；objective为寻找满足整个表达式的最小未知数字，无多对象选择或覆盖义务；invariant仅保证候选数字有序且与已知数字不交，不描述对象族之间的一致性。因此，缺失规则要求的局部对象族和覆盖/割关系的种子基础。",
+        "feedback": "本题不具备扩展为覆盖、割或支配问题的局部结构基础，强行应用本规则会导致结果与种子毫无关联，建议寻找其他更适合的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_seed",
+      "message": "原题是寻找满足约束的最小未知数字，属于判定/搜索问题，不存在明确的有限计数对象，不符合规则要求的“原题已经有明确有限的计数对象”。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "no_counting_seed"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题objective为minimize_value，输出一个数字或-1，schema中无任何计数相关的约束、状态或输出，original_problem描述为“figure out the value of the rune represented by the question mark”，解法为遍历候选数字并验证，不是统计方案数量。",
+        "feedback": "该规则仅适用于已有稳定计数对象的题目（如组合计数、方案计数），当前种子题不属于计数类题目，无法进行带权或分布计数扩展。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "distance_gate_failed",
+      "message": "规划结果未达到差异度或变化轴硬门槛。",
+      "details": {
+        "distance": {
+          "distance_version": "v2",
+          "backend": "embedding",
+          "total": 0.3224,
+          "axis_scores": {
+            "I": 0.0201,
+            "C": 0.4142,
+            "O": 0.4187,
+            "V": 0.4422
+          },
+          "components": {
+            "input_tree_distance": 0.0201,
+            "constraint_match_distance": 0.4142,
+            "objective_type_distance": 0.5145,
+            "objective_text_distance": 0.2749,
+            "invariant_match_distance": 0.4422
+          }
+        },
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_satisfied",
+      "message": "规划成功将正向求解翻转为目标驱动的最小修改问题，三个 helper 均已兑现，且各自落入目标轴、满足 redlines。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "target_result_binding 通过 core_constraints.target_digit_binding 和 objective 的描述实现，将原题求解的 d 变为固定目标，目标驱动整个问题；edit_operation_contract 在 core_constraints.edit_operation_contract 和 invariant.edit_locality 中定义操作，确保修改仅限已知数字替换，不引入无关操作；minimality_or_certificate_lock 体现在 objective 要求最小次数+证书，invariant.breadth_first_minimality 保证按层搜索首次发现即最小，承担最小性证明责任。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面完整实现了规则要求的反向目标绑定、编辑操作合同和最小性证书责任，三项 helper 的语义均在约束、目标和不变式中得到具体落实。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述明确了目标数字 d 来自被弄脏的？，要求通过修改已知数字使等式在 d 替换后成立，实现了 target_result_binding；约束第三条定义了仅修改已知数字字符且不改变结构的编辑操作，对应 edit_operation_contract；输出要求“最少的修改次数 k”并提供修改后等式作为证明，结合 invariant 中的 breadth_first_minimality 承诺最小性，落实了 minimality_or_certificate_lock。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_semantics_fulfilled",
+      "message": "题面明确定义了反向目标d、只允许修改已知数字的编辑操作合同，并要求输出最小修改次数及修改后等式作为证书，完全兑现了forward_solution_to_inverse_design的专属合同。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中“小明可以修改等式里任意已知数字（每次只能改动一个数字，将其变成另一个数字）”与约束中“每次可以选择一个已知数字字符...将其改为另一个数字。不能增删字符，不能修改运算符、等号和负号的位置。”构成了edit_operation_contract；输入包含target_digit d，要求修改后使等式成立且d不出现在已知位置，实现了target_result_binding；输出格式要求“第一行输出一个整数k，表示最少的修改次数；第二行输出一个字符串...完整等式”，并配合样例解释强调“最少修改次数为0”“为最小方案”，实现了minimality_or_certificate_lock。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "all_helpers_realized",
+      "message": "题面清晰定义了反向目标（d固定后修改已知数字使等式成立）、修改操作（替换已知数字字符并保持结构不变）和最小性要求（输出最少修改次数及修改后的等式作为证书），完全覆盖了规则和三个helper的语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "题面描述：“小明可以修改等式里任意已知数字……每次修改只能选择等式中的一个已知数字字符，将其改为另一个数字字符（0-9）……不能增删字符……修改后，等式的长度和运算符、等号、前缀负号的位置必须与原式完全一致”、“小明希望修改次数越少越好”、“请你帮小明算出最少需要修改几个数字，并给出修改后的完整等式”、“该等式可直接作为修改方案的证明”；new_schema中core_constraints包含target_digit_binding、edit_operation_contract和minimize_edit_count的objective；规划摘要中applied_helpers包含target_result_binding、edit_operation_contract、minimality_or_certificate_lock且均对应题面实现。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.92,
+      "accepted": true,
+      "risk_tags": [],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "种子题具备可指定的反向目标（未知数字 d）和自然的修改操作空间（表达式中的已知数字），且核心规律与修改操作直接相关，规则适用。通过强化约束描述、目标文本差异化和不变量扩展，已提升各轴距离以通过硬门槛。",
+      "contract_retry_count": 1,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "distance_gate_failed",
+          "reason": "规划结果未达到硬门槛，预测距离=0.3224，落地轴=C, O, V。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "distance_gate_failed",
+              "message": "规划结果未达到差异度或变化轴硬门槛。",
+              "details": {
+                "distance": {
+                  "distance_version": "v2",
+                  "backend": "embedding",
+                  "total": 0.3224,
+                  "axis_scores": {
+                    "I": 0.0201,
+                    "C": 0.4142,
+                    "O": 0.4187,
+                    "V": 0.4422
+                  },
+                  "components": {
+                    "input_tree_distance": 0.0201,
+                    "constraint_match_distance": 0.4142,
+                    "objective_type_distance": 0.5145,
+                    "objective_text_distance": 0.2749,
+                    "invariant_match_distance": 0.4422
+                  }
+                },
+                "changed_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    }
+  ],
+  "generated_problem": {
+    "title": "公交班次修正",
+    "description": "小明是公交公司的调度员，发现某条线路的运行时间记录格式为数学等式，例如“12+34=46”，表示第一段耗时12分钟，第二段耗时34分钟，总耗时46分钟。等式可能包含加号(+)、减号(-)、乘号(*)，且等式两边均可能出现多个数字和运算符。然而部分记录被墨水弄脏，一些数字变得模糊不清，用问号“?”代替。根据其他班次的信息，小明推断所有这些污损数字其实都是同一个数字 d。但即便把“?”都换成 d，等式通常也不成立，这说明记录中还有一些原本清晰的数字其实是错误的。\n\n为此，小明可以修改等式里任意已知数字（即原本清晰且不是“?”的数字）。每次修改只能选择等式中的一个已知数字字符，将其改为另一个数字字符（0-9）。注意：不能增删字符，不能修改运算符（+、-、*）、等号和紧邻数字前的前缀负号。修改后，等式的长度和运算符、等号、前缀负号的位置必须与原式完全一致。\n\n每改动一个数字算作一次修改。小明希望修改次数越少越好。此外，修改完成后，数字 d 不能再出现在等式的任何已知位置上——毕竟 d 是当初被弄脏的数字，如果修改后它又出现在了清晰的位置，就自相矛盾了。所有修改后的数字必须满足常规数值约束：不能有前导零（除非该数字本身就是 0），且每个数字的绝对值不超过 1,000,000。\n\n请你帮小明算出最少需要修改几个数字，并给出修改后的完整等式（所有“?”均已替换成 d）。如果无论如何修改都无法满足要求，则直接指出无法做到。",
+    "input_format": "输入包含两行。\n第一行是一个字符串，表示带有“?”的等式，格式为合法的数学表达式，只包含数字0-9、问号“?”、加号“+”、减号“-”、乘号“*”和等号“=”。其中紧邻数字前的“-”视为该数字的前缀负号，不作为独立的减号运算符；数字前最多有一个前缀负号，且其后紧跟数字或“?”。\n第二行是一个整数 d（0 ≤ d ≤ 9），表示所有“?”代表的数字。",
+    "output_format": "如果不存在符合要求的修改方案，输出一行 -1。\n否则，第一行输出一个整数 k，表示最少的修改次数；第二行输出一个字符串，表示修改完成且将所有“?”替换为 d 之后的完整等式。该等式可直接作为修改方案的证明。",
+    "constraints": [
+      "等式字符串的长度不超过 30。",
+      "所有“?”代表同一个数字 d，0 ≤ d ≤ 9。",
+      "修改操作：每次只能选择一个已知数字字符（即不是“?”、不是运算符、不是等号、不是前缀负号的数字），将其改为另一个数字（0-9）。不能增删字符，不能修改运算符、等号和前缀负号的位置。修改后等式长度与字符的类别位置必须与原式一致。",
+      "修改后，等式中的每个数字序列不能有前导零（除非该数字本身就是 0），且每个数字的绝对值不超过 1,000,000。",
+      "修改后，数字 d 不得出现在等式中的任何已知数字位置上（即除“?”所在位置外，不应含有数字 d）。",
+      "时间限制：2000ms，空间限制：256MB。"
+    ],
+    "samples": [
+      {
+        "input": "?+?=10\n5",
+        "output": "0\n5+5=10",
+        "explanation": "将“?”全部替换为5后得到“5+5=10”，等式自然成立，且5不在已知数字{1,0}中，无需任何修改。最少修改次数为0，直接输出替换后的等式。"
+      },
+      {
+        "input": "?+?=??\n5",
+        "output": "2\n5+5=10",
+        "explanation": "直接替换后为“5+5=55”，等式不成立且已知数字包含5（与d=5冲突）。需修改结果中的两个“5”：把它们分别改为1和0，得到“5+5=10”，等式成立且已知数字{1,0}不含5。共修改2次，为最小方案。"
+      },
+      {
+        "input": "?*?=??\n2",
+        "output": "-1",
+        "explanation": "原等式只有问号，没有任何已知数字可以修改。替换为2后得到“2*2=22”，等式不成立。由于无法进行任何修改操作，不存在满足要求的解，故输出-1。"
+      },
+      {
+        "input": "-1+?=?\n1",
+        "output": "1\n-0+1=1",
+        "explanation": "将“?”替换为1后得到“-1+1=1”，等式不成立（-1+1=0≠1），且已知数字1出现在-1中，与d=1冲突。将-1中的数字1改为0，得到“-0+1=1”，等式成立且已知数字{0}不含1。仅需1次修改，为最小次数。注意负号保留，长度不变。"
+      },
+      {
+        "input": "?+?*?=??\n3",
+        "output": "2\n3+3*3=12",
+        "explanation": "替换后为“3+3*3=33”，不成立且已知数字含3。修改结果“33”为“12”，等式“3+3*3=12”成立，且{1,2}不含3。共修改2次。"
+      }
+    ],
+    "notes": "当有解时，输出的第二行字符串即为修改后的等式，它已经将所有“?”换成 d。将该字符串与原输入对比，即可知道哪些位置的数字被更改，从而还原具体的修改方案。如果无解，只输出 -1。前缀负号仅出现在数字或“?”之前，且不视为独立运算符；表达式中允许多个运算符（如 a+b*c=d）。所有修改必须保持等式长度与运算符/等号/负号的位置完全不变。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codewars_24712bdb68a7_urban_commute_20260609_191606",
+    "round_index": 3,
+    "requested_rounds": 3,
+    "iteration_phase": "full_score_polish",
+    "full_score_polish_round_index": 2,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\artifacts\\taco_codewars_24712bdb68a7\\taco_codewars_24712bdb68a7_urban_commute_20260609_191606_round2.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_379_400_9c56d0a6\\generation\\reports\\taco_codewars_24712bdb68a7\\taco_codewars_24712bdb68a7_urban_commute_20260609_191606_round2_quality_report.json",
+    "revision_context_snapshot": {
+      "revision_mode": "full_score_polish",
+      "instruction": "复用当前 new_schema，仅重写题面内容以修复未满分质量维度；不得改变任务定义、输入输出语义、核心约束或算法义务。",
+      "overall_status": "revise_quality",
+      "generated_status": "ok",
+      "quality_score": 59.0,
+      "divergence_score": 72.4,
+      "non_full_dimensions": [
+        {
+          "dimension": "variant_fidelity",
+          "score": 4.0,
+          "rationale": "new_schema 的核心输入字段（formula, target_digit）、编辑操作合同、修改后约束、目标函数与存在性处理均在题面中落地。但编辑证书以输出完整等式替代详细位置列表，与规范略有偏差；且未提及表达式可包含多个运算符，可能影响实现复杂度。",
+          "evidence_refs": [
+            "new_schema.input_structure",
+            "new_schema.core_constraints.edit_operation_contract",
+            "new_schema.core_constraints.modified_expression_constraints",
+            "new_schema.objective",
+            "generated_problem.input_format",
+            "generated_problem.constraints",
+            "generated_problem.output_format"
+          ]
+        },
+        {
+          "dimension": "spec_completeness",
+          "score": 3.0,
+          "rationale": "题面提供了任务说明、输入输出格式、主要约束和样例，但缺少负号与减号区分规则、多运算符表达式可能性说明，对解题必备的表达式解析规则界定不清，选手需自行猜测负号边界，可能影响独立做题。",
+          "evidence_refs": [
+            "new_schema.core_constraints.expression_grammar",
+            "generated_problem.description",
+            "generated_problem.constraints",
+            "generated_problem.samples[3]"
+          ]
+        },
+        {
+          "dimension": "cross_section_consistency",
+          "score": 2.0,
+          "rationale": "样例4输入 '-1+?=?' 输出 '0+1=1' 长度不匹配，违反‘不能增删字符’约束；且负号删除未解释，与约束矛盾，严重不一致。其他部分大体一致，但这一错误直接影响理解。",
+          "evidence_refs": [
+            "generated_problem.constraints[2]",
+            "generated_problem.samples[3].input",
+            "generated_problem.samples[3].output",
+            "generated_problem.samples[3].explanation"
+          ]
+        },
+        {
+          "dimension": "sample_quality",
+          "score": 2.0,
+          "rationale": "样例数量尚可，覆盖常见情况，但样例4存在输出长度不一致的错误，会严重误导选手对操作规则的理解，且未覆盖多运算符情形，整体质量下降。",
+          "evidence_refs": [
+            "generated_problem.samples[3]",
+            "generated_problem.constraints[2]"
+          ]
+        },
+        {
+          "dimension": "oj_readability",
+          "score": 3.0,
+          "rationale": "题面结构清晰、语言流畅，符合OJ习惯。但样例4的明显错误破坏了规则的可信度，且负号规则不明确会增加阅读障碍，需修正后提升可读性。",
+          "evidence_refs": [
+            "generated_problem.samples[3]",
+            "generated_problem.constraints"
+          ]
+        }
+      ],
+      "suggested_revisions": [
+        "增加一个无解样例（例如等式无法通过合法修改满足且所有尝试失败），并补充一个包含负号和乘号的样例，以全面覆盖运算类型与输出格式。",
+        "增加至少一个无解样例，说明输出仅一行-1的情形",
+        "考虑增加一个包含负号（如“-?+?=10”）和乘号（如“?*?=?”）的样例，以增强覆盖度",
+        "可在备注中简单解释“将输出等式与原输入对比即可还原具体修改位置”，进一步降低理解门槛",
+        "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。",
+        "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。",
+        "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。",
+        "修正样例4的输出字符串为 '-0+1=1' 或等效形式，并重新梳理解释文本。",
+        "在输入格式部分明确负号的判定规则，或将负号与数字视为整体Token，消除歧义。",
+        "在约束或描述中指明表达式可包含任意数量的运算符，不受限于两个操作数。",
+        "考虑增加一个至少包含两个运算符的样例，以展示更复杂的表达式结构。"
+      ],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例覆盖不足，缺少无解及复杂运算符样例",
+          "detail": "当前只有2个样例，且均为有解情况，未提供无解（输出-1）的样例。同时未展示负号、乘号或多位数复杂组合，可能影响参赛者对边界条件的正确理解。",
+          "evidence_refs": [
+            "generated_problem.samples",
+            "hard_checks[12].message"
+          ],
+          "fix_hint": "增加一个无解样例（例如等式无法通过合法修改满足且所有尝试失败），并补充一个包含负号和乘号的样例，以全面覆盖运算类型与输出格式。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例4输出长度与输入不一致",
+          "detail": "样例4输入为 '-1+?=?' 长度6，输出为 '0+1=1' 长度5，违反了约束“不能增删字符”。同时负号被无故删除，与编辑操作合同矛盾。",
+          "evidence_refs": [
+            "generated_problem.samples[3].input",
+            "generated_problem.samples[3].output",
+            "generated_problem.constraints[2]"
+          ],
+          "fix_hint": "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "负号与减号区分规则缺失",
+          "detail": "题面未明确如何区分前缀负号与运算符减号，选手无法确定哪些 '-' 是不可修改的负号，影响解析与操作实现。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "generated_problem.constraints",
+            "new_schema.core_constraints.expression_grammar"
+          ],
+          "fix_hint": "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。"
+        },
+        {
+          "issue_type": "quality_issue",
+          "severity": "minor",
+          "title": "表达式运算符数量未明确说明",
+          "detail": "描述仅以‘A+B=C’举例，可能让选手误认为只有两个操作数，而实际约束只限制了总长度，允许多运算符。",
+          "evidence_refs": [
+            "generated_problem.description",
+            "new_schema.core_constraints.expression_grammar.formal"
+          ],
+          "fix_hint": "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。"
+        }
+      ],
+      "strengths_to_keep": [
+        "反向设计核心约束（编辑操作、数字禁用、证书输出）在题面中表述精确，与new_schema高度对齐",
+        "故事化背景（公交班次修正）自然植入，不干扰数学本质",
+        "输出格式既给出最小次数又提供完整等式作为证书，简洁直观",
+        "约束列表完整覆盖数值范围、前导零、操作限制，杜绝歧义",
+        "问题翻转设计新颖，从正向求解转为反向输入设计，富有挑战性。",
+        "背景故事（公交班次修正）贴合日常生活，易于理解。",
+        "约束描述详细，涵盖了数值范围、前导零、数字互斥等关键点。",
+        "样例覆盖了无解、零次修改和多次修改的基本场景。"
+      ],
+      "previous_generated_problem": {
+        "title": "公交班次修正",
+        "description": "小明是公交公司的调度员，最近发现某条线路的运行时间记录出现了问题。记录采用形如“A+B=C”的等式，例如“12+34=46”，表示第一段耗时12分钟，第二段耗时34分钟，总耗时为46分钟。然而部分记录被墨水弄脏，一些数字变得模糊不清，用问号‘?’代替。根据其他班次的信息，小明推断所有这些污损数字其实都是同一个数字d。但即便把‘?’都换成d，等式通常也不成立，这说明记录中还有一些原本清晰的数字其实是错误的。为此，小明可以修改等式里任意已知数字（每次只能改动一个数字，将其变成另一个数字），但他希望改动次数越少越好。此外，修改完成后，数字d不能再出现在等式的任何已知位置上——毕竟d是当初被弄脏的数字，如果修改后它又出现在了清晰的位置，就自相矛盾了。请你帮小明算出最少需要修改几个数字，并给出修改后的完整等式（所有‘?’均已替换成d）。如果无论如何修改都无法满足要求，则直接指出无法做到。",
+        "input_format": "输入包含两行。第一行是一个字符串，表示带有‘?’的等式，格式为合法的数学表达式，只包含数字0-9、问号‘?’、加号‘+’、减号‘-’、乘号‘*’和等号‘=’，且可能出现在数字前的前缀负号。第二行是一个整数d（0 ≤ d ≤ 9），表示所有‘?’代表的数字。",
+        "output_format": "如果不存在符合要求的修改方案，输出一行-1。否则，第一行输出一个整数k，表示最少的修改次数；第二行输出一个字符串，表示修改完成且将所有‘?’替换为d之后的完整等式。该等式可直接作为修改方案的证明。",
+        "constraints": [
+          "等式字符串的长度不超过30。",
+          "所有‘?’代表同一个数字d，0 ≤ d ≤ 9。",
+          "修改操作：每次可以选择一个已知数字字符（即非‘?’、非运算符、非等号、非负号的数字），将其改为另一个数字（0-9）。不能增删字符，不能修改运算符、等号和负号的位置。",
+          "修改后，等式中的每个数字序列不能有前导零（除非该数字本身就是0），且每个数字的绝对值不超过1,000,000。",
+          "修改后，数字d不得出现在等式中的任何已知数字位置上（即除‘?’所在位置外，不应含有数字d）。",
+          "时间限制：2000ms，空间限制：256MB。"
+        ],
+        "samples": [
+          {
+            "input": "?+?=10\n5",
+            "output": "0\n5+5=10",
+            "explanation": "将‘?’全部替换为5后得到“5+5=10”，等式自然成立，且5不在已知数字{1,0}中，无需任何修改。最少修改次数为0，直接输出替换后的等式。"
+          },
+          {
+            "input": "?+?=??\n5",
+            "output": "2\n5+5=10",
+            "explanation": "直接替换后为“5+5=55”，但等式不成立且已知数字包含5（与d=5冲突）。需修改结果中的两个‘5’：把它们分别改为1和0，得到“5+5=10”，等式成立且已知数字{1,0}不含5。共修改2次，为最小方案。"
+          },
+          {
+            "input": "?*?=??\n2",
+            "output": "-1",
+            "explanation": "原等式只有问号，没有任何已知数字可以修改。替换为2后得到“2*2=22”，等式不成立。由于无法进行任何修改操作，不存在满足要求的解，故输出-1。"
+          },
+          {
+            "input": "-1+?=?\n1",
+            "output": "1\n0+1=1",
+            "explanation": "将‘?’替换为1后得到“-1+1=1”，等式不成立（-1+1=0≠1），且已知数字1出现在-1中，与d=1冲突。将-1中的数字1改为0，得到“0+1=1”，等式成立且已知数字{0}不含1。仅需1次修改，为最小次数。"
+          }
+        ],
+        "notes": "当有解时，输出的第二行字符串即为修改后的等式，它已经将所有‘?’换成d。将该字符串与原输入对比，即可知道哪些位置的数字被更改，从而还原具体的修改方案。如果无解，只输出-1。",
+        "status": "ok",
+        "error_reason": "",
+        "feedback": ""
+      },
+      "schema_lock": "必须使用本轮 plan.new_schema_snapshot，不允许重新规划或生成新的 new_schema。",
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "pass",
+            "generated_status": "ok",
+            "quality_score": 94.0,
+            "divergence_score": 72.6,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例覆盖不足，缺少无解及复杂运算符样例",
+                "detail": "当前只有2个样例，且均为有解情况，未提供无解（输出-1）的样例。同时未展示负号、乘号或多位数复杂组合，可能影响参赛者对边界条件的正确理解。",
+                "evidence_refs": [
+                  "generated_problem.samples",
+                  "hard_checks[12].message"
+                ],
+                "fix_hint": "增加一个无解样例（例如等式无法通过合法修改满足且所有尝试失败），并补充一个包含负号和乘号的样例，以全面覆盖运算类型与输出格式。"
+              }
+            ],
+            "suggested_revisions": [
+              "增加一个无解样例（例如等式无法通过合法修改满足且所有尝试失败），并补充一个包含负号和乘号的样例，以全面覆盖运算类型与输出格式。",
+              "增加至少一个无解样例，说明输出仅一行-1的情形",
+              "考虑增加一个包含负号（如“-?+?=10”）和乘号（如“?*?=?”）的样例，以增强覆盖度",
+              "可在备注中简单解释“将输出等式与原输入对比即可还原具体修改位置”，进一步降低理解门槛"
+            ],
+            "strengths_to_keep": [
+              "反向设计核心约束（编辑操作、数字禁用、证书输出）在题面中表述精确，与new_schema高度对齐",
+              "故事化背景（公交班次修正）自然植入，不干扰数学本质",
+              "输出格式既给出最小次数又提供完整等式作为证书，简洁直观",
+              "约束列表完整覆盖数值范围、前导零、操作限制，杜绝歧义"
+            ]
+          }
+        },
+        {
+          "round_index": 2,
+          "iteration_phase": "full_score_polish",
+          "revision_brief": {
+            "round_index": 2,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 59.0,
+            "divergence_score": 72.4,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例4输出长度与输入不一致",
+                "detail": "样例4输入为 '-1+?=?' 长度6，输出为 '0+1=1' 长度5，违反了约束“不能增删字符”。同时负号被无故删除，与编辑操作合同矛盾。",
+                "evidence_refs": [
+                  "generated_problem.samples[3].input",
+                  "generated_problem.samples[3].output",
+                  "generated_problem.constraints[2]"
+                ],
+                "fix_hint": "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "负号与减号区分规则缺失",
+                "detail": "题面未明确如何区分前缀负号与运算符减号，选手无法确定哪些 '-' 是不可修改的负号，影响解析与操作实现。",
+                "evidence_refs": [
+                  "generated_problem.description",
+                  "generated_problem.constraints",
+                  "new_schema.core_constraints.expression_grammar"
+                ],
+                "fix_hint": "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。"
+              },
+              {
+                "issue_type": "quality_issue",
+                "severity": "minor",
+                "title": "表达式运算符数量未明确说明",
+                "detail": "描述仅以‘A+B=C’举例，可能让选手误认为只有两个操作数，而实际约束只限制了总长度，允许多运算符。",
+                "evidence_refs": [
+                  "generated_problem.description",
+                  "new_schema.core_constraints.expression_grammar.formal"
+                ],
+                "fix_hint": "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。"
+              }
+            ],
+            "suggested_revisions": [
+              "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。",
+              "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。",
+              "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。",
+              "修正样例4的输出字符串为 '-0+1=1' 或等效形式，并重新梳理解释文本。",
+              "在输入格式部分明确负号的判定规则，或将负号与数字视为整体Token，消除歧义。",
+              "在约束或描述中指明表达式可包含任意数量的运算符，不受限于两个操作数。",
+              "考虑增加一个至少包含两个运算符的样例，以展示更复杂的表达式结构。"
+            ],
+            "strengths_to_keep": [
+              "问题翻转设计新颖，从正向求解转为反向输入设计，富有挑战性。",
+              "背景故事（公交班次修正）贴合日常生活，易于理解。",
+              "约束描述详细，涵盖了数值范围、前导零、数字互斥等关键点。",
+              "样例覆盖了无解、零次修改和多次修改的基本场景。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 2,
+        "latest_round_index": 2,
+        "latest_iteration_phase": "full_score_polish",
+        "latest_overall_status": "revise_quality",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 59.0,
+        "latest_divergence_score": 72.4,
+        "suggested_revisions": [
+          "增加一个无解样例（例如等式无法通过合法修改满足且所有尝试失败），并补充一个包含负号和乘号的样例，以全面覆盖运算类型与输出格式。",
+          "增加至少一个无解样例，说明输出仅一行-1的情形",
+          "考虑增加一个包含负号（如“-?+?=10”）和乘号（如“?*?=?”）的样例，以增强覆盖度",
+          "可在备注中简单解释“将输出等式与原输入对比即可还原具体修改位置”，进一步降低理解门槛",
+          "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。",
+          "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。",
+          "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。",
+          "修正样例4的输出字符串为 '-0+1=1' 或等效形式，并重新梳理解释文本。",
+          "在输入格式部分明确负号的判定规则，或将负号与数字视为整体Token，消除歧义。",
+          "在约束或描述中指明表达式可包含任意数量的运算符，不受限于两个操作数。",
+          "考虑增加一个至少包含两个运算符的样例，以展示更复杂的表达式结构。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例覆盖不足，缺少无解及复杂运算符样例",
+            "detail": "当前只有2个样例，且均为有解情况，未提供无解（输出-1）的样例。同时未展示负号、乘号或多位数复杂组合，可能影响参赛者对边界条件的正确理解。",
+            "evidence_refs": [
+              "generated_problem.samples",
+              "hard_checks[12].message"
+            ],
+            "fix_hint": "增加一个无解样例（例如等式无法通过合法修改满足且所有尝试失败），并补充一个包含负号和乘号的样例，以全面覆盖运算类型与输出格式。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例4输出长度与输入不一致",
+            "detail": "样例4输入为 '-1+?=?' 长度6，输出为 '0+1=1' 长度5，违反了约束“不能增删字符”。同时负号被无故删除，与编辑操作合同矛盾。",
+            "evidence_refs": [
+              "generated_problem.samples[3].input",
+              "generated_problem.samples[3].output",
+              "generated_problem.constraints[2]"
+            ],
+            "fix_hint": "修改样例4输出为 '-0+1=1'，或调整输入/解释，确保长度不变且负号处理合理。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "负号与减号区分规则缺失",
+            "detail": "题面未明确如何区分前缀负号与运算符减号，选手无法确定哪些 '-' 是不可修改的负号，影响解析与操作实现。",
+            "evidence_refs": [
+              "generated_problem.description",
+              "generated_problem.constraints",
+              "new_schema.core_constraints.expression_grammar"
+            ],
+            "fix_hint": "在输入格式或约束中增加说明，例如‘负号紧邻数字前且后无空格，且不作为独立运算符’，或直接规定负号只允许出现在数字的最前端。"
+          },
+          {
+            "issue_type": "quality_issue",
+            "severity": "minor",
+            "title": "表达式运算符数量未明确说明",
+            "detail": "描述仅以‘A+B=C’举例，可能让选手误认为只有两个操作数，而实际约束只限制了总长度，允许多运算符。",
+            "evidence_refs": [
+              "generated_problem.description",
+              "new_schema.core_constraints.expression_grammar.formal"
+            ],
+            "fix_hint": "在约束或描述中补充‘表达式中可包含多个运算符（加、减、乘）’，并给出一个简单多运算符样例。"
+          }
+        ],
+        "strengths_to_keep": [
+          "反向设计核心约束（编辑操作、数字禁用、证书输出）在题面中表述精确，与new_schema高度对齐",
+          "故事化背景（公交班次修正）自然植入，不干扰数学本质",
+          "输出格式既给出最小次数又提供完整等式作为证书，简洁直观",
+          "约束列表完整覆盖数值范围、前导零、操作限制，杜绝歧义",
+          "问题翻转设计新颖，从正向求解转为反向输入设计，富有挑战性。",
+          "背景故事（公交班次修正）贴合日常生活，易于理解。",
+          "约束描述详细，涵盖了数值范围、前导零、数字互斥等关键点。",
+          "样例覆盖了无解、零次修改和多次修改的基本场景。"
+        ],
+        "failed_hard_checks": []
+      },
+      "failed_hard_checks": []
+    }
+  }
+}

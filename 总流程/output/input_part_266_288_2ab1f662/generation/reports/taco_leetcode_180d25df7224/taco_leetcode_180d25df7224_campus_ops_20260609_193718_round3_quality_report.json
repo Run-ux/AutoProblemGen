@@ -1,0 +1,668 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 84.0,
+    "divergence_score": 76.4,
+    "schema_distance": 0.3915,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema中定义的任务变体、输入结构、目标函数、结构选项均准确落地到generated_problem的description、input_format、output_format、constraints、samples中，没有遗漏或偏离。编辑操作集合和代价、合法性约束、相等性零代价等细节均得到正确体现。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples",
+          "hard_checks[14].message",
+          "hard_checks[15].message"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 3.0,
+        "rationale": "题面对编辑操作和格式约束描述详尽，但缺少一个关键信息：如何判定两个编码字符串表示的数相等。虽然面向熟悉原题的选手可能知道通过无限展开比较，但题面自身未给出明确的相等性判断规则（如展开到17位小数后比较），这会导致解题者无法准确实现目标验证，需要自行猜测。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.samples[2].explanation"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples之间没有矛盾。输入输出行数、格式与样例完全对应，操作描述与样例行为一致，约束覆盖样例数据。",
+        "evidence_refs": [
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples[0]",
+          "generated_problem.samples[1]",
+          "generated_problem.samples[2]"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 3.0,
+        "rationale": "样例数量为3，但仅覆盖了替换操作和原始相等的情况，缺少对插入括号、删除括号、移动括号操作的示范，不利于选手理解这些操作的具体效果和合法形式。",
+        "evidence_refs": [
+          "generated_problem.samples",
+          "hard_checks[13].message"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，从背景到操作到输入输出格式，表达明确，没有来源污染或无关文本，便于快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "hard_checks[10].message",
+          "hard_checks[11].message"
+        ]
+      }
+    ],
+    "strengths": [
+      "任务背景转换自然，将原题抽象映射为家庭收纳场景，易读且无违和感。",
+      "编辑操作集合定义清晰，四种操作及代价描述详细，形式化程度高。",
+      "输入输出格式严格对齐，样例解释简明，整体结构符合OJ题面规范。",
+      "保留了原题格式约束并扩展了编辑操作，不存在信息泄露或原题痕迹。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3915,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5017,
+        "O": 0.5718,
+        "V": 0.4903
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5017,
+        "objective_type_distance": 0.6632,
+        "objective_text_distance": 0.4348,
+        "invariant_match_distance": 0.4903
+      }
+    },
+    "schema_distance": 0.3915,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.9,
+    "solution_transfer_risk": 0.2,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "新题将原题的二值判定任务完全转变为带编辑操作的最优化问题，目标函数、约束集合和输出形式均发生根本变化。原题解法（有限展开、前缀比较）仅能用作子程序验证修改后字符串是否相等，核心算法需在编辑操作图上进行搜索/规划，无法直接迁移。新题采用家庭收纳叙事，文本、样例和结构均无明显复用原题痕迹，表层重主题风险低。",
+    "evidence_refs": [
+      "new_schema.objective",
+      "new_schema.core_constraints",
+      "generated_problem.description",
+      "hard_checks[check_id=schema_distance_threshold].message",
+      "hard_checks[check_id=changed_axes_threshold].message",
+      "review_context.algorithmic_delta_claim",
+      "review_context.distance_breakdown.axis_scores"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.39，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=3。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "缺少编码数值相等性的明确定义",
+      "detail": "题面只描述了编码的格式和操作，但未说明如何判断两个编码字符串表示的数是否相等。例如样例“0.1(6)”与“0.1666(6)”被认为相等，但没有给出判定规则（如展开到多少位后比较）。解题者需要自行猜测，可能导致实现偏差。",
+      "evidence_refs": [
+        "generated_problem.description",
+        "generated_problem.samples[2].explanation"
+      ],
+      "fix_hint": "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。"
+    },
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例未覆盖全部编辑操作类型",
+      "detail": "目前样例只展示了替换操作和无需操作的情形，没有给出插入括号、删除括号、移动括号的示例，降低了这些操作的可理解性。",
+      "evidence_refs": [
+        "generated_problem.samples"
+      ],
+      "fix_hint": "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。"
+    }
+  ],
+  "suggested_revisions": [
+    "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。",
+    "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。",
+    "在描述中明确给出两个编码数值相等的判定条件（如展开至17位后逐位比较）。",
+    "补充至少一个涵盖括号插入/删除/移动的样例，以帮助理解操作语义。",
+    "（可选）在constraints中增加对字符串长度上下界的简要说明（已在描述中体现，可保留现状）。"
+  ],
+  "revision_brief": {
+    "round_index": 3,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 84.0,
+    "divergence_score": 76.4,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "缺少编码数值相等性的明确定义",
+        "detail": "题面只描述了编码的格式和操作，但未说明如何判断两个编码字符串表示的数是否相等。例如样例“0.1(6)”与“0.1666(6)”被认为相等，但没有给出判定规则（如展开到多少位后比较）。解题者需要自行猜测，可能导致实现偏差。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.samples[2].explanation"
+        ],
+        "fix_hint": "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。"
+      },
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例未覆盖全部编辑操作类型",
+        "detail": "目前样例只展示了替换操作和无需操作的情形，没有给出插入括号、删除括号、移动括号的示例，降低了这些操作的可理解性。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ],
+        "fix_hint": "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。"
+      }
+    ],
+    "suggested_revisions": [
+      "在description或constraints部分增加说明：两个编码表示的数相等当且仅当将它们按照循环节无限展开后，从某一位开始数字序列完全相同；实际可通过展开到17位小数后比较实现（参考原题已知的不变性）。",
+      "增加至少一个涉及插入/删除括号或移动括号的样例，并附带解释，展示操作后仍满足格式约束且达到相等的最小代价方案。",
+      "在描述中明确给出两个编码数值相等的判定条件（如展开至17位后逐位比较）。",
+      "补充至少一个涵盖括号插入/删除/移动的样例，以帮助理解操作语义。",
+      "（可选）在constraints中增加对字符串长度上下界的简要说明（已在描述中体现，可保留现状）。"
+    ],
+    "strengths_to_keep": [
+      "任务背景转换自然，将原题抽象映射为家庭收纳场景，易读且无违和感。",
+      "编辑操作集合定义清晰，四种操作及代价描述详细，形式化程度高。",
+      "输入输出格式严格对齐，样例解释简明，整体结构符合OJ题面规范。",
+      "保留了原题格式约束并扩展了编辑操作，不存在信息泄露或原题痕迹。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\source\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\artifacts\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224_campus_ops_20260609_193718_round3.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_266_288_2ab1f662\\generation\\output\\taco_leetcode_180d25df7224\\taco_leetcode_180d25df7224_campus_ops_20260609_193718_round3.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_leetcode_180d25df7224",
+      "title": "equal rational numbers",
+      "description": "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the rational number.\nIn general a rational number can be represented using up to three parts: an integer part, a non-repeating part, and a repeating part. The number will be represented in one of the following three ways:\n\n<IntegerPart> (e.g. 0, 12, 123)\n<IntegerPart><.><NonRepeatingPart>  (e.g. 0.5, 1., 2.12, 2.0001)\n<IntegerPart><.><NonRepeatingPart><(><RepeatingPart><)> (e.g. 0.1(6), 0.9(9), 0.00(1212))\n\nThe repeating portion of a decimal expansion is conventionally denoted within a pair of round brackets.  For example:\n1 / 6 = 0.16666666... = 0.1(6) = 0.1666(6) = 0.166(66)\nBoth 0.1(6) or 0.1666(6) or 0.166(66) are correct representations of 1 / 6.\n \nExample 1:\nInput: S = \"0.(52)\", T = \"0.5(25)\"\nOutput: true\nExplanation:\nBecause \"0.(52)\" represents 0.52525252..., and \"0.5(25)\" represents 0.52525252525..... , the strings represent the same number.\n\n\nExample 2:\nInput: S = \"0.1666(6)\", T = \"0.166(66)\"\nOutput: true\n\n\nExample 3:\nInput: S = \"0.9(9)\", T = \"1.\"\nOutput: true\nExplanation: \n\"0.9(9)\" represents 0.999999999... repeated forever, which equals 1.  [See this link for an explanation.]\n\"1.\" represents the number 1, which is formed correctly: (IntegerPart) = \"1\" and (NonRepeatingPart) = \"\".\n \n\n\nNote:\n\nEach part consists only of digits.\nThe <IntegerPart> will not begin with 2 or more zeros.  (There is no other restriction on the digits of each part.)\n1 <= <IntegerPart>.length <= 4 \n0 <= <NonRepeatingPart>.length <= 4 \n1 <= <RepeatingPart>.length <= 4",
+      "input": "",
+      "output": "",
+      "constraints": "",
+      "source": "leetcode",
+      "standard_solution_code": "import math\n\nclass Solution:\n\n\tdef isRationalEqual(self, S: str, T: str) -> bool:\n\t\tif len(S) == 0 or len(T) == 0:\n\t\t\treturn False\n\n\t\tdef process(s):\n\t\t\tif s[-1] == '.':\n\t\t\t\ts = s[:-1]\n\t\t\t(stack, repeat_9) = ([], False)\n\t\t\tfor (i, x) in enumerate(s):\n\t\t\t\tif x != ')':\n\t\t\t\t\tstack.append(x)\n\t\t\t\telse:\n\t\t\t\t\ttmp = ''\n\t\t\t\t\twhile stack[-1] != '(':\n\t\t\t\t\t\ttmp += stack.pop()\n\t\t\t\t\tif len(tmp) == tmp.count('9'):\n\t\t\t\t\t\trepeat_9 = True\n\t\t\t\t\tstack.pop()\n\t\t\t\t\treturn (''.join(stack) + tmp[::-1] * (24 // len(tmp)), repeat_9)\n\t\t\treturn (''.join(stack), repeat_9)\n\t\t(x, y) = (process(S), process(T))\n\t\tif x[0].count('.') == 0 or y[0].count('.') == 0:\n\t\t\treturn float(x[0]) == float(y[0])\n\t\tl = max(len(x[0]), len(y[0]))\n\t\tif x[0][:17] == y[0][:17]:\n\t\t\treturn True\n\t\tif x[1] or y[1]:\n\t\t\tm = min(len(x[0].split('.')[1]), len(y[0].split('.')[1]))\n\t\t\tif round(float(x[0]), m) == round(float(y[0]), m):\n\t\t\t\treturn True\n\t\treturn False"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_leetcode_180d25df7224",
+        "equal rational numbers",
+        "leetcode",
+        "Given two strings S and T, each of which represents a non-negative rational number, return True if and only if they represent the same number. The strings may use parentheses to denote the repeating part of the ration...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束（C）新增了编辑操作定义及操作代价；目标（O）从决策型改为最小化总代价并输出修改证据的优化型；不变量（V）从仅保证有限位比较扩展到编辑操作保持格式合法性，并与代价、相等性绑定。输入结构（I）维持原样，仅重命名角色以贴合主题。",
+      "summary": "通过翻转求解方向，将判定问题变为设计问题，并强制要求最小代价证明，从根本改变算法策略。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_leetcode_inverse_edit_equal_home",
+      "source": "leetcode",
+      "input_structure": {
+        "type": "tuple",
+        "length": {
+          "min": 2,
+          "max": 2
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {},
+        "components": [
+          {
+            "role": "first_vault_inventory",
+            "role_description": "一个表示家庭收纳清单的字符串，格式与种子题相同（带循环节的有理数表示），表示第一个柜子的物品编码。",
+            "type": "string",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          },
+          {
+            "role": "second_vault_inventory",
+            "role_description": "另一个相同格式的字符串，表示第二个柜子的物品编码。",
+            "type": "string",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "original_format_constraints",
+            "description": "每个输入字符串必须符合原题的三种格式之一：<整数部分>、<整数部分>.<非重复部分> 或 <整数部分>.<非重复部分>(<重复部分>)。整数部分长度 1~4，非重复部分长度 0~4，重复部分长度 1~4。仅由数字组成，整数部分不能以两个以上零开头。这些约束在编辑过程中也必须保持。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "edit_operations",
+            "description": "允许以下操作，每种操作的成本固定为1：(a) 替换一个数字为另一个数字（0-9）；(b) 在符合格式的位置插入一对括号，标记新的循环节（须保证非重复部分长度合法）；(c) 删除一对括号，将原循环节转化为非重复部分（可能产生格式违规则不允许）；(d) 将左括号向左或向右移动一个字符位置（改变循环节长度），前提是新位置仍产生合法格式。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "legality_preservation",
+            "description": "任何编辑操作得到的中间字符串或最终字符串都必须严格满足原题格式约束。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "equality_check_cost",
+            "description": "若原始字符串已经表示相同的数，代价为0，且不需要输出修改。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "optimization",
+        "description": "找出最小的总编辑代价，使得两个字符串修改后表示相同的非负有制数。输出一个整数表示最小总代价，以及两行修改后满足格式且相等的字符串（任意一组最小代价方案）。若存在多组解，输出任意一组即可。",
+        "target": "minimum_cost",
+        "requires_solution": true,
+        "cost_function": "sum of costs of applied operations (each operation cost = 1)"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "format_closed_under_edits",
+            "description": "合法编辑操作作用于合法字符串得到合法字符串。",
+            "properties": {},
+            "evidence_source": "design"
+          },
+          {
+            "name": "cost_lower_bound",
+            "description": "若两数不等，最小编辑代价至少为从S到T在编辑图上的最短路径长度，且该长度下界可由数值差异与格式约束共同导出。",
+            "properties": {},
+            "evidence_source": "design"
+          },
+          {
+            "name": "finite_prefix_equality_holds",
+            "description": "对于任何合法字符串对，若它们表示的数相等，则扩展至17位小数后必然相等（原题不变性在修改后的字符串上仍成立）。",
+            "properties": {
+              "prefix_length": 17
+            },
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "home_organization",
+        "name": "家庭收纳",
+        "tone": "清晰、细致、强调整理与查找",
+        "keywords": [
+          "柜子",
+          "物品",
+          "清单",
+          "格子",
+          "标签",
+          "整理"
+        ],
+        "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "家庭收纳清单调整",
+      "description": "小明有两个柜子，每个柜子里存放的物品都有一个唯一的编码。这些编码遵循特定的格式：一个整数部分，可选的小数点，可选的 non-repeating 部分，以及可能由一对圆括号括起来的 repeating 部分。具体来说，一个合法的编码字符串必须符合以下三种形式之一：\n- <整数部分> (例如 0, 12, 123)\n- <整数部分>.< non-repeating 部分> (例如 0.5, 1., 2.12, 2.0001)\n- <整数部分>.< non-repeating 部分>(<repeating 部分>) (例如 0.1(6), 0.9(9), 0.00(1212))\n\n其中，整数部分的长度在 1 到 4 之间，non-repeating 部分的长度在 0 到 4 之间，repeating 部分的长度在 1 到 4 之间。整数部分不能以两个或更多的零开头（例如 \"00\" 开头是不允许的）。每个部分只包含数字字符 '0'-'9'。括号仅用于标记 repeating 部分，且必须成对出现，括号内至少有一个数字。\n\n现在，小明发现两个柜子的物品编码清单不一致，他希望通过一系列调整操作，使两个清单的编码变得相同，并且总调整代价最小。每次调整操作称为一步，每一步的代价为 1。允许的调整操作包括：\n\n1. 替换：将清单中的某一个数字字符改为另一个数字字符（例如将 '3' 改为 '5'）。\n2. 插入括号：在符合格式的位置插入一对括号，将原本不循环的部分变为新的 repeating 部分。插入后必须满足格式约束（non-repeating 部分长度不能超过 4，且括号不能出现在整数部分等）。\n3. 删除括号：删除一对已有的括号，将原来的 repeating 部分变为 non-repeating 部分。删除后不能违反格式约束（例如 non-repeating 部分长度不能超过 4）。\n4. 移动括号：将一个左括号向左或向右移动一个字符位置，从而改变 repeating 部分的长度。移动后必须仍然是一个合法的编码字符串。\n\n任何操作过程中及结束后的字符串都必须严格遵守编码格式约束。如果原始两个清单的编码已经相同，则不需要任何调整，总代价为 0。\n\n请你帮助小明计算使两个清单编码相同所需的最小总代价，并输出一组达到该最小代价的修改后的清单编码（任意一组即可）。",
+      "input_format": "输入包含两行，每行一个字符串，分别表示第一个柜子和第二个柜子的原始物品编码。",
+      "output_format": "第一行输出一个整数，表示最小总代价。\n第二行输出第一个柜子调整后的物品编码。\n第三行输出第二个柜子调整后的物品编码。\n如果存在多组最小代价方案，输出任意一组即可。",
+      "constraints": [
+        "1 ≤ 每个字符串长度 ≤ 13（包括数字、小数点、括号）",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "0.0\n0.1",
+          "output": "1\n0.1\n0.1",
+          "explanation": "将第一个编码的最后一个 '0' 替换为 '1'，总代价为 1。"
+        },
+        {
+          "input": "0.(123)\n0.(124)",
+          "output": "1\n0.(124)\n0.(124)",
+          "explanation": "将第一个编码 repeating 部分中的 '3' 替换为 '4'，得到与第二个编码相同的字符串。总代价为 1。"
+        },
+        {
+          "input": "0.1(6)\n0.1666(6)",
+          "output": "0\n0.1(6)\n0.1666(6)",
+          "explanation": "两个编码本质上表示相同的物品序列，无需修改。输出原字符串即可。"
+        }
+      ],
+      "notes": "",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "通过翻转求解方向，将判定问题变为设计问题，并强制要求最小代价证明，从根本改变算法策略。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3915,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5017,
+          "O": 0.5718,
+          "V": 0.4903
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5017,
+          "objective_type_distance": 0.6632,
+          "objective_text_distance": 0.4348,
+          "invariant_match_distance": 0.4903
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "规则必需的 helper，用于将原题结果绑定为反向目标。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中明确目标为“使两字符串表示的数相等”；",
+            "在 objective 中绑定目标为必须达成的性质，并输出最小代价和证据。"
+          ],
+          "innovation_reason": "将原本的判定结果直接作为设计目标，迫使算法围绕如何满足目标来反推状态，而非计算状态。",
+          "difficulty_reason": "解法不能直接沿用比较，必须搜索能够满足目标的编辑序列，增加了优化难度。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "规则必需的 helper，用于定义可操作的修改空间。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在 core_constraints 中引入编辑操作集（替换数字、移动/增删括号），并定义操作成本；",
+            "在 invariant 中增加 ‘format_closed_under_edits’，保证操作不破坏输入格式合法性。"
+          ],
+          "innovation_reason": "将反向设计落实到可枚举、可量化的操作集合，使模糊的“修改”成为算法可处理的形式化动作。",
+          "difficulty_reason": "要求算法理解操作如何改变数值并搜索代价最小的序列，引入组合爆炸和最优性证明需求。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "规则必需的 helper，用于强制最小代价和证据输出。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 类型变为 optimization，要求输出最小总代价和一组修改后的字符串作为证书；",
+            "invariant 新增 ‘cost_lower_bound’，说明如何从数值差异推导下界，支持最小性论证。"
+          ],
+          "innovation_reason": "让答案承担证明责任，不能只给出任意可行修改，必须证明无法用更少操作达成相同目标。",
+          "difficulty_reason": "需要算法不仅找到可行解，还要证明是最小代价，通常需要下界理论或穷举，显著提高难度。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "通过有限展开和特殊处理（全9循环）判断两个字符串表示的数是否相等，核心为字符串展开与前缀比较。",
+        "reusable_subroutines": "字符串解析提取整数、非重复、重复部分；展开无限小数到有限位（如17位）；检测全9循环并处理四舍五入。",
+        "new_solver_core": "在定义的编辑操作图上进行状态空间搜索（BFS/DP/最短路），状态为(S,T)对，目标为两个字符串表示的数相等；底层调用解析与相等判定作为单步验证。核心转变为优化与搜索，而非原题的单次展开比较。",
+        "new_proof_obligation": "证明编辑操作图上的最短路径对应最小总代价；证明搜索算法能正确找到全局最优解；证明代价下界分析与数值差异的一致性；证明修改后的字符串仍满足格式约束。",
+        "why_direct_reuse_fails": "原题直接输出一个布尔值，既无代价概念，也无编辑方案输出，算法完全不涉及状态转移和优化；新题必须构造状态空间并求解最优化问题，原解只能作为子程序用于目标验证，主导逻辑完全改变。"
+      },
+      "anti_shallow_rationale": "本题没有停留在只改变故事背景或输出包装。核心从二值判定转变为基于编辑操作图的最优化问题，求解方向从正向计算翻转为目标驱动的逆向设计，并强制要求最小代价证明。即使底层字符串相等性可复用，整体算法框架已从“解析-比较”变为“搜索-验证”，构成实质性差异，完全避免了换皮风险。"
+    }
+  }
+}

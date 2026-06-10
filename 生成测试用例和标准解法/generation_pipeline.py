@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 import logging
 from typing import Any, Callable
 
@@ -58,6 +59,9 @@ except ImportError:  # pragma: no cover - 当前测试以顶层模块方式导�
 logger = logging.getLogger(__name__)
 
 Validator = Callable[[dict[str, Any]], dict[str, Any]]
+PromptTask = Callable[[], dict[str, Any]]
+
+INITIAL_GENERATION_MAX_WORKERS = 8
 
 
 def _call_prompt(
@@ -75,6 +79,35 @@ def _call_prompt(
         user_prompt=user_prompt,
         validator=validator,
     )
+
+
+def _run_prompt_tasks_parallel(tasks: dict[str, PromptTask]) -> dict[str, dict[str, Any]]:
+    """并行执行彼此独立的初始 LLM 生成任务，并保留 fail-fast 语义。"""
+
+    if not tasks:
+        return {}
+
+    max_workers = min(len(tasks), INITIAL_GENERATION_MAX_WORKERS)
+    executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="initial-generation")
+    future_to_name: dict[Future[dict[str, Any]], str] = {}
+    shutdown_called = False
+    try:
+        future_to_name = {executor.submit(task): name for name, task in tasks.items()}
+        results: dict[str, dict[str, Any]] = {}
+        for future in as_completed(future_to_name):
+            task_name = future_to_name[future]
+            results[task_name] = future.result()
+        return results
+    except Exception:
+        # 已开始的 LLM 请求无法安全中断；这里取消尚未开始的任务，异常继续向上抛出。
+        for future in future_to_name:
+            future.cancel()
+        executor.shutdown(wait=True, cancel_futures=True)
+        shutdown_called = True
+        raise
+    finally:
+        if not shutdown_called:
+            executor.shutdown(wait=True)
 
 
 def _build_client(config: LLMConfig | None, client: ChatLLMClient | None) -> tuple[LLMConfig | None, ChatLLMClient]:
@@ -107,77 +140,92 @@ def generate_all_artifacts(
     """调用 LLM 生成本模块负责的全部产物。"""
     resolved_config, active_client = _build_client(config, client)
 
-    standard_solution = _call_prompt(
-        active_client,
-        task_name="standard_solution",
-        system_prompt=prompt_standard_solution.build_system_prompt(),
-        user_prompt=prompt_standard_solution.build_user_prompt(artifact),
-        validator=lambda payload: validate_solution_response(
-            payload,
+    initial_tasks: dict[str, PromptTask] = {
+        "standard_solution": lambda: _call_prompt(
+            active_client,
             task_name="standard_solution",
-            markdown_key="solution_markdown",
+            system_prompt=prompt_standard_solution.build_system_prompt(),
+            user_prompt=prompt_standard_solution.build_user_prompt(artifact),
+            validator=lambda payload: validate_solution_response(
+                payload,
+                task_name="standard_solution",
+                markdown_key="solution_markdown",
+            ),
         ),
-    )
-    bruteforce_solution = _call_prompt(
-        active_client,
-        task_name="bruteforce_solution",
-        system_prompt=prompt_bruteforce_solution.build_system_prompt(),
-        user_prompt=prompt_bruteforce_solution.build_user_prompt(artifact),
-        validator=lambda payload: validate_solution_response(
-            payload,
+        "bruteforce_solution": lambda: _call_prompt(
+            active_client,
             task_name="bruteforce_solution",
-            markdown_key="bruteforce_markdown",
+            system_prompt=prompt_bruteforce_solution.build_system_prompt(),
+            user_prompt=prompt_bruteforce_solution.build_user_prompt(artifact),
+            validator=lambda payload: validate_solution_response(
+                payload,
+                task_name="bruteforce_solution",
+                markdown_key="bruteforce_markdown",
+            ),
         ),
-    )
-
-    random_test_input = _call_prompt(
-        active_client,
-        task_name="random_test_input",
-        system_prompt=prompt_random_test_input.build_system_prompt(),
-        user_prompt=prompt_random_test_input.build_user_prompt(artifact),
-        validator=lambda payload: validate_test_generator_response(payload, task_name="random_test_input"),
-    )
-    adversarial_test_input = _call_prompt(
-        active_client,
-        task_name="adversarial_test_input",
-        system_prompt=prompt_adversarial_test_input.build_system_prompt(),
-        user_prompt=prompt_adversarial_test_input.build_user_prompt(artifact),
-        validator=lambda payload: validate_test_generator_response(payload, task_name="adversarial_test_input"),
-    )
-    small_challenge_test_input = _call_prompt(
-        active_client,
-        task_name="small_challenge_test_input",
-        system_prompt=prompt_small_challenge_test_input.build_system_prompt(),
-        user_prompt=prompt_small_challenge_test_input.build_user_prompt(artifact),
-        validator=lambda payload: validate_small_challenge_response(payload, task_name="small_challenge_test_input"),
-    )
-
-    checker = _call_prompt(
-        active_client,
-        task_name="checker",
-        system_prompt=prompt_checker.build_system_prompt(),
-        user_prompt=prompt_checker.build_user_prompt(artifact),
-        validator=validate_checker_response,
-    )
-
-    fixed_wrong_solutions: dict[str, dict[str, Any]] = {}
+        "random_test_input": lambda: _call_prompt(
+            active_client,
+            task_name="random_test_input",
+            system_prompt=prompt_random_test_input.build_system_prompt(),
+            user_prompt=prompt_random_test_input.build_user_prompt(artifact),
+            validator=lambda payload: validate_test_generator_response(payload, task_name="random_test_input"),
+        ),
+        "adversarial_test_input": lambda: _call_prompt(
+            active_client,
+            task_name="adversarial_test_input",
+            system_prompt=prompt_adversarial_test_input.build_system_prompt(),
+            user_prompt=prompt_adversarial_test_input.build_user_prompt(artifact),
+            validator=lambda payload: validate_test_generator_response(payload, task_name="adversarial_test_input"),
+        ),
+        "small_challenge_test_input": lambda: _call_prompt(
+            active_client,
+            task_name="small_challenge_test_input",
+            system_prompt=prompt_small_challenge_test_input.build_system_prompt(),
+            user_prompt=prompt_small_challenge_test_input.build_user_prompt(artifact),
+            validator=lambda payload: validate_small_challenge_response(payload, task_name="small_challenge_test_input"),
+        ),
+        "checker": lambda: _call_prompt(
+            active_client,
+            task_name="checker",
+            system_prompt=prompt_checker.build_system_prompt(),
+            user_prompt=prompt_checker.build_user_prompt(artifact),
+            validator=validate_checker_response,
+        ),
+        "strategy_analysis": lambda: _call_prompt(
+            active_client,
+            task_name="strategy_analysis",
+            system_prompt=prompt_schema_mistake_analysis.build_system_prompt(),
+            user_prompt=prompt_schema_mistake_analysis.build_user_prompt(artifact),
+            validator=validate_strategy_analysis_response,
+        ),
+    }
     for category in prompt_fixed_category_wrong_solution.FIXED_WRONG_CATEGORIES:
         task_name = f"fixed_wrong_solution:{category}"
-        fixed_wrong_solutions[category] = _call_prompt(
-            active_client,
-            task_name=task_name,
-            system_prompt=prompt_fixed_category_wrong_solution.build_system_prompt(),
-            user_prompt=prompt_fixed_category_wrong_solution.build_user_prompt(artifact, category),
-            validator=lambda payload, task_name=task_name: validate_wrong_solution_response(payload, task_name=task_name),
+        initial_tasks[task_name] = (
+            lambda category=category, task_name=task_name: _call_prompt(
+                active_client,
+                task_name=task_name,
+                system_prompt=prompt_fixed_category_wrong_solution.build_system_prompt(),
+                user_prompt=prompt_fixed_category_wrong_solution.build_user_prompt(artifact, category),
+                validator=lambda payload, task_name=task_name: validate_wrong_solution_response(
+                    payload,
+                    task_name=task_name,
+                ),
+            )
         )
 
-    strategy_analysis = _call_prompt(
-        active_client,
-        task_name="strategy_analysis",
-        system_prompt=prompt_schema_mistake_analysis.build_system_prompt(),
-        user_prompt=prompt_schema_mistake_analysis.build_user_prompt(artifact),
-        validator=validate_strategy_analysis_response,
-    )
+    initial_results = _run_prompt_tasks_parallel(initial_tasks)
+    standard_solution = initial_results["standard_solution"]
+    bruteforce_solution = initial_results["bruteforce_solution"]
+    random_test_input = initial_results["random_test_input"]
+    adversarial_test_input = initial_results["adversarial_test_input"]
+    small_challenge_test_input = initial_results["small_challenge_test_input"]
+    checker = initial_results["checker"]
+    fixed_wrong_solutions = {
+        category: initial_results[f"fixed_wrong_solution:{category}"]
+        for category in prompt_fixed_category_wrong_solution.FIXED_WRONG_CATEGORIES
+    }
+    strategy_analysis = initial_results["strategy_analysis"]
     strategies = strategy_analysis["strategies"]
     logger.info("错误策略分析完成: strategy_count=%s", len(strategies))
 

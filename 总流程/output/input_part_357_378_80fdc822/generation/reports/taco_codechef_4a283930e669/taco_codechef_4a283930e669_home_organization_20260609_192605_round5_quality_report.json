@@ -1,0 +1,691 @@
+{
+  "overall": {
+    "status": "pass",
+    "quality_score": 97.0,
+    "divergence_score": 73.2,
+    "schema_distance": 0.3856,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema 中定义的输入结构（多测试用例、每行字符串与代价）、核心约束（使用次数、配对结构、允许未用、编辑定义、beauty 定义、目标阈值等）、目标函数（最小化总代价）都已准确、完整地落地到 generated_problem 的 description、input_format、output_format、constraints 和 notes 中，无遗漏或偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立做题所需的全部关键信息：任务说明详细解释了线路、配对、匹配度、编辑操作和目标；输入格式、输出格式明确；约束覆盖了 T、N、总长度、字符集、代价范围、K 范围；notes 补充了重要细节。读者无需额外猜测规则或边界条件。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints、samples 各部分完全一致，无矛盾。样例输入输出与格式说明严格对应，解释与匹配度定义契合，约束中的范围与样例数据吻合。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 4.0,
+        "rationale": "提供了两个样例，覆盖了无解（-1）、零代价达标、有代价达标等典型情况，解释详细，有助于理解匹配度计算和编辑决策。但样例数量仅 2 组，对于较难的题目稍显不足，若能增加一个边界或复杂结构样例会更完善。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面使用城市通勤的主题包装，表述清晰规范，结构符合 OJ 惯例（标题、描述、输入格式、输出格式、约束、样例），无来源污染或无关噪声，便于参赛者快速准确理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      }
+    ],
+    "strengths": [
+      "主题化包装自然，不损失数学严谨性",
+      "输入输出格式说明与样例完全对齐，易于解析",
+      "约束条件详细且与描述一致，无歧义",
+      "目标函数和编辑模型阐述清楚，无隐藏规则"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.3856,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.5969,
+        "O": 0.4334,
+        "V": 0.491
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.5969,
+        "objective_type_distance": 0.5072,
+        "objective_text_distance": 0.3227,
+        "invariant_match_distance": 0.491
+      }
+    },
+    "schema_distance": 0.3856,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.85,
+    "solution_transfer_risk": 0.25,
+    "surface_retheme_risk": 0.15,
+    "verdict": "pass",
+    "rationale": "新题在输入结构(I)上与原题完全一致，但约束(C)、目标(O)和不变量(V)轴发生了实质改变。原题是正向最大化 beauty 的配对优化，新题则翻转为目标达到阈值 K 的最小化编辑代价的反向设计，并引入带位置代价的字符编辑操作。核心求解关注点从“如何配对使总平方和最大”转变为“如何以最小代价编辑字符串使配对后的总 beauty 达到指定值”。原题标准解（字符串交错变换、排序、分治递归）仅能作为计算给定字符串集合最大 beauty 的子程序，无法直接迁移原框架来解决新题中编辑决策与代价最小化的问题，必须重新建模（例如费用流、动态规划或贪心与下界证明）。表层主题、叙事和样例均无明显复用痕迹，标题重合度为0，故换皮风险极低。因此semantic_difference高，solution_transfer_risk低，判定为pass。",
+    "evidence_refs": [
+      "divergence.schema_distance_breakdown",
+      "snapshots.new_schema.core_constraints",
+      "snapshots.new_schema.objective",
+      "snapshots.new_schema.invariant",
+      "snapshots.generated_problem.description",
+      "snapshots.generated_problem.constraints",
+      "snapshots.difference_plan",
+      "hard_checks.changed_axes_realized"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.39，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "minor",
+      "title": "样例略显单薄",
+      "detail": "现有两个样例虽然覆盖了主要情景，但数量偏少，且未展示字符串长度较大、代价分布不均匀等复杂情况，可能对参赛者充分理解题目模型支持不足。",
+      "evidence_refs": [
+        "generated_problem.samples"
+      ],
+      "fix_hint": "建议增加至少一个边界样例，例如 N=1 且 K>0 的情形，或多字符串、代价差异大的情形，加强说明性。"
+    }
+  ],
+  "suggested_revisions": [
+    "建议增加至少一个边界样例，例如 N=1 且 K>0 的情形，或多字符串、代价差异大的情形，加强说明性。",
+    "增加一个仅用单个字符串无法达到 K 的样例，凸显编辑的必要性",
+    "可补充一个总长度接近上限的样例，验证输入格式的可读性"
+  ],
+  "revision_brief": {
+    "round_index": 5,
+    "overall_status": "pass",
+    "generated_status": "ok",
+    "quality_score": 97.0,
+    "divergence_score": 73.2,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "minor",
+        "title": "样例略显单薄",
+        "detail": "现有两个样例虽然覆盖了主要情景，但数量偏少，且未展示字符串长度较大、代价分布不均匀等复杂情况，可能对参赛者充分理解题目模型支持不足。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ],
+        "fix_hint": "建议增加至少一个边界样例，例如 N=1 且 K>0 的情形，或多字符串、代价差异大的情形，加强说明性。"
+      }
+    ],
+    "suggested_revisions": [
+      "建议增加至少一个边界样例，例如 N=1 且 K>0 的情形，或多字符串、代价差异大的情形，加强说明性。",
+      "增加一个仅用单个字符串无法达到 K 的样例，凸显编辑的必要性",
+      "可补充一个总长度接近上限的样例，验证输入格式的可读性"
+    ],
+    "strengths_to_keep": [
+      "主题化包装自然，不损失数学严谨性",
+      "输入输出格式说明与样例完全对齐，易于解析",
+      "约束条件详细且与描述一致，无歧义",
+      "目标函数和编辑模型阐述清楚，无隐藏规则"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\source\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\artifacts\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669_home_organization_20260609_192605_round5.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_357_378_80fdc822\\generation\\output\\taco_codechef_4a283930e669\\taco_codechef_4a283930e669_home_organization_20260609_192605_round5.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_4a283930e669",
+      "title": "ENGLISH",
+      "description": "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well.\n\nChef is learning English. So far, he knows $N$ words, and he wants to write a verse.\n\nLet's call a pair of English words a *stanza*. A *verse* is a list of stanzas. The *prefixal rhyme* of a stanza is the longest common prefix of the words in it. Similarly, the *suffixal rhyme* of a stanza is the longest common suffix of the words in it. The *beauty* of a stanza whose prefixal and suffixal rhymes have lengths $l_{p}$ and $l_{s}$ respectively is $\\mathrm{min}(l_{p}, l_{s})^2$.\n\nFor example, a stanza formed by the words \"abcdefghijkl\" and \"abcxyzhijkl\" has a prefixal rhyme \"abc\" (with length $3$), suffixal rhyme \"hijkl\" (with length $5$) and beauty $\\mathrm{min}(3,5)^2 = 3^{2} = 9$.\n\nThe beauty of a verse is the sum of beauties of all its stanzas. For example, the beauty of the verse ((\"abcdefghijkl\", \"abcxyzhijkl\"), (\"world\", \"word\"), (\"code\", \"chef\")) is $9+1+0=10$.\n\nYou are given $N$ words $W_{1}, W_{2}, \\ldots, W_{N}$ (they are not necessarily distinct). Help Chef write the most beautiful verse. It is not necessary to use all the words, but each word may be used at most once in the whole verse (more precisely, each element of the sequence $W$ may be used only once, but if some word appears $k$ times in $W$, we can use it up to $k$ times).\n\n------  Input ------\nThe first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\nThe first line of each test case contains a single integer $N$.\n$N$ lines follow. For each $i$ ($1 ≤ i ≤ N$), the $i$-th of these lines contains a single string $W_{i}$.\n\n------  Output ------\nFor each test case, print a single line containing one integer ― the greatest possible beauty of Chef's verse.\n\n------  Constraints ------\n$1 ≤ T ≤ 10^{5}$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ |W_{i}| ≤ 10^{5}$ for each valid $i$\nall words contain only lowercase English letters\nthe sum of $|W_{1}|+|W_{2}|+\\ldots+|W_{N}|$ over all test cases does not exceed $10^{5}$\n\n------  Subtasks ------\nSubtask #1 (50 points): all words are palindromes\n\nSubtask #2 (50 points): original constraints\n\n----- Sample Input 1 ------ \n3\n\n6\n\nabcdefghijkl\n\nchef\n\nworld\n\ncode\n\nabcxyzhijkl\n\nword\n\n4\n\nproblem\n\npoem\n\nproblem\n\nproblem\n\n3\n\ncontest\n\ncoolest\n\nunused\n----- Sample Output 1 ------ \n10\n\n50\n\n4\n----- explanation 1 ------ \nExample case 1: The best verse is ((\"abcdefghijkl\", \"abcxyzhijkl\"), (\"world\", \"word\"), (\"code\", \"chef\")), which was described above.\n\nExample case 2: The best verse is ((\"problem\", \"problem\"), (\"problem\", \"poem\")). Its beauty is $7^{2}+1^{2} = 49+1 = 50$. Note that we have three copies of the word \"problem\", so we can use it three times.\n\nExample case 3: The best verse is ((\"coolest\", \"contest\")), which contains only one stanza. Its beauty is $2^{2}=4$. Note that it is not necessary to use all the words ? the word \"unused\" is left unused.",
+      "input": "",
+      "output": "",
+      "constraints": "time limit: 2 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "def change(u):\n\ti = 0\n\tN = len(u)\n\tv = u[::-1]\n\tnew = ''\n\tfor i in range(N):\n\t\tnew += u[i] + v[i]\n\treturn new\nT = int(input())\nfor nnn in range(T):\n\tk = []\n\tN = int(input())\n\tfor i in range(N):\n\t\tu = input()\n\t\tu = change(u)\n\t\tk.append(u)\n\tk.sort()\n\ttt = []\n\tttt = 0\n\ti = 0\n\tnewarr = []\n\tif len(tt) < 0:\n\t\ta = 'abcdefghijklmnopqrstuvwxyz'\n\t\tb = 0\n\t\tfor i in a:\n\t\t\tm = []\n\t\t\tfor j in range(b, len(k)):\n\t\t\t\tif i == k[j][0]:\n\t\t\t\t\tm.append(k[j])\n\t\t\t\telse:\n\t\t\t\t\tb = j\n\t\t\t\t\tbreak\n\t\t\tnewarr.append(m)\n\t\tttt = 0\n\t\tfor d in newarr:\n\t\t\tif len(d) <= 1:\n\t\t\t\tcontinue\n\t\t\twhile len(d) >= 1:\n\t\t\t\ti = 0\n\t\t\t\tarr_indexes = 0\n\t\t\t\tmax1 = 0\n\t\t\t\twhile i < len(d) - 1:\n\t\t\t\t\tu = 0\n\t\t\t\t\tfor j in range(min(len(d[i]), len(d[i + 1]))):\n\t\t\t\t\t\tif d[i][j] == d[i + 1][j]:\n\t\t\t\t\t\t\tu += 1\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\tif u > 0:\n\t\t\t\t\t\tif max1 < u:\n\t\t\t\t\t\t\tmax1 = u\n\t\t\t\t\t\t\tarr_indexes = i\n\t\t\t\t\t\ti += 1\n\t\t\t\t\telse:\n\t\t\t\t\t\ti += 1\n\t\t\t\ttry:\n\t\t\t\t\td.pop(arr_indexes)\n\t\t\t\t\td.pop(arr_indexes)\n\t\t\t\texcept:\n\t\t\t\t\tbreak\n\t\t\t\tttt += max1 * max1\n\n\tdef my(k, mmm):\n\t\tmini = 1000000000000\n\t\tindex = 0\n\t\tfor i in range(0, len(k) - 1):\n\t\t\tu = 0\n\t\t\tfor j in range(min(len(k[i]), len(k[i + 1]))):\n\t\t\t\tif k[i][j] == k[i + 1][j]:\n\t\t\t\t\tu += 1\n\t\t\t\telse:\n\t\t\t\t\tbreak\n\t\t\tif mini > u:\n\t\t\t\tmini = u\n\t\t\t\tindex = i\n\t\tif k[0] == k[-1]:\n\t\t\tc = len(k) // 2 * len(k[0]) * len(k[0]) // 4\n\t\t\tif len(k) % 2 == 0:\n\t\t\t\treturn (0, 0, c)\n\t\t\telse:\n\t\t\t\treturn (1, mmm.index(k[0]), c)\n\t\tif len(k) == 1:\n\t\t\treturn (1, mmm.index(k[0]), 0)\n\t\tif len(k) == 2:\n\t\t\tmini = mini // 2\n\t\t\treturn (0, 0, mini * mini)\n\t\ta1 = my(k[:index + 1], mmm)\n\t\ta2 = my(k[index + 1:], mmm)\n\t\tif a1[0] == 1 and a2[0] == 1:\n\t\t\tu = 0\n\t\t\tfor j in range(min(len(mmm[a1[1]]), len(mmm[a2[1]]))):\n\t\t\t\tif mmm[a1[1]][j] == mmm[a2[1]][j]:\n\t\t\t\t\tu += 1\n\t\t\t\telse:\n\t\t\t\t\tbreak\n\t\t\tu = u // 2\n\t\t\treturn (0, 0, a1[2] + a2[2] + u * u)\n\t\telif a1[0] == 1 and a2[0] == 0:\n\t\t\treturn (1, a1[1], a1[2] + a2[2])\n\t\telif a1[0] == 0 and a2[0] == 1:\n\t\t\treturn (1, a2[1], a1[2] + a2[2])\n\t\telse:\n\t\t\treturn (0, 0, a1[2] + a2[2])\n\tmmm = k[:]\n\ta = my(k, mmm)\n\tprint(a[2])"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_4a283930e669",
+        "ENGLISH",
+        "codechef",
+        "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well. Chef is learning English. So far, he knows $N$ words, and he wants to write a verse. Let's call a pair of English...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "核心约束新增带代价的编辑操作与目标 beauty 阈值；目标从最大化翻转为最小化代价；不变量从单纯 LCP 分治转为代价感知的 beauty 提升界限与最小性证明。输入结构增加编辑代价和阈值参数，但整体结构仍为多测试用例与字符串序列，因此 I 轴未发生根本改变。",
+      "summary": "从计算最大 beauty 的优化问题转为在给定编辑代价矩阵下求最小总代价使 beauty ≥ K 的逆设计问题，核心约束、目标与不变量发生实质扭转。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "inverse_design_urban_commute_002",
+      "source": "codechef_adapted",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "multiple_test_cases": true
+        },
+        "components": [
+          {
+            "role": "test_case_count",
+            "role_description": "测试用例数量 T",
+            "type": "integer",
+            "length": {
+              "min": null,
+              "max": null
+            },
+            "value_range": {
+              "min": 1,
+              "max": 100000
+            },
+            "properties": {}
+          },
+          {
+            "role": "test_cases",
+            "role_description": "每个测试用例包含整数 N、整数 K，以及 N 行数据，每行包含一个由小写字母组成的字符串 W_i 和 |W_i| 个整数 c_{i,1}...c_{i,|W_i|}，表示将该位置字符替换为任意小写字母的代价。所有字符串总长 ≤ 10^5，代价均为正整数且不超过 10^9。",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100000
+            },
+            "value_range": {
+              "min": null,
+              "max": null
+            },
+            "properties": {}
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "element_usage_limit",
+            "description": "每个原始字符串（经过编辑后）最多在配对中使用一次；若输入中某个字符串出现多次，每个副本独立计数。",
+            "formal": "For each i, the (possibly edited) string derived from W_i can be used at most once in the whole verse.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "stanza_pair_structure",
+            "description": "一个 stanza 由两个字符串组成；一个 verse 是零个或多个 stanza 的序列。",
+            "formal": "A verse is a sequence of pairs {(a_1, b_1), ..., (a_m, b_m)} where each a_i, b_i are chosen from the edited strings.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "allow_unused_elements",
+            "description": "不必使用所有原始字符串（或其编辑后版本），可选择任意子集构成 verse。",
+            "formal": "The number of strings used in the verse is ≤ N.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "alphabet_restriction",
+            "description": "所有原始及编辑后的字符串仅由小写英文字母组成。",
+            "formal": "Each W_i ∈ [a-z]+, and each edited string ∈ [a-z]+.",
+            "source_sections": [
+              "constraints"
+            ]
+          },
+          {
+            "name": "edit_operation_definition",
+            "description": "一次编辑定义为选择一个字符串的某个位置 p，将其字符替换为任意小写字母，并支付该位置对应的代价 c_{i,p}。可对同一字符串的不同位置进行多次编辑，总编辑次数无上限，总代价为各编辑代价之和。",
+            "formal": "An edit on string i at position p changes the character to any lowercase letter and incurs cost c_{i,p}. The total edit cost is the sum of costs of all performed edits.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "target_beauty_threshold",
+            "description": "必须存在一个编辑方案和一个合法配对方案，使得总 beauty 至少为 K。若不存在，输出 -1。",
+            "formal": "∃ edit plan and selection of stanzas such that ∑ min(l_p, l_s)^2 ≥ K. If impossible, output -1.",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "beauty_definition",
+            "description": "两个字符串的 beauty 定义为 min(最长公共前缀长度, 最长公共后缀长度) 的平方。",
+            "formal": "beauty(a,b) = min(|lcp(a,b)|, |lcs(a,b)|)^2",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "cost_range",
+            "description": "所有代价 c_{i,p} 均为正整数，且不超过 10^9。",
+            "formal": "1 ≤ c_{i,p} ≤ 10^9",
+            "source_sections": [
+              "constraints"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "minimize_cost",
+        "description": "最小化总编辑代价，使得编辑后的字符串集合存在一种合法配对（verse），其总 beauty 至少为 K。若无法达到 K，输出 -1。",
+        "target": "total_edit_cost",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "transformed_lcp_correspondence",
+            "description": "将每个字符串与其反转交错合并形成新字符串后，任意两个字符串的原始 beauty 值 min(lp,ls)^2 等于新字符串间最长公共前缀长度一半的平方，从而可通过交错字符串的 LCP 计算 beauty。",
+            "properties": {
+              "formula": "for any strings w1,w2, let t1=interleave(w1,reverse(w1)), t2=interleave(w2,reverse(w2)). Then min(lcp(w1,w2), lcs(w1,w2)) = lcp(t1,t2) // 2"
+            },
+            "evidence_source": "both"
+          },
+          {
+            "name": "edit_monotonicity_with_cost",
+            "description": "对于任一字符串的任意单次编辑，其引起的总 beauty 增量 Δ 受到编辑代价 c 的约束，即 Δ ≤ h(c)，其中 h 是预定义的单调非减函数。此函数基于字符改变对 LCP 的局部影响上限推导得出，保证代价与 beauty 增益之间的定量关系。",
+            "properties": {
+              "condition": "For any single edit with cost c, the increase in total beauty of the optimal verse is at most h(c), where h is a non-decreasing function derived from the LCP structure."
+            },
+            "evidence_source": "deduced from edit definition and cost structure"
+          },
+          {
+            "name": "minimal_edit_cost_lower_bound",
+            "description": "为达到至少 K 的总 beauty，所需的最小总编辑代价 Cost_min 满足 Cost_min ≥ 某个基于当前未编辑状态下最大 beauty B_max 和最佳代价效率的下界。该下界由 h(c) 函数和未编辑状态下的 beauty 分布计算得到。",
+            "properties": {
+              "formula": "Cost_min ≥ min total cost of edits such that the beauty increase is at least max(0, K - B_max), where each edit's contribution is bounded by its cost-specific efficiency."
+            },
+            "evidence_source": "problem-specific reasoning"
+          },
+          {
+            "name": "edited_string_ordering_lemma",
+            "description": "尽管编辑操作可能扰乱交错字符串的字典序排列，但在任何总代价严格小于理论下界的解中，编辑操作引起的排序变化范围可被限定，且最优解中可以通过预排序和局部调整来保持算法的效率，无需考虑全局重排。",
+            "properties": {
+              "condition": "If total edit cost < some threshold, the relative order of edited strings in the sorted sequence of interleaved strings does not deviate beyond a narrow window, allowing divide-and-conquer adaptations."
+            },
+            "evidence_source": "analysis of edit cost and LCP changes"
+          }
+        ]
+      },
+      "theme": {
+        "id": "urban_commute",
+        "name": "城市通勤",
+        "tone": "日常、节奏明确、强调路线与时段",
+        "keywords": [
+          "公交",
+          "站点",
+          "换乘",
+          "班次",
+          "通勤",
+          "闸机"
+        ],
+        "mapping_hint": "把对象映射成站点、班次、通勤记录、换乘方案或闸机流量。"
+      },
+      "difficulty": "hard"
+    },
+    "generated_problem": {
+      "title": "城市通勤优化",
+      "description": "交通局正在对城市公交线路进行优化调整。共有 N 条公交线路，每条线路用一个由小写字母组成的字符串表示，例如 \"ab\" 代表依次经过站点 a, b。\n\n为了提升通勤效率，规划员可以将线路两两配对，形成通勤组合。一对线路的匹配度定义为：它们最长公共前缀长度与最长公共后缀长度的较小值的平方，即 min(lcp, lcs)^2。例如，线路 \"abcd\" 与 \"abed\" 的最长公共前缀为 \"ab\"（长度 2），最长公共后缀为 \"d\"（长度 1），匹配度为 min(2,1)^2 = 1。\n\n一个通勤方案的总匹配度是所有配对匹配度的总和。规划员可以从 N 条线路中任意选择若干条配对，每条线路至多在一个配对中使用（同一条线路如果出现多次，每个副本独立计数）。允许不进行任何配对，此时总匹配度为 0。\n\n规划员还可以对部分线路进行站点调整：选择某条线路的某个位置，将该位置的站点字符替换为任意其他小写字母。每次调整需支付相应的代价，不同位置的代价可能不同。同一条线路的多个位置可以分别调整，总调整代价为所有调整代价之和。\n\n给定目标匹配度阈值 K，规划员希望知道：最少需要支付多少调整代价，才能使得存在一种调整方案和配对方案，让总匹配度至少达到 K？如果无论如何调整都无法达到 K，请输出 -1。",
+      "input_format": "第一行包含一个整数 T，表示测试用例的数量。\n\n接下来是 T 组测试用例。每组测试用例的格式如下：\n第一行包含两个整数 N 和 K，分别表示线路数量和目标匹配度阈值。\n接下来 N 行，每行首先是一个由小写字母组成的非空字符串 Wi，表示第 i 条线路的原始站点序列；随后是 |Wi| 个正整数 ci,1, ci,2, ..., ci,|Wi|，表示将线路 Wi 上第 j 个位置的字符替换为任意小写字母所需的代价。\n\n所有整数均用空格分隔。",
+      "output_format": "对于每组测试用例，输出一行一个整数，表示达到匹配度阈值 K 所需的最小总调整代价。如果无论怎么调整都无法达到 K，则输出 -1。",
+      "constraints": [
+        "1 ≤ T ≤ 10^5，且所有测试用例的 N 之和不超过 10^5",
+        "1 ≤ N ≤ 10^5",
+        "1 ≤ |Wi| ≤ 10^5，且所有测试用例的线路长度之和不超过 10^5",
+        "Wi 仅包含小写英文字母",
+        "1 ≤ ci,j ≤ 10^9",
+        "0 ≤ K ≤ 10^18",
+        "时间限制：3 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3\n3 16\nab 1 1\nab 1 1\nab 1 1\n4 16\nabcd 1 2 3 4\nabcd 1 2 3 4\nabcd 1 2 3 4\nabcd 1 2 3 4\n2 1\na 1\nb 1",
+          "output": "-1\n0\n1",
+          "explanation": "第一个测试用例：共三条线路 \"ab\"。任意两条配对匹配度为 min(2,2)^2 = 4，最多形成一对，总匹配度最大为 4，无法达到 16，故输出 -1。\n第二个测试用例：四条相同的 \"abcd\"。直接选取其中两条配对，匹配度为 min(4,4)^2 = 16，总代价为 0。\n第三个测试用例：线路 \"a\" 和 \"b\" 原始匹配度为 0。将 \"a\" 的第一个字符改为 'b'，代价 1，得到 \"b\"。与另一条 \"b\" 配对，最长公共前缀和最长公共后缀长度均为 1，匹配度为 min(1,1)^2 = 1，达到 K=1，总代价为 1。"
+        },
+        {
+          "input": "2\n2 4\nab 1 100\nac 100 1\n2 4\nab 1 2\nba 3 4",
+          "output": "1\n3",
+          "explanation": "第一个测试用例：原始线路 \"ab\" 和 \"ac\"，lcp=1, lcs=0，匹配度为 0。将 \"ac\" 的第二个字符改为 'b'，代价为 1，得到 \"ab\"。编辑后的 \"ab\" 与另一条 \"ab\" 配对，匹配度 = min(2,2)^2 = 4，达到 K=4，总代价为 1。其他方案（如修改 \"ab\"）代价为 100，因此最小代价为 1。\n第二个测试用例：原始线路 \"ab\" 和 \"ba\"，匹配度为 0。将 \"ab\" 的第一个字符改为 'b'（代价 1），第二个字符改为 'a'（代价 2），总代价为 3，得到 \"ba\"。编辑后的 \"ba\" 与未编辑的 \"ba\" 配对，匹配度 = min(2,2)^2 = 4，达到 K=4。修改 \"ba\" 的总代价至少为 3+4=7，故最小代价为 3。"
+        }
+      ],
+      "notes": "匹配度计算基于编辑后的字符串。编辑操作仅替换字符，不改变字符串长度。同一条线路的不同位置可以分别进行调整。不必使用所有线路，可选用任意子集进行配对，每条原始线路最多使用一次。如果 K=0，可以不进行任何配对，总代价为 0。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "从计算最大 beauty 的优化问题转为在给定编辑代价矩阵下求最小总代价使 beauty ≥ K 的逆设计问题，核心约束、目标与不变量发生实质扭转。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.3856,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.5969,
+          "O": 0.4334,
+          "V": 0.491
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.5969,
+          "objective_type_distance": 0.5072,
+          "objective_text_distance": 0.3227,
+          "invariant_match_distance": 0.491
+        }
+      },
+      "applied_rule": "forward_solution_to_inverse_design",
+      "applied_helpers": [
+        {
+          "id": "target_result_binding",
+          "selection_reason": "原题输出 beauty 值，可绑定为新题的达成目标 K，驱动反向设计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 增加 target_beauty_threshold，要求总 beauty ≥ K",
+            "objective 描述改为最小化代价以满足 K"
+          ],
+          "innovation_reason": "迫使求解器围绕外生目标反推状态，彻底翻转优化方向。",
+          "difficulty_reason": "算法需处理目标可行性分析及代价与 beauty 的权衡，增加证明负担。"
+        },
+        {
+          "id": "edit_operation_contract",
+          "selection_reason": "字符串是核心对象，字符替换是自然操作，而引入位置代价使编辑操作空间更丰富且更贴合现实约束。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 新增 edit_operation_definition，包含代价定义",
+            "invariant 新增 edit_monotonicity_with_cost，描述编辑代价与 beauty 变化的关系"
+          ],
+          "innovation_reason": "将反向设计落实到带代价的可操作编辑空间，要求算法显式建模编辑代价对匹配度的影响。",
+          "difficulty_reason": "需要分析不同位置的编辑代价对 LCP 的局部影响，并建立代价-增益效率模型，提升组合优化复杂度和证明难度。"
+        },
+        {
+          "id": "minimality_or_certificate_lock",
+          "selection_reason": "目标明确为最小化编辑代价，需要提供下界与最优性证明。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 类型为 minimize_cost，目标为 total_edit_cost",
+            "invariant 新增 minimal_edit_cost_lower_bound，给出基于代价效率的下界"
+          ],
+          "innovation_reason": "强制算法承担最小性证明责任，需要论证更小代价的不可能性。",
+          "difficulty_reason": "下界证明需精确定量编辑代价对总 beauty 的最大可能贡献，并构造紧致分析，大幅提高理论要求。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "将每个单词与其反转交错生成新字符串，按字典序排序，利用相邻最小 LCP 分割进行分治递归，最大化配对 beauty 总和。",
+        "reusable_subroutines": "字符串交错变换、字符串反转、字符串排序、相邻 LCP 计算、分治递归框架（左右子问题合并时计算未配对单词间的 beauty）。",
+        "new_solver_core": "在排序后交错序列的基础上，需要设计状态搜索或动态规划，为每个字符串选择编辑位置和编辑结果，使得总代价最小且总 beauty ≥ K。可能的方法包括：预处理每个字符串在不编辑和各位置编辑下的潜在 LCP 提升量，建立二分图或最小代价流模型，在约束下选择编辑决策并保证配对的最大 beauty 达到阈值。需开发全新的代价感知优化算法。",
+        "new_proof_obligation": "必须证明编辑操作对总 beauty 提升的上界关于其代价的函数关系 h(c)，并利用此关系推导最小编辑代价下界，证明算法所得代价为最小。同时需证明在代价非均匀时，任何总代价更小的方案均无法达到 K，且算法在考虑多字符串协同编辑时保持了最优性。另外，需证明在搜索空间极大的情况下，编辑后的字符串仍能有效维持排序窗口引理，保证算法复杂度可接受。",
+        "why_direct_reuse_fails": "原算法直接最大化 beauty，完全未涉及编辑操作与代价，也无法回答“为达到指定 beauty 最少需要多少代价”。直接调用原解法只能获取未编辑时的最大 beauty，但无法指导如何分配编辑预算，也无法保证编辑后的字符串序列仍能套用原递归框架的最优性，因为编辑可能改变字符串间的 LCP 关系及排序。"
+      },
+      "anti_shallow_rationale": "新题在翻转正向优化为反向设计的基础上，进一步引入位置相关编辑代价，使输入结构、核心约束和优化目标发生了实质性改变。原题的核心算法（交错变换、排序、分治）虽可部分复用，但必须与全新的代价感知决策机制结合，无法直接套用，避免了换皮风险。同时，invariant 彻底重写，以代价-增益函数和排序窗口引理取代原题的分治相邻最小 LCP 性质，确保问题核心推理路径与原题隔离。"
+    }
+  }
+}

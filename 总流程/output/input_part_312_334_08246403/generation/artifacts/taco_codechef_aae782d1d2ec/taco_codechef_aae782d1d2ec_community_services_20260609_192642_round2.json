@@ -1,0 +1,1109 @@
+{
+  "problem_id": "home_org_inverse_min_shift",
+  "source_problem_ids": [
+    "taco_codechef_aae782d1d2ec"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 1,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "home_organization",
+    "name": "家庭收纳"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [
+      "C",
+      "O",
+      "V"
+    ],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_aae782d1d2ec",
+      "DOWNLOAD",
+      "codechef",
+      "The aliens living in outer space are very advanced in technology, intelligence and everything, except one, and that is Cooking. Each year they spend millions of dollars in research, to crack famous recipes prepared by...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "C轴：引入目标覆盖数约束和修改操作定义；O轴：从计数变为最小化修改次数；V轴：从BIT维护覆盖统计变为基于需求差分的可行性下界证明。",
+    "summary": "将正向查询统计翻转为带目标约束的最小修改设计问题，结构上查询变为单时刻并增加目标值，算法核心从简单统计转为组合优化与可行性判定。",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.4819,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.4819,
+    "axis_scores": {
+      "I": 0.0304,
+      "C": 0.7329,
+      "O": 0.541,
+      "V": 0.5958
+    },
+    "components": {
+      "input_tree_distance": 0.0304,
+      "constraint_match_distance": 0.7329,
+      "objective_type_distance": 0.5689,
+      "objective_text_distance": 0.4991,
+      "invariant_match_distance": 0.5958
+    }
+  },
+  "changed_axes_realized": [
+    "C",
+    "O",
+    "V"
+  ],
+  "objective": {
+    "type": "minimize",
+    "description": "最小化需要修改的物品数量，使得所有查询的可见物品数恰好等于各自的目标值。若无解，输出-1。",
+    "target": "min_modified_items",
+    "requires_solution": true,
+    "value_range": "integer ≥ 0 or -1"
+  },
+  "rule_selection_reason": "种子题是经典区间覆盖计数问题，计数对象为区间，存在自然权重（区间长度）和潜在分布属性（长度分组），因此加权计数规则可直接适用且能实质性提升难度；反向设计需要额外构造修改操作，易于退化成暴力枚举修改后重算，核心算法变化不足。；创新度判断：将计数目标从'不同区间个数'改为'区间覆盖总时长'或'按长度分组统计'，迫使算法从简单统计活跃数量升级为维护区间并集的加权统计，核心约束和输出责任均被重构。；难度判断：新问题要求在线或离线维护区间并集的加权和或分布，传统 BIT 差分化方法无法直接去重长度，需要引入区间树、集合去重或更复杂的扫描线结构，算法复杂度从 O((N+Q) log N) 提升到更高层次或需要更细粒度的正确性证明。；风险判断：主要风险在于权重定义是否自然：区间长度是显而易见的，但需确保权重不会退化成平凡计数；通过 helper 强制要求权重由区间自身属性定义且不能只是数量，并确保分布统计不重不漏，风险可控。",
+  "new_schema_snapshot": {
+    "problem_id": "home_org_inverse_min_shift",
+    "source": "derived_from_codechef_DOWNLOAD",
+    "input_structure": {
+      "type": "composite",
+      "length": {
+        "min": 2,
+        "max": 105000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 1000000000
+      },
+      "properties": {},
+      "components": [
+        {
+          "role": "items",
+          "role_description": "物品及其占据的连续格子区间",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 100000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {
+            "interval_constraint": "Si ≤ Ei"
+          },
+          "elements": {
+            "type": "tuple",
+            "fields": [
+              {
+                "name": "S",
+                "type": "integer",
+                "range": {
+                  "min": 1,
+                  "max": 1000000000
+                }
+              },
+              {
+                "name": "E",
+                "type": "integer",
+                "range": {
+                  "min": 1,
+                  "max": 1000000000
+                }
+              }
+            ]
+          }
+        },
+        {
+          "role": "queries",
+          "role_description": "单时刻查询，包含查看位置和目标可见物品数",
+          "type": "array",
+          "length": {
+            "min": 1,
+            "max": 5000
+          },
+          "value_range": {
+            "min": 1,
+            "max": 1000000000
+          },
+          "properties": {},
+          "elements": {
+            "type": "tuple",
+            "fields": [
+              {
+                "name": "position",
+                "type": "integer",
+                "range": {
+                  "min": 1,
+                  "max": 1000000000
+                }
+              },
+              {
+                "name": "target_count",
+                "type": "integer",
+                "range": {
+                  "min": 0,
+                  "max": 100000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "core_constraints": {
+      "constraints": [
+        {
+          "name": "interval_validity",
+          "description": "每个物品的区间必须满足起始格子编号不大于结束格子编号，即 Si ≤ Ei。",
+          "formal": "Si ≤ Ei",
+          "source_sections": [
+            "input"
+          ]
+        },
+        {
+          "name": "visibility_rule",
+          "description": "物品i在位置p可见当且仅当p落在区间[Si, Ei]内。",
+          "formal": "item i visible at position p ⇔ Si ≤ p ≤ Ei",
+          "source_sections": [
+            "description"
+          ]
+        },
+        {
+          "name": "target_cover_constraint",
+          "description": "对于每个查询j，在最终物品区间配置下，位置p_j处的可见物品总数必须恰好等于target_count_j。",
+          "formal": "∀j, |{i : Si_final ≤ p_j ≤ Ei_final}| = target_count_j",
+          "source_sections": [
+            "reverse_objective"
+          ]
+        },
+        {
+          "name": "modification_operation",
+          "description": "允许选择任意数量的物品，将其区间改为任意新值[Si', Ei']满足1≤Si'≤Ei'≤1e9，一次修改一个物品算一次操作。每个物品至多被修改一次。",
+          "formal": "modify(i, S', E') where 1≤S'≤E'≤1e9, and each item modified at most once",
+          "source_sections": [
+            "reverse_operation"
+          ]
+        }
+      ]
+    },
+    "objective": {
+      "type": "minimize",
+      "description": "最小化需要修改的物品数量，使得所有查询的可见物品数恰好等于各自的目标值。若无解，输出-1。",
+      "target": "min_modified_items",
+      "requires_solution": true,
+      "value_range": "integer ≥ 0 or -1"
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "initial_coverage_array",
+          "description": "初始物品区间形成覆盖数组 orig[t]，可通过 BIT 快速查询任意位置 t 的原始可见物品数。",
+          "properties": {},
+          "evidence_source": "derived_from_seed"
+        },
+        {
+          "name": "residual_demand_lower_bound",
+          "description": "对于保留物品集合 R，剩余需求 diff[t] = target[t] - cov_R[t] 须非负；满足该需求所需的最少新区间数为 sum_t max(0, diff[t] - diff[t-1])，该值构成修改数的下界。",
+          "properties": {},
+          "evidence_source": "proof_of_minimality"
+        },
+        {
+          "name": "feasibility_condition",
+          "description": "若 sum_t max(0, diff[t] - diff[t-1]) ≤ N - |R|，则存在构造方案用 N-|R| 个新区间精确达到所有目标；进而最小修改数等于 N - max_{feasible R} |R|。",
+          "properties": {},
+          "evidence_source": "construction_algorithm"
+        }
+      ]
+    },
+    "theme": {
+      "id": "home_organization",
+      "name": "家庭收纳",
+      "tone": "清晰、细致、强调整理与查找",
+      "keywords": [
+        "柜子",
+        "物品",
+        "清单",
+        "格子",
+        "标签",
+        "整理"
+      ],
+      "mapping_hint": "把原始结构映射成物品、收纳格、标签、清单或整理步骤。"
+    },
+    "difficulty": "medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "status": "ok",
+      "reason_code": "not_weighted_counting",
+      "reason": "核心约束中仅定义了支配关系和前沿概念，未定义任何由区间自身属性决定的数值权重或分类统计量（如长度、权重等），也未说明如何汇总为带权和或分布。；目标输出为非支配前沿的区间列表，属于结构化集合输出，而非带权和、分类计数或分布统计，违背了helper weighted_output_contract 的 redline '不能只输出普通计数'（此处甚至不是计数）。；不变量仅描述前沿维护的正确性，未提供带权汇总或分布的不重不漏保证，缺失分布状态因子化应有的状态单元设计。"
+    }
+  ],
+  "algorithmic_delta_claim": {
+    "seed_solver_core": "事件排序 + BIT 维护差分数组，处理区间添加/删除与查询时刻的覆盖计数。",
+    "reusable_subroutines": "坐标压缩、BIT 结构、单点更新与前缀查询等局部子程序可直接复用。",
+    "new_solver_core": "需设计保留物品的选择策略（可能基于贪心或 DP），利用剩余需求的下界公式进行可行性剪枝，而不是仅做覆盖统计。",
+    "new_proof_obligation": "证明由需求差分给出的新区间数下界是紧的，并能构造对应数量的区间；证明选出的保留集合确实最大化保留数，且剩余物品足够填补缺口。",
+    "why_direct_reuse_fails": "原 BIT 仅能被动计算给定配置下的覆盖数，无法主动决定哪些物品应保留或修改以实现目标，且缺少对修改操作空间与最小性的推理机制。"
+  },
+  "anti_shallow_rationale": "题目并未简单将原输出形式改为“是否等于目标”，而是增加了最小修改次数这一优化维度，要求算法在目标约束下搜索最优保留子集，并证明下界。覆盖计数仅作为子程序判断可行性，主求解方向从纯统计翻转为组合设计。",
+  "shared_core_summary": "",
+  "shared_core_anchors": {
+    "shared_state": "",
+    "shared_transition": "",
+    "shared_decision_basis": ""
+  },
+  "seed_contributions": {
+    "seed_a": "",
+    "seed_b": ""
+  },
+  "fusion_ablation": {
+    "without_seed_a": "",
+    "without_seed_b": ""
+  },
+  "applied_helpers": [
+    {
+      "id": "target_result_binding",
+      "selection_reason": "原题结果（单次查询的覆盖数）可直接作为反向目标，形成自然的设计要求。",
+      "affected_axes": [
+        "C",
+        "O"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中加入 target_cover_constraint，强制每个查询达到指定覆盖数；",
+        "objective 从计数变为判断并最小化修改次数。"
+      ],
+      "innovation_reason": "迫使解题方向从正向计算变为目标驱动，需围绕目标约束反推物品区间设置。",
+      "difficulty_reason": "目标约束增加了可行解的存在性判定，使算法必须考虑全局组合结构。"
+    },
+    {
+      "id": "edit_operation_contract",
+      "selection_reason": "物品区间是原题核心对象，自然允许调整区间作为修改操作，且操作定义符合收纳场景。",
+      "affected_axes": [
+        "C",
+        "V"
+      ],
+      "schema_changes": [
+        "在 core_constraints 中增加了 modification_operation 约束，清晰定义修改动作及计数方式；",
+        "invariant 中引入 residual_demand_lower_bound，将修改操作与目标达成所需资源关联。"
+      ],
+      "innovation_reason": "将反向设计落实到可枚举、可优化的操作空间，避免抽象叙事。",
+      "difficulty_reason": "需要分析操作对覆盖的影响，并证明操作序列与目标结果的对应关系，提高算法复杂度。"
+    },
+    {
+      "id": "minimality_or_certificate_lock",
+      "selection_reason": "要求输出最小修改数而非任意可行解，紧扣逆问题的优化本质。",
+      "affected_axes": [
+        "O",
+        "V"
+      ],
+      "schema_changes": [
+        "objective 明确定义为最小化修改物品数；",
+        "invariant 提供基于需求差分的下界，作为最小性的证明基础。"
+      ],
+      "innovation_reason": "答案必须承担最小性责任，不能仅输出任意可行修改方案。",
+      "difficulty_reason": "要求算法不仅要构造解，还要证明或保证用最少的修改数达成目标，引入下界推理。"
+    }
+  ],
+  "planning_status": "ok",
+  "planning_error_reason": "",
+  "planning_feedback": "",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_construct_object",
+      "selection_reason": "种子题是纯粹的计数问题，输出为单个整数，缺乏可供规范化的构造对象，无法升级为带证明责任的规范解输出。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为 counting，要求输出每个查询覆盖的不同区间数量，scheme 中 objective.type 为 counting，requires_solution 为 false。标准解法使用 BIT 进行计数，不产生任何方案或可恢复的构造，解对象仅为整数计数。规则要求种子题有明确的解对象或可恢复的方案，此处均不满足。",
+        "feedback": "该规则期望将原题升级为输出规范解（如字典序最小的构造），但当前种子题没有构造基础，强行改为输出区间列表将完全改变问题性质，且难以定义自然的规范顺序。建议选择已有构造输出的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "seed_lacks_unsolvable_instance",
+      "selection_reason": "种子题是一个计数问题，总是有解，不存在‘做不到’的情形，因此无法要求输出局部冲突证据。规则的前提条件‘做不到的原因可以用局部证据表示’在本种子题中不成立。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述（DOWNLOAD）要求对给定时间点集合统计不同区间的数量，约束条件定义明确且始终有解，没有无解分支。规则声明required_seed_properties包含‘做不到的原因可以用局部证据表示’但种子题不存在做不到的情况。failure_templates.not_applicable明确‘这道种子题做不到的原因没法稳定地写成局部证据’正对应此场景。",
+        "feedback": "适用于种子题的变更规则必须与种子题的固有性质兼容。construct_or_obstruction需要基础题存在无解或障碍情形，而本题仅有正向计算，强行施加将导致无意义的输出语义。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题目标已是计数（统计不同区间数量），不符合规则要求的存在性或最优值种子。转换后不会产生新责任。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目 schema 中 objective.type 为 'counting'，描述为'统计每个查询中给定时间点集合所覆盖的不同区间数量'；规则 'existence_to_counting' 的 handler 和 eligibility.required_seed_properties 明确要求将存在性或最优值问题改成计数，但原题已为计数，不满足转换前提。",
+        "feedback": "规则假定种子为存在性或单一最优值，而此题已为计数，强行应用只会产生冗余或伪变化，建议另选种子或更换规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是固定的区间覆盖查询，所有时间点均作为输入给定，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法转化为最小保底优化。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中，外星人访问时刻由输入明确给出，无任何不确定性；schema 的 core_constraints 仅定义区间非退化和严格时间包含关系，无扰动量；invariant 中的 event_total_order 为固定处理顺序，无波动空间。",
+        "feedback": "该规则要求原题自带可建模的扰动来源，但本题的输入和语义均为确定性集合覆盖计数，缺少将扰动模型内生于原题语义的切入点，强行套用只会产生外围包装而非本质变化。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "seed_unsuitable",
+      "selection_reason": "原问题是区间覆盖计数，不存在可行性判定，也没有可调节的参数使之具有单调性或临界阈值，无法扩展为阈值优化问题。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题的核心约束为区间覆盖（time_in_interval），目标是统计不同覆盖区间数量。规则要求“原题可行性随某个参数具有清晰的单调性或分层结构”，但该问题中没有可行性概念，也没有可调节的阈值参数（如容量、长度等）来改变可行区域。输入只有固定的区间和查询时间点，没有可优化的变量。",
+        "feedback": "规则的前置条件不满足：种子题缺少自然临界参数，无法稳定扩成阈值优化题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.12,
+      "reason_code": "missing_natural_secondary_metric",
+      "selection_reason": "原题目标仅为统计给定时间点集覆盖的不同区间数量，无任何天然的量化代价、收益或风险维度，无法形成冲突的第二评价指标。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "Seed objective: '统计每个查询中给定时间点集合所覆盖的不同区间数量' (schema_context.seed_schema.objective). 区间与查询时间点均只有标号与时刻，未携带权重、成本、覆盖率等可构成权衡的属性。原题非优化问题，强行加入第二指标将导致语义断裂。",
+        "feedback": "建议更换为自带多属性目标的种子题（如调度、资源分配），或先在种子题中显式引入可冲突的额外维度（如每个区间的重要度、查询时间点的开销）。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "valid_target_and_natural_edits",
+      "selection_reason": "原题输出 distinct_covered_intervals 可作为反向目标，区间端点修改是自然操作，最小编辑定义清晰，满足 helpers 的 target_result_binding、edit_operation_contract、minimality_or_certificate_lock 所有要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "schema 中 objective.type 为 counting，target 为 distinct_covered_intervals，提供了可直接绑定的结果类型；core_constraints 包含 strict_interval 和 time_in_interval，其区间端点是原题核心输入对象；规则 helpers 要求目标绑定、操作契约、最小性证明，均可在修改区间端点、以最少修改次数达成目标覆盖数的设定下实现。",
+        "feedback": "规划阶段应明确定义修改操作（如每次调整端点值）和代价函数，并设计算法计算最小修改次数或多目标可行性，避免泛化为无约束重构。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "insufficient_natural_coupling_basis",
+      "selection_reason": "The seed problem involves counting distinct intervals covered by independent query groups. These groups share only a static set of intervals, which is not a dynamic resource or conservation law. Introducing global coupling (e.g., a shared budget or cross-group dependency) would require unnatural external restrictions, violating the rule's requirement that local units be naturally coupled via shared resources or global conservation.",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Invariant 'query_state_isolation' explicitly states each query group maintains its own state and does not interfere with others. The schema's core constraints and objective show no dynamic shared variable among the query groups. The rule's eligibility criteria require local units to be naturally coupled through shared resources, totals, or global choices, but here the only common element is the read-only interval list.",
+        "feedback": "The seed problem is a counting problem with independent queries. To apply global coupling, one would need to add an external constraint like a total download cap, but that would be an arbitrary restriction on an otherwise well-defined independent task, failing the rule's anti-shallow requirement."
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_natural_choice_mechanism",
+      "selection_reason": "原题为计数查询任务，无任何可轮流选择、拿取或状态转移的操作，完全缺乏转化为双方博弈的语义基础。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 'DOWNLOAD' 描述为一组固定的视频区间和查询时间点，要求计算覆盖的不同区间数量。输入处理仅涉及事件读取与排序，核心约束仅定义区间覆盖关系，不变式基于 BIT 维护活跃区间，整个过程中不存在任何决策或可选动作。规则要求的 'required_seed_properties' 第一条即为 '原题存在可轮流选择、拿取、移动或改变状态的自然操作'，本种子题不满足。",
+        "feedback": "该规则只适用于本身包含选择或操作自由度的种子题（如取物、移动等），当前的区间覆盖查询问题无法支撑对抗化改造。建议选择其他种子或考虑基于玩家主动选择访问时间的变体，但那已超出原有操作空间。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "missing_global_selection_seed",
+      "selection_reason": "原题仅要求对独立查询统计区间覆盖个数，不存在选择、割或支配机制的种子，无法自然升级为全局覆盖或最小割问题。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束是时间点落入区间则下载，目标为统计不同区间数（seed_schema.objective.type: counting）。区间作为局部对象存在，但原题未定义任何全局选择或覆盖关系，亦无对象族间协同约束。规则要求的‘多个局部对象之间可以自然形成覆盖或割关系’未满足，强行扩展会脱离原结构（见 forbidden_seed_properties）。",
+        "feedback": "原题是独立的组查询问题，每个查询只关心自身不同区间数，没有跨查询或统筹选择的基底。若强行改成选择最少时间点覆盖所有区间等变体，是全新问题，不属于本规则的合理扩展。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": true,
+      "score": 0.92,
+      "reason_code": "natural_weight_exists",
+      "selection_reason": "原题计数对象为视频区间，每个区间具有自然长度属性（结束时间-开始时间），可作为权重；且规则要求计数对象上存在自然统计量，区间长度满足这一条件，无需背景硬造。",
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "eligible",
+        "evidence": "规则 required_seed_properties 要求“计数对象上存在自然权重、等级或统计量”；seed_schema 中每个区间由 S_i 和 E_i 定义，长度 = E_i - S_i 是区间固有属性，可直接作为权重。原题 objective 为 counting，输出“不同区间数量”，扩展为带权计数（如输出总时长）自然成立。",
+        "feedback": "注意原题去重算法基于同质计数，转为带权后需重新设计去重逻辑以处理非同质权重，但此复杂性属于规划阶段应解决的问题，不影响资格判断。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "no_construct_object",
+      "message": "种子题是纯粹的计数问题，输出为单个整数，缺乏可供规范化的构造对象，无法升级为带证明责任的规范解输出。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目标为 counting，要求输出每个查询覆盖的不同区间数量，scheme 中 objective.type 为 counting，requires_solution 为 false。标准解法使用 BIT 进行计数，不产生任何方案或可恢复的构造，解对象仅为整数计数。规则要求种子题有明确的解对象或可恢复的方案，此处均不满足。",
+        "feedback": "该规则期望将原题升级为输出规范解（如字典序最小的构造），但当前种子题没有构造基础，强行改为输出区间列表将完全改变问题性质，且难以定义自然的规范顺序。建议选择已有构造输出的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "seed_lacks_unsolvable_instance",
+      "message": "种子题是一个计数问题，总是有解，不存在‘做不到’的情形，因此无法要求输出局部冲突证据。规则的前提条件‘做不到的原因可以用局部证据表示’在本种子题中不成立。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述（DOWNLOAD）要求对给定时间点集合统计不同区间的数量，约束条件定义明确且始终有解，没有无解分支。规则声明required_seed_properties包含‘做不到的原因可以用局部证据表示’但种子题不存在做不到的情况。failure_templates.not_applicable明确‘这道种子题做不到的原因没法稳定地写成局部证据’正对应此场景。",
+        "feedback": "适用于种子题的变更规则必须与种子题的固有性质兼容。construct_or_obstruction需要基础题存在无解或障碍情形，而本题仅有正向计算，强行施加将导致无意义的输出语义。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题目标已是计数（统计不同区间数量），不符合规则要求的存在性或最优值种子。转换后不会产生新责任。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "ineligible",
+        "evidence": "种子题目 schema 中 objective.type 为 'counting'，描述为'统计每个查询中给定时间点集合所覆盖的不同区间数量'；规则 'existence_to_counting' 的 handler 和 eligibility.required_seed_properties 明确要求将存在性或最优值问题改成计数，但原题已为计数，不满足转换前提。",
+        "feedback": "规则假定种子为存在性或单一最优值，而此题已为计数，强行应用只会产生冗余或伪变化，建议另选种子或更换规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是固定的区间覆盖查询，所有时间点均作为输入给定，不存在顺序不确定、资源波动或局部选择差异等原生扰动来源，无法转化为最小保底优化。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述中，外星人访问时刻由输入明确给出，无任何不确定性；schema 的 core_constraints 仅定义区间非退化和严格时间包含关系，无扰动量；invariant 中的 event_total_order 为固定处理顺序，无波动空间。",
+        "feedback": "该规则要求原题自带可建模的扰动来源，但本题的输入和语义均为确定性集合覆盖计数，缺少将扰动模型内生于原题语义的切入点，强行套用只会产生外围包装而非本质变化。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "seed_unsuitable",
+      "message": "原问题是区间覆盖计数，不存在可行性判定，也没有可调节的参数使之具有单调性或临界阈值，无法扩展为阈值优化问题。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "ineligible",
+        "evidence": "种子问题的核心约束为区间覆盖（time_in_interval），目标是统计不同覆盖区间数量。规则要求“原题可行性随某个参数具有清晰的单调性或分层结构”，但该问题中没有可行性概念，也没有可调节的阈值参数（如容量、长度等）来改变可行区域。输入只有固定的区间和查询时间点，没有可优化的变量。",
+        "feedback": "规则的前置条件不满足：种子题缺少自然临界参数，无法稳定扩成阈值优化题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "missing_natural_secondary_metric",
+      "message": "原题目标仅为统计给定时间点集覆盖的不同区间数量，无任何天然的量化代价、收益或风险维度，无法形成冲突的第二评价指标。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.12,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "Seed objective: '统计每个查询中给定时间点集合所覆盖的不同区间数量' (schema_context.seed_schema.objective). 区间与查询时间点均只有标号与时刻，未携带权重、成本、覆盖率等可构成权衡的属性。原题非优化问题，强行加入第二指标将导致语义断裂。",
+        "feedback": "建议更换为自带多属性目标的种子题（如调度、资源分配），或先在种子题中显式引入可冲突的额外维度（如每个区间的重要度、查询时间点的开销）。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "valid_target_and_natural_edits",
+      "message": "原题输出 distinct_covered_intervals 可作为反向目标，区间端点修改是自然操作，最小编辑定义清晰，满足 helpers 的 target_result_binding、edit_operation_contract、minimality_or_certificate_lock 所有要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.97,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "schema 中 objective.type 为 counting，target 为 distinct_covered_intervals，提供了可直接绑定的结果类型；core_constraints 包含 strict_interval 和 time_in_interval，其区间端点是原题核心输入对象；规则 helpers 要求目标绑定、操作契约、最小性证明，均可在修改区间端点、以最少修改次数达成目标覆盖数的设定下实现。",
+        "feedback": "规划阶段应明确定义修改操作（如每次调整端点值）和代价函数，并设计算法计算最小修改次数或多目标可行性，避免泛化为无约束重构。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "insufficient_natural_coupling_basis",
+      "message": "The seed problem involves counting distinct intervals covered by independent query groups. These groups share only a static set of intervals, which is not a dynamic resource or conservation law. Introducing global coupling (e.g., a shared budget or cross-group dependency) would require unnatural external restrictions, violating the rule's requirement that local units be naturally coupled via shared resources or global conservation.",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "Invariant 'query_state_isolation' explicitly states each query group maintains its own state and does not interfere with others. The schema's core constraints and objective show no dynamic shared variable among the query groups. The rule's eligibility criteria require local units to be naturally coupled through shared resources, totals, or global choices, but here the only common element is the read-only interval list.",
+        "feedback": "The seed problem is a counting problem with independent queries. To apply global coupling, one would need to add an external constraint like a total download cap, but that would be an arbitrary restriction on an otherwise well-defined independent task, failing the rule's anti-shallow requirement."
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_choice_mechanism",
+      "message": "原题为计数查询任务，无任何可轮流选择、拿取或状态转移的操作，完全缺乏转化为双方博弈的语义基础。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "种子题 'DOWNLOAD' 描述为一组固定的视频区间和查询时间点，要求计算覆盖的不同区间数量。输入处理仅涉及事件读取与排序，核心约束仅定义区间覆盖关系，不变式基于 BIT 维护活跃区间，整个过程中不存在任何决策或可选动作。规则要求的 'required_seed_properties' 第一条即为 '原题存在可轮流选择、拿取、移动或改变状态的自然操作'，本种子题不满足。",
+        "feedback": "该规则只适用于本身包含选择或操作自由度的种子题（如取物、移动等），当前的区间覆盖查询问题无法支撑对抗化改造。建议选择其他种子或考虑基于玩家主动选择访问时间的变体，但那已超出原有操作空间。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "missing_global_selection_seed",
+      "message": "原题仅要求对独立查询统计区间覆盖个数，不存在选择、割或支配机制的种子，无法自然升级为全局覆盖或最小割问题。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "种子题核心约束是时间点落入区间则下载，目标为统计不同区间数（seed_schema.objective.type: counting）。区间作为局部对象存在，但原题未定义任何全局选择或覆盖关系，亦无对象族间协同约束。规则要求的‘多个局部对象之间可以自然形成覆盖或割关系’未满足，强行扩展会脱离原结构（见 forbidden_seed_properties）。",
+        "feedback": "原题是独立的组查询问题，每个查询只关心自身不同区间数，没有跨查询或统筹选择的基底。若强行改成选择最少时间点覆盖所有区间等变体，是全新问题，不属于本规则的合理扩展。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "pass",
+      "reason_code": "natural_weight_exists",
+      "message": "原题计数对象为视频区间，每个区间具有自然长度属性（结束时间-开始时间），可作为权重；且规则要求计数对象上存在自然统计量，区间长度满足这一条件，无需背景硬造。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.92,
+        "risk_tags": [
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "eligible",
+        "evidence": "规则 required_seed_properties 要求“计数对象上存在自然权重、等级或统计量”；seed_schema 中每个区间由 S_i 和 E_i 定义，长度 = E_i - S_i 是区间固有属性，可直接作为权重。原题 objective 为 counting，输出“不同区间数量”，扩展为带权计数（如输出总时长）自然成立。",
+        "feedback": "注意原题去重算法基于同质计数，转为带权后需重新设计去重逻辑以处理非同质权重，但此复杂性属于规划阶段应解决的问题，不影响资格判断。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "not_weighted_counting",
+      "message": "规划将普通计数问题改为输出非支配前沿集合，未定义任何自然权重或统计量用于加权计数或分布统计，输出不是带权和或分类计数，未兑现带权计数专属合同。",
+      "details": {
+        "review_role": "你扮演一名分布计数规划审查官，重点确认规划是否把普通计数升级为带权、分层或分类分布统计。",
+        "review_brief": "确认规划是否定义自然权重或统计量，并让计数状态承担不重不漏的分布汇总责任。",
+        "evidence": "candidate_schema.core_constraints 中定义了 dominance_relation 和 pareto_frontier，但未涉及任何权重或统计量定义；candidate_schema.objective 类型为 structured_output，目标为 pareto_frontier_intervals，输出格式为区间属性列表；planner_payload.applied_helpers 声称应用了 weight_or_statistic_definition，但实际 schema 中未见数值权重或分类统计量，仅定义了偏序关系。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "规划成功将正向覆盖计数反转成目标驱动的区间修改最小代价问题，所有 helper 均已兑现，轴变化到位。",
+      "details": {
+        "review_role": "你扮演一名反向问题规划审查官，重点确认规划是否把正向求解翻转成目标驱动的最小修改或构造。",
+        "review_brief": "确认规划是否定义目标结果、允许操作和最小性证明，而不是只换一种问法验证原答案。",
+        "evidence": "目标结果绑定：core_constraints 中增加 target_cover_constraint 强制每个查询达到指定覆盖数，objective 从计数变为最小化修改次数；编辑操作合同：core_constraints 中定义 modification_operation 允许调整物品区间，invariant 中 residual_demand_lower_bound 将操作与目标需求关联；最小性锁定：objective 明确定义最小修改物品数，invariant 提供基于需求差分的下界作为最小性证明基础。所有变化都记录在 candidate_schema 和 applied_helpers 中。"
+      }
+    },
+    {
+      "stage": "problem_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "rule_contract_fulfilled",
+      "message": "题面明确给出了反向目标（每个查询要求恰好t个物品覆盖）、修改操作（修改物品区间，每物品至多一次）和最小化修改数的目标，并提供了无解输出-1，完全兑现了三个helper的语义。",
+      "details": {
+        "review_role": "你扮演一名反向设计题面审查官，重点确认题面是否写清目标、修改操作和最小性语义。",
+        "review_brief": "确认题面是否要求用最少修改或具体设计达成目标，并且修改操作来自原题对象。",
+        "evidence": "描述中写明“希望在最终的物品放置方案中，恰好有t个物品的区间覆盖位置p”，对应target_result_binding；定义修改操作“可以将该物品的区间修改为任意新的区间...每个物品最多只能被修改一次”，对应edit_operation_contract；目标“最少需要修改多少个物品”以及输出格式“输出一个整数，表示最少需要修改的物品数量。如果无法满足所有检查要求，输出-1”，对应minimality_or_certificate_lock。core_constraints中target_cover_constraint和modification_operation明确约束，invariant提供下界证明基础。"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "score": 0.92,
+      "accepted": false,
+      "risk_tags": [
+        "shared_core_risk"
+      ],
+      "status": "ok",
+      "reason_code": "not_weighted_counting",
+      "reason": "核心约束中仅定义了支配关系和前沿概念，未定义任何由区间自身属性决定的数值权重或分类统计量（如长度、权重等），也未说明如何汇总为带权和或分布。；目标输出为非支配前沿的区间列表，属于结构化集合输出，而非带权和、分类计数或分布统计，违背了helper weighted_output_contract 的 redline '不能只输出普通计数'（此处甚至不是计数）。；不变量仅描述前沿维护的正确性，未提供带权汇总或分布的不重不漏保证，缺失分布状态因子化应有的状态单元设计。",
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.97,
+      "accepted": true,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "plan_validation_failed",
+      "reason": "规则适用，已成功生成反向设计题目。",
+      "attempt_index": 2
+    }
+  ],
+  "generated_problem": {
+    "title": "物品整理最小调整",
+    "description": "小明有一个很长的柜子，柜子被划分成连续的正整数编号的格子，编号范围从 1 到 10^9。他有 N 个物品，每个物品会占据一段连续的格子。初始时，每个物品已经放置在某个区间 [S_i, E_i] 上（S_i ≤ E_i）。\n\n小明计划整理这些物品，使得在之后的一些特定位置上检查时，看到的物品数量正好满足他的要求。具体地，小明会进行 Q 次检查，每次检查选择一个位置 p 和一个期望看到的物品数量 t，他希望在最终的物品放置方案中，恰好有 t 个物品的区间覆盖位置 p。\n\n小明可以改变物品的放置位置：对于任意一个物品，他可以将该物品的区间修改为任意新的区间 [S', E']，满足 1 ≤ S' ≤ E' ≤ 10^9。一次修改只能改变一个物品的区间，每个物品最多只能被修改一次。小明希望知道，最少需要修改多少个物品，才能让所有 Q 次检查的要求同时得到满足。如果无法做到，请输出 -1。",
+    "input_format": "第一行一个整数 N，表示物品的数量。\n接下来 N 行，每行两个整数 S_i, E_i，表示第 i 个物品初始占据的区间，保证 S_i ≤ E_i。\n接下来一行一个整数 Q，表示检查要求的数量。\n接下来 Q 行，每行两个整数 p, t，表示一次检查要求：希望在位置 p 处恰好看到 t 个物品。",
+    "output_format": "输出一个整数，表示最少需要修改的物品数量。如果无法满足所有检查要求，输出 -1。",
+    "constraints": [
+      "1 ≤ N ≤ 100,000",
+      "1 ≤ Q ≤ 5,000",
+      "1 ≤ S_i ≤ E_i ≤ 1,000,000,000",
+      "1 ≤ p ≤ 1,000,000,000",
+      "0 ≤ t ≤ 100,000",
+      "时间限制: 2 秒",
+      "空间限制: 256 MB"
+    ],
+    "samples": [
+      {
+        "input": "3\n1 2\n2 3\n3 4\n2\n2 2\n3 2",
+        "output": "0",
+        "explanation": "初始方案：物品1在[1,2]，物品2在[2,3]，物品3在[3,4]。\n检查1在位置2要求看到2个物品：物品1和2覆盖位置2，恰好2个。\n检查2在位置3要求看到2个物品：物品2和3覆盖位置3，恰好2个。\n所有要求均已满足，不需要修改任何物品。"
+      },
+      {
+        "input": "3\n1 1\n2 2\n3 3\n1\n2 2",
+        "output": "1",
+        "explanation": "初始方案：每个物品只占据一个格子，位置2只有物品2覆盖，要求看到2个物品。\n只需修改物品1，将其区间改为[2,2]，则位置2有物品1和物品2，恰好2个。修改1个物品为最优。"
+      },
+      {
+        "input": "2\n1 5\n3 7\n1\n4 2",
+        "output": "0",
+        "explanation": "初始方案中，物品1覆盖[1,5]，物品2覆盖[3,7]。位置4同时被两个物品覆盖，满足要求。"
+      },
+      {
+        "input": "3\n1 2\n3 4\n5 6\n2\n3 3\n5 1",
+        "output": "2",
+        "explanation": "初始方案：位置3只有物品2覆盖；位置5只有物品3覆盖。\n要求位置3有3个物品，位置5有1个物品。\n一种最优方案：保留物品2不变，修改物品1为[3,3]，修改物品3为[3,5]。\n最终：位置3有物品1、2、3（3个），位置5有物品3（1个）。共修改2个物品。可以证明无法只修改1个物品达成目标。"
+      },
+      {
+        "input": "1\n1 1\n1\n1 2",
+        "output": "-1",
+        "explanation": "只有一个物品，它最多只能覆盖一个格子，无法在位置1看到2个物品。"
+      }
+    ],
+    "notes": "如果无法通过修改物品来满足所有检查要求，输出 -1。注意每个物品至多被修改一次，修改后的区间可以是任意合法的 [S', E']。",
+    "status": "ok",
+    "error_reason": "",
+    "feedback": ""
+  },
+  "iteration": {
+    "run_id": "taco_codechef_aae782d1d2ec_community_services_20260609_192642",
+    "round_index": 2,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\artifacts\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec_community_services_20260609_192642_round1.json",
+    "previous_quality_report_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\reports\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec_community_services_20260609_192642_round1_quality_report.json",
+    "revision_context_snapshot": {
+      "round_index": 1,
+      "overall_status": "revise_quality",
+      "generated_status": "ok",
+      "quality_score": 60.0,
+      "divergence_score": 83.5,
+      "failed_hard_checks": [],
+      "issues": [
+        {
+          "issue_type": "quality_issue",
+          "severity": "major",
+          "title": "样例输出与支配规则矛盾",
+          "detail": "第一个样例的第二个查询输出包含 '2:2'，但根据 description 中的支配定义，(2,2) 被 (1,2) 支配，不应出现在非支配前沿中；同时样例解释文字称前沿为 '0:0, 1:2'，与输出不符。",
+          "evidence_refs": [
+            "generated_problem.samples[0].output",
+            "generated_problem.samples[0].explanation",
+            "new_schema.objective"
+          ],
+          "fix_hint": "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。"
+        }
+      ],
+      "suggested_revisions": [
+        "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。",
+        "修正样例错误，确保所有样例输出与支配规则一致；",
+        "可在样例解释中增加对支配剔除的显式计算步骤，帮助读者验证。"
+      ],
+      "strengths_to_keep": [
+        "语义映射自然，将原问题巧妙转化为社区服务场景；",
+        "支配关系与非支配前沿的定义描述精准，易于理解；",
+        "输入输出格式说明详细，样例解释周到（除矛盾部分外）；",
+        "约束条件完整，范围明确。"
+      ],
+      "revision_history": [
+        {
+          "round_index": 1,
+          "iteration_phase": "normal",
+          "revision_brief": {
+            "round_index": 1,
+            "overall_status": "revise_quality",
+            "generated_status": "ok",
+            "quality_score": 60.0,
+            "divergence_score": 83.5,
+            "failed_hard_checks": [],
+            "issues": [
+              {
+                "issue_type": "quality_issue",
+                "severity": "major",
+                "title": "样例输出与支配规则矛盾",
+                "detail": "第一个样例的第二个查询输出包含 '2:2'，但根据 description 中的支配定义，(2,2) 被 (1,2) 支配，不应出现在非支配前沿中；同时样例解释文字称前沿为 '0:0, 1:2'，与输出不符。",
+                "evidence_refs": [
+                  "generated_problem.samples[0].output",
+                  "generated_problem.samples[0].explanation",
+                  "new_schema.objective"
+                ],
+                "fix_hint": "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。"
+              }
+            ],
+            "suggested_revisions": [
+              "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。",
+              "修正样例错误，确保所有样例输出与支配规则一致；",
+              "可在样例解释中增加对支配剔除的显式计算步骤，帮助读者验证。"
+            ],
+            "strengths_to_keep": [
+              "语义映射自然，将原问题巧妙转化为社区服务场景；",
+              "支配关系与非支配前沿的定义描述精准，易于理解；",
+              "输入输出格式说明详细，样例解释周到（除矛盾部分外）；",
+              "约束条件完整，范围明确。"
+            ]
+          }
+        }
+      ],
+      "revision_summary": {
+        "round_count": 1,
+        "latest_round_index": 1,
+        "latest_iteration_phase": "normal",
+        "latest_overall_status": "revise_quality",
+        "latest_generated_status": "ok",
+        "latest_quality_score": 60.0,
+        "latest_divergence_score": 83.5,
+        "suggested_revisions": [
+          "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。",
+          "修正样例错误，确保所有样例输出与支配规则一致；",
+          "可在样例解释中增加对支配剔除的显式计算步骤，帮助读者验证。"
+        ],
+        "issues": [
+          {
+            "issue_type": "quality_issue",
+            "severity": "major",
+            "title": "样例输出与支配规则矛盾",
+            "detail": "第一个样例的第二个查询输出包含 '2:2'，但根据 description 中的支配定义，(2,2) 被 (1,2) 支配，不应出现在非支配前沿中；同时样例解释文字称前沿为 '0:0, 1:2'，与输出不符。",
+            "evidence_refs": [
+              "generated_problem.samples[0].output",
+              "generated_problem.samples[0].explanation",
+              "new_schema.objective"
+            ],
+            "fix_hint": "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。"
+          }
+        ],
+        "strengths_to_keep": [
+          "语义映射自然，将原问题巧妙转化为社区服务场景；",
+          "支配关系与非支配前沿的定义描述精准，易于理解；",
+          "输入输出格式说明详细，样例解释周到（除矛盾部分外）；",
+          "约束条件完整，范围明确。"
+        ],
+        "failed_hard_checks": []
+      }
+    }
+  }
+}

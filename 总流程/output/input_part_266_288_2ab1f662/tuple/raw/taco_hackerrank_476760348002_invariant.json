@@ -1,0 +1,39 @@
+{
+  "problem_id": "taco_hackerrank_476760348002",
+  "source": "hackerrank",
+  "dimension": "invariant",
+  "result": {
+    "invariants": [
+      {
+        "name": "carry_trigger_digit_condition",
+        "description": "A number is irresponsible if and only if there exists a digit position i where the sum of the digit d_i and the corresponding digit of x+1 exceeds or equals the base B. This condition can be expressed locally using d_i and the incoming carry from lower positions, leading to a stable threshold-based test.",
+        "properties": {
+          "base": 10,
+          "threshold": 5,
+          "local_condition": "d_i + ((d_i + c_i) % B) >= B"
+        },
+        "evidence_source": "both"
+      },
+      {
+        "name": "critical_prefix_suffix_decomposition",
+        "description": "For counting irresponsible numbers up to a given decimal string, the first (most significant) position where the digit is at least the threshold divides the string into a prefix and a suffix. Digits in the suffix after this critical position contribute independently: any suffix value yields an irresponsible number once the prefix has exceeded the threshold, modulo a fixed adjustment for boundary values captured by the function F.",
+        "properties": {
+          "critical_position": "first index i with d_i >= threshold",
+          "suffix_independence": "for positions i > critical_idx, every choice of digits yields an irresponsible number; contribution is d_i * B^{remaining_length}"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "geometric_periodic_summation",
+        "description": "When the base digit string is repeated multiple times, the total count of irresponsible numbers can be expressed as a geometric series in powers of B^{L} where L is the length of the string. The contributions from each repetition are additive and follow a geometric progression, allowing computation via modular inverses and closed-form formulas.",
+        "properties": {
+          "period_length": "L",
+          "common_ratio": "B^L mod MOD",
+          "sum_formula": "using modular inverse of (common_ratio - 1)"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "status": "success"
+}

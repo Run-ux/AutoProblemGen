@@ -1,0 +1,63 @@
+{
+  "problem_id": "taco_leetcode_a3bd8f75b8ab",
+  "source": "leetcode",
+  "input_structure": {
+    "type": "array",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": 0,
+      "max": 2147483647
+    },
+    "properties": {},
+    "components": []
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "element_value_range",
+        "description": "数组中的所有元素均为非负整数,且数值可容纳于32位有符号整数范围（即0到2^31-1）",
+        "formal": "∀ i, 0 ≤ a[i] ≤ 2^31 - 1",
+        "source_sections": [
+          "description"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "value_computation",
+    "description": "计算数组排序后相邻元素的最大差值",
+    "target": "maximum_difference",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "monotonicity",
+        "description": "The sorted array is non-decreasing, so every adjacent difference used in the scan is non-negative, providing a valid basis for the gap computation.",
+        "properties": {},
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "prefix_max",
+        "description": "During the iteration, the maintained value always equals the maximum adjacent difference among all prefix pairs processed so far, guaranteeing that after the full scan it yields the global maximum gap.",
+        "properties": {
+          "maintains": "maximum of adjacent differences up to current index"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_leetcode_a3bd8f75b8ab",
+    "title": "maximum gap",
+    "description": "Given an unsorted array, find the maximum difference between the successive elements in its sorted form.\n\nReturn 0 if the array contains less than 2 elements.\n\nExample 1:\n\n\nInput: [3,6,9,1]\nOutput: 3\nExplanation: The sorted form of the array is [1,3,6,9], either\n             (3,6) or (6,9) has the maximum difference 3.\n\nExample 2:\n\n\nInput: [10]\nOutput: 0\nExplanation: The array contains less than 2 elements, therefore return 0.\n\nNote:\n\n\n       You may assume all elements in the array are non-negative integers and fit in the 32-bit signed integer range.\n       Try to solve it in linear time/space.",
+    "input": "",
+    "output": "",
+    "constraints": "",
+    "source": "leetcode",
+    "standard_solution_code": "class Solution:\n\n\tdef maximumGap(self, nums):\n\t\tif not nums or len(nums) == 1:\n\t\t\treturn 0\n\t\tsorted_gap = 0\n\t\tnums = list(set(nums))\n\t\tnums.sort()\n\t\tfor curr in range(len(nums[:-1])):\n\t\t\tgap = nums[curr + 1] - nums[curr]\n\t\t\tif gap > sorted_gap:\n\t\t\t\tsorted_gap = gap\n\t\treturn sorted_gap"
+  }
+}

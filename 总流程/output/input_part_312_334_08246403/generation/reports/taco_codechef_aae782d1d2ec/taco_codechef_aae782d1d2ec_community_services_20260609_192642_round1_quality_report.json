@@ -1,0 +1,645 @@
+{
+  "overall": {
+    "status": "revise_quality",
+    "quality_score": 60.0,
+    "divergence_score": 83.5,
+    "schema_distance": 0.5125,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 3.0,
+        "rationale": "new_schema 中的输入结构、目标函数、核心约束等已在 description、input/output format 和 constraints 中正确落地，但 samples 部分未能准确实现支配前沿规则（第二个查询的输出错误地包含了被支配的对），导致目标函数的落地不完全。",
+        "evidence_refs": [
+          "new_schema.objective",
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立求解所需的全部关键信息：任务说明、清晰的支配定义、输入输出格式、各变量约束以及样例解释，读者无需自行猜测核心规则。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 1.0,
+        "rationale": "第一个样例中第二个查询的输出 '0:0 1:2 2:2' 与 description 中的支配定义及样例解释文字 '前沿为 0:0, 1:2' 存在直接矛盾，(2,2) 应被 (1,2) 支配而不该出现，这一冲突严重破坏题面一致性。",
+        "evidence_refs": [
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation",
+          "new_schema.objective"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 1.0,
+        "rationale": "虽然有两个样例，但第一个样例的第二个查询存在输出内容与支配规则相悖的严重错误，会严重误导解题者，样例质量不可接受。",
+        "evidence_refs": [
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰，措辞明确，采用了温和的社区服务主题，无来源污染或无关文本，符合正常 OJ 题面表达习惯。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format"
+        ]
+      }
+    ],
+    "strengths": [
+      "语义映射自然，将原问题巧妙转化为社区服务场景；",
+      "支配关系与非支配前沿的定义描述精准，易于理解；",
+      "输入输出格式说明详细，样例解释周到（除矛盾部分外）；",
+      "约束条件完整，范围明确。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.5125,
+      "axis_scores": {
+        "I": 0.2222,
+        "C": 0.7142,
+        "O": 0.588,
+        "V": 0.4782
+      },
+      "components": {
+        "input_tree_distance": 0.2222,
+        "constraint_match_distance": 0.7142,
+        "objective_type_distance": 0.7111,
+        "objective_text_distance": 0.4034,
+        "invariant_match_distance": 0.4782
+      }
+    },
+    "schema_distance": 0.5125,
+    "changed_axes_planned": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "I",
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.82,
+    "solution_transfer_risk": 0.18,
+    "surface_retheme_risk": 0.2,
+    "verdict": "pass",
+    "rationale": "原题是给定所有访问时间点，统计覆盖的不同区间数；新题改为从候选时间点中选择至多B个，最大化覆盖数，并输出非支配前沿。(费用,覆盖)对。任务从计数变为带预算的子集优化与多目标输出，语义差异显著。原题解法依赖所有点顺序累加并去重，无法直接处理子集选择和帕累托前沿；新题需离线预处理both(p,q)并设计DP，解法迁移风险低。表层主题、标题、样例均独立设计，无文本复用痕迹。",
+    "evidence_refs": [
+      "snapshots.original_problem",
+      "snapshots.generated_problem",
+      "snapshots.new_schema.core_constraints",
+      "snapshots.new_schema.objective",
+      "divergence.schema_distance_breakdown.axis_scores",
+      "review_context.difference_plan.changed_axes",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.51，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：I, C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "issue_type": "quality_issue",
+      "severity": "major",
+      "title": "样例输出与支配规则矛盾",
+      "detail": "第一个样例的第二个查询输出包含 '2:2'，但根据 description 中的支配定义，(2,2) 被 (1,2) 支配，不应出现在非支配前沿中；同时样例解释文字称前沿为 '0:0, 1:2'，与输出不符。",
+      "evidence_refs": [
+        "generated_problem.samples[0].output",
+        "generated_problem.samples[0].explanation",
+        "new_schema.objective"
+      ],
+      "fix_hint": "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。"
+    }
+  ],
+  "suggested_revisions": [
+    "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。",
+    "修正样例错误，确保所有样例输出与支配规则一致；",
+    "可在样例解释中增加对支配剔除的显式计算步骤，帮助读者验证。"
+  ],
+  "revision_brief": {
+    "round_index": 1,
+    "overall_status": "revise_quality",
+    "generated_status": "ok",
+    "quality_score": 60.0,
+    "divergence_score": 83.5,
+    "failed_hard_checks": [],
+    "issues": [
+      {
+        "issue_type": "quality_issue",
+        "severity": "major",
+        "title": "样例输出与支配规则矛盾",
+        "detail": "第一个样例的第二个查询输出包含 '2:2'，但根据 description 中的支配定义，(2,2) 被 (1,2) 支配，不应出现在非支配前沿中；同时样例解释文字称前沿为 '0:0, 1:2'，与输出不符。",
+        "evidence_refs": [
+          "generated_problem.samples[0].output",
+          "generated_problem.samples[0].explanation",
+          "new_schema.objective"
+        ],
+        "fix_hint": "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。"
+      }
+    ],
+    "suggested_revisions": [
+      "修正第二个查询的输出为 '0:0 1:2'，或调整解释以匹配输出，但必须保证输出严格符合支配与非支配前沿的定义。",
+      "修正样例错误，确保所有样例输出与支配规则一致；",
+      "可在样例解释中增加对支配剔除的显式计算步骤，帮助读者验证。"
+    ],
+    "strengths_to_keep": [
+      "语义映射自然，将原问题巧妙转化为社区服务场景；",
+      "支配关系与非支配前沿的定义描述精准，易于理解；",
+      "输入输出格式说明详细，样例解释周到（除矛盾部分外）；",
+      "约束条件完整，范围明确。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\source\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\artifacts\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec_community_services_20260609_192642_round1.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_312_334_08246403\\generation\\output\\taco_codechef_aae782d1d2ec\\taco_codechef_aae782d1d2ec_community_services_20260609_192642_round1.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codechef_aae782d1d2ec",
+      "title": "DOWNLOAD",
+      "description": "The aliens living in outer space are very advanced in technology, \nintelligence and everything, except one, and that is Cooking. \nEach year they spend millions of dollars in research, to crack famous recipes prepared by humans.\n\nRecently they came to know about Khana-Academy, \na non-profit organization streaming free cooking lesson videos on earth. \nThere are N recipes, \nnumbered 1 to N, and the video of the i^{th} recipe is live in the time interval [S_{i}, E_{i}]. \nAn alien can visit earth but can not survive for more than just a small moment (earth is so advanced in pollution). \nAn alien visits the earth at an integer time t and instantly downloads the complete video of all the lessons \nthat are live at that moment of time t and leaves earth immediately. \nYou are given the visiting times of a small group of K aliens. \nFind the number of different recipes aliens can learn by watching the downloaded videos. \nNot just one group of aliens, there are Q such groups, \nso you have to find the answer for each of these Q groups.\n\n------ Input ------ \n\nThe first line has an integer N. \nEach of the following N lines has two integers S_{i} E_{i}. \nThe next line has an integer Q, the number of groups. \nEach of the following Q lines has information of a group of aliens. \nThe first integer is K, the number of aliens in that group, followed by K integers in the same line, \nthe integer visiting times t of the aliens.\n\n1 ≤ N ≤ 100000 (10^{5})\n\n1 ≤ Q ≤ 5000 (5 · 10^{3})\n\n1 ≤ K ≤ 20\n\n1 ≤ S_{i}, E_{i}, t ≤ 1000000000 (10^{9})\n\nS_{i} < E_{i}\n\n------ Output ------ \n\nFor each of the Q groups, output the number of different recipes that group of aliens can learn by watching the downloaded videos.\n\n------ Example ------ \n\nInput:\n4\n1 4\n3 10\n2 6\n5 8\n3\n1 5\n2 2 6\n3 1 10 9\n\nOutput:\n3\n4\n2\n\nExplanation:\n\nGiven videos of 4 recipes in the following closed intervals.\n\n1. [ 1 , 4 ]\n\n2. [ 3 , 10 ]\n\n3. [ 2 , 6 ]\n\n4. [ 5 , 8 ]\n\nIn the first query, only one alien arrives at t = 5 and can download 3 recipes 2, 3, 4.\n\nIn the second query, two aliens arrive at t = 2 and 6. They can learn all the 4 recipes.\n\nIn the third query, three aliens arrive at t = 1, 10 and 9. They can learn only two recipes, 1 and 2.",
+      "input": "4\n1 4\n3 10\n2 6\n5 8\n3\n1 5\n2 2 6\n3 1 10 9",
+      "output": "3\n4\n2\n\nExplanation:\n\nGiven videos of 4 recipes in the following closed intervals.\n\n1. [ 1 , 4 ]\n\n2. [ 3 , 10 ]\n\n3. [ 2 , 6 ]\n\n4. [ 5 , 8 ]\n\nIn the first query, only one alien arrives at t = 5 and can download 3 recipes 2, 3, 4.\n\nIn the second query, two aliens arrive at t = 2 and 6. They can learn all the 4 recipes.\n\nIn the third query, three aliens arrive at t = 1, 10 and 9. They can learn only two recipes, 1 and 2.",
+      "constraints": "time limit: 0.396667 seconds\nmemory limit: 50000 bytes",
+      "source": "codechef",
+      "standard_solution_code": "def give_index(time_stamp):\n\tnextind = 0\n\tres = {}\n\tfor (t, check, _) in time_stamp:\n\t\tif check != 2 and t not in res:\n\t\t\tres[t] = nextind\n\t\t\tnextind += 1\n\treturn res\n\ndef add_sum(tree, index, value):\n\twhile index < len(tree):\n\t\ttree[index] += value\n\t\tindex += index & -index\n\ndef give_sum(tree, index):\n\tres = 0\n\twhile index > 0:\n\t\tres += tree[index]\n\t\tindex -= index & -index\n\treturn res\nno_of_shows = int(input())\ntime_stamp = []\n(START, CHECK, END) = (0, 1, 2)\nfor i in range(no_of_shows):\n\t(start, end) = map(int, input().split())\n\ttime_stamp.append((start, START, None))\n\ttime_stamp.append((end, END, start))\ntotal_queries = int(input())\nfor i in range(total_queries):\n\tfor j in map(int, input().split()[1:]):\n\t\ttime_stamp.append((j, CHECK, i))\ntime_stamp = sorted(time_stamp)\nindexed = give_index(time_stamp)\ntree = [0] * (len(indexed) + 1)\nfinal_result = [0] * total_queries\nprev_result = [None] * total_queries\nfor i in time_stamp:\n\t(start, value, end) = i\n\tif value == START:\n\t\tadd_sum(tree, indexed[start] + 1, 1)\n\telif value == END:\n\t\tadd_sum(tree, indexed[end] + 1, -1)\n\telse:\n\t\tquery_no = end\n\t\tfinal_result[query_no] += give_sum(tree, indexed[start] + 1)\n\t\tif prev_result[query_no] != None:\n\t\t\tfinal_result[query_no] -= give_sum(tree, prev_result[query_no])\n\t\tprev_result[query_no] = indexed[start] + 1\nfor i in final_result:\n\tprint(i)"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "I",
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codechef_aae782d1d2ec",
+        "DOWNLOAD",
+        "codechef",
+        "The aliens living in outer space are very advanced in technology, intelligence and everything, except one, and that is Cooking. Each year they spend millions of dollars in research, to crack famous recipes prepared by...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "输入结构增加了预算 B 和子集选择机制（I），需要增加费用约束和选择性输入（C），将目标从单值计数改为前沿输出（O），并构造 DP 状态与二维查询不变量（V）以保证正确性。",
+      "summary": "核心变化在于引入预算和子集选择，输出非支配对，算法从 BIT 差分累加变为 DP + 离线二维 BIT 查询。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "SERVICE_POINTS_TRADEOFF",
+      "source": "generated from taco_codechef_aae782d1d2ec",
+      "input_structure": {
+        "type": "composite",
+        "components": [
+          {
+            "role": "service_intervals",
+            "description": "N 个服务点的开放时间区间 [S_i, E_i]",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 100000
+            },
+            "element_schema": {
+              "S_i": "int",
+              "E_i": "int",
+              "constraint": "1 ≤ S_i < E_i ≤ 10^9"
+            }
+          },
+          {
+            "role": "queries",
+            "description": "Q 个住户组查询，每个查询给出 K 个候选访问时间点和一个预算 B",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 5000
+            },
+            "element_schema": {
+              "K": {
+                "min": 1,
+                "max": 20
+              },
+              "times": {
+                "type": "array",
+                "length": "K",
+                "item": "int in [1,10^9]"
+              },
+              "B": {
+                "min": 1,
+                "max": "K"
+              }
+            }
+          }
+        ],
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "non_degenerate_interval",
+            "description": "每个服务点的开放时间区间严格小于结束时间。",
+            "formal": "S_i < E_i"
+          },
+          {
+            "name": "coverage_condition",
+            "description": "服务点 i 被住户组覆盖，当且仅当选中的候选时间点集合中至少有一个时间 t 满足 S_i ≤ t ≤ E_i。",
+            "formal": "covered(i) ⇔ ∃ t ∈ selected_times : S_i ≤ t ≤ E_i"
+          },
+          {
+            "name": "budget_constraint",
+            "description": "每个查询中，选中的时间点个数不能超过预算 B。",
+            "formal": "|selected_times| ≤ B"
+          },
+          {
+            "name": "time_candidate_restriction",
+            "description": "只能选择查询给出的候选时间点，不能使用其他时刻。",
+            "formal": "selected_times ⊆ query_times"
+          }
+        ]
+      },
+      "objective": {
+        "type": "pareto_frontier_output",
+        "description": "对于每个查询，输出所有非支配的（费用，覆盖数）对。费用 c = |selected_times|，覆盖数 v = |{i : covered(i)}|。支配定义：(c1, v1) 支配 (c2, v2) 当且仅当 c1 ≤ c2 且 v1 ≥ v2 且 (c1 < c2 或 v1 > v2)。输出按费用升序排列的非支配对。默认包含 (0,0) 对。",
+        "target": "non_dominated_pairs_per_query",
+        "output_spec": "每个查询一行，格式：c1:v1 c2:v2 ... （例：0:0 1:3 2:5）"
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "activity_maintenance",
+            "description": "通过 BIT 差分数组和事件排序，任意时刻 t 的活动服务点数可在 O(log M) 内查询（M 为离散化坐标数）。",
+            "properties": {
+              "method": "BIT + scan"
+            },
+            "evidence": "solution_design"
+          },
+          {
+            "name": "dual_point_coverage_query",
+            "description": "通过离线将所有区间视为 (S_i, E_i) 并按 S_i 排序，对 O(Q·K^2) 个 (p,q) 查询按 p 排序，配合 BIT 维护右端点计数，可在 O((N+Q·K^2) log M) 内回答任意 (p,q) 的“同时包含 p 和 q 的区间数”。",
+            "properties": {
+              "method": "offline BIT on right endpoints"
+            },
+            "evidence": "solution_design"
+          },
+          {
+            "name": "dp_optimal_substructure",
+            "description": "设时间点升序 t_1..t_K，dp[i][j] 表示从前 i 个点中选 j 个且最后选 i 时可覆盖的最大服务点数。转移：dp[i][j] = max_{p < i} ( dp[p][j-1] + activity(t_i) - both(p,i) )，其中 both(p,i) 是同时覆盖 p,i 的区间数。正确性基于区间连续性，新增覆盖数恰好为 activity(t_i) 减去与前邻的交集。最后 best[j] = max_i dp[i][j]，并提取费用 j 严格递增的覆盖数作为前沿。",
+            "properties": {},
+            "evidence": "solution_design"
+          }
+        ]
+      },
+      "theme": {
+        "id": "community_services",
+        "name": "社区服务",
+        "tone": "温和、实用、贴近日常协作",
+        "keywords": [
+          "住户",
+          "服务点",
+          "预约",
+          "工单",
+          "通知",
+          "排班"
+        ],
+        "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+      },
+      "difficulty": "中等偏高"
+    },
+    "generated_problem": {
+      "title": "服务点的预约权衡",
+      "description": "在一个新规划的社区中，有 N 个服务点（例如社区中心、健身房、医疗站等），它们各自在固定的时间区间 [S_i, E_i] 对外开放，且保证 S_i < E_i。\n\n社区里有 Q 个住户小组，每个小组计划在未来一段时间内组织集体活动，他们手上有一份候选时段列表（由 K 个不同的整数时刻组成），并拥有一定的“预算” B，即最多只能在这些候选时段中实际挑选 B 个时刻进行统一预约。每当小组在一个时刻 t 进行预约时，所有开放区间包含 t 的服务点都会被该小组覆盖一次（重复覆盖只计一次）。小组的目标是让被覆盖的不同服务点数量尽可能多。\n\n然而，预算越少越好，覆盖越多越好，两者常常冲突。因此，对于每个小组，你不仅需要输出某个单一最优解，而是需要给出完整的“非支配前沿”：即所有满足以下条件的 (费用 c, 覆盖数 v) 对，其中费用 c 是实际挑选的时段个数，覆盖数 v 是能覆盖到的不同服务点个数：\n\n- 不存在另一个可行的 (c', v') 使得 c' ≤ c 且 v' ≥ v，且不等号至少有一个严格成立（即 (c', v') 支配 (c, v)）。\n\n换而言之，你输出的 (c, v) 应该是一系列“无法被其他可行解在两方面同时不差地击败”的权衡点。习惯上我们会默认包含 (0,0) 对，因为不挑选任何时段自然覆盖 0 个服务点。\n\n你需要对每个住户小组独立求解，并按照费用升序输出其前沿上的所有对。",
+      "input_format": "第一行一个整数 N，表示服务点数量。\n接下来 N 行，每行两个整数 S_i 和 E_i，表示第 i 个服务点的开放区间 [S_i, E_i]。\n接下来一行一个整数 Q，表示住户小组数量。\n接下来 Q 行，每行描述一个小组：首先是整数 K，表示候选时段个数；接着是 K 个互不相同的整数，表示候选的时刻；最后是一个整数 B，表示该小组的预约预算（即最多可挑选的时段数）。",
+      "output_format": "对于每个小组，输出一行，包含若干个形如 c:v 的对（用空格分隔），依次表示该小组非支配前沿上所有点，按费用 c 升序排列。默认第一对总是 0:0。每行末尾没有多余空格。",
+      "constraints": [
+        "1 ≤ N ≤ 100,000",
+        "1 ≤ Q ≤ 5,000",
+        "1 ≤ K ≤ 20",
+        "1 ≤ B ≤ K",
+        "1 ≤ S_i < E_i ≤ 1,000,000,000",
+        "所有候选时刻均为不超过 1,000,000,000 的正整数",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "3\n1 3\n2 5\n4 6\n2\n3 1 2 4 2\n2 3 5 2",
+          "output": "0:0 1:2 2:3\n0:0 1:2 2:2",
+          "explanation": "第一个小组：候选时刻 {1,2,4}，预算 ≤2。\n- 不选：覆盖 0；\n- 选 1 个：选 2 或选 4 均覆盖 2 个服务点（选 1 只能覆盖 1 个），故费用 1 最大覆盖数 2；\n- 选 2 个：选 {1,4} 或 {2,4} 均覆盖全部 3 个服务点，费用 2 最大覆盖数 3。\n(1,1) 被 (1,2) 支配，故非支配对为 0:0, 1:2, 2:3。\n\n第二个小组：候选时刻 {3,5}，预算 ≤2。\n- 不选：0；\n- 选 1 个：选 3 覆盖区间 [1,3] 和 [2,5]（共 2 个），选 5 覆盖 [2,5] 和 [4,6]（共 2 个），故费用 1 最大覆盖数 2；\n- 选 2 个：同时选 3 和 5，覆盖区间 [2,5] 和 [4,6]，区间 [1,3] 不含 5，仍为 2 个。\n因此非支配前沿为 0:0, 1:2（费用 2 的覆盖数未能超过费用 1）。"
+        },
+        {
+          "input": "2\n1 2\n3 4\n1\n2 1 3 2",
+          "output": "0:0 1:1 2:2",
+          "explanation": "服务点只有两个：[1,2] 和 [3,4]，候选时刻 {1,3}，预算 ≤2。\n- 不选：0；\n- 选 1 个：选 1 仅覆盖 [1,2]，选 3 仅覆盖 [3,4]，最大覆盖数均为 1；\n- 选 2 个：同时选 1 和 3，覆盖全部 2 个服务点。\n因此非支配前沿为 0:0, 1:1, 2:2。"
+        }
+      ],
+      "notes": "输出的非支配前沿总是从 (0,0) 开始，费用严格递增，对应覆盖数非降。对于某些费用可能没有出现前沿对，这表示在该费用下无法获得比更低费用更好的覆盖数，因此被支配。各小组的输出独立，互不影响。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "核心变化在于引入预算和子集选择，输出非支配对，算法从 BIT 差分累加变为 DP + 离线二维 BIT 查询。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "I",
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "I",
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.5125,
+        "axis_scores": {
+          "I": 0.2222,
+          "C": 0.7142,
+          "O": 0.588,
+          "V": 0.4782
+        },
+        "components": {
+          "input_tree_distance": 0.2222,
+          "constraint_match_distance": 0.7142,
+          "objective_type_distance": 0.7111,
+          "objective_text_distance": 0.4034,
+          "invariant_match_distance": 0.4782
+        }
+      },
+      "applied_rule": "single_objective_to_tradeoff_frontier",
+      "applied_helpers": [
+        {
+          "id": "secondary_metric_materialization",
+          "selection_reason": "引入费用（选点个数）作为第二指标，与原始覆盖数形成真实冲突，符合原题对象属性。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "core_constraints 中增加 budget_constraint",
+            "objective 改为输出 (费用, 覆盖数) 对"
+          ],
+          "innovation_reason": "将目标空间从一维计数扩展为二维权衡，使得题目不再是单一最优值输出。",
+          "difficulty_reason": "要求算法同时维护两个评价维度，并在不同预算下寻找最优覆盖，显著增加了状态管理和决策维度。"
+        },
+        {
+          "id": "frontier_dominance_rule",
+          "selection_reason": "定义支配关系并输出非支配前沿，使得答案具有可比较的语义，而非孤立的单个数值。",
+          "affected_axes": [
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "objective 中明确支配定义和前沿输出格式",
+            "invariant 中增加 dp_optimal_substructure 及前沿提取逻辑"
+          ],
+          "innovation_reason": "输出从单个最优值变为帕累托前沿，要求算法能够高效生成并过滤非支配解，推动解法从贪心/累加转向 DP。",
+          "difficulty_reason": "增加了证明非支配规则正确性的义务，并需要在 DP 后处理费用与前缀的比较。"
+        },
+        {
+          "id": "coupled_state_expansion",
+          "selection_reason": "确保核心状态同时承载费用和覆盖数，防止退化为先独立优化费用再计算覆盖数的两步解。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "core_constraints 中隐含 DP 状态需同时记录费用和覆盖数",
+            "invariant 中明确 dp[i][j] 的转移与 both(p,i) 耦合"
+          ],
+          "innovation_reason": "DP 状态的设计强制费用与覆盖数在决策中耦合，使得解法不能是「先枚举费用，对每个费用独立用 BIT 求最大覆盖」的退化形式。",
+          "difficulty_reason": "要求证明状态压缩不会丢失折中信息，且转移公式的正确性需要严格的区间连续性论证。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "原题使用 BIT 差分数组和事件排序，通过依次累加每个时间点的活动区间数并减去前一个查询点处的活动区间数来高效计算固定访问点集合的并集大小，复杂度 O((N+QK) log M)。",
+        "reusable_subroutines": "BIT 数据结构、事件排序框架、坐标离散化技巧、离线处理多查询的思路。",
+        "new_solver_core": "对每个查询，将候选时间点排序；先用离线 BIT 预处理所有 (p,q) 对的同时覆盖数 both(p,q)（按左端点排序，BIT 维护右端点）；然后进行 DP 求出每个费用下的最大覆盖数；最后根据支配关系提取前沿。复杂度 O((N + Q·K^2) log M + Q·K^2)。",
+        "new_proof_obligation": "1. 证明 DP 转移所用公式「新增覆盖 = activity(t_i) - both(p,i)」的正确性，需利用区间连续性：对于排序后的选中时间点集合，总覆盖数等于 Σ( activity(t_{i_k}) - both(t_{i_{k-1}}, t_{i_k}) )，且此公式在任意子集下均成立。2. 证明离线 BIT 回答 both(p,q) 的算法正确性，即同时满足 S_i ≤ p 且 E_i ≥ q 的区间可被无漏无重地计数。3. 证明由 DP 结果得到的前沿为非支配集合的正确性，以及费用递增时覆盖数非降的性质。",
+        "why_direct_reuse_fails": "原题假设所有给定时间点都必须使用，且其累加减法公式仅在访问全部点（相邻点间无跳跃）时有效；新题允许任意子集选择，直接套用会导致重叠计数错误（如前文的跳跃试验）。此外，原题无法处理 both(p,q) 查询，必须引入新的数据结构。"
+      },
+      "anti_shallow_rationale": "本题并非简单换皮。社区服务主题仅作叙事映射，不影响算法内核。核心创新在于：1) 引入预算与子集选择，使单目标计数问题变为多目标优化；2) 输出从单一最优值变为帕累托前沿；3) 解法从线性扫描 BIT 累加重构为 DP + 二维离线查询，完全改变了计算流程和正确性证明。参数 K 虽保留，但新增的 B 与选择性使状态空间截然不同。"
+    }
+  }
+}

@@ -1,0 +1,641 @@
+{
+  "overall": {
+    "status": "reject_as_retheme",
+    "quality_score": 100.0,
+    "divergence_score": 63.2,
+    "schema_distance": 0.4022,
+    "generated_status": "ok"
+  },
+  "quality": {
+    "dimension_scores": [
+      {
+        "dimension": "variant_fidelity",
+        "score": 5.0,
+        "rationale": "new_schema中所有输入结构、核心约束、目标和不变量的落地要求均在题目描述、输入格式、输出格式和样例中得到准确体现，无偏差。",
+        "evidence_refs": [
+          "new_schema.input_structure",
+          "new_schema.core_constraints",
+          "new_schema.objective",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "spec_completeness",
+        "score": 5.0,
+        "rationale": "题面提供了独立解题所需的全部关键信息：任务说明、输入输出格式、约束条件、配对方案定义、取模要求以及样例，无模糊或缺失之处。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.notes"
+        ]
+      },
+      {
+        "dimension": "cross_section_consistency",
+        "score": 5.0,
+        "rationale": "description、input_format、output_format、constraints和samples之间完全一致，闸机数量、配对定义、样例数值均无冲突。",
+        "evidence_refs": [
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints",
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "sample_quality",
+        "score": 5.0,
+        "rationale": "提供2个样例，覆盖了链状和分支树的情况，解释清晰说明了配对方案和计数依据，足以帮助理解题意。",
+        "evidence_refs": [
+          "generated_problem.samples"
+        ]
+      },
+      {
+        "dimension": "oj_readability",
+        "score": 5.0,
+        "rationale": "题面结构清晰、用语符合OJ习惯，无来源污染或无关内容，便于参赛者快速理解。",
+        "evidence_refs": [
+          "generated_problem.title",
+          "generated_problem.description",
+          "generated_problem.input_format",
+          "generated_problem.output_format",
+          "generated_problem.constraints"
+        ]
+      }
+    ],
+    "strengths": [
+      "计数方案定义明确，对方案等价性的描述消除了歧义。",
+      "流量上限的必要条件以简洁的语言给出，使解题者清楚计数前提。",
+      "样例覆盖充分，解释直截了当。",
+      "题面各部分格式规范，信息完整无矛盾。"
+    ]
+  },
+  "divergence": {
+    "schema_distance_breakdown": {
+      "distance_version": "v2",
+      "backend": "embedding",
+      "total": 0.4022,
+      "axis_scores": {
+        "I": 0.0,
+        "C": 0.583,
+        "O": 0.5244,
+        "V": 0.4808
+      },
+      "components": {
+        "input_tree_distance": 0.0,
+        "constraint_match_distance": 0.583,
+        "objective_type_distance": 0.5645,
+        "objective_text_distance": 0.4643,
+        "invariant_match_distance": 0.4808
+      }
+    },
+    "schema_distance": 0.4022,
+    "changed_axes_planned": [
+      "C",
+      "O",
+      "V"
+    ],
+    "changed_axes_realized": [
+      "C",
+      "O",
+      "V"
+    ],
+    "semantic_difference": 0.6,
+    "solution_transfer_risk": 0.4,
+    "surface_retheme_risk": 0.6,
+    "verdict": "pass",
+    "rationale": "原题与生成题共享相同的树+2k特殊节点配对模型，输入结构几乎一致（I轴距离0），核心约束也高度相似（配对、不同节点、单位边权），因此表层映射明显。但生成题目标从最大化总距离变为统计达到最大距离的配对方案数，并增加方案等价性定义、取模等新约束，求解义务发生实质改变：原题的贪心求和算法无法直接复用，必须设计新的树上DP进行方案计数。这一核心改变有效提升了语义差异，并降低了原题解法直接迁移的风险。同时，题面叙事虽有换皮痕迹，但增加了具体的流量上限解释，避免了完全照搬原文。综合来看，题目在核心求解义务上有真实创新，不属于简单换皮。",
+    "evidence_refs": [
+      "original_problem.description",
+      "original_problem.input",
+      "original_schema.objective",
+      "new_schema.core_constraints",
+      "new_schema.objective",
+      "generated_problem.description",
+      "generated_problem.input_format",
+      "generated_problem.samples",
+      "review_context.distance_breakdown",
+      "review_context.algorithmic_delta_claim"
+    ]
+  },
+  "hard_checks": [
+    {
+      "check_id": "source_problem_resolved",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "已成功加载原题文本。",
+      "evidence_refs": [
+        "snapshots.original_problem"
+      ]
+    },
+    {
+      "check_id": "generated_problem_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 generated_problem。",
+      "evidence_refs": [
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "new_schema_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 new_schema 或兼容字段 new_schema_snapshot。",
+      "evidence_refs": [
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "difference_plan_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已持久化 difference_plan。",
+      "evidence_refs": [
+        "snapshots.difference_plan"
+      ]
+    },
+    {
+      "check_id": "generated_status_ok",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "生成状态正常。",
+      "evidence_refs": [
+        "snapshots.generated_problem.status"
+      ]
+    },
+    {
+      "check_id": "predicted_schema_distance_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 predicted_schema_distance。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "distance_breakdown_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 distance_breakdown。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "changed_axes_realized_present",
+      "passed": true,
+      "severity": "blocker",
+      "category": "invalid",
+      "message": "artifact 已包含 changed_axes_realized。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.artifact_contract"
+      ]
+    },
+    {
+      "check_id": "schema_distance_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "schema_distance=0.40，达到中等差异阈值。",
+      "evidence_refs": [
+        "divergence.schema_distance_breakdown"
+      ]
+    },
+    {
+      "check_id": "changed_axes_threshold",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "已落地核心差异轴：C, O, V。",
+      "evidence_refs": [
+        "snapshots.difference_plan",
+        "snapshots.new_schema"
+      ]
+    },
+    {
+      "check_id": "source_leakage",
+      "passed": true,
+      "severity": "blocker",
+      "category": "retheme_issue",
+      "message": "未发现原题标题或题源泄露。",
+      "evidence_refs": [
+        "snapshots.original_problem",
+        "snapshots.generated_problem"
+      ]
+    },
+    {
+      "check_id": "title_overlap",
+      "passed": true,
+      "severity": "major",
+      "category": "retheme_issue",
+      "message": "标题重合度=0.00。",
+      "evidence_refs": [
+        "snapshots.original_problem.title",
+        "snapshots.generated_problem.title"
+      ]
+    },
+    {
+      "check_id": "sample_count",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "样例数量=2。",
+      "evidence_refs": [
+        "snapshots.generated_problem.samples"
+      ]
+    },
+    {
+      "check_id": "sample_line_alignment",
+      "passed": true,
+      "severity": "major",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过样例行数检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "input_count_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "输入结构不是固定小数组，跳过输入项数量声明检查。",
+      "evidence_refs": []
+    },
+    {
+      "check_id": "objective_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "目标函数已经在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.objective",
+        "snapshots.generated_problem.output_format"
+      ]
+    },
+    {
+      "check_id": "structural_option_alignment",
+      "passed": true,
+      "severity": "blocker",
+      "category": "quality_issue",
+      "message": "结构选项已在题面中落地。",
+      "evidence_refs": [
+        "snapshots.new_schema.selected_structural_options",
+        "snapshots.generated_problem"
+      ]
+    }
+  ],
+  "issues": [],
+  "suggested_revisions": [],
+  "revision_brief": {
+    "round_index": 2,
+    "overall_status": "reject_as_retheme",
+    "generated_status": "ok",
+    "quality_score": 100.0,
+    "divergence_score": 63.2,
+    "failed_hard_checks": [],
+    "issues": [],
+    "suggested_revisions": [],
+    "strengths_to_keep": [
+      "计数方案定义明确，对方案等价性的描述消除了歧义。",
+      "流量上限的必要条件以简洁的语言给出，使解题者清楚计数前提。",
+      "样例覆盖充分，解释直截了当。",
+      "题面各部分格式规范，信息完整无矛盾。"
+    ]
+  },
+  "snapshots": {
+    "paths": {
+      "schema_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\source\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df.json",
+      "artifact_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\artifacts\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df_urban_commute_20260609_201208_round2.json",
+      "markdown_path": "D:\\AutoProblemGen\\总流程\\output\\input_part_335_356_3c7b99e4\\generation\\output\\taco_codeforces_3249c8d739df\\taco_codeforces_3249c8d739df_urban_commute_20260609_201208_round2.md"
+    },
+    "original_problem": {
+      "problem_id": "taco_codeforces_3249c8d739df",
+      "title": "B",
+      "description": "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. \n\nIn Treeland there are 2k universities which are located in different towns. \n\nRecently, the president signed the decree to connect universities by high-speed network.The Ministry of Education understood the decree in its own way and decided that it was enough to connect each university with another one by using a cable. Formally, the decree will be done! \n\nTo have the maximum sum in the budget, the Ministry decided to divide universities into pairs so that the total length of the required cable will be maximum. In other words, the total distance between universities in k pairs should be as large as possible. \n\nHelp the Ministry to find the maximum total distance. Of course, each university should be present in only one pair. Consider that all roads have the same length which is equal to 1. \n\n\n-----Input-----\n\nThe first line of the input contains two integers n and k (2 ≤ n ≤ 200 000, 1 ≤ k ≤ n / 2) — the number of towns in Treeland and the number of university pairs. Consider that towns are numbered from 1 to n. \n\nThe second line contains 2k distinct integers u_1, u_2, ..., u_2k (1 ≤ u_{i} ≤ n) — indices of towns in which universities are located. \n\nThe next n - 1 line contains the description of roads. Each line contains the pair of integers x_{j} and y_{j} (1 ≤ x_{j}, y_{j} ≤ n), which means that the j-th road connects towns x_{j} and y_{j}. All of them are two-way roads. You can move from any town to any other using only these roads. \n\n\n-----Output-----\n\nPrint the maximum possible sum of distances in the division of universities into k pairs.\n\n\n-----Examples-----\nInput\n7 2\n1 5 6 2\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6\n\nOutput\n6\n\nInput\n9 3\n3 2 1 6 5 9\n8 9\n3 2\n2 7\n3 4\n7 6\n4 5\n2 1\n2 8\n\nOutput\n9\n\n\n\n-----Note-----\n\nThe figure below shows one of possible division into pairs in the first test. If you connect universities number 1 and 6 (marked in red) and universities number 2 and 5 (marked in blue) by using the cable, the total distance will equal 6 which will be the maximum sum in this example. \n\n [Image]",
+      "input": "7 2\n1 5 6 2\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6\n\n9 3\n3 2 1 6 5 9\n8 9\n3 2\n2 7\n3 4\n7 6\n4 5\n2 1\n2 8",
+      "output": "6\n\n9\n\n\n\n-----Note-----\n\nThe figure below shows one of possible division into pairs in the first test. If you connect universities number 1 and 6 (marked in red) and universities number 2 and 5 (marked in blue) by using the cable, the total distance will equal 6 which will be the maximum sum in this example. \n\n [Image]",
+      "constraints": "",
+      "source": "codeforces",
+      "standard_solution_code": "def main():\n\t(n, k) = list(map(int, input().split()))\n\ts = [0] * n\n\tfor i in map(int, input().split()):\n\t\ts[i - 1] = 1\n\te = [[] for _ in range(n)]\n\tfor _ in range(n - 1):\n\t\t(x, y) = (int(s) - 1 for s in input().split())\n\t\te[x].append(y)\n\t\te[y].append(x)\n\t(q, fa) = ([0], [-1] * n)\n\tfa[0] = 0\n\tfor i in range(n):\n\t\tx = q[i]\n\t\tfor y in e[x]:\n\t\t\tif fa[y] == -1:\n\t\t\t\tfa[y] = x\n\t\t\t\tq.append(y)\n\t(dp, k2) = ([0] * n, k * 2)\n\tfor x in reversed(q):\n\t\tfor y in e[x]:\n\t\t\tif fa[y] == x:\n\t\t\t\ti = s[y]\n\t\t\t\ts[x] += i\n\t\t\t\tdp[x] += dp[y] + (k2 - i if i > k else i)\n\tprint(dp[0])\n\ndef __starting_point():\n\tmain()\n__starting_point()"
+    },
+    "difference_plan": {
+      "target_distance_band": {
+        "min": 0.35,
+        "max": 0.6
+      },
+      "changed_axes": [
+        "C",
+        "O",
+        "V"
+      ],
+      "same_family_allowed": true,
+      "forbidden_reuse": [
+        "taco_codeforces_3249c8d739df",
+        "codeforces",
+        "Treeland is a country in which there are n towns connected by n - 1 two-way road such that it's possible to get from any town to any other town. In Treeland there are 2k universities which are located in different tow...",
+        "不要复写原题的叙事结构、任务定义或样例套路。",
+        "不要只替换实体名称后保留同样的输入输出关系。"
+      ],
+      "rationale": "目标(O)从最大化数值变为计数；约束(C)中增加计数定义、去重规则和流量上限的强制要求；不变量(V)从全局最大流量的可达性变为每个子树必须满足的闸机外部需求数量，支撑DP分解。",
+      "summary": "目标维度完全切换为计数，约束中显式给出方案等价关系与流量上限的强制性，不变量转化为子树状态转移规则。",
+      "mode": "single_seed_extension"
+    },
+    "new_schema": {
+      "problem_id": "taco_campus_turnstile_pairing_count",
+      "source": "derived",
+      "input_structure": {
+        "type": "composite",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {
+          "connected": true,
+          "acyclic": true,
+          "directed": false,
+          "simple": true
+        },
+        "components": [
+          {
+            "role": "config",
+            "role_description": "两个整数：节点数n和闸机对数k",
+            "type": "tuple",
+            "length": {
+              "min": 2,
+              "max": 2
+            },
+            "value_range": {
+              "min": 2,
+              "max": 2000
+            },
+            "properties": {}
+          },
+          {
+            "role": "turnstiles",
+            "role_description": "2k个互不相同的节点编号，表示闸机所在位置",
+            "type": "array",
+            "length": {
+              "min": 2,
+              "max": 2000
+            },
+            "value_range": {
+              "min": 1,
+              "max": 2000
+            },
+            "properties": {
+              "distinct": true
+            }
+          },
+          {
+            "role": "edges",
+            "role_description": "n-1条无向边构成树",
+            "type": "array",
+            "length": {
+              "min": 1,
+              "max": 1999
+            },
+            "value_range": {
+              "min": 1,
+              "max": 2000
+            },
+            "properties": {
+              "directed": false
+            }
+          }
+        ]
+      },
+      "core_constraints": {
+        "constraints": [
+          {
+            "name": "complete_pairing",
+            "description": "2k个闸机必须恰好配成k个不相交的无序对，每个闸机恰出现在一对中。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "distinct_nodes_for_turnstiles",
+            "description": "所有闸机位于互不相同的节点上。",
+            "formal": "",
+            "source_sections": [
+              "description",
+              "input"
+            ]
+          },
+          {
+            "name": "unit_edge_weight",
+            "description": "每条通道（边）的长度均为1，两个闸机之间的路径长度等于它们之间边的条数。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "flow_upper_bound",
+            "description": "对于一个配对方案，每条边被所有配对的路径经过的次数等于该边一侧子树内的闸机数量s与另一侧2k-s的较小值min(s,2k-s)。题目要求方案必须达到该上限（即总距离最大）。",
+            "formal": "",
+            "source_sections": [
+              "description",
+              "output"
+            ]
+          },
+          {
+            "name": "counting_definition",
+            "description": "一个配对方案定义为2k个闸机集合的一个划分，分成k个两两不相交的二元子集（无序）。两个方案不同当且仅当存在至少一对闸机在一个方案中被分在同一个对中，而在另一个方案中没有。不考虑对内的顺序或对的顺序。",
+            "formal": "",
+            "source_sections": [
+              "description"
+            ]
+          },
+          {
+            "name": "modulo",
+            "description": "答案可能很大，需要对质数M=10^9+7取模输出。",
+            "formal": "",
+            "source_sections": [
+              "output"
+            ]
+          }
+        ]
+      },
+      "objective": {
+        "type": "count_solutions",
+        "description": "计算满足每条边流量达到上限的闸机配对方案总数，并对10^9+7取模。",
+        "target": "total_count",
+        "requires_solution": false
+      },
+      "invariant": {
+        "invariants": [
+          {
+            "name": "subtree_external_need",
+            "description": "对于树中任意节点v的子树，设其内部闸机数为s。任何有效方案中，v与其父节点相连的边被使用的次数必须恰为min(s, 2k-s)。该值决定了子树内必须有多少个闸机与外部配对，从而将问题拆分为可动态规划的计数单元。",
+            "properties": {},
+            "evidence_source": "both"
+          }
+        ]
+      },
+      "theme": {
+        "id": "campus_ops",
+        "name": "校园运营",
+        "tone": "日常、轻松、贴近现实",
+        "keywords": [
+          "社团",
+          "教室",
+          "队伍",
+          "课表",
+          "仓库",
+          "窗口"
+        ],
+        "mapping_hint": "把抽象约束映射成排队、分配、排课或借还流程。"
+      },
+      "difficulty": "medium"
+    },
+    "generated_problem": {
+      "title": "校园闸机配对计数",
+      "description": "某大学校园里有 n 间教室，教室之间由 n−1 条走廊连接，形成一棵树，任意两间教室可以互相到达。学校在 2k 间不同教室里安装了闸机，现在计划将这些闸机恰好配成 k 对，每一对的两台闸机之间通过走廊建立一条直达通道。每种配对方案的总距离定义为这 k 条路径所经过的走廊总长度（每条走廊的长度均为 1）。\n\n根据分析，要使总距离达到最大，必须满足：对于任意一条走廊，它被路径经过的次数恰好等于该走廊两侧闸机数中较少的那一侧的闸机数量（即流量达到上限）。\n\n请你计算共有多少种不同的闸机配对方案能够使总距离达到这个最大值。由于方案数可能很大，请对 1000000007 (10^9+7) 取模后输出。\n\n配对方案的不同仅由哪些闸机被分到同一对决定，不考虑对内的顺序，也不考虑 k 个对之间的排列顺序。",
+      "input_format": "第一行包含两个整数 n 和 k，分别表示教室数量和需要配对的闸机对数。\n第二行包含 2k 个互不相同的整数，表示安装了闸机的教室编号，编号从 1 到 n。\n接下来的 n−1 行，每行包含两个整数 u 和 v，表示编号为 u 的教室和编号为 v 的教室之间有一条走廊。",
+      "output_format": "输出一个整数，表示使总距离达到最大值的闸机配对方案数量对 1000000007 取模的结果。",
+      "constraints": [
+        "2 ≤ n ≤ 2000",
+        "1 ≤ k ≤ n/2",
+        "1 ≤ 闸机编号 ≤ n，且所有闸机编号互不相同",
+        "保证输入的走廊构成一棵树",
+        "时间限制：2 秒",
+        "空间限制：256 MB"
+      ],
+      "samples": [
+        {
+          "input": "4 1\n1 4\n1 2\n2 3\n3 4",
+          "output": "1",
+          "explanation": "只有一种配对方案：将教室 1 和教室 4 的闸机配对，路径为 1–2–3–4，总距离为 3，达到最大值，因此方案数为 1。"
+        },
+        {
+          "input": "7 2\n1 2 5 6\n1 3\n3 2\n4 5\n3 7\n4 3\n4 6",
+          "output": "2",
+          "explanation": "闸机位于教室 1, 2, 5, 6，可以算出最大总距离为 6。满足这一最大值的配对方案共有两种：(1,5) 和 (2,6) 配对，或者 (1,6) 和 (2,5) 配对。其余配对方式总距离都小于 6，不计入答案。"
+        }
+      ],
+      "notes": "输入保证 2k ≤ n。如果某条走廊某一侧没有闸机，则该走廊不会被任何路径经过。方案计数时，对内的两个闸机无顺序之分，对之间的顺序也不影响方案是否相同。",
+      "status": "ok",
+      "error_reason": "",
+      "feedback": ""
+    },
+    "artifact_contract": {
+      "new_schema_present": true,
+      "new_schema_field_present": false,
+      "new_schema_snapshot_field_present": true,
+      "difference_plan_present": true,
+      "predicted_schema_distance_present": true,
+      "distance_breakdown_present": true,
+      "changed_axes_realized_present": true,
+      "generated_problem_present": true
+    },
+    "review_context": {
+      "difference_plan": {
+        "summary": "目标维度完全切换为计数，约束中显式给出方案等价关系与流量上限的强制性，不变量转化为子树状态转移规则。",
+        "mode": "single_seed_extension",
+        "changed_axes": [
+          "C",
+          "O",
+          "V"
+        ]
+      },
+      "changed_axes_realized": [
+        "C",
+        "O",
+        "V"
+      ],
+      "distance_breakdown": {
+        "distance_version": "v2",
+        "backend": "embedding",
+        "total": 0.4022,
+        "axis_scores": {
+          "I": 0.0,
+          "C": 0.583,
+          "O": 0.5244,
+          "V": 0.4808
+        },
+        "components": {
+          "input_tree_distance": 0.0,
+          "constraint_match_distance": 0.583,
+          "objective_type_distance": 0.5645,
+          "objective_text_distance": 0.4643,
+          "invariant_match_distance": 0.4808
+        }
+      },
+      "applied_rule": "existence_to_counting",
+      "applied_helpers": [
+        {
+          "id": "counting_unit_definition",
+          "selection_reason": "必须明确计数对象和去重规则，否则计数目标模糊。",
+          "affected_axes": [
+            "C",
+            "O",
+            "V"
+          ],
+          "schema_changes": [
+            "在core_constraints中添加counting_definition和modulo约束",
+            "将objective改为count_solutions类型",
+            "在invariant中隐含方案等价性"
+          ],
+          "innovation_reason": "将原题的存在性/数值型答案升级为组合计数，需定义何为一个方案、何时两个方案不同，从而要求更严格的分析。",
+          "difficulty_reason": "去重规则迫使解法必须精确区分方案，不能简单沿用构造性方法，增加了组合验证负担。"
+        },
+        {
+          "id": "state_factorization",
+          "selection_reason": "解空间是2k个闸机的完美匹配，必须拆分为子树状态才能有效计数。",
+          "affected_axes": [
+            "C",
+            "V"
+          ],
+          "schema_changes": [
+            "在core_constraints中添加flow_upper_bound强制要求",
+            "在invariant中引入subtree_external_need，将问题分解为子树未配对闸机数"
+          ],
+          "innovation_reason": "通过边流量上限将整体配对方案计数转化为子树状态的聚合，提供了DP求解的基础，完全改变了求解视角。",
+          "difficulty_reason": "要求设计带一维状态的树上DP，并处理多子树的合并（可能涉及卷积或背包），较原题单值聚合大幅提升复杂度。"
+        },
+        {
+          "id": "counting_obligation_lock",
+          "selection_reason": "确保计数是主求解目标，而非在原最大化问题后顺手统计。",
+          "affected_axes": [
+            "C",
+            "O"
+          ],
+          "schema_changes": [
+            "objective直接设为计数，不再保留原最大化目标",
+            "core_constraints中flow_upper_bound作为方案有效性前提，与计数目标绑定"
+          ],
+          "innovation_reason": "完全替换原题目标，使题目从“求最大值”变为“数方案”，性质根本改变。",
+          "difficulty_reason": "解法不能使用原贪心或简单DP，必须直接针对计数设计状态和转移，且需处理取模，难度显著提高。"
+        }
+      ],
+      "algorithmic_delta_claim": {
+        "seed_solver_core": "一次DFS计算每条边两侧的闸机数，贡献min(s,2k-s)，求和得到最大总距离。",
+        "reusable_subroutines": "树的DFS遍历，统计子树闸机数量。",
+        "new_solver_core": "树上动态规划：设dp[v][j]为在v的子树内，有j个闸机尚未配对（即需要与v的祖先或兄弟子树中的闸机配对）的方案数。转移时合并子节点，根据v本身是否为闸机以及子树的未配对需求来更新状态，最终答案在dp[root][0]（或根据根的情况）。",
+        "new_proof_obligation": "需证明DP状态转移完整覆盖了所有满足流量上限的配对方案，无重复计数；证明每条边的流量上限等价于子树外部需求等于min(s,2k-s)，从而给出DP的边界条件和转移合法性；证明取模不影响计数正确性。",
+        "why_direct_reuse_fails": "原算法只求和，状态仅需一个整数值；计数需要在整个配对组合空间上枚举，必须跟踪未配对闸机的具体数量，状态维度从0维升级为1维（甚至多子合并时需卷积），原算法无法直接套用。"
+      },
+      "anti_shallow_rationale": "改动不仅将答案从数值换成计数，更彻底重构了求解义务：原题通过贪心计算边贡献即可；新题要求在所有最大化方案上计数，引入了子树未配对闸机这一核心状态，迫使算法采用DP并处理组合合并，难度和正确性证明远高于原题。"
+    }
+  }
+}

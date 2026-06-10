@@ -1,0 +1,128 @@
+{
+  "problem_id": "taco_codechef_4a283930e669",
+  "source": "codechef",
+  "input_structure": {
+    "type": "composite",
+    "length": {
+      "min": null,
+      "max": null
+    },
+    "value_range": {
+      "min": null,
+      "max": null
+    },
+    "properties": {
+      "multiple_test_cases": true
+    },
+    "components": [
+      {
+        "role": "test_case_count",
+        "role_description": "the number of test cases T",
+        "type": "integer",
+        "length": {
+          "min": null,
+          "max": null
+        },
+        "value_range": {
+          "min": 1,
+          "max": 100000
+        },
+        "properties": {}
+      },
+      {
+        "role": "test_cases",
+        "role_description": "sequence of test cases, each containing an integer N and N strings",
+        "type": "array",
+        "length": {
+          "min": 1,
+          "max": 100000
+        },
+        "value_range": {
+          "min": null,
+          "max": null
+        },
+        "properties": {}
+      }
+    ]
+  },
+  "core_constraints": {
+    "constraints": [
+      {
+        "name": "element_usage_limit",
+        "description": "Each element of the given word sequence may be used at most once in the verse; if a word appears k times in the input, it may be used up to k times (each occurrence separately).",
+        "formal": "For each i, word W_i can be used at most once in the whole verse.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "stanza_pair_structure",
+        "description": "A stanza must consist of exactly two words; a verse is a (possibly empty) list of such stanzas.",
+        "formal": "A verse is a sequence of pairs {(a_1, b_1), ..., (a_m, b_m)} where each a_i, b_i are chosen from the input words.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "allow_unused_elements",
+        "description": "It is not necessary to use all given words; any subset (respecting element usage limits) may form the verse.",
+        "formal": "The number of words used in the verse is ≤ N.",
+        "source_sections": [
+          "description"
+        ]
+      },
+      {
+        "name": "alphabet_restriction",
+        "description": "All words consist only of lowercase English letters.",
+        "formal": "Each W_i ∈ [a-z]+.",
+        "source_sections": [
+          "constraints"
+        ]
+      }
+    ]
+  },
+  "objective": {
+    "type": "maximize_value",
+    "description": "maximize the total beauty of a verse formed by pairing given words",
+    "target": "beauty",
+    "requires_solution": false
+  },
+  "invariant": {
+    "invariants": [
+      {
+        "name": "transformed_lcp_correspondence",
+        "description": "将每个单词与其反转字符串交错合并形成新字符串后,任意两个单词的原始美丽度 min(lp,ls)^2 恰好等于新字符串间最长公共前缀长度一半的平方,从而将原问题转化为在新字符串集合上的最长公共前缀配对优化。",
+        "properties": {
+          "formula": "for any words w1,w2, let t1=interleave(w1,reverse(w1)), t2=interleave(w2,reverse(w2)). Then min(lcp(w1,w2), lcs(w1,w2)) = lcp(t1,t2) // 2"
+        },
+        "evidence_source": "both"
+      },
+      {
+        "name": "adjacent_min_lcp_upper_bound",
+        "description": "将转换后的字符串按字典序排序后,序列中任意一个跨过全局最小相邻LCP索引的字符串对的LCP都不会超过该最小相邻LCP值。这一性质允许以最小相邻LCP为分割点进行分治,保证跨部分配对的贡献被约束。",
+        "properties": {
+          "condition": "对于已排序的序列 t,若 p 使得 lcp(t_p, t_{p+1}) 为所有相邻对中的最小值,则对所有 i ≤ p < j,lcp(t_i,t_j) ≤ lcp(t_p,t_{p+1})。"
+        },
+        "evidence_source": "solution_code"
+      },
+      {
+        "name": "unpaired_word_merge",
+        "description": "递归分治过程中,左子问题和右子问题分别返回各自内部可能剩余的一个未配对单词。若两侧均剩余一个,则这两个单词可以在当前层配对,其贡献由它们之间的LCP决定；否则未配对的单词向上传播,保证最终所有单词要么被使用一次,要么最多剩余一个未能配对的单词。",
+        "properties": {
+          "invariant": "递归函数返回 (rem, idx, total_beauty),rem 为 0 或 1 表示剩余未配对单词数,idx 为原始列表中该单词的下标,total_beauty 为子问题内部产生的最大美丽度和,并且所有被配对的单词互不重复且均来自该子列表。"
+        },
+        "evidence_source": "solution_code"
+      }
+    ]
+  },
+  "original_problem": {
+    "problem_id": "taco_codechef_4a283930e669",
+    "title": "ENGLISH",
+    "description": "Read problem statements in [Hindi], [Bengali], [Mandarin Chinese], [Russian], and [Vietnamese] as well.\n\nChef is learning English. So far, he knows $N$ words, and he wants to write a verse.\n\nLet's call a pair of English words a *stanza*. A *verse* is a list of stanzas. The *prefixal rhyme* of a stanza is the longest common prefix of the words in it. Similarly, the *suffixal rhyme* of a stanza is the longest common suffix of the words in it. The *beauty* of a stanza whose prefixal and suffixal rhymes have lengths $l_{p}$ and $l_{s}$ respectively is $\\mathrm{min}(l_{p}, l_{s})^2$.\n\nFor example, a stanza formed by the words \"abcdefghijkl\" and \"abcxyzhijkl\" has a prefixal rhyme \"abc\" (with length $3$), suffixal rhyme \"hijkl\" (with length $5$) and beauty $\\mathrm{min}(3,5)^2 = 3^{2} = 9$.\n\nThe beauty of a verse is the sum of beauties of all its stanzas. For example, the beauty of the verse ((\"abcdefghijkl\", \"abcxyzhijkl\"), (\"world\", \"word\"), (\"code\", \"chef\")) is $9+1+0=10$.\n\nYou are given $N$ words $W_{1}, W_{2}, \\ldots, W_{N}$ (they are not necessarily distinct). Help Chef write the most beautiful verse. It is not necessary to use all the words, but each word may be used at most once in the whole verse (more precisely, each element of the sequence $W$ may be used only once, but if some word appears $k$ times in $W$, we can use it up to $k$ times).\n\n------  Input ------\nThe first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\nThe first line of each test case contains a single integer $N$.\n$N$ lines follow. For each $i$ ($1 ≤ i ≤ N$), the $i$-th of these lines contains a single string $W_{i}$.\n\n------  Output ------\nFor each test case, print a single line containing one integer ― the greatest possible beauty of Chef's verse.\n\n------  Constraints ------\n$1 ≤ T ≤ 10^{5}$\n$1 ≤ N ≤ 10^{5}$\n$1 ≤ |W_{i}| ≤ 10^{5}$ for each valid $i$\nall words contain only lowercase English letters\nthe sum of $|W_{1}|+|W_{2}|+\\ldots+|W_{N}|$ over all test cases does not exceed $10^{5}$\n\n------  Subtasks ------\nSubtask #1 (50 points): all words are palindromes\n\nSubtask #2 (50 points): original constraints\n\n----- Sample Input 1 ------ \n3\n\n6\n\nabcdefghijkl\n\nchef\n\nworld\n\ncode\n\nabcxyzhijkl\n\nword\n\n4\n\nproblem\n\npoem\n\nproblem\n\nproblem\n\n3\n\ncontest\n\ncoolest\n\nunused\n----- Sample Output 1 ------ \n10\n\n50\n\n4\n----- explanation 1 ------ \nExample case 1: The best verse is ((\"abcdefghijkl\", \"abcxyzhijkl\"), (\"world\", \"word\"), (\"code\", \"chef\")), which was described above.\n\nExample case 2: The best verse is ((\"problem\", \"problem\"), (\"problem\", \"poem\")). Its beauty is $7^{2}+1^{2} = 49+1 = 50$. Note that we have three copies of the word \"problem\", so we can use it three times.\n\nExample case 3: The best verse is ((\"coolest\", \"contest\")), which contains only one stanza. Its beauty is $2^{2}=4$. Note that it is not necessary to use all the words ? the word \"unused\" is left unused.",
+    "input": "",
+    "output": "",
+    "constraints": "time limit: 2 seconds\nmemory limit: 50000 bytes",
+    "source": "codechef",
+    "standard_solution_code": "def change(u):\n\ti = 0\n\tN = len(u)\n\tv = u[::-1]\n\tnew = ''\n\tfor i in range(N):\n\t\tnew += u[i] + v[i]\n\treturn new\nT = int(input())\nfor nnn in range(T):\n\tk = []\n\tN = int(input())\n\tfor i in range(N):\n\t\tu = input()\n\t\tu = change(u)\n\t\tk.append(u)\n\tk.sort()\n\ttt = []\n\tttt = 0\n\ti = 0\n\tnewarr = []\n\tif len(tt) < 0:\n\t\ta = 'abcdefghijklmnopqrstuvwxyz'\n\t\tb = 0\n\t\tfor i in a:\n\t\t\tm = []\n\t\t\tfor j in range(b, len(k)):\n\t\t\t\tif i == k[j][0]:\n\t\t\t\t\tm.append(k[j])\n\t\t\t\telse:\n\t\t\t\t\tb = j\n\t\t\t\t\tbreak\n\t\t\tnewarr.append(m)\n\t\tttt = 0\n\t\tfor d in newarr:\n\t\t\tif len(d) <= 1:\n\t\t\t\tcontinue\n\t\t\twhile len(d) >= 1:\n\t\t\t\ti = 0\n\t\t\t\tarr_indexes = 0\n\t\t\t\tmax1 = 0\n\t\t\t\twhile i < len(d) - 1:\n\t\t\t\t\tu = 0\n\t\t\t\t\tfor j in range(min(len(d[i]), len(d[i + 1]))):\n\t\t\t\t\t\tif d[i][j] == d[i + 1][j]:\n\t\t\t\t\t\t\tu += 1\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\tif u > 0:\n\t\t\t\t\t\tif max1 < u:\n\t\t\t\t\t\t\tmax1 = u\n\t\t\t\t\t\t\tarr_indexes = i\n\t\t\t\t\t\ti += 1\n\t\t\t\t\telse:\n\t\t\t\t\t\ti += 1\n\t\t\t\ttry:\n\t\t\t\t\td.pop(arr_indexes)\n\t\t\t\t\td.pop(arr_indexes)\n\t\t\t\texcept:\n\t\t\t\t\tbreak\n\t\t\t\tttt += max1 * max1\n\n\tdef my(k, mmm):\n\t\tmini = 1000000000000\n\t\tindex = 0\n\t\tfor i in range(0, len(k) - 1):\n\t\t\tu = 0\n\t\t\tfor j in range(min(len(k[i]), len(k[i + 1]))):\n\t\t\t\tif k[i][j] == k[i + 1][j]:\n\t\t\t\t\tu += 1\n\t\t\t\telse:\n\t\t\t\t\tbreak\n\t\t\tif mini > u:\n\t\t\t\tmini = u\n\t\t\t\tindex = i\n\t\tif k[0] == k[-1]:\n\t\t\tc = len(k) // 2 * len(k[0]) * len(k[0]) // 4\n\t\t\tif len(k) % 2 == 0:\n\t\t\t\treturn (0, 0, c)\n\t\t\telse:\n\t\t\t\treturn (1, mmm.index(k[0]), c)\n\t\tif len(k) == 1:\n\t\t\treturn (1, mmm.index(k[0]), 0)\n\t\tif len(k) == 2:\n\t\t\tmini = mini // 2\n\t\t\treturn (0, 0, mini * mini)\n\t\ta1 = my(k[:index + 1], mmm)\n\t\ta2 = my(k[index + 1:], mmm)\n\t\tif a1[0] == 1 and a2[0] == 1:\n\t\t\tu = 0\n\t\t\tfor j in range(min(len(mmm[a1[1]]), len(mmm[a2[1]]))):\n\t\t\t\tif mmm[a1[1]][j] == mmm[a2[1]][j]:\n\t\t\t\t\tu += 1\n\t\t\t\telse:\n\t\t\t\t\tbreak\n\t\t\tu = u // 2\n\t\t\treturn (0, 0, a1[2] + a2[2] + u * u)\n\t\telif a1[0] == 1 and a2[0] == 0:\n\t\t\treturn (1, a1[1], a1[2] + a2[2])\n\t\telif a1[0] == 0 and a2[0] == 1:\n\t\t\treturn (1, a2[1], a1[2] + a2[2])\n\t\telse:\n\t\t\treturn (0, 0, a1[2] + a2[2])\n\tmmm = k[:]\n\ta = my(k, mmm)\n\tprint(a[2])"
+  }
+}

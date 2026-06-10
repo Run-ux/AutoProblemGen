@@ -1,0 +1,921 @@
+{
+  "problem_id": "taco_codechef_8da4a2a032bc",
+  "source_problem_ids": [
+    "taco_codechef_8da4a2a032bc"
+  ],
+  "variant_index": 1,
+  "theme_random_value": 0,
+  "mode": "single_seed_extension",
+  "rule_version": "2026-04-rules-v3",
+  "theme": {
+    "id": "community_services",
+    "name": "社区服务"
+  },
+  "difference_plan": {
+    "target_distance_band": {
+      "min": 0.35,
+      "max": 0.6
+    },
+    "changed_axes": [],
+    "same_family_allowed": true,
+    "forbidden_reuse": [
+      "taco_codechef_8da4a2a032bc",
+      "CHEFFFUNC",
+      "codechef",
+      "Chef's new friend hErd gave him two functions f and g. The function f is defined over x (x≥ 1) as: f(x) = \\begin{cases} 0, & \\text{if } x = 1 \\\\ f( \\frac{x}{2} ) + 1, & \\text{if } x \\text{ is even} \\\\ f( \\lfloor \\frac...",
+      "不要复写原题的叙事结构、任务定义或样例套路。",
+      "不要只替换实体名称后保留同样的输入输出关系。"
+    ],
+    "rationale": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "summary": "选中的规则未能稳定落地",
+    "mode": "single_seed_extension"
+  },
+  "predicted_schema_distance": 0.0,
+  "distance_breakdown": {
+    "distance_version": "v2",
+    "backend": "embedding",
+    "total": 0.0,
+    "axis_scores": {
+      "I": 0.0,
+      "C": 0.0,
+      "O": 0.0,
+      "V": 0.0
+    },
+    "components": {
+      "input_tree_distance": 0.0,
+      "constraint_match_distance": 0.0,
+      "objective_type_distance": 0.0,
+      "objective_text_distance": 0.0,
+      "invariant_match_distance": 0.0
+    }
+  },
+  "changed_axes_realized": [],
+  "objective": {
+    "type": "maximize_value",
+    "description": "maximize the sum of f(x) and g(x) over x in [L, R]",
+    "target": "sum",
+    "requires_solution": false
+  },
+  "rule_selection_reason": "种子问题是区间最大化优化，输出为最优值。逆设计规则可将目标值作为反向目标，要求设计满足该最大值的区间，并引入最小性义务，天然改变求解方向、核心约束和目标责任。而计数规则易退化为‘统计最优解个数’的后处理浅改；阈值规则因缺少自然可行性结构而难以适用。；创新度判断：将正向求最大值翻转为指定目标最大值后的参数设计（如求包含目标值的最小区间），迫使解题者从构造端理解原题成立条件，带来目标驱动设计、逆向状态反推和最小性证明等全新核心义务。；难度判断：原题难度集中在区间内最大值的高效计算，新题要求在此基础上处理参数逆向搜索与最优性证明：给定目标最大值，需分析使之成立的区间特征，并结合单调性或封闭形式设计搜索/构造算法，且最小性要求增加了下界论证负担。；风险判断：主要风险是若反向目标定义不当（如随意选定目标值无合理区间），会脱离原题核心规律；通过严格绑定目标与原题最大值公式、限制修改操作在 L,R 的加减上，并强制最小区间/最小修改代价，可将风险控制在变换深度内。",
+  "new_schema_snapshot": {
+    "problem_id": "taco_codechef_8da4a2a032bc",
+    "source": "codechef",
+    "input_structure": {
+      "type": "array",
+      "length": {
+        "min": 1,
+        "max": 100000
+      },
+      "value_range": {
+        "min": 1,
+        "max": 1000000000
+      },
+      "properties": {
+        "multiple_test_cases": true
+      }
+    },
+    "core_constraints": {
+      "constraints": []
+    },
+    "objective": {
+      "type": "maximize_value",
+      "description": "maximize the sum of f(x) and g(x) over x in [L, R]",
+      "target": "sum",
+      "requires_solution": false
+    },
+    "invariant": {
+      "invariants": [
+        {
+          "name": "closed_form_sum",
+          "description": "For every x, f(x)+g(x) equals c + 2^(k+1) + 2^k - 1 - x, where k is the index of the most significant bit of x and c is the number of '0' in the binary representation of x. This closed form allows O(1) evaluation and is used throughout the algorithm.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "maximum_at_highest_power",
+          "description": "For all x sharing the same most significant bit k, the maximum of f(x)+g(x) is attained at x = 2^k. This property allows the algorithm to output the answer immediately when the interval contains that power of two.",
+          "properties": {},
+          "evidence_source": "solution_code"
+        },
+        {
+          "name": "lowbit_step_sufficiency",
+          "description": "When the interval does not contain a power of two, iterating x by adding its lowbit (lowest set bit) starting from l visits a set of candidates that includes an optimal x maximizing f(x)+g(x) in [l, r].",
+          "properties": {
+            "step": "lowbit(x)",
+            "coverage": "optimal x is visited"
+          },
+          "evidence_source": "solution_code"
+        }
+      ]
+    },
+    "theme": {
+      "id": "community_services",
+      "name": "社区服务",
+      "tone": "温和、实用、贴近日常协作",
+      "keywords": [
+        "住户",
+        "服务点",
+        "预约",
+        "工单",
+        "通知",
+        "排班"
+      ],
+      "mapping_hint": "把原始结构映射成住户、服务点、预约记录、工单或排班流程。"
+    },
+    "difficulty": "Medium"
+  },
+  "applied_rule": "forward_solution_to_inverse_design",
+  "rejected_candidates": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。"
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题中 f+g 的最大值在任意区间内唯一（或可通过分析证明），直接计数最大值个数将导致答案恒为 1，算法可退化至直接输出 1，没有实质性新责任。若改为计数其它对象（如 lowbit 步数），则丢弃了原题核心的 f+g 极值分析，不符合 existence_to_counting 规则要求的围绕最优解空间构建计数题的预期。"
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "status": "schema_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题不是判定或可行性问题，而是直接最大化问题，缺少规则所需的单调性参数和可行性框架。"
+    }
+  ],
+  "algorithmic_delta_claim": {},
+  "anti_shallow_rationale": "",
+  "shared_core_summary": "",
+  "shared_core_anchors": {},
+  "seed_contributions": {},
+  "fusion_ablation": {},
+  "applied_helpers": [],
+  "planning_status": "difference_insufficient",
+  "planning_error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+  "planning_feedback": "已尝试 3 条候选规则，均未通过规划校验。",
+  "selection_trace": [
+    {
+      "rule_id": "canonical_witness",
+      "handler": "canonical_witness",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "difference_insufficient",
+      "selection_reason": "原题解法已隐含输出最小规范解的能力：lowbit步进从l开始，首个最大值对应最小最优x，添加输出要求不会实质改变核心算法，属于表面修改。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "不变式 lowbit_step_sufficiency 表明从l开始以lowbit(x)步进遍历的候选集包含最优x，且首次达到最大值的位置即为最小x；标准解代码仅需增加记录最优x的变量即可，无需改动核心逻辑。",
+        "feedback": "该种子题已有隐含的规范解构造通路，直接要求输出字典序最小x不会催生新的算法挑战。建议选择解对象恢复代价更高、规范顺序需重新设计搜索策略的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "construct_or_obstruction",
+      "handler": "construct_or_obstruction",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_failure_semantics",
+      "selection_reason": "原题始终有解，不存在‘做不到’的情形，无法构造局部冲突证据，不满足规则对种子题的要求。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为在区间内求最大值，区间非空，函数定义明确，必有解；解法代码中无失败分支，invariant 列表均为优化性质，未提及无解情况。schema 中 core_constraints 为空，objective 为最大化，无失败输出需求。",
+        "feedback": "该种子题缺乏可生成局部冲突证据的无解场景，规则无法落地，建议选择存在约束不可满足或区间失效等情形的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "accepted": true,
+      "score": 1.02,
+      "reason_code": "FINITE_CLEAR_COUNTING_SPACE",
+      "selection_reason": "种子题是最大化 f(x)+g(x) 的最优值问题，解空间为有限整数区间 [L,R]，不同 x 天然是不同解，去重规则直接按 x 区分。计数对象可明确定义为'达到最大值的 x 的个数'，对象明确、有限且有明确去重，符合计数题要求。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 显示 objective 为 maximize sum,f(x)+g(x) target 为 sum；原题约束 L,R ≤ 1e9，解空间为有限整数集；invariant 描述了最大值在特定 2^k 处取得，但未断言唯一性，存在多 x 同取最大的可能，故计数有意义；解空间有限，去重以 x 区分即清晰。",
+        "feedback": "解空间有限、去重规则可直接基于 x 的取值定义，可以进入规划阶段。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 2
+    },
+    {
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "handler": "minimum_guarantee_under_perturbation",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "native_perturbation_missing",
+      "selection_reason": "原题是一个确定性最大化问题，没有任何顺序不确定、资源波动或局部选择差异等原生扰动来源。最坏情况分析无法回归原题语义，不满足规则要求。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为在区间[L,R]上最大化f(x)+g(x)，函数f和g由递归定义，解法基于封闭形式和最高位性质（见invariant条目），算法为确定性O(1)~O(log R)查找，无不确定性；规则eligibility.required_seed_properties明确要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，该原题不具备。",
+        "feedback": "建议寻找具有天然不确定性（如资源分配、顺序选择）的种子题来应用此规则。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "accepted": true,
+      "score": 0.97,
+      "reason_code": "natural_threshold_exists",
+      "selection_reason": "种子题中求区间最大f+g的问题隐含可行性判定：对阈值V，存在x使得f+g>=V。该可行性关于区间左端点L单调递减（区间缩小），且存在分层结构（最大值在2的幂处取得，由不变量支撑）。改造为：给定R和V，求最小L使得[L,R]内存在解。阈值L进入核心约束（定义搜索区间），目标变为最小化，并需证明临界L的正确性。非二分直接推导算法可行（利用不变量直接定位临界点），避免机械二分，符合规则。",
+      "risk_tags": [],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "invariant: maximum_at_highest_power（最大值在x=2^k处取得）, lowbit_step_sufficiency（区间内候选覆盖最优解）。原题约束：1≤L≤R≤10^9。",
+        "feedback": ""
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 3
+    },
+    {
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "handler": "single_objective_to_tradeoff_frontier",
+      "accepted": false,
+      "score": 0.15,
+      "reason_code": "no_natural_tradeoff",
+      "selection_reason": "种子题的目标是最大化 f(x)+g(x) 的单一标量，其数学结构（closed_form_sum 和 maximum_at_highest_power）表明 f 和 g 高度正相关，在同一区间内几乎总存在一个同时使 f 和 g 达到最优的解（如该位最高幂次），无法形成真实的帕累托前沿或冲突权衡。",
+      "risk_tags": [
+        "low_novelty",
+        "shared_core_risk",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 schema 中 objective 为单目标最大化 sum；不变量 maximum_at_highest_power 声明 'for all x sharing the same most significant bit k, the maximum of f(x)+g(x) is attained at x=2^k'，而该点同时使 f=k 和 g=2^{k+1}-1 达到最大，证明两指标无冲突。",
+        "feedback": "该种子题缺少一个与原目标真实冲突、且自然存在于题目定义中的第二评价指标。拆分 f 和 g 仅是将求和拆开，无法产生支配互斥的解；引入 x 最小化等额外指标则属于人为附加，不符合自然属性要求。建议寻找本身具有资源分配、公平性等冲突维度的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "accepted": true,
+      "score": 0.82,
+      "reason_code": "eligible",
+      "selection_reason": "原题输出是区间内 f(x)+g(x) 的最大值，该值可以直接作为反向目标。原题输入区间端点 L、R 是自然的修改自由度，可设计为“给定目标最大值 T，求最小的 R 使得 [1,R] 内最大值等于 T”，具备最小性责任，符合反向设计要求。",
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 seed_schema 的 objective 描述为 'maximize the sum of f(x) and g(x) over x in [L, R]'，输出为数值最大值。invariant 中的 'maximum_at_highest_power' 指出在 2^k 处取得最大值，且 closed_form_sum 给出 f+g 的闭式，使目标值 T 可逆推出对应的 x 或区间，因此可验证。输入结构包含 L 和 R，可以固定其中一个，将另一个作为设计变量，存在自然的修改操作。",
+        "feedback": "规则适用于该种子题，但反向设计可能退化为简单的解方程问题，需要规划时强调最小性证明与新算法差异。"
+      },
+      "selected_for_attempt": true,
+      "attempt_rank": 1
+    },
+    {
+      "rule_id": "independent_components_to_global_coupling",
+      "handler": "independent_components_to_global_coupling",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "missing_decomposable_units",
+      "selection_reason": "种子题是单一区间上的全局最优化，没有可分解的局部独立单元，无法通过共享资源或全局守恒自然耦合。",
+      "risk_tags": [
+        "low_novelty",
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定 L,R，求 max{f(x)+g(x) | L ≤ x ≤ R}，解法直接在 [L,R] 上求最大，不存在多个局部组件分别处理后再组合。例如，标准解法通过判断区间是否包含 2^k 或通过 lowbit 步进寻找候选，都是对单一目标的全局操作，没有任何分治或独立子问题结构。",
+        "feedback": "该规则要求种子题存在可分解的局部单元，但当前种子题不具备此属性，建议更换为包含多个独立区间的题目，或将问题改为多个查询共享某些全局资源。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "deterministic_process_to_game_outcome",
+      "handler": "deterministic_process_to_game_outcome",
+      "accepted": false,
+      "score": 0.0,
+      "reason_code": "no_natural_adversarial_action",
+      "selection_reason": "原题 CHEFFFUNC 是询问区间内 f(x)+g(x) 最大值的纯组合优化题，不存在可双方轮流选择、拿取或改变状态的交互过程。任何博弈化都必须依靠背景硬造玩家与行动，违反规则 forbidden_seed_properties。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题仅有输入区间和输出最大值，没有任何操作步骤。即便在算法内部有 lowbit 迭代，那也只是单一智能体的搜索，不是多玩家交互。规则 forbidden_seed_properties 明确禁止“对抗方只能靠故事背景硬造”，而此题完全缺乏天然对抗结构。",
+        "feedback": "该种子题本质为静态极值查询，无状态转移或行动树，无法在不杜撰虚构玩家的情况下建立博弈语义。建议寻找具有显式操作序列或树形决策的种子题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "local_path_to_global_cover",
+      "handler": "local_path_to_global_cover",
+      "accepted": false,
+      "score": 0.2,
+      "reason_code": "not_applicable",
+      "selection_reason": "原题是单区间上的函数最值问题，核心对象是单个整数x，不存在可组合的局部对象族（如多个区间、路径或子树）以自然形成覆盖或割关系。强行扩展为覆盖问题将引入与核心规律无关的额外约束，违反红线。",
+      "risk_tags": [
+        "semantic_mismatch",
+        "low_novelty"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定L,R，求max_{x∈[L,R]}(f(x)+g(x))。种子schema中核心约束为空，目标为最大化值，不变量涉及单区间内的闭式与lowbit步进。规则要求原题核心对象具有路径、区间、子树等局部结构且多个局部对象可形成覆盖或割关系。但原题仅有一个区间，对象不是多个，无法满足。",
+        "feedback": "规则不适用，建议寻找具有多个相关局部对象（如多条路径、多个区间或子树）的种子题，以便扩展为覆盖或割类问题。"
+      },
+      "selected_for_attempt": false
+    },
+    {
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "handler": "plain_counting_to_weighted_distribution",
+      "accepted": false,
+      "score": 0.1,
+      "reason_code": "no_counting_object",
+      "selection_reason": "原题为求最大值问题，非计数问题，缺少明确的计数对象，无法应用带权计数扩展规则。",
+      "risk_tags": [
+        "semantic_mismatch"
+      ],
+      "details": {
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：寻找f(x)+g(x)在[L,R]上的最大值，输出最大值。规则 eligibility.required_seed_properties 要求“原题已经有明确有限的计数对象”，但本题目并未涉及计数。",
+        "feedback": "种子题类型不匹配，建议选择计数类题目作为种子。"
+      },
+      "selected_for_attempt": false
+    }
+  ],
+  "validation_trace": [
+    {
+      "stage": "eligibility",
+      "rule_id": "canonical_witness",
+      "outcome": "fail",
+      "reason_code": "difference_insufficient",
+      "message": "原题解法已隐含输出最小规范解的能力：lowbit步进从l开始，首个最大值对应最小最优x，添加输出要求不会实质改变核心算法，属于表面修改。",
+      "details": {
+        "handler": "canonical_witness",
+        "score": 0.2,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk"
+        ],
+        "mode": "single_seed_extension",
+        "family": "output_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "witness",
+          "output_contract"
+        ],
+        "review_role": "你扮演一名规范解审查官，重点判断种子题是否仍有空间升级为带规范性的构造输出。",
+        "llm_status": "ineligible",
+        "evidence": "不变式 lowbit_step_sufficiency 表明从l开始以lowbit(x)步进遍历的候选集包含最优x，且首次达到最大值的位置即为最小x；标准解代码仅需增加记录最优x的变量即可，无需改动核心逻辑。",
+        "feedback": "该种子题已有隐含的规范解构造通路，直接要求输出字典序最小x不会催生新的算法挑战。建议选择解对象恢复代价更高、规范顺序需重新设计搜索策略的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "construct_or_obstruction",
+      "outcome": "fail",
+      "reason_code": "no_failure_semantics",
+      "message": "原题始终有解，不存在‘做不到’的情形，无法构造局部冲突证据，不满足规则对种子题的要求。",
+      "details": {
+        "handler": "construct_or_obstruction",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "certificate_output",
+        "audit_tags": [
+          "single_seed",
+          "certificate",
+          "failure_semantics"
+        ],
+        "review_role": "你扮演一名冲突证书审查官，重点判断无解情形能否落成可局部检查的阻碍证据。",
+        "llm_status": "ineligible",
+        "evidence": "种子题描述为在区间内求最大值，区间非空，函数定义明确，必有解；解法代码中无失败分支，invariant 列表均为优化性质，未提及无解情况。schema 中 core_constraints 为空，objective 为最大化，无失败输出需求。",
+        "feedback": "该种子题缺乏可生成局部冲突证据的无解场景，规则无法落地，建议选择存在约束不可满足或区间失效等情形的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "existence_to_counting",
+      "outcome": "pass",
+      "reason_code": "FINITE_CLEAR_COUNTING_SPACE",
+      "message": "种子题是最大化 f(x)+g(x) 的最优值问题，解空间为有限整数区间 [L,R]，不同 x 天然是不同解，去重规则直接按 x 区分。计数对象可明确定义为'达到最大值的 x 的个数'，对象明确、有限且有明确去重，符合计数题要求。",
+      "details": {
+        "handler": "existence_to_counting",
+        "score": 1.02,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "objective_upgrade",
+        "audit_tags": [
+          "single_seed",
+          "counting",
+          "deduplication"
+        ],
+        "review_role": "你扮演一名计数化审查官，重点判断解空间、去重规则和有限性是否足够清晰。",
+        "llm_status": "eligible",
+        "evidence": "seed_schema 显示 objective 为 maximize sum,f(x)+g(x) target 为 sum；原题约束 L,R ≤ 1e9，解空间为有限整数集；invariant 描述了最大值在特定 2^k 处取得，但未断言唯一性，存在多 x 同取最大的可能，故计数有意义；解空间有限，去重以 x 区分即清晰。",
+        "feedback": "解空间有限、去重规则可直接基于 x 的取值定义，可以进入规划阶段。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "minimum_guarantee_under_perturbation",
+      "outcome": "fail",
+      "reason_code": "native_perturbation_missing",
+      "message": "原题是一个确定性最大化问题，没有任何顺序不确定、资源波动或局部选择差异等原生扰动来源。最坏情况分析无法回归原题语义，不满足规则要求。",
+      "details": {
+        "handler": "minimum_guarantee_under_perturbation",
+        "score": 0.0,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "robust_optimization",
+        "audit_tags": [
+          "single_seed",
+          "guarantee",
+          "worst_case"
+        ],
+        "review_role": "你扮演一名保底优化审查官，重点判断原题语义中是否存在可被放大的原生扰动来源。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述为在区间[L,R]上最大化f(x)+g(x)，函数f和g由递归定义，解法基于封闭形式和最高位性质（见invariant条目），算法为确定性O(1)~O(log R)查找，无不确定性；规则eligibility.required_seed_properties明确要求'原题里本来就有顺序不确定、资源波动或局部选择差异'，该原题不具备。",
+        "feedback": "建议寻找具有天然不确定性（如资源分配、顺序选择）的种子题来应用此规则。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "pass",
+      "reason_code": "natural_threshold_exists",
+      "message": "种子题中求区间最大f+g的问题隐含可行性判定：对阈值V，存在x使得f+g>=V。该可行性关于区间左端点L单调递减（区间缩小），且存在分层结构（最大值在2的幂处取得，由不变量支撑）。改造为：给定R和V，求最小L使得[L,R]内存在解。阈值L进入核心约束（定义搜索区间），目标变为最小化，并需证明临界L的正确性。非二分直接推导算法可行（利用不变量直接定位临界点），避免机械二分，符合规则。",
+      "details": {
+        "handler": "feasibility_to_extremal_threshold",
+        "score": 0.97,
+        "risk_tags": [],
+        "mode": "single_seed_extension",
+        "family": "threshold_optimization",
+        "audit_tags": [
+          "single_seed",
+          "threshold",
+          "extremal_value"
+        ],
+        "review_role": "你扮演一名阈值优化审查官，重点判断可行性是否能自然升级为临界参数或极值阈值。",
+        "llm_status": "eligible",
+        "evidence": "invariant: maximum_at_highest_power（最大值在x=2^k处取得）, lowbit_step_sufficiency（区间内候选覆盖最优解）。原题约束：1≤L≤R≤10^9。",
+        "feedback": ""
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "single_objective_to_tradeoff_frontier",
+      "outcome": "fail",
+      "reason_code": "no_natural_tradeoff",
+      "message": "种子题的目标是最大化 f(x)+g(x) 的单一标量，其数学结构（closed_form_sum 和 maximum_at_highest_power）表明 f 和 g 高度正相关，在同一区间内几乎总存在一个同时使 f 和 g 达到最优的解（如该位最高幂次），无法形成真实的帕累托前沿或冲突权衡。",
+      "details": {
+        "handler": "single_objective_to_tradeoff_frontier",
+        "score": 0.15,
+        "risk_tags": [
+          "low_novelty",
+          "shared_core_risk",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "multi_objective_tradeoff",
+        "audit_tags": [
+          "single_seed",
+          "tradeoff",
+          "pareto_frontier"
+        ],
+        "review_role": "你扮演一名多目标权衡审查官，重点判断种子题是否存在自然且冲突的第二评价指标。",
+        "llm_status": "ineligible",
+        "evidence": "原题 schema 中 objective 为单目标最大化 sum；不变量 maximum_at_highest_power 声明 'for all x sharing the same most significant bit k, the maximum of f(x)+g(x) is attained at x=2^k'，而该点同时使 f=k 和 g=2^{k+1}-1 达到最大，证明两指标无冲突。",
+        "feedback": "该种子题缺少一个与原目标真实冲突、且自然存在于题目定义中的第二评价指标。拆分 f 和 g 仅是将求和拆开，无法产生支配互斥的解；引入 x 最小化等额外指标则属于人为附加，不符合自然属性要求。建议寻找本身具有资源分配、公平性等冲突维度的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "pass",
+      "reason_code": "eligible",
+      "message": "原题输出是区间内 f(x)+g(x) 的最大值，该值可以直接作为反向目标。原题输入区间端点 L、R 是自然的修改自由度，可设计为“给定目标最大值 T，求最小的 R 使得 [1,R] 内最大值等于 T”，具备最小性责任，符合反向设计要求。",
+      "details": {
+        "handler": "forward_solution_to_inverse_design",
+        "score": 0.82,
+        "risk_tags": [
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "inverse_design",
+        "audit_tags": [
+          "single_seed",
+          "inverse_problem",
+          "minimal_edit"
+        ],
+        "review_role": "你扮演一名反向设计审查官，重点判断原题结果是否能作为目标，并存在自然修改或设计自由度。",
+        "llm_status": "eligible",
+        "evidence": "原题 seed_schema 的 objective 描述为 'maximize the sum of f(x) and g(x) over x in [L, R]'，输出为数值最大值。invariant 中的 'maximum_at_highest_power' 指出在 2^k 处取得最大值，且 closed_form_sum 给出 f+g 的闭式，使目标值 T 可逆推出对应的 x 或区间，因此可验证。输入结构包含 L 和 R，可以固定其中一个，将另一个作为设计变量，存在自然的修改操作。",
+        "feedback": "规则适用于该种子题，但反向设计可能退化为简单的解方程问题，需要规划时强调最小性证明与新算法差异。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "independent_components_to_global_coupling",
+      "outcome": "fail",
+      "reason_code": "missing_decomposable_units",
+      "message": "种子题是单一区间上的全局最优化，没有可分解的局部独立单元，无法通过共享资源或全局守恒自然耦合。",
+      "details": {
+        "handler": "independent_components_to_global_coupling",
+        "score": 0.1,
+        "risk_tags": [
+          "low_novelty",
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_coupling",
+        "audit_tags": [
+          "single_seed",
+          "global_constraint",
+          "coupled_components"
+        ],
+        "review_role": "你扮演一名全局耦合审查官，重点判断局部独立单元是否能被共享资源或全局守恒自然绑定。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定 L,R，求 max{f(x)+g(x) | L ≤ x ≤ R}，解法直接在 [L,R] 上求最大，不存在多个局部组件分别处理后再组合。例如，标准解法通过判断区间是否包含 2^k 或通过 lowbit 步进寻找候选，都是对单一目标的全局操作，没有任何分治或独立子问题结构。",
+        "feedback": "该规则要求种子题存在可分解的局部单元，但当前种子题不具备此属性，建议更换为包含多个独立区间的题目，或将问题改为多个查询共享某些全局资源。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "deterministic_process_to_game_outcome",
+      "outcome": "fail",
+      "reason_code": "no_natural_adversarial_action",
+      "message": "原题 CHEFFFUNC 是询问区间内 f(x)+g(x) 最大值的纯组合优化题，不存在可双方轮流选择、拿取或改变状态的交互过程。任何博弈化都必须依靠背景硬造玩家与行动，违反规则 forbidden_seed_properties。",
+      "details": {
+        "handler": "deterministic_process_to_game_outcome",
+        "score": 0.0,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "game_transformation",
+        "audit_tags": [
+          "single_seed",
+          "game",
+          "adversarial_choice"
+        ],
+        "review_role": "你扮演一名博弈化审查官，重点判断原题操作是否能自然转化为双方轮流选择。",
+        "llm_status": "ineligible",
+        "evidence": "规则 eligibility.required_seed_properties 要求“原题存在可轮流选择、拿取、移动或改变状态的自然操作”，但原题仅有输入区间和输出最大值，没有任何操作步骤。即便在算法内部有 lowbit 迭代，那也只是单一智能体的搜索，不是多玩家交互。规则 forbidden_seed_properties 明确禁止“对抗方只能靠故事背景硬造”，而此题完全缺乏天然对抗结构。",
+        "feedback": "该种子题本质为静态极值查询，无状态转移或行动树，无法在不杜撰虚构玩家的情况下建立博弈语义。建议寻找具有显式操作序列或树形决策的种子题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "local_path_to_global_cover",
+      "outcome": "fail",
+      "reason_code": "not_applicable",
+      "message": "原题是单区间上的函数最值问题，核心对象是单个整数x，不存在可组合的局部对象族（如多个区间、路径或子树）以自然形成覆盖或割关系。强行扩展为覆盖问题将引入与核心规律无关的额外约束，违反红线。",
+      "details": {
+        "handler": "local_path_to_global_cover",
+        "score": 0.2,
+        "risk_tags": [
+          "semantic_mismatch",
+          "low_novelty"
+        ],
+        "mode": "single_seed_extension",
+        "family": "global_cover",
+        "audit_tags": [
+          "single_seed",
+          "cover",
+          "cut_or_dominance"
+        ],
+        "review_role": "你扮演一名全局覆盖审查官，重点判断局部路径、区间或子结构是否能扩成覆盖、割或支配问题。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：给定L,R，求max_{x∈[L,R]}(f(x)+g(x))。种子schema中核心约束为空，目标为最大化值，不变量涉及单区间内的闭式与lowbit步进。规则要求原题核心对象具有路径、区间、子树等局部结构且多个局部对象可形成覆盖或割关系。但原题仅有一个区间，对象不是多个，无法满足。",
+        "feedback": "规则不适用，建议寻找具有多个相关局部对象（如多条路径、多个区间或子树）的种子题，以便扩展为覆盖或割类问题。"
+      }
+    },
+    {
+      "stage": "eligibility",
+      "rule_id": "plain_counting_to_weighted_distribution",
+      "outcome": "fail",
+      "reason_code": "no_counting_object",
+      "message": "原题为求最大值问题，非计数问题，缺少明确的计数对象，无法应用带权计数扩展规则。",
+      "details": {
+        "handler": "plain_counting_to_weighted_distribution",
+        "score": 0.1,
+        "risk_tags": [
+          "semantic_mismatch"
+        ],
+        "mode": "single_seed_extension",
+        "family": "counting_refinement",
+        "audit_tags": [
+          "single_seed",
+          "weighted_counting",
+          "distribution"
+        ],
+        "review_role": "你扮演一名带权计数审查官，重点判断已有计数对象上是否存在自然权重、等级或统计量。",
+        "llm_status": "ineligible",
+        "evidence": "原题描述：寻找f(x)+g(x)在[L,R]上的最大值，输出最大值。规则 eligibility.required_seed_properties 要求“原题已经有明确有限的计数对象”，但本题目并未涉及计数。",
+        "feedback": "种子题类型不匹配，建议选择计数类题目作为种子。"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "forward_solution_to_inverse_design",
+      "outcome": "fail",
+      "reason_code": "declared_axes_mismatch",
+      "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+      "details": {
+        "declared_axes": [
+          "C",
+          "I",
+          "O",
+          "V"
+        ],
+        "realized_axes": [
+          "I",
+          "O",
+          "V"
+        ]
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "existence_to_counting",
+      "outcome": "fail",
+      "reason_code": "planner_rejected",
+      "message": "种子题中 f+g 的最大值在任意区间内唯一（或可通过分析证明），直接计数最大值个数将导致答案恒为 1，算法可退化至直接输出 1，没有实质性新责任。若改为计数其它对象（如 lowbit 步数），则丢弃了原题核心的 f+g 极值分析，不符合 existence_to_counting 规则要求的围绕最优解空间构建计数题的预期。",
+      "details": {
+        "planner_status": "difference_insufficient"
+      }
+    },
+    {
+      "stage": "plan_validation",
+      "rule_id": "feasibility_to_extremal_threshold",
+      "outcome": "fail",
+      "reason_code": "planner_rejected",
+      "message": "种子题不是判定或可行性问题，而是直接最大化问题，缺少规则所需的单调性参数和可行性框架。",
+      "details": {
+        "planner_status": "schema_insufficient"
+      }
+    }
+  ],
+  "candidate_attempts": [
+    {
+      "rule_id": "forward_solution_to_inverse_design",
+      "handler": "forward_solution_to_inverse_design",
+      "score": 0.82,
+      "accepted": false,
+      "risk_tags": [
+        "low_novelty"
+      ],
+      "status": "ok",
+      "reason_code": "declared_axes_mismatch",
+      "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+      "contract_retry_count": 2,
+      "contract_retry_history": [
+        {
+          "attempt": 1,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "I",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "reason_code": "declared_axes_mismatch",
+          "reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+          "status": "ok",
+          "validation_trace": [
+            {
+              "stage": "plan_validation",
+              "rule_id": "forward_solution_to_inverse_design",
+              "outcome": "fail",
+              "reason_code": "declared_axes_mismatch",
+              "message": "difference_plan.changed_axes 与实际变化轴不一致。",
+              "details": {
+                "declared_axes": [
+                  "C",
+                  "I",
+                  "O",
+                  "V"
+                ],
+                "realized_axes": [
+                  "I",
+                  "O",
+                  "V"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "attempt_index": 1
+    },
+    {
+      "rule_id": "existence_to_counting",
+      "handler": "existence_to_counting",
+      "score": 1.02,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "difference_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题中 f+g 的最大值在任意区间内唯一（或可通过分析证明），直接计数最大值个数将导致答案恒为 1，算法可退化至直接输出 1，没有实质性新责任。若改为计数其它对象（如 lowbit 步数），则丢弃了原题核心的 f+g 极值分析，不符合 existence_to_counting 规则要求的围绕最优解空间构建计数题的预期。",
+      "attempt_index": 2
+    },
+    {
+      "rule_id": "feasibility_to_extremal_threshold",
+      "handler": "feasibility_to_extremal_threshold",
+      "score": 0.97,
+      "accepted": false,
+      "risk_tags": [],
+      "status": "schema_insufficient",
+      "reason_code": "planner_rejected",
+      "reason": "种子题不是判定或可行性问题，而是直接最大化问题，缺少规则所需的单调性参数和可行性框架。",
+      "attempt_index": 3
+    }
+  ],
+  "generated_problem": {
+    "title": "",
+    "description": "",
+    "input_format": "",
+    "output_format": "",
+    "constraints": [],
+    "samples": [],
+    "notes": "",
+    "status": "difference_insufficient",
+    "error_reason": "difference_plan.changed_axes 与 new_schema 的真实变化不一致。",
+    "feedback": "已尝试 3 条候选规则，均未通过规划校验。"
+  },
+  "iteration": {
+    "run_id": "taco_codechef_8da4a2a032bc_community_services_20260609_222232",
+    "round_index": 1,
+    "requested_rounds": 3,
+    "iteration_phase": "normal",
+    "full_score_polish_round_index": 0,
+    "full_score_max_iterations": 10,
+    "previous_artifact_path": "",
+    "previous_quality_report_path": "",
+    "revision_context_snapshot": {}
+  }
+}
