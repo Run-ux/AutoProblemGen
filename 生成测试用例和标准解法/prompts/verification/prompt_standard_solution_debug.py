@@ -20,6 +20,8 @@ def build_user_prompt(
     current_code: str,
     failure_summary: dict,
     failed_cases: list[dict],
+    anchor_cases: list[dict],
+    repair_attempts: list[dict],
 ) -> str:
     return "\n\n".join(
         [
@@ -33,9 +35,15 @@ def build_user_prompt(
             json.dumps(failure_summary, ensure_ascii=False, indent=2),
             "# 本轮代表性失败样例",
             json.dumps(failed_cases, ensure_ascii=False, indent=2),
+            "# 已通过锚点用例",
+            json.dumps(anchor_cases, ensure_ascii=False, indent=2),
+            "# 历次修复尝试摘要",
+            json.dumps(repair_attempts, ensure_ascii=False, indent=2),
             """# 修复要求
 - 先综合本轮全部失败样例，输出根因分析，再输出修复计划，最后产出完整代码。
 - 优先定位导致失败批次不通过的共同根因，并做通用修复。
+- 修复后必须继续通过全部锚点用例，不得破坏当前已经正确的行为。
+- 必须参考历次尝试的拒绝原因，不要重复已经验证失败的修复方向。
 - 标准解应保持高效算法定位，允许修正算法、边界处理和复杂度问题。
 - 必须严格贴合题意，不得引入题面未给出的假设。
 - 保持输入输出格式完全一致，不要添加额外输出。

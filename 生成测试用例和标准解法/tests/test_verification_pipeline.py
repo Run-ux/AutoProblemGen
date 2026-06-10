@@ -56,9 +56,11 @@ class FakeLLMClient:
     model = "fake-model"
     base_url = None
 
-    def __init__(self, *, checker: bool = False) -> None:
+    def __init__(self, *, checker: bool = False, standard_repair_codes: list[str] | None = None) -> None:
         self.checker = checker
         self.calls: list[str] = []
+        self.standard_repair_codes = list(standard_repair_codes or ["good_standard_code"])
+        self.standard_repair_prompts: list[str] = []
 
     def complete_json(self, *, task_name: str, system_prompt: str, user_prompt: str) -> str:
         self.calls.append(task_name)
@@ -129,11 +131,14 @@ class FakeLLMClient:
         if task_name == "bruteforce_debug":
             return json.dumps({"code": "good_code"}, ensure_ascii=False)
         if task_name == "standard_solution_debug":
+            self.standard_repair_prompts.append(user_prompt)
+            if not self.standard_repair_codes:
+                raise AssertionError("标准解修复候选已耗尽")
             return json.dumps(
                 {
                     "analysis": "标准解根因分析",
                     "fix_plan": "修复标准解算法",
-                    "code": "good_standard_code",
+                    "code": self.standard_repair_codes.pop(0),
                 },
                 ensure_ascii=False,
             )
@@ -696,6 +701,8 @@ class VerificationPipelineTests(unittest.TestCase):
 
         self.assertEqual(result["final_code"], "good_standard_code")
         self.assertEqual(result["repair_iteration_count"], 1)
+        self.assertEqual(result["accepted_repair_count"], 1)
+        self.assertEqual(result["rejected_repair_count"], 0)
         self.assertEqual(result["max_repair_iterations"], 5)
         self.assertEqual(result["repair_history"][0]["failed_count"], 2)
         self.assertEqual(result["repair_history"][0]["failure_classification_counts"], {"output_mismatch": 2})
@@ -703,9 +710,257 @@ class VerificationPipelineTests(unittest.TestCase):
         self.assertEqual(result["repair_history"][0]["failed_cases"][0]["actual_output"], "0")
         self.assertEqual(result["repair_history"][0]["analysis"], "标准解根因分析")
         self.assertEqual(result["repair_history"][0]["fix_plan"], "修复标准解算法")
+        self.assertEqual(result["repair_history"][0]["decision"], "accepted")
+        self.assertTrue(result["repair_history"][0]["incumbent_updated"])
+        self.assertEqual(result["repair_history"][0]["candidate_failed_count"], 0)
         self.assertEqual(result["checked_count"], 2)
         self.assertEqual(fake_run_solution.call_count, 4)
         self.assertIn("[verification repair] 标准解修复：第 1 轮开始", stdout.getvalue())
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_rejects_worse_candidate_and_keeps_incumbent(
+        self,
+        fake_run_solution,
+    ) -> None:
+        client = FakeLLMClient(standard_repair_codes=["worse_standard", "good_standard_code"])
+        solved_cases = [
+            {
+                "case_id": f"case_{index:03d}",
+                "source": "random" if index <= 3 else "adversarial",
+                "input": str(index),
+                "output": str(index),
+            }
+            for index in range(1, 7)
+        ]
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            case_number = int(input_string)
+            if code == "bad_standard":
+                return ExecutionResult(
+                    status=EXECUTION_OK,
+                    return_value=str(case_number) if case_number <= 2 else "wrong",
+                )
+            if code == "worse_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value="wrong")
+            if code == "good_standard_code":
+                return ExecutionResult(status=EXECUTION_OK, return_value=str(case_number))
+            raise AssertionError(code)
+
+        fake_run_solution.side_effect = side_effect
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            result = verify_standard_solution(
+                sample_artifact(),
+                {"status": "ok", "code": "bad_standard"},
+                solved_cases,
+                {"needs_checker": False, "reason": "唯一答案题。"},
+                {"status": "skipped"},
+                client,
+                self.config,
+            )
+
+        first_attempt, second_attempt = result["repair_history"]
+        self.assertEqual(first_attempt["failed_count"], 4)
+        self.assertEqual(first_attempt["candidate_failed_count"], 6)
+        self.assertEqual(first_attempt["regressed_case_ids"], ["case_001", "case_002"])
+        self.assertEqual(first_attempt["decision"], "rejected")
+        self.assertFalse(first_attempt["incumbent_updated"])
+        self.assertEqual(second_attempt["failed_count"], 4)
+        self.assertEqual(second_attempt["decision"], "accepted")
+        self.assertEqual(result["final_code"], "good_standard_code")
+        self.assertEqual(result["accepted_repair_count"], 1)
+        self.assertEqual(result["rejected_repair_count"], 1)
+        self.assertIn("4→6，新增回归 2 条，拒绝并回退", stdout.getvalue())
+        self.assertIn("# 当前迭代标准解完整代码\n\nbad_standard", client.standard_repair_prompts[1])
+        self.assertIn("候选破坏了当前最佳版本已经通过的用例", client.standard_repair_prompts[1])
+        self.assertIn("candidate_diff_from_incumbent", client.standard_repair_prompts[1])
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_rejects_regression_even_when_total_failures_drop(
+        self,
+        fake_run_solution,
+    ) -> None:
+        client = FakeLLMClient(standard_repair_codes=["regressive_standard"])
+        config = ExecutionConfig(
+            test_input_timeout_seconds=1,
+            test_input_memory_limit_mb=512,
+            bruteforce_timeout_seconds=1,
+            bruteforce_memory_limit_mb=512,
+            checker_timeout_seconds=1,
+            checker_memory_limit_mb=512,
+            standard_solution_max_repair_iterations=1,
+        )
+        solved_cases = [
+            {"case_id": "case_001", "source": "random", "input": "1", "output": "1"},
+            {"case_id": "case_002", "source": "random", "input": "2", "output": "2"},
+            {"case_id": "case_003", "source": "random", "input": "3", "output": "3"},
+        ]
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            if code == "bad_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value="1" if input_string == "1" else "wrong")
+            if code == "regressive_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value="wrong" if input_string == "1" else input_string)
+            raise AssertionError(code)
+
+        fake_run_solution.side_effect = side_effect
+
+        with self.assertRaises(VerificationError) as raised:
+            verify_standard_solution(
+                sample_artifact(),
+                {"status": "ok", "code": "bad_standard"},
+                solved_cases,
+                {"needs_checker": False, "reason": "唯一答案题。"},
+                {"status": "skipped"},
+                client,
+                config,
+            )
+
+        history = raised.exception.details["repair_history"]
+        self.assertEqual(history[0]["failed_count"], 2)
+        self.assertEqual(history[0]["candidate_failed_count"], 1)
+        self.assertEqual(history[0]["fixed_case_ids"], ["case_002", "case_003"])
+        self.assertEqual(history[0]["regressed_case_ids"], ["case_001"])
+        self.assertEqual(history[0]["decision"], "rejected")
+        self.assertEqual(raised.exception.details["final_code"], "bad_standard")
+        self.assertEqual(raised.exception.details["failure_summary"]["failed_count"], 2)
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_rejects_duplicate_and_equal_failure_candidates(
+        self,
+        fake_run_solution,
+    ) -> None:
+        client = FakeLLMClient(standard_repair_codes=["bad_standard", "same_fail_standard"])
+        config = ExecutionConfig(
+            test_input_timeout_seconds=1,
+            test_input_memory_limit_mb=512,
+            bruteforce_timeout_seconds=1,
+            bruteforce_memory_limit_mb=512,
+            checker_timeout_seconds=1,
+            checker_memory_limit_mb=512,
+            standard_solution_max_repair_iterations=2,
+        )
+        fake_run_solution.return_value = ExecutionResult(status=EXECUTION_OK, return_value="wrong")
+
+        with self.assertRaises(VerificationError) as raised:
+            verify_standard_solution(
+                sample_artifact(),
+                {"status": "ok", "code": "bad_standard"},
+                [{"case_id": "case_001", "source": "random", "input": "1", "output": "1"}],
+                {"needs_checker": False, "reason": "唯一答案题。"},
+                {"status": "skipped"},
+                client,
+                config,
+            )
+
+        history = raised.exception.details["repair_history"]
+        self.assertIn("重复", history[0]["decision_reason"])
+        self.assertIn("未严格下降", history[1]["decision_reason"])
+        self.assertEqual(raised.exception.details["rejected_repair_count"], 2)
+        self.assertEqual(raised.exception.details["accepted_repair_count"], 0)
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_accepts_monotonic_improvements_and_grows_anchors(
+        self,
+        fake_run_solution,
+    ) -> None:
+        client = FakeLLMClient(standard_repair_codes=["one_failure_standard", "good_standard_code"])
+        solved_cases = [
+            {
+                "case_id": f"case_{index:03d}",
+                "source": "random" if index <= 3 else "adversarial",
+                "input": str(index),
+                "output": str(index),
+            }
+            for index in range(1, 7)
+        ]
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            case_number = int(input_string)
+            if code == "bad_standard":
+                return ExecutionResult(
+                    status=EXECUTION_OK,
+                    return_value=str(case_number) if case_number <= 2 else "wrong",
+                )
+            if code == "one_failure_standard":
+                return ExecutionResult(
+                    status=EXECUTION_OK,
+                    return_value="wrong" if case_number == 6 else str(case_number),
+                )
+            if code == "good_standard_code":
+                return ExecutionResult(status=EXECUTION_OK, return_value=str(case_number))
+            raise AssertionError(code)
+
+        fake_run_solution.side_effect = side_effect
+
+        result = verify_standard_solution(
+            sample_artifact(),
+            {"status": "ok", "code": "bad_standard"},
+            solved_cases,
+            {"needs_checker": False, "reason": "唯一答案题。"},
+            {"status": "skipped"},
+            client,
+            self.config,
+        )
+
+        first_attempt, second_attempt = result["repair_history"]
+        self.assertEqual((first_attempt["failed_count"], first_attempt["candidate_failed_count"]), (4, 1))
+        self.assertEqual((second_attempt["failed_count"], second_attempt["candidate_failed_count"]), (1, 0))
+        self.assertTrue(set(first_attempt["anchor_case_ids"]).issubset(second_attempt["anchor_case_ids"]))
+        self.assertEqual(len(second_attempt["anchor_case_ids"]), 3)
+        self.assertEqual(result["accepted_repair_count"], 2)
+        self.assertEqual(result["rejected_repair_count"], 0)
+
+    @patch("verification_pipeline.run_solution")
+    def test_verify_standard_solution_limit_error_keeps_historical_best_candidate(
+        self,
+        fake_run_solution,
+    ) -> None:
+        client = FakeLLMClient(standard_repair_codes=["better_standard", "worse_standard"])
+        config = ExecutionConfig(
+            test_input_timeout_seconds=1,
+            test_input_memory_limit_mb=512,
+            bruteforce_timeout_seconds=1,
+            bruteforce_memory_limit_mb=512,
+            checker_timeout_seconds=1,
+            checker_memory_limit_mb=512,
+            standard_solution_max_repair_iterations=2,
+        )
+        solved_cases = [
+            {"case_id": "case_001", "source": "random", "input": "1", "output": "1"},
+            {"case_id": "case_002", "source": "random", "input": "2", "output": "2"},
+            {"case_id": "case_003", "source": "random", "input": "3", "output": "3"},
+        ]
+
+        def side_effect(code, input_string, *, timeout_seconds, memory_limit_mb):
+            if code == "bad_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value="1" if input_string == "1" else "wrong")
+            if code == "better_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value=input_string if input_string != "3" else "wrong")
+            if code == "worse_standard":
+                return ExecutionResult(status=EXECUTION_OK, return_value="wrong")
+            raise AssertionError(code)
+
+        fake_run_solution.side_effect = side_effect
+
+        with self.assertRaises(VerificationError) as raised:
+            verify_standard_solution(
+                sample_artifact(),
+                {"status": "ok", "code": "bad_standard"},
+                solved_cases,
+                {"needs_checker": False, "reason": "唯一答案题。"},
+                {"status": "skipped"},
+                client,
+                config,
+            )
+
+        details = raised.exception.details
+        self.assertEqual(details["final_code"], "better_standard")
+        self.assertEqual(details["failure_summary"]["failed_count"], 1)
+        self.assertEqual(details["accepted_repair_count"], 1)
+        self.assertEqual(details["rejected_repair_count"], 1)
+        self.assertEqual(details["repair_history"][1]["failed_count"], 1)
 
     @patch("verification_pipeline.run_checker")
     @patch("verification_pipeline.run_solution")

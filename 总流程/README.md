@@ -97,7 +97,7 @@ PYTHON_EXECUTABLE=D:\path\to\venv\Scripts\python.exe
 
 `VERIFICATION_TIMEOUT_SECONDS` 是废弃兼容项；总流程不再用外层总超时杀掉 `verification_runner.py`。验证耗时由 `generation_llm.env` 的 `TIMEOUT_SECONDS`、`MAX_RETRIES` 和 `workflow.env` 中的 `EXECUTION_TEST_INPUT_TIMEOUT_SECONDS`、`EXECUTION_BRUTEFORCE_TIMEOUT_SECONDS`、`EXECUTION_CHECKER_TIMEOUT_SECONDS` 分阶段控制。
 
-标准解 debug 的最大修复轮数由 `workflow.env` 中的 `STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制，默认值为 5。达到上限仍无法通过全部小规模真值用例时，验证阶段会 fail-fast 并在结果中保留失败分类摘要。
+标准解 debug 的最大候选生成轮数由 `workflow.env` 中的 `STANDARD_SOLUTION_MAX_REPAIR_ITERATIONS` 控制，默认值为 5，候选因回归、重复或失败数未下降而被拒绝时同样计数。流水线只采纳不破坏已通过用例且失败数严格下降的候选；达到上限仍无法通过全部小规模真值用例时会 fail-fast，并在验证结果 `details` 中保留历史最佳代码、失败摘要和修复历史。
 
 验证阶段还会使用 `workflow.env` 中的 LLM 上下文预算配置控制哪些测试用例可以进入模型 prompt。`LLM_CASE_*` 系列配置用于把小型可读用例和大规模压力用例分流：大规模用例继续用于本地执行验证，但不会原样进入 `checker_counterexample_generation` 等 LLM prompt。`MAX_LLM_PROMPT_CHARS` 用于在请求 API 前做本地预算检查，超限会直接失败并给出具体任务名和字符数；`LLM_TRACE_MAX_TEXT_CHARS` 控制 `logs/llm_calls.jsonl` 中大文本字段的记录上限。
 

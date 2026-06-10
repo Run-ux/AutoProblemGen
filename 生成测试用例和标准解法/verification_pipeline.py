@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import json
 import logging
 import math
@@ -100,10 +101,17 @@ DEFAULT_LLM_CASE_MAX_COUNT = 10
 DEFAULT_MAX_LLM_PROMPT_CHARS = 600_000
 DEFAULT_LLM_TRACE_MAX_TEXT_CHARS = 30_000
 STANDARD_DEBUG_PROMPT_FAILED_CASE_LIMIT = 10
+STANDARD_DEBUG_PROMPT_ANCHOR_LIMIT = 3
+STANDARD_DEBUG_DIFF_MAX_CHARS = 8_000
+STANDARD_DEBUG_RECENT_DIFF_COUNT = 2
 
 
 class VerificationError(RuntimeError):
     """表示生成后验证流水线无法安全继续。"""
+
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.details = details or {}
 
 
 @dataclass(frozen=True)
@@ -1423,6 +1431,8 @@ def _repair_standard_solution(
     current_code: str,
     failure_summary: dict[str, Any],
     failed_cases: list[dict[str, Any]],
+    anchor_cases: list[dict[str, Any]],
+    repair_attempts: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return _call_prompt(
         client,
@@ -1434,6 +1444,8 @@ def _repair_standard_solution(
             current_code=current_code,
             failure_summary=failure_summary,
             failed_cases=failed_cases,
+            anchor_cases=anchor_cases,
+            repair_attempts=repair_attempts,
         ),
         validator=lambda payload: validate_standard_solution_repair_response(
             payload,
@@ -1543,7 +1555,15 @@ def _evaluate_standard_solution_case(
     if result.status == EXECUTION_OK and isinstance(result.return_value, str):
         if checker_code is None:
             if actual_output == expected_output:
-                return {"status": "accepted", "case_id": case["case_id"], "verdict": "accepted"}
+                return {
+                    "status": "accepted",
+                    "case_id": case["case_id"],
+                    "source": case.get("source", ""),
+                    "input": case["input"],
+                    "expected_output": expected_output,
+                    "actual_output": actual_output,
+                    "verdict": "accepted",
+                }
             error_report = _standard_output_failure_report(
                 solution_result=result,
                 expected_output=expected_output,
@@ -1567,7 +1587,15 @@ def _evaluate_standard_solution_case(
             memory_limit_mb=execution_config.checker_memory_limit_mb,
         )
         if checker_result.status == EXECUTION_OK and checker_result.return_value is True:
-            return {"status": "accepted", "case_id": case["case_id"], "verdict": "accepted_by_checker"}
+            return {
+                "status": "accepted",
+                "case_id": case["case_id"],
+                "source": case.get("source", ""),
+                "input": case["input"],
+                "expected_output": expected_output,
+                "actual_output": actual_output,
+                "verdict": "accepted_by_checker",
+            }
         classification = (
             "checker_rejected"
             if checker_result.status == EXECUTION_OK and checker_result.return_value is False
@@ -1647,6 +1675,118 @@ def _select_standard_debug_failed_cases(failed_cases: list[dict[str, Any]]) -> l
     return selected
 
 
+def _standard_case_io_size(case: dict[str, Any]) -> int:
+    return len(str(case.get("input", ""))) + len(
+        str(case.get("expected_output", case.get("output", "")))
+    )
+
+
+def _select_standard_debug_anchor_cases(
+    checked_cases: list[dict[str, Any]],
+    failed_cases: list[dict[str, Any]],
+    existing_anchor_case_ids: list[str],
+) -> list[dict[str, Any]]:
+    """保留既有锚点，再按来源和输入输出规模确定性补充通过用例。"""
+    checked_by_id = {str(case["case_id"]): case for case in checked_cases}
+    selected: list[dict[str, Any]] = []
+    selected_ids: set[str] = set()
+
+    for case_id in existing_anchor_case_ids:
+        case = checked_by_id.get(case_id)
+        if case is None or case_id in selected_ids:
+            continue
+        selected.append(case)
+        selected_ids.add(case_id)
+        if len(selected) >= STANDARD_DEBUG_PROMPT_ANCHOR_LIMIT:
+            return selected
+
+    candidates = [case for case in checked_cases if str(case["case_id"]) not in selected_ids]
+    targets = sorted(
+        failed_cases,
+        key=lambda case: (
+            str(case.get("source", "")),
+            _standard_case_io_size(case),
+            str(case.get("case_id", "")),
+        ),
+    )
+
+    while candidates and len(selected) < STANDARD_DEBUG_PROMPT_ANCHOR_LIMIT:
+        target = targets[len(selected) % len(targets)] if targets else None
+        if target is None:
+            candidates.sort(key=lambda case: (str(case.get("source", "")), str(case["case_id"])))
+        else:
+            target_source = str(target.get("source", ""))
+            target_size = _standard_case_io_size(target)
+            candidates.sort(
+                key=lambda case: (
+                    0 if str(case.get("source", "")) == target_source else 1,
+                    abs(_standard_case_io_size(case) - target_size),
+                    str(case["case_id"]),
+                )
+            )
+        selected.append(candidates.pop(0))
+
+    return selected
+
+
+def _standard_code_diff(incumbent_code: str, candidate_code: str) -> str:
+    diff = "".join(
+        difflib.unified_diff(
+            incumbent_code.splitlines(keepends=True),
+            candidate_code.splitlines(keepends=True),
+            fromfile="incumbent.py",
+            tofile="candidate.py",
+        )
+    )
+    return _truncate_middle(diff, STANDARD_DEBUG_DIFF_MAX_CHARS)
+
+
+def _standard_repair_attempt_context(repair_history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """压缩历史尝试；仅最近两次保留统一 diff，避免 prompt 随轮次快速膨胀。"""
+    recent_diff_start = max(0, len(repair_history) - STANDARD_DEBUG_RECENT_DIFF_COUNT)
+    attempts: list[dict[str, Any]] = []
+    for index, item in enumerate(repair_history):
+        attempt = {
+            "repair_round": item["repair_round"],
+            "analysis": item["analysis"],
+            "fix_plan": item["fix_plan"],
+            "decision": item["decision"],
+            "decision_reason": item["decision_reason"],
+            "candidate_failed_count": item["candidate_failed_count"],
+            "fixed_case_ids": item["fixed_case_ids"],
+            "regressed_case_ids": item["regressed_case_ids"],
+        }
+        if index >= recent_diff_start:
+            attempt["candidate_diff_from_incumbent"] = item["candidate_diff_from_incumbent"]
+        attempts.append(attempt)
+    return attempts
+
+
+def _evaluate_standard_solution_cases(
+    *,
+    code: str,
+    solved_cases: list[dict[str, Any]],
+    checker_code: str | None,
+    standard_limits: dict[str, Any],
+    execution_config: ExecutionConfig,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    checked_cases: list[dict[str, Any]] = []
+    failed_cases: list[dict[str, Any]] = []
+    for case in solved_cases:
+        evaluation = _evaluate_standard_solution_case(
+            code=code,
+            case=case,
+            checker_code=checker_code,
+            standard_limits=standard_limits,
+            execution_config=execution_config,
+        )
+        if evaluation.get("status") == "accepted":
+            checked_cases.append(evaluation)
+        else:
+            failed_cases.append(evaluation)
+    return checked_cases, failed_cases
+
+
 def _standard_failure_summary(
     *,
     iteration: int,
@@ -1674,6 +1814,39 @@ def _standard_repair_limit_failure_message(
     )
 
 
+def _standard_repair_failure_details(
+    *,
+    incumbent_code: str,
+    checked_cases: list[dict[str, Any]],
+    failed_cases: list[dict[str, Any]],
+    failure_summary: dict[str, Any],
+    standard_limits: dict[str, Any],
+    checker_used: bool,
+    repair_history: list[dict[str, Any]],
+    max_repair_iterations: int,
+    anchor_case_ids: list[str],
+) -> dict[str, Any]:
+    accepted_repair_count = sum(1 for item in repair_history if item["incumbent_updated"])
+    return {
+        "phase": "standard_solution_repair",
+        "status": "failed",
+        "final_code": incumbent_code,
+        "best_code": incumbent_code,
+        "checked_cases": checked_cases,
+        "checked_count": len(checked_cases),
+        "failed_cases": failed_cases,
+        "failure_summary": failure_summary,
+        "standard_solution_limits": standard_limits,
+        "checker_used": checker_used,
+        "repair_history": repair_history,
+        "repair_iteration_count": len(repair_history),
+        "accepted_repair_count": accepted_repair_count,
+        "rejected_repair_count": len(repair_history) - accepted_repair_count,
+        "max_repair_iterations": max_repair_iterations,
+        "anchor_case_ids": anchor_case_ids,
+    }
+
+
 def verify_standard_solution(
     artifact: dict[str, Any],
     standard_payload: dict[str, Any],
@@ -1691,92 +1864,180 @@ def verify_standard_solution(
     standard_limits = _parse_standard_solution_limits(artifact)
     checker_code = _checker_code_for_standard_verification(checker_payload, checker_verification)
     initial_code = standard_payload["code"]
-    current_code = initial_code
+    incumbent_code = initial_code
     repair_history: list[dict[str, Any]] = []
     max_repair_iterations = execution_config.standard_solution_max_repair_iterations
-    iteration = 0
+    attempted_codes = {initial_code}
+    anchor_case_ids: list[str] = []
+
+    # incumbent 是唯一可进入下一轮的基线，候选必须通过门禁后才能替换它。
+    incumbent_checked_cases, incumbent_failed_cases = _evaluate_standard_solution_cases(
+        code=incumbent_code,
+        solved_cases=solved_cases,
+        checker_code=checker_code,
+        standard_limits=standard_limits,
+        execution_config=execution_config,
+    )
 
     while True:
-        iteration += 1
-        checked_cases: list[dict[str, Any]] = []
-        failed_cases: list[dict[str, Any]] = []
-
-        for case in solved_cases:
-            evaluation = _evaluate_standard_solution_case(
-                code=current_code,
-                case=case,
-                checker_code=checker_code,
-                standard_limits=standard_limits,
-                execution_config=execution_config,
-            )
-            if evaluation.get("status") == "accepted":
-                checked_cases.append(evaluation)
-            else:
-                failed_cases.append(evaluation)
-
-        if not failed_cases:
+        if not incumbent_failed_cases:
             if repair_history:
                 _emit_progress(
                     f"[verification repair] 标准解修复循环结束；累计修复 {len(repair_history)} 轮，验证通过。"
                 )
+            accepted_repair_count = sum(1 for item in repair_history if item["incumbent_updated"])
             return {
                 "status": "ok",
-                "final_code": current_code,
-                "checked_cases": checked_cases,
-                "checked_count": len(checked_cases),
+                "final_code": incumbent_code,
+                "checked_cases": incumbent_checked_cases,
+                "checked_count": len(incumbent_checked_cases),
                 "standard_solution_limits": standard_limits,
                 "checker_used": checker_code is not None,
                 "repair_history": repair_history,
                 "repair_iteration_count": len(repair_history),
+                "accepted_repair_count": accepted_repair_count,
+                "rejected_repair_count": len(repair_history) - accepted_repair_count,
                 "max_repair_iterations": max_repair_iterations,
+                "anchor_case_ids": anchor_case_ids,
             }
 
+        iteration = len(repair_history) + 1
         failure_summary = _standard_failure_summary(
             iteration=iteration,
-            checked_cases=checked_cases,
-            failed_cases=failed_cases,
+            checked_cases=incumbent_checked_cases,
+            failed_cases=incumbent_failed_cases,
             solved_case_count=len(solved_cases),
         )
         if len(repair_history) >= max_repair_iterations:
+            details = _standard_repair_failure_details(
+                incumbent_code=incumbent_code,
+                checked_cases=incumbent_checked_cases,
+                failed_cases=incumbent_failed_cases,
+                failure_summary=failure_summary,
+                standard_limits=standard_limits,
+                checker_used=checker_code is not None,
+                repair_history=repair_history,
+                max_repair_iterations=max_repair_iterations,
+                anchor_case_ids=anchor_case_ids,
+            )
             raise VerificationError(
                 _standard_repair_limit_failure_message(
                     max_repair_iterations=max_repair_iterations,
                     failure_summary=failure_summary,
-                )
+                ),
+                details=details,
             )
 
         repair_round = len(repair_history) + 1
-        prompt_failed_cases = _select_standard_debug_failed_cases(failed_cases)
+        prompt_failed_cases = _select_standard_debug_failed_cases(incumbent_failed_cases)
+        prompt_anchor_cases = _select_standard_debug_anchor_cases(
+            incumbent_checked_cases,
+            prompt_failed_cases,
+            anchor_case_ids,
+        )
+        anchor_case_ids = [str(case["case_id"]) for case in prompt_anchor_cases]
         _emit_repair_progress(
             "标准解修复",
             repair_round,
-            f"开始；本轮失败 {len(failed_cases)} 条，分类={failure_summary['failure_classification_counts']}。",
+            f"开始；当前最佳版本失败 {len(incumbent_failed_cases)} 条，"
+            f"分类={failure_summary['failure_classification_counts']}。",
         )
         repair = _repair_standard_solution(
             artifact,
             client,
             initial_code=initial_code,
-            current_code=current_code,
+            current_code=incumbent_code,
             failure_summary=failure_summary,
             failed_cases=prompt_failed_cases,
+            anchor_cases=prompt_anchor_cases,
+            repair_attempts=_standard_repair_attempt_context(repair_history),
         )
+        candidate_code = repair["code"]
+        candidate_checked_cases, candidate_failed_cases = _evaluate_standard_solution_cases(
+            code=candidate_code,
+            solved_cases=solved_cases,
+            checker_code=checker_code,
+            standard_limits=standard_limits,
+            execution_config=execution_config,
+        )
+
+        incumbent_failed_ids = {str(case["case_id"]) for case in incumbent_failed_cases}
+        incumbent_checked_ids = {str(case["case_id"]) for case in incumbent_checked_cases}
+        candidate_failed_ids = {str(case["case_id"]) for case in candidate_failed_cases}
+        fixed_case_ids = sorted(incumbent_failed_ids - candidate_failed_ids)
+        regressed_case_ids = sorted(candidate_failed_ids & incumbent_checked_ids)
+        is_duplicate = candidate_code in attempted_codes
+
+        # 门禁顺序优先报告重复和回归，再判断失败数是否真正改善。
+        if is_duplicate:
+            decision = "rejected"
+            decision_reason = "候选代码与已验证版本重复。"
+        elif regressed_case_ids:
+            decision = "rejected"
+            decision_reason = "候选破坏了当前最佳版本已经通过的用例。"
+        elif len(candidate_failed_cases) >= len(incumbent_failed_cases):
+            decision = "rejected"
+            decision_reason = "候选失败用例数未严格下降。"
+        else:
+            decision = "accepted"
+            decision_reason = "候选无回归且失败用例数严格下降。"
+
+        candidate_diff = _standard_code_diff(incumbent_code, candidate_code)
+        incumbent_updated = decision == "accepted"
         repair_history.append(
             {
                 "iteration": iteration,
                 "repair_round": repair_round,
-                "failed_count": len(failed_cases),
+                "failed_count": len(incumbent_failed_cases),
                 "failure_classification_counts": failure_summary["failure_classification_counts"],
                 "failure_summary": failure_summary,
-                "failed_cases": failed_cases,
+                "failed_cases": incumbent_failed_cases,
                 "prompt_failed_cases": prompt_failed_cases,
+                "prompt_anchor_cases": prompt_anchor_cases,
+                "anchor_case_ids": list(anchor_case_ids),
                 "analysis": repair["analysis"],
                 "fix_plan": repair["fix_plan"],
+                "candidate_failed_count": len(candidate_failed_cases),
+                "candidate_failure_classification_counts": _standard_failure_counts(candidate_failed_cases),
+                "candidate_failed_cases": candidate_failed_cases,
+                "fixed_case_ids": fixed_case_ids,
+                "regressed_case_ids": regressed_case_ids,
+                "decision": decision,
+                "decision_reason": decision_reason,
+                "incumbent_updated": incumbent_updated,
+                "candidate_diff_from_incumbent": candidate_diff,
                 "repair": repair,
             }
         )
-        current_code = repair["code"]
-        _emit_repair_progress("标准解修复", repair_round, "完成，重新验证全部小规模真值输入。")
-        logger.info("标准解已修复，准备重新验证全部小规模真值输入: iteration=%s", iteration)
+        attempted_codes.add(candidate_code)
+
+        # 只在候选通过全部门禁后原子更新代码、评估结果和锚点集合。
+        if incumbent_updated:
+            incumbent_code = candidate_code
+            incumbent_checked_cases = candidate_checked_cases
+            incumbent_failed_cases = candidate_failed_cases
+            updated_anchors = _select_standard_debug_anchor_cases(
+                incumbent_checked_cases,
+                incumbent_failed_cases,
+                anchor_case_ids,
+            )
+            anchor_case_ids = [str(case["case_id"]) for case in updated_anchors]
+
+        decision_text = "采纳为当前最佳版本" if incumbent_updated else "拒绝并回退"
+        _emit_repair_progress(
+            "标准解修复",
+            repair_round,
+            f"候选验证完成：{failure_summary['failed_count']}→{len(candidate_failed_cases)}，"
+            f"新增回归 {len(regressed_case_ids)} 条，{decision_text}；原因={decision_reason}",
+        )
+        logger.info(
+            "标准解候选验证完成: repair_round=%s decision=%s incumbent_failed=%s candidate_failed=%s regressions=%s",
+            repair_round,
+            decision,
+            failure_summary["failed_count"],
+            len(candidate_failed_cases),
+            len(regressed_case_ids),
+        )
 
 
 def generate_large_scale_truth_outputs(
