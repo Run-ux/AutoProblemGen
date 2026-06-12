@@ -9,7 +9,7 @@ from models import GeneratedProblem, VariantPlan
 from prompt_builder import build_generation_system_prompt, build_generation_user_prompt
 from qwen_client import QwenClient
 from rule_handlers import get_rule_handler
-from schema_tools import dataclass_to_dict
+from schema_tools import dataclass_to_dict, normalize_forbidden_reuse_token
 
 
 PROBLEM_CONTRACT_RETRY_LIMIT = 2
@@ -263,6 +263,7 @@ class ProblemGenerator:
             "当前 objective 是判定类",
             "当前 objective 是构造类",
             "当前 objective 要求字典序规范",
+            "题面包含不应复用的原题标识或标题片段",
         )
         return any(marker in error for marker in contract_markers)
 
@@ -390,30 +391,24 @@ class ProblemGenerator:
         problem: GeneratedProblem,
         original_problems: list[dict[str, Any]],
     ) -> list[str]:
-        combined = "\n".join(
-            [problem.title, problem.description, problem.input_format, problem.output_format, problem.notes]
-        ).lower()
+        combined = normalize_forbidden_reuse_token(
+            "\n".join(
+                [problem.title, problem.description, problem.input_format, problem.output_format, problem.notes]
+            )
+        )
         errors: list[str] = []
         for original_problem in original_problems:
             forbidden = [
-                self._clean_forbidden_reuse_token(original_problem.get("problem_id", "")),
-                self._clean_forbidden_reuse_token(self._source_name(original_problem.get("source", ""))),
-                self._clean_forbidden_reuse_token(original_problem.get("title", "")),
-                self._clean_forbidden_reuse_token(original_problem.get("url", "")),
+                normalize_forbidden_reuse_token(original_problem.get("problem_id", "")),
+                normalize_forbidden_reuse_token(self._source_name(original_problem.get("source", ""))),
+                normalize_forbidden_reuse_token(original_problem.get("title", "")),
+                normalize_forbidden_reuse_token(original_problem.get("url", "")),
             ]
             for token in forbidden:
                 if token and token in combined:
                     errors.append(f"题面包含不应复用的原题标识或标题片段：{token}")
                     return errors
         return errors
-
-    def _clean_forbidden_reuse_token(self, value: Any) -> str:
-        token = str(value).strip().lower()
-        if not token:
-            return ""
-        if len(token) == 1 and token.isascii() and token.isalpha():
-            return ""
-        return token
 
     def _source_name(self, source: Any) -> str:
         if isinstance(source, dict):
@@ -493,10 +488,16 @@ class ProblemGenerator:
             ensure_ascii=False,
             indent=2,
         )
+        source_reuse_instruction = ""
+        if any("题面包含不应复用的原题标识或标题片段" in error for error in errors):
+            source_reuse_instruction = (
+                "- 必须重写所有命中原题标识或标题片段的标题、叙事和说明文本；"
+                "不得通过删除任务必要语义来规避校验，也不得改变 `new_schema`、任务定义或算法义务。\n"
+            )
         return (
             f"{base_prompt}\n\n"
             "# 题面合同定向修复\n"
-            f"上一次返回的题面 JSON 未通过格式/可数性合同校验。当前是第 {next_attempt} 次尝试。\n"
+            f"上一次返回的题面 JSON 未通过题面合同校验。当前是第 {next_attempt} 次尝试。\n"
             "本轮只允许修复题面合同，不要改变 new_schema、difference_plan、目标语义或规则承诺。\n"
             "必须修复以下问题：\n"
             f"{error_lines}\n\n"
@@ -508,6 +509,7 @@ class ProblemGenerator:
             "- 如果目标是计数类，必须明确输出方案数/计数结果、不同方案或去重定义，并说明计数空间有限性来源或取模规则。\n"
             "- 样例输入必须是纯文本，不要包含引号拼接残留、HTML 片段或 Markdown 标记。\n"
             "- 必须按实例化后的 schema 写输入数量、目标函数和结构约束，不要退回种子题设定。\n\n"
+            f"{source_reuse_instruction}"
             "此前失败摘要：\n"
             f"{history_summary}\n\n"
             "上一次的错误 JSON 如下，仅用于定位问题，不可局部复用：\n"

@@ -6,6 +6,7 @@ import json
 import math
 import re
 import sys
+import unicodedata
 from dataclasses import asdict, dataclass, is_dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -128,6 +129,19 @@ def dataclass_to_dict(value: Any) -> dict[str, Any]:
     return copy.deepcopy(value)
 
 
+def normalize_forbidden_reuse_token(value: Any) -> str:
+    """规范化原题禁用词，并丢弃容易造成广泛误报的单字符标识。"""
+    if value is None:
+        return ""
+    token = unicodedata.normalize("NFKC", str(value))
+    token = re.sub(r"\s+", " ", token).strip().casefold()
+    if not token:
+        return ""
+    if len(token) == 1 and token.isalnum():
+        return ""
+    return token
+
+
 def build_forbidden_reuse_list(original_problem: dict[str, Any] | None) -> list[str]:
     if not original_problem:
         return [
@@ -137,10 +151,10 @@ def build_forbidden_reuse_list(original_problem: dict[str, Any] | None) -> list[
 
     summary = _truncate_text(original_problem.get("description", ""), 220)
     items = [
-        str(original_problem.get("problem_id", "")).strip(),
-        str(original_problem.get("title", "")).strip(),
-        str(original_problem.get("source", "")).strip(),
-        str(original_problem.get("url", "")).strip(),
+        normalize_forbidden_reuse_token(original_problem.get("problem_id", "")),
+        normalize_forbidden_reuse_token(original_problem.get("title", "")),
+        normalize_forbidden_reuse_token(original_problem.get("source", "")),
+        normalize_forbidden_reuse_token(original_problem.get("url", "")),
     ]
     if summary:
         items.append(summary)
@@ -150,12 +164,7 @@ def build_forbidden_reuse_list(original_problem: dict[str, Any] | None) -> list[
             "不要只替换实体名称后保留同样的输入输出关系。",
         ]
     )
-    return [item for item in items if item and not _is_single_ascii_letter(item)]
-
-
-def _is_single_ascii_letter(value: str) -> bool:
-    token = value.strip()
-    return len(token) == 1 and token.isascii() and token.isalpha()
+    return [item for item in items if item]
 
 
 def compute_schema_distance(
