@@ -305,7 +305,7 @@ def extract_all_problems(
         client: Qwen API 客户端
         problems: 题目列表
         output_dir: 输出根目录
-        resume: 是否断点续传（跳过已存在的文件）
+        resume: 是否断点续传（仅跳过状态为 success 的已有文件）
         logger: 日志记录器
         temperature: LLM 采样温度（默认 0.4）
     """
@@ -329,8 +329,8 @@ def extract_all_problems(
         for dim_name in DIMENSIONS:
             output_file = raw_dir / f"{problem_id}_{dim_name}.json"
 
-            if resume and output_file.exists():
-                logger.debug(f"    Skipping (already exists): {output_file.name}")
+            if resume and _is_successful_output(output_file):
+                logger.debug(f"    Skipping (already successful): {output_file.name}")
                 skipped += 1
                 completed += 1
                 continue
@@ -355,7 +355,17 @@ def extract_all_problems(
                     f"  Progress: {completed}/{total_tasks} ({100 * completed / total_tasks:.1f}%)"
                 )
 
-    logger.info(f"抽取完成：{completed} 个任务（跳过 {skipped} 个已存在文件）")
+    logger.info(f"抽取完成：{completed} 个任务（跳过 {skipped} 个已有成功文件）")
+
+
+def _is_successful_output(output_file: Path) -> bool:
+    if not output_file.exists():
+        return False
+    try:
+        payload = json.loads(output_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return isinstance(payload, dict) and payload.get("status") == "success"
 
 
 # ---------------------------------------------------------------------------
