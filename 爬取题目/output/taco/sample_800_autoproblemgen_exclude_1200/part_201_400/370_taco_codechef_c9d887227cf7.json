@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_c9d887227cf7",
+  "title": "DELARRAY",
+  "description": "You are given a sequence $A_1, A_2, \\ldots, A_N$. Calculate the number of ways to remove a non-empty contiguous subsequence from it such that the resulting sequence is non-empty and strictly increasing.\n\n-----Input-----\n- The first line of the input contains a single integer $T$ denoting the number of test cases. The description of $T$ test cases follows.\n- The first line of each test case contains a single integer $N$.\n- The second line contains $N$ space-separated integers $A_1, A_2, \\ldots, A_N$.\n\n-----Output-----\nFor each test case, print a single line containing one integer ― the number of ways.\n\n-----Constraints-----\n- $1 \\le T \\le 10$\n- $1 \\le N \\le 10^5$\n- $|A_i| \\le 10^9$ for each valid $i$\n\n-----Subtasks-----\nSubtask #1 (40 points): $N \\le 1,000$\nSubtask #2 (60 points): original constraints\n\n-----Example Input-----\n2\n3\n1 1 2\n4\n2 4 3 5\n\n-----Example Output-----\n4\n7",
+  "input": "",
+  "output": "",
+  "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "t = int(input())\nfor _ in range(t):\n\tn = int(input())\n\tdata = list(map(int, input().strip().split()))\n\tprefix = [False] * n\n\tsuffix = [False] * n\n\tprefix[0] = True\n\tfor i in range(1, n):\n\t\tif data[i] > data[i - 1]:\n\t\t\tprefix[i] = True\n\t\telse:\n\t\t\tbreak\n\tsuffix[n - 1] = True\n\tfor i in range(n - 2, -1, -1):\n\t\tif data[i] < data[i + 1]:\n\t\t\tsuffix[i] = True\n\t\telse:\n\t\t\tbreak\n\tans = 0\n\tif prefix.count(True) == n:\n\t\tans = n * (n - 1) / 2 + (n - 1)\n\telse:\n\t\tfor i in range(n):\n\t\t\tif prefix[i]:\n\t\t\t\tlow = i\n\t\t\t\thigh = n\n\t\t\t\twhile high - low > 1:\n\t\t\t\t\tmid = (low + high) // 2\n\t\t\t\t\tif suffix[mid] and data[i] < data[mid]:\n\t\t\t\t\t\thigh = mid\n\t\t\t\t\telse:\n\t\t\t\t\t\tlow = mid\n\t\t\t\tans += n - high\n\t\t\telse:\n\t\t\t\tbreak\n\t\tans += suffix.count(True)\n\t\tans += prefix.count(True)\n\tprint(int(ans))"
+}

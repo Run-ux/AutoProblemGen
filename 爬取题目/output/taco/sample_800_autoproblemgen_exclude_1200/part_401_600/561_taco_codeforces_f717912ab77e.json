@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_f717912ab77e",
+  "title": "C",
+  "description": "You're given Q queries of the form (L, R). \n\nFor each query you have to find the number of such x that L ≤ x ≤ R and there exist integer numbers a > 0, p > 1 such that x = a^{p}.\n\n\n-----Input-----\n\nThe first line contains the number of queries Q (1 ≤ Q ≤ 10^5).\n\nThe next Q lines contains two integers L, R each (1 ≤ L ≤ R ≤ 10^18).\n\n\n-----Output-----\n\nOutput Q lines — the answers to the queries.\n\n\n-----Example-----\nInput\n6\n1 4\n9 9\n5 7\n12 29\n137 591\n1 1000000\n\nOutput\n2\n1\n0\n3\n17\n1111\n\n\n\n-----Note-----\n\nIn query one the suitable numbers are 1 and 4.",
+  "input": "6\n1 4\n9 9\n5 7\n12 29\n137 591\n1 1000000",
+  "output": "2\n1\n0\n3\n17\n1111\n\n\n\n-----Note-----\n\nIn query one the suitable numbers are 1 and 4.",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "import sys\nimport math\nfrom math import sqrt\nimport bisect\nsmall = 10 ** 5 + 1\nbig = 10 ** 18 + 1\npos = []\nf = pos.append\nj = 2\nwhile True:\n\tj2 = j * j\n\ti = j * j2\n\tif i >= big:\n\t\tbreak\n\twhile i < big:\n\t\tf(i)\n\t\ti *= j2\n\tj += 1\npos2 = [p for p in pos if not sqrt(p).is_integer()]\npos2.sort()\nprev = -1\npos = []\nf = pos.append\nfor p in pos2:\n\tif p == prev:\n\t\tcontinue\n\tf(p)\n\tprev = p\nq = int(input())\nout = []\nfor line in sys.stdin:\n\t(L, R) = line.split()\n\tL = int(L)\n\tR = int(R)\n\ta = -1\n\tb = len(pos)\n\twhile b - a > 1:\n\t\tm = (a + b) // 2\n\t\tif pos[m] < L:\n\t\t\ta = m\n\t\telse:\n\t\t\tb = m\n\tunder = a\n\ta = -1\n\tb = len(pos)\n\twhile b - a > 1:\n\t\tm = (a + b) // 2\n\t\tif pos[m] <= R:\n\t\t\ta = m\n\t\telse:\n\t\t\tb = m\n\tupper = a\n\tLupp = max(int(sqrt(L) - 1), 0)\n\twhile Lupp * Lupp < L:\n\t\tLupp += 1\n\tRdown = int(sqrt(R)) + 1\n\twhile Rdown * Rdown > R:\n\t\tRdown -= 1\n\tcount = max(0, Rdown - Lupp + 1)\n\tout.append(str(upper - under + count))\nprint('\\n'.join(out))"
+}

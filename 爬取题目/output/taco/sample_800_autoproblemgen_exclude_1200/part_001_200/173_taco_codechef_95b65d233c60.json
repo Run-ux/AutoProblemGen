@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_95b65d233c60",
+  "title": "COUNTING",
+  "description": "Given two integers A and B, find the count of integers X \\in [L, R] such that at least one of the following is true:\nX and A are [coprime]\nX and B are [coprime]\n\n------ Input Format ------ \n\n- The first and only line of input contains four integers A,B,L, and R: as given in the problem statement.\n\n------ Output Format ------ \n\n- Print a single integer denoting the count of integers X satisfying the condition.\n\n------ Constraints ------ \n\n$1 ≤ A,B ≤ 10^{9}$\n$1 ≤ L ≤ R ≤ 10^{18}$\n\n----- Sample Input 1 ------ \n6 15 1 10\n\n----- Sample Output 1 ------ \n6\n\n----- explanation 1 ------ \nThere are $6$ numbers that satisfy the condition: $1,2,4,5,7,8$.\n\n----- Sample Input 2 ------ \n235714494 193478285 2 100000000000\n\n----- Sample Output 2 ------ \n65435081000\n\n----- explanation 2 ------",
+  "input": "",
+  "output": "",
+  "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "possible_pfs = [2, 3] + [6 * x + d for x in range(1, 5271) for d in [-1, 1]]\n\ndef LII():\n\treturn [int(x) for x in input().split()]\n\ndef ceilq(a, b):\n\treturn (a + b - 1) // b\n\ndef prime_factors(n):\n\tpfs = set({})\n\tfor p in possible_pfs:\n\t\tif n % p == 0:\n\t\t\tpfs.add(p)\n\t\t\twhile n % p == 0:\n\t\t\t\tn //= p\n\t\tif p * p > n:\n\t\t\tbreak\n\tif n > 1:\n\t\tpfs.add(n)\n\treturn pfs\n\ndef copr(l, r, x):\n\tif x:\n\t\ty = x.copy()\n\t\tp = y.pop()\n\t\treturn copr(l, r, y) - copr(ceilq(l, p), r // p, y)\n\telse:\n\t\treturn r - l + 1\n(a, b, l, r) = LII()\npfs_a = prime_factors(a)\npfs_b = prime_factors(b)\npfs_ab = pfs_a | pfs_b\nprint(copr(l, r, pfs_a) + copr(l, r, pfs_b) - copr(l, r, pfs_ab))"
+}

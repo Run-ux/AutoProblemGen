@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_50e88b2a1d5c",
+  "title": "CHEFARRB",
+  "description": "Read problems statements in Mandarin Chinese, Russian and Vietnamese as well. \n\nChef has array A consisting of N integers. He calls a sub-array of the array good if the bitwise OR of all the elements in it is greater or equal than number K. Please help him to find out how many sub-arrays of array A are good!\n\n------ Input ------ \n\nThe first line of input contains T - number of test cases. T test cases follow.\nFor each test case, first line contains an integer N - number of elements in array, and integer K.\nSecond line contains N space separated non-negative integers denoting array A. \n\n------ Output ------ \n\nFor each test case, output an integer corresponding to the number of good sub-arrays of A in separate line. \n\n------ Constraints ------ \n\n1 ≤ T, N, ≤ 100,000\n0 ≤ A_{i}, K ≤ 10^{9}\n1 ≤ Sum over all values of N in the input in a single test file \n≤ 100,000\n\n----- Sample Input 1 ------ \n2\n3 3\n1 2 3\n3 6\n3 4 5\n----- Sample Output 1 ------ \n4\n2",
+  "input": "",
+  "output": "",
+  "constraints": "time limit: 0.5 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "from collections import defaultdict\n\ndef get_active_bits(n):\n\tresult = []\n\ti = 0\n\twhile n:\n\t\tif n & 1:\n\t\t\tresult.append(i)\n\t\ti += 1\n\t\tn >>= 1\n\treturn result\n\ndef get_val(d):\n\tresult = 0\n\tfor (key, val) in d.items():\n\t\tif val:\n\t\t\tresult += 2 ** key\n\treturn result\nt = int(input())\nwhile t:\n\tn = input().split()\n\tk = int(n[1])\n\tn = int(n[0])\n\ta = [int(_) for _ in input().split()]\n\t(i, j, ans) = (0, 0, 0)\n\tdd = defaultdict(int)\n\twhile j < n:\n\t\twhile j < n and get_val(dd) < k:\n\t\t\tnew_bits = get_active_bits(a[j])\n\t\t\tfor each in new_bits:\n\t\t\t\tdd[each] += 1\n\t\t\tj += 1\n\t\twhile i <= j and get_val(dd) >= k:\n\t\t\tans += n - j + 1\n\t\t\tnew_bits = get_active_bits(a[i])\n\t\t\tfor each in new_bits:\n\t\t\t\tdd[each] -= 1\n\t\t\ti += 1\n\tprint(ans)\n\tt -= 1"
+}

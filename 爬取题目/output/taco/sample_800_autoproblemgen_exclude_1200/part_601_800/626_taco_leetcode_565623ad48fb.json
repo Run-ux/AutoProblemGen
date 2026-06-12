@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_565623ad48fb",
+  "title": "best time to buy and sell stock iv",
+  "description": "Say you have an array for which the ith element is the price of a given stock on day i.\n\nDesign an algorithm to find the maximum profit. You may complete at most k transactions.\n\nNote:\nYou may not engage in multiple transactions at the same time (ie, you must sell the stock before you buy again).\n\nExample 1:\n\n\nInput: [2,4,1], k = 2\nOutput: 2\nExplanation: Buy on day 1 (price = 2) and sell on day 2 (price = 4), profit = 4-2 = 2.\n\n\nExample 2:\n\n\nInput: [3,2,6,5,0,3], k = 2\nOutput: 7\nExplanation: Buy on day 2 (price = 2) and sell on day 3 (price = 6), profit = 6-2 = 4.\n             Then buy on day 5 (price = 0) and sell on day 6 (price = 3), profit = 3-0 = 3.",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef maxProfit(self, k, prices):\n\t\tlength = len(prices)\n\t\tv = p = 0\n\t\t(pairs, profits) = ([], [])\n\t\twhile p < length:\n\t\t\tv = p\n\t\t\twhile v < length - 1 and prices[v] >= prices[v + 1]:\n\t\t\t\tv += 1\n\t\t\tp = v + 1\n\t\t\twhile p < length and prices[p] >= prices[p - 1]:\n\t\t\t\tp += 1\n\t\t\twhile pairs and prices[v] < prices[pairs[-1][0]]:\n\t\t\t\theapq.heappush(profits, prices[pairs[-1][0]] - prices[pairs[-1][1] - 1])\n\t\t\t\tpairs.pop()\n\t\t\twhile pairs and prices[p - 1] >= prices[pairs[-1][1] - 1]:\n\t\t\t\theapq.heappush(profits, prices[v] - prices[pairs[-1][1] - 1])\n\t\t\t\tv = pairs[-1][0]\n\t\t\t\tpairs.pop()\n\t\t\tpairs.append((v, p))\n\t\twhile pairs:\n\t\t\theapq.heappush(profits, prices[pairs[-1][0]] - prices[pairs[-1][1] - 1])\n\t\t\tpairs.pop()\n\t\tans = 0\n\t\twhile k != 0 and profits:\n\t\t\tans += -heapq.heappop(profits)\n\t\t\tk -= 1\n\t\treturn ans"
+}

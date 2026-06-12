@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_0205c97b583c",
+  "title": "CSEQ",
+  "description": "Read problems statements in Mandarin Chinese  and Russian. \n\nGiven three positive integers N, L and R, find the number of non-decreasing sequences of size at least 1 and at most N, such that each element of the sequence lies between L and R, both inclusive.\n\nPrint the answer modulo 10^{6}+3.\n\n------ Input ------ \n\nFirst line of input contains T, the number of the test cases.\nEach of next T lines contains three space separated integers N, L and R.\n\n------ Output ------ \n\nFor each test case print the answer modulo 10^{6}+3 in a single line.\n\n------ Constraints ------ \n\n$1 ≤ T ≤ 100$\n$L ≤ R$\n\n------ Subtasks ------ \n\n$Subtask #1 (20 points): 1 ≤ N, L, R ≤ 100\n$$Subtask #2 (30 points): 1 ≤ N, L, R ≤ 10^{4}\n$$Subtask #3 (50 points): 1 ≤ N, L, R ≤ 10^{9}\n\n----- Sample Input 1 ------ \n2\n1 4 5\n2 4 5\n----- Sample Output 1 ------ \n2\n5\n----- explanation 1 ------ \ntest #1: [4] and [5] are the two sequences.\ntest #2: [4], [5], [4, 4], [4, 5] and [5, 5] are the five sequences.",
+  "input": "",
+  "output": "",
+  "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "cl = [1]\n\ndef factorial2(n, mod):\n\tif n > len(cl):\n\t\tfor i in range(len(cl), n):\n\t\t\tcl.append((i + 1) * cl[i - 1] % mod)\n\treturn cl[n - 1]\n\ndef select7(n, k, mod):\n\tif n > mod or k > mod:\n\t\t(n1, k1) = (n // mod, k // mod)\n\t\t(n0, k0) = (n % mod, k % mod)\n\t\tif n1 < k1 or n0 < k0:\n\t\t\treturn 0\n\t\treturn select7(n1, k1, mod) * select7(n0, k0, mod)\n\tif n == k or k == 0:\n\t\treturn 1\n\ta = factorial2(n, mod)\n\tb = factorial2(k, mod)\n\tb = pow(b, mod - 2, mod)\n\tc = factorial2(n - k, mod)\n\tc = pow(c, mod - 2, mod)\n\treturn a * b * c % mod\n\ndef solve2(n, m, p):\n\treturn (select7(m + n, n, p) - 1) % p\nfor t in range(int(input())):\n\t(n, l, r) = [int(x) for x in input().split()]\n\tprint(solve2(n, r - l + 1, 10 ** 6 + 3))"
+}
