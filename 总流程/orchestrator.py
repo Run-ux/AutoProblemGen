@@ -47,6 +47,7 @@ VERIFICATION_ERROR_TEXT_LIMIT = 2000
 _VERIFICATION_ENV_CHECK_CACHE: dict[str, str] = {}
 _EMBEDDED_ERROR_TYPE_RE = re.compile(r'"error_type"\s*:\s*"([^"]+)"')
 _EMBEDDED_ERROR_MESSAGE_RE = re.compile(r'"error_message"\s*:\s*"([^"]+)"')
+_HTTP_402_RE = re.compile(r"\bhttp(?:\s+error)?\s*402\b", re.IGNORECASE)
 
 TUPLE_DIMENSIONS = (
     "input_structure",
@@ -309,7 +310,21 @@ def run_workflow(
     try:
         verified_skip_count = sum(1 for problem in summary["problems"] if _can_skip_problem(problem))
         previous_failure_skip_count = (
-            sum(1 for problem in summary["problems"] if _can_skip_previous_failure(problem))
+            sum(
+                1
+                for problem in summary["problems"]
+                if _can_skip_previous_failure(problem, paths["tuple_raw"])
+            )
+            if skip_previous_failures
+            else 0
+        )
+        http_402_retry_count = (
+            sum(
+                1
+                for problem in summary["problems"]
+                if _is_unchanged_previous_failure(problem)
+                and _http_402_failure_stages(problem, paths["tuple_raw"])
+            )
             if skip_previous_failures
             else 0
         )
@@ -324,7 +339,8 @@ def run_workflow(
         progress(
             f"[workflow] 历史 summary={'已发现' if existing_summary else '未发现'}；"
             f"verified可跳过={verified_skip_count}；"
-            f"历史失败可跳过={previous_failure_skip_count}；待处理={pending_count}"
+            f"历史失败可跳过={previous_failure_skip_count}；"
+            f"HTTP 402强制重试={http_402_retry_count}；待处理={pending_count}"
         )
         progress(f"[workflow] summary={summary_path}")
         progress(f"[workflow] 日志目录={paths['logs']}")
@@ -347,7 +363,7 @@ def run_workflow(
                 )
                 continue
 
-            if skip_previous_failures and _can_skip_previous_failure(problem):
+            if skip_previous_failures and _can_skip_previous_failure(problem, paths["tuple_raw"]):
                 previous_status = _previous_problem_status(problem)
                 problem["skipped_this_run"] = True
                 problem["processed_this_run"] = False
@@ -363,7 +379,7 @@ def run_workflow(
                 )
                 continue
 
-            problem["resume_decision"] = _resume_decision(problem)
+            problem["resume_decision"] = _resume_decision(problem, paths["tuple_raw"])
             _reset_problem_for_current_run(problem)
             _run_single_problem_workflow(
                 config=config,
@@ -466,7 +482,8 @@ def _build_run_summary(
             "loaded_from": str(paths["summary"]) if existing_summary else "",
             "skip_previous_failures": skip_previous_failures,
             "skip_previous_failures_policy": (
-                "启用时跳过历史已跑过但未 verified 且输入 hash 未变化的题。"
+                "启用时跳过历史已跑过但未 verified 且输入 hash 未变化的题；"
+                "因 HTTP 402 Payment Required 失败的题除外，仍会强制重试。"
                 if skip_previous_failures
                 else "未启用；历史失败或未完成题会按默认逻辑重跑。"
             ),
@@ -481,9 +498,58 @@ def _can_skip_problem(problem: dict[str, Any]) -> bool:
     return _previous_problem_status(problem) == "verified" and _input_hash_unchanged(problem)
 
 
-def _can_skip_previous_failure(problem: dict[str, Any]) -> bool:
+def _can_skip_previous_failure(problem: dict[str, Any], tuple_raw_dir: Path | None = None) -> bool:
+    return _is_unchanged_previous_failure(problem) and not _http_402_failure_stages(problem, tuple_raw_dir)
+
+
+def _is_unchanged_previous_failure(problem: dict[str, Any]) -> bool:
     previous_status = _previous_problem_status(problem)
     return _input_hash_unchanged(problem) and previous_status not in {"verified", "pending"}
+
+
+def _contains_http_402_payment_required(value: Any) -> bool:
+    text = str(value or "")
+    return bool(_HTTP_402_RE.search(text)) and "payment required" in text.casefold()
+
+
+def _http_402_failure_stages(
+    problem: dict[str, Any],
+    tuple_raw_dir: Path | None = None,
+) -> list[str]:
+    stages: list[str] = []
+    generation = problem.get("generation", {})
+    if isinstance(generation, dict):
+        if _contains_http_402_payment_required(generation.get("error_reason")):
+            stages.append("题面生成")
+        verification_errors = (
+            generation.get("verification_error"),
+            generation.get("verification_embedded_error_message"),
+        )
+        if any(_contains_http_402_payment_required(value) for value in verification_errors):
+            stages.append("验证")
+
+    tuple_result = problem.get("tuple", {})
+    if isinstance(tuple_result, dict):
+        dimension_errors = tuple_result.get("dimension_errors", {})
+        if isinstance(dimension_errors, dict) and any(
+            _contains_http_402_payment_required(value) for value in dimension_errors.values()
+        ):
+            stages.append("四元组抽取")
+
+    problem_id = str(problem.get("problem_id", "")).strip()
+    if tuple_raw_dir is not None and problem_id and "四元组抽取" not in stages:
+        for dimension in TUPLE_DIMENSIONS:
+            raw_file = tuple_raw_dir / f"{problem_id}_{dimension}.json"
+            if not raw_file.exists():
+                continue
+            try:
+                payload = json.loads(raw_file.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if isinstance(payload, dict) and _contains_http_402_payment_required(payload.get("error")):
+                stages.append("四元组抽取")
+                break
+    return stages
 
 
 def _previous_problem_status(problem: dict[str, Any]) -> str:
@@ -496,7 +562,7 @@ def _input_hash_unchanged(problem: dict[str, Any]) -> bool:
     return bool(previous_hash and current_hash and previous_hash == current_hash)
 
 
-def _resume_decision(problem: dict[str, Any]) -> str:
+def _resume_decision(problem: dict[str, Any], tuple_raw_dir: Path | None = None) -> str:
     previous_status = _previous_problem_status(problem)
     previous_hash = str(problem.get("previous_input_sha256") or "")
     current_hash = str(problem.get("input_sha256") or "")
@@ -505,6 +571,13 @@ def _resume_decision(problem: dict[str, Any]) -> str:
             f"历史状态={previous_status}；输入hash变化；"
             f"previous={_short_hash(previous_hash)}；current={_short_hash(current_hash)}；"
             "从四元组抽取开始完整重跑。"
+        )
+    http_402_stages = _http_402_failure_stages(problem, tuple_raw_dir)
+    if http_402_stages:
+        return (
+            f"历史状态={previous_status}；检测到 HTTP 402 Payment Required；"
+            f"失败阶段={','.join(http_402_stages)}；即使启用 --skip-previous-failures 也强制重试；"
+            "四元组抽取仅复用 status=success 的已有维度。"
         )
     if previous_status != "pending":
         return f"历史状态={previous_status}；不满足 verified+hash未变化 跳过条件，从四元组抽取开始完整重跑。"
@@ -656,6 +729,7 @@ def _collect_single_tuple_raw_status(raw_dir: Path, problem_id: str) -> dict[str
     status = {
         "success": False,
         "dimension_status": {dimension: "missing" for dimension in TUPLE_DIMENSIONS},
+        "dimension_errors": {},
         "failed_dimensions": list(TUPLE_DIMENSIONS),
     }
     for dimension in TUPLE_DIMENSIONS:
@@ -664,10 +738,14 @@ def _collect_single_tuple_raw_status(raw_dir: Path, problem_id: str) -> dict[str
             continue
         try:
             payload = json.loads(raw_file.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             status["dimension_status"][dimension] = "invalid_json"
+            status["dimension_errors"][dimension] = "结果文件不是合法 JSON。"
             continue
         status["dimension_status"][dimension] = str(payload.get("status", ""))
+        error = str(payload.get("error", "")).strip()
+        if error:
+            status["dimension_errors"][dimension] = error
     failed = [
         dimension
         for dimension in TUPLE_DIMENSIONS
@@ -934,6 +1012,7 @@ def _collect_tuple_raw_status(raw_dir: Path, problem_map: dict[str, dict[str, An
         problem_id: {
             "success": False,
             "dimension_status": {dimension: "missing" for dimension in TUPLE_DIMENSIONS},
+            "dimension_errors": {},
             "failed_dimensions": list(TUPLE_DIMENSIONS),
         }
         for problem_id in problem_map
@@ -949,6 +1028,9 @@ def _collect_tuple_raw_status(raw_dir: Path, problem_map: dict[str, dict[str, An
         if problem_id not in raw_status or dimension not in TUPLE_DIMENSIONS:
             continue
         raw_status[problem_id]["dimension_status"][dimension] = str(payload.get("status", ""))
+        error = str(payload.get("error", "")).strip()
+        if error:
+            raw_status[problem_id]["dimension_errors"][dimension] = error
 
     for status in raw_status.values():
         failed = [

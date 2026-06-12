@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_30a3f0e281a3",
+  "title": "GDSUB",
+  "description": "Chef is given a sequence of prime numbers $A_1, A_2, \\ldots, A_N$. This sequence has exactly $2^N$ subsequences. A subsequence of $A$ is good if it does not contain any two identical numbers; in particular, the empty sequence is good.\nChef has to find the number of good subsequences which contain at most $K$ numbers. Since he does not know much about subsequences, help him find the answer. This number could be very large, so compute it modulo $1,000,000,007$.\n\n-----Input-----\n- The first line of the input contains two space-separated integers $N$ and $K$.\n- The second line contains $N$ space-separated integers $A_1, A_2, \\ldots, A_N$.\n\n-----Output-----\nPrint a single line containing one integer ― the number of good subsequences with size at most $K$, modulo $1,000,000,007$.\n\n-----Constraints-----\n- $1 \\le K \\le N \\le 10^5$\n- $2 \\le A_i \\le 8,000$ for each valid $i$\n\n-----Subtasks-----\nSubtask #1 (40 points): $A_1, A_2, \\ldots, A_N$ are pairwise distinct\nSubtask #2 (60 points): original constraints\n\n-----Example Input-----\n5 3\n2 2 3 3 5\n\n-----Example Output-----\n18\n\n-----Explanation-----\nThere is $1$ good subsequence with length $0$, $5$ good subsequences with length $1$, $8$ good subsequences with length $2$ and $4$ good subsequences with length $3$.",
+  "input": "",
+  "output": "",
+  "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "from collections import Counter\nfrom itertools import accumulate\n(n, k) = map(int, input().split())\na = list(map(int, input().split()))\nctr = Counter(a)\nst = list(set(a))\nl = len(st)\nk = min(k, l)\nm = list(accumulate([ctr[i] for i in st]))\nans = 0\nfor i in range(2, k + 1):\n\ttemp = []\n\tfor j in range(l):\n\t\tif j >= i - 1:\n\t\t\tans += m[j - 1] * ctr[st[j]]\n\t\t\ttemp.append(m[j - 1] * ctr[st[j]] + temp[-1])\n\t\telse:\n\t\t\ttemp.append(0)\n\tm = temp\nprint((ans + sum(ctr.values()) + 1) % (10 ** 9 + 7))"
+}

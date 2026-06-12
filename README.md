@@ -12,6 +12,7 @@
 | `题目质量评价`            | 对生成 artifact 做题面质量评分、反换皮判定、硬约束检查，并输出 `revision_brief`              | 当前质量闭环           |
 | `生成测试用例和标准解法`  | 基于上游 artifact 生成标准解、暴力解、测试输入生成器、checker 和错误解池，并执行本地验证闭环   | 交付验证能力建设       |
 | `总流程`                  | 将四元组抽取、题面生成、质量评价、测试用例与标准解法验证串成一条端到端 CLI                    | 一键编排入口           |
+| `实验`                    | 冻结已验证生成题，让多个 LLM 独立解题并统计 pass@1、对抗鲁棒性和经验难度                      | 实验评测层             |
 
 ## 端到端总流程
 
@@ -48,6 +49,18 @@ python D:\AutoProblemGen\总流程\main.py ^
 ```
 
 `workflow_summary.json` 会按题记录输入 hash、抽取、生成、质量门槛和验证状态。若某题抽取四维中任一维失败，该题会标记为 `skipped_before_generation`，不会进入题面生成；若质量门槛未通过，则不会生成下游测试与标准解法产物。终端会输出每题阶段进度和 LLM 重试/失败等异常信号；正常 LLM 调用的模型、prompt、response、usage、耗时和解析结果写入 `logs/llm_calls.jsonl`，且不会记录 API Key。
+
+## 生成题质量评测实验
+
+`实验` 模块会从 `总流程/output` 冻结同时具备随机、对抗、小规模难例和大规模真值的生成题，让多个 OpenAI 兼容模型在只看到题面的条件下各生成一次 Python 解答，并输出总体 pass@1、分类通过率、随机/对抗差距、经验难度和分组统计。实验运行前会校验 artifact hash，API 基础设施错误可补跑，模型答题失败不会自动重新采样。
+
+```powershell
+python D:\AutoProblemGen\实验\main.py build-manifest --workflow-output-root D:\AutoProblemGen\总流程\output --output D:\AutoProblemGen\实验\manifests\generated_v1.json
+python D:\AutoProblemGen\实验\main.py run --manifest D:\AutoProblemGen\实验\manifests\generated_v1.json --models D:\AutoProblemGen\实验\models.json --output-root D:\AutoProblemGen\实验\output --run-id generated_v1
+python D:\AutoProblemGen\实验\main.py report --run-dir D:\AutoProblemGen\实验\output\generated_v1
+```
+
+完整配置、指标口径和输出合同见 [`实验/README.md`](实验/README.md)。
 
 ## 主线流程
 

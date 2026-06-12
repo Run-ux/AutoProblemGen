@@ -26,7 +26,12 @@ from qwen_client import LLMResponseFormatError, QwenClient
 from rule_handlers import get_rule_handler
 from rulebook import RuleBook
 from runtime_config import LLMEndpointConfig
-from schema_tools import _objective_type_prompt, compute_schema_distance
+from schema_tools import (
+    _objective_type_prompt,
+    build_forbidden_reuse_list,
+    compute_schema_distance,
+    normalize_forbidden_reuse_token,
+)
 from variant_planner import THEMES, VariantPlanner
 
 
@@ -1221,6 +1226,44 @@ class ProblemGeneratorTests(unittest.TestCase):
 
         self.assertEqual(errors, [])
 
+    def test_source_reuse_validation_ignores_single_digit_and_chinese_title(self) -> None:
+        generator = ProblemGenerator(client=None)
+        problem = GeneratedProblem(
+            title="社区任务 1",
+            description="给定一个数组，请输出答案。",
+            input_format="第一行输入一个整数。",
+            output_format="输出一个整数。",
+            constraints=["时间限制：2 秒。", "空间限制：256 MB。"],
+            samples=[],
+        )
+
+        for title in ("1", "题"):
+            with self.subTest(title=title):
+                errors = generator._validate_source_reuse(
+                    problem,
+                    [{"problem_id": "CF100A", "title": title, "source": "codeforces"}],
+                )
+                self.assertEqual(errors, [])
+
+    def test_forbidden_reuse_list_uses_shared_normalization(self) -> None:
+        self.assertEqual(normalize_forbidden_reuse_token(" Ａ "), "")
+        self.assertEqual(normalize_forbidden_reuse_token(" １ "), "")
+        self.assertEqual(normalize_forbidden_reuse_token(" 题 "), "")
+
+        forbidden = build_forbidden_reuse_list(
+            {
+                "problem_id": " ＣＦ１００Ａ ",
+                "title": "1",
+                "source": " CodeForces ",
+                "url": "",
+                "description": "",
+            }
+        )
+
+        self.assertIn("cf100a", forbidden)
+        self.assertIn("codeforces", forbidden)
+        self.assertNotIn("1", forbidden)
+
     def test_source_reuse_validation_rejects_meaningful_title(self) -> None:
         generator = ProblemGenerator(client=None)
         problem = GeneratedProblem(
@@ -1234,10 +1277,45 @@ class ProblemGeneratorTests(unittest.TestCase):
 
         errors = generator._validate_source_reuse(
             problem,
-            [{"problem_id": "CF100A", "title": "Seed Match", "source": "codeforces"}],
+            [{"problem_id": "CF100A", "title": "Ｓｅｅｄ　Ｍａｔｃｈ", "source": "codeforces"}],
         )
 
         self.assertIn("seed match", errors[0])
+
+    def test_source_reuse_validation_retries_and_repairs_real_match(self) -> None:
+        first_payload = self._valid_problem_payload()
+        second_payload = self._valid_problem_payload()
+        second_payload["title"] = "社区安排挑战"
+        client = self.SequencedProblemClient([first_payload, second_payload])
+        generator = ProblemGenerator(client=client)
+
+        problem = generator.generate(
+            {},
+            self._contract_retry_plan(),
+            [{"problem_id": "seed_001", "title": "构造任务", "source": "example"}],
+        )
+
+        self.assertEqual(problem.title, "社区安排挑战")
+        self.assertEqual(len(client.calls), 2)
+        retry_prompt = str(client.calls[1]["user_prompt"])
+        self.assertIn("题面包含不应复用的原题标识或标题片段", retry_prompt)
+        self.assertIn("必须重写所有命中原题标识或标题片段", retry_prompt)
+        self.assertIn("不得改变 `new_schema`、任务定义或算法义务", retry_prompt)
+
+    def test_source_reuse_validation_stops_after_retry_limit(self) -> None:
+        client = self.SequencedProblemClient(
+            [self._valid_problem_payload(), self._valid_problem_payload(), self._valid_problem_payload()]
+        )
+        generator = ProblemGenerator(client=client)
+
+        with self.assertRaisesRegex(RuntimeError, "题面包含不应复用的原题标识或标题片段"):
+            generator.generate(
+                {},
+                self._contract_retry_plan(),
+                [{"problem_id": "seed_001", "title": "构造任务", "source": "example"}],
+            )
+
+        self.assertEqual(len(client.calls), 3)
 
     def test_problem_contract_retry_repairs_single_sample(self) -> None:
         first_payload = self._valid_problem_payload(

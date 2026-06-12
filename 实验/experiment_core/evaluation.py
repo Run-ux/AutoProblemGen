@@ -1,0 +1,382 @@
+from __future__ import annotations
+
+import json
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Any
+
+from .manifest import load_and_validate_manifest
+from .models import ClientFactory, InfrastructureError, ModelConfig, OpenAICompatibleClient, load_model_configs
+from .prompting import CodeResponseError, build_prompts, extract_and_validate_code
+from .utils import atomic_write_json, read_json, safe_filename, sha256_bytes, storage_name, truncate_text, utc_now_iso
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+EXECUTION_MODULE_DIR = PROJECT_ROOT / "生成测试用例和标准解法"
+if str(EXECUTION_MODULE_DIR) not in sys.path:
+    sys.path.insert(0, str(EXECUTION_MODULE_DIR))
+
+from local_execution import (  # noqa: E402
+    EXECUTION_ERROR,
+    EXECUTION_MEMORY_LIMIT,
+    EXECUTION_OK,
+    EXECUTION_TIMEOUT,
+    run_checker,
+    run_solution,
+)
+
+
+def _load_problem_payload(problem: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    generation = read_json(Path(problem["generation_artifact_path"]))
+    verification = read_json(Path(problem["verification_artifact_path"]))
+    return generation, verification
+
+
+def _test_cases(verification: dict[str, Any]) -> list[dict[str, Any]]:
+    cases = []
+    for case in verification["bruteforce_verification"]["solved_cases"]:
+        source = str(case.get("source", ""))
+        if source not in {"random", "adversarial", "small_challenge"}:
+            continue
+        cases.append(
+            {
+                "case_id": str(case.get("case_id", "")),
+                "category": source,
+                "input": case["input"],
+                "output": case["output"],
+            }
+        )
+    for case in verification["large_scale_truth_outputs"]["cases"]:
+        cases.append(
+            {
+                "case_id": str(case.get("case_id", "")),
+                "category": "large_scale",
+                "input": case["input"],
+                "output": case["output"],
+            }
+        )
+    return cases
+
+
+def _execution_summary(result: Any) -> dict[str, Any]:
+    return {
+        "status": result.status,
+        "phase": result.phase,
+        "error_type": result.error_type,
+        "error_message": result.error_message,
+        "duration_seconds": result.duration_seconds,
+        "timeout_seconds": result.timeout_seconds,
+        "memory_limit_mb": result.memory_limit_mb,
+        "peak_memory_mb": result.peak_memory_mb,
+        "user_stdout": truncate_text(result.user_stdout, 2_000),
+        "user_stderr": truncate_text(result.user_stderr, 2_000),
+    }
+
+
+def _classify_execution(result: Any) -> str:
+    if result.status == EXECUTION_TIMEOUT:
+        return "timeout"
+    if result.status == EXECUTION_MEMORY_LIMIT:
+        return "memory_limit"
+    if result.status == EXECUTION_ERROR and result.phase in {"compile", "interface"}:
+        return "interface_error"
+    return "runtime_error"
+
+
+def _evaluate_case(
+    code: str,
+    case: dict[str, Any],
+    *,
+    checker_code: str | None,
+    timeout_seconds: float,
+    memory_limit_mb: int,
+    checker_timeout_seconds: float,
+    checker_memory_limit_mb: int,
+) -> dict[str, Any]:
+    started = time.perf_counter()
+    result = run_solution(
+        code,
+        case["input"],
+        timeout_seconds=timeout_seconds,
+        memory_limit_mb=memory_limit_mb,
+    )
+    record: dict[str, Any] = {
+        "case_id": case["case_id"],
+        "category": case["category"],
+        "input_sha256": sha256_bytes(case["input"].encode("utf-8")),
+        "input_chars": len(case["input"]),
+        "expected_output_sha256": sha256_bytes(case["output"].encode("utf-8")),
+        "expected_output_chars": len(case["output"]),
+        "execution": _execution_summary(result),
+    }
+    if result.status != EXECUTION_OK:
+        record.update({"passed": False, "classification": _classify_execution(result)})
+        return record
+    if not isinstance(result.return_value, str):
+        record.update(
+            {
+                "passed": False,
+                "classification": "interface_error",
+                "actual_return_type": type(result.return_value).__name__,
+            }
+        )
+        return record
+    actual = result.return_value
+    record.update(
+        {
+            "actual_output_sha256": sha256_bytes(actual.encode("utf-8")),
+            "actual_output_chars": len(actual),
+        }
+    )
+    if checker_code is None:
+        passed = actual == case["output"]
+        record.update(
+            {
+                "passed": passed,
+                "classification": "accepted" if passed else "wrong_answer",
+                "actual_output_preview": "" if passed else truncate_text(actual, 2_000),
+                "expected_output_preview": "" if passed else truncate_text(case["output"], 2_000),
+            }
+        )
+        return record
+    checker_result = run_checker(
+        checker_code,
+        case["input"],
+        actual,
+        timeout_seconds=checker_timeout_seconds,
+        memory_limit_mb=checker_memory_limit_mb,
+    )
+    record["checker_execution"] = _execution_summary(checker_result)
+    if checker_result.status != EXECUTION_OK:
+        record.update({"passed": False, "classification": "checker_error"})
+    elif checker_result.return_value is True:
+        record.update({"passed": True, "classification": "accepted_by_checker"})
+    elif checker_result.return_value is False:
+        record.update({"passed": False, "classification": "wrong_answer"})
+    else:
+        record.update({"passed": False, "classification": "checker_error"})
+    record["evaluation_duration_seconds"] = time.perf_counter() - started
+    return record
+
+
+def _cost(model: ModelConfig, usage: dict[str, int]) -> float | None:
+    if model.input_price_per_million is None or model.output_price_per_million is None:
+        return None
+    return (
+        usage.get("prompt_tokens", 0) * model.input_price_per_million
+        + usage.get("completion_tokens", 0) * model.output_price_per_million
+    ) / 1_000_000
+
+
+def _result_identity(manifest_sha256: str, model: ModelConfig, problem_id: str) -> dict[str, Any]:
+    return {
+        "manifest_sha256": manifest_sha256,
+        "model_config_fingerprint": model.fingerprint,
+        "problem_id": problem_id,
+        "attempt": 1,
+    }
+
+
+def _is_completed_result(path: Path, identity: dict[str, Any]) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        result = read_json(path)
+    except (OSError, ValueError):
+        return False
+    return isinstance(result, dict) and result.get("status") == "completed" and result.get("identity") == identity
+
+
+def _evaluate_job(
+    *,
+    problem: dict[str, Any],
+    model: ModelConfig,
+    client: Any,
+    manifest_sha256: str,
+    result_path: Path,
+) -> dict[str, Any]:
+    identity = _result_identity(manifest_sha256, model, problem["problem_id"])
+    if _is_completed_result(result_path, identity):
+        return {"action": "skipped", "path": str(result_path)}
+    generation, verification = _load_problem_payload(problem)
+    generated_problem = generation["generated_problem"]
+    system_prompt, user_prompt = build_prompts(generated_problem)
+    base_result: dict[str, Any] = {
+        "schema_version": 1,
+        "created_at": utc_now_iso(),
+        "identity": identity,
+        "model": model.public_dict(),
+        "problem": {
+            "problem_id": problem["problem_id"],
+            "problem_kind": problem.get("problem_kind", "generated"),
+            "pair_id": problem.get("pair_id", ""),
+            "title": problem.get("title", ""),
+            "source": problem.get("source", ""),
+            "applied_rule": problem.get("applied_rule", ""),
+            "changed_axes": problem.get("changed_axes", []),
+            "algorithm_tags": problem.get("algorithm_tags", []),
+        },
+        "prompt": {"system": system_prompt, "user": user_prompt},
+    }
+    try:
+        response = client.complete(system_prompt=system_prompt, user_prompt=user_prompt)
+    except InfrastructureError as exc:
+        base_result.update(
+            {
+                "status": "infrastructure_error",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "api_attempts": exc.attempts,
+            }
+        )
+        atomic_write_json(result_path, base_result)
+        return {"action": "infrastructure_error", "path": str(result_path)}
+    except Exception as exc:
+        base_result.update(
+            {
+                "status": "infrastructure_error",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            }
+        )
+        atomic_write_json(result_path, base_result)
+        return {"action": "infrastructure_error", "path": str(result_path)}
+
+    base_result["response"] = response
+    usage = response.get("usage", {})
+    base_result["estimated_cost_usd"] = _cost(model, usage)
+    try:
+        code = extract_and_validate_code(response["content"])
+    except CodeResponseError as exc:
+        base_result.update(
+            {
+                "status": "completed",
+                "passed": False,
+                "failure_kind": exc.classification,
+                "failure_message": str(exc),
+                "code": "",
+                "category_results": {},
+                "case_results": [],
+            }
+        )
+        atomic_write_json(result_path, base_result)
+        return {"action": "completed", "path": str(result_path), "passed": False}
+
+    checker = verification.get("checker", {})
+    checker_code = None
+    if isinstance(checker, dict) and checker.get("needs_checker") is True:
+        checker_code = checker.get("verified_checker_code") or checker.get("checker_code")
+    standard_limits = verification["standard_solution_verification"]["standard_solution_limits"]
+    execution_config = verification.get("execution_metadata", {}).get("execution_config", {})
+    case_results = [
+        _evaluate_case(
+            code,
+            case,
+            checker_code=checker_code,
+            timeout_seconds=float(standard_limits["timeout_seconds"]),
+            memory_limit_mb=int(standard_limits["memory_limit_mb"]),
+            checker_timeout_seconds=float(execution_config.get("checker_timeout_seconds", 5)),
+            checker_memory_limit_mb=int(execution_config.get("checker_memory_limit_mb", 512)),
+        )
+        for case in _test_cases(verification)
+    ]
+    category_results = {}
+    for category in ("random", "adversarial", "small_challenge", "large_scale"):
+        selected = [item for item in case_results if item["category"] == category]
+        category_results[category] = {
+            "passed": bool(selected) and all(item["passed"] for item in selected),
+            "passed_case_count": sum(1 for item in selected if item["passed"]),
+            "case_count": len(selected),
+        }
+    passed = all(item["passed"] for item in category_results.values())
+    failure_kind = ""
+    if not passed:
+        failure_kind = next(
+            (item["classification"] for item in case_results if not item["passed"]),
+            "wrong_answer",
+        )
+    base_result.update(
+        {
+            "status": "completed",
+            "passed": passed,
+            "failure_kind": failure_kind,
+            "code": code,
+            "execution_limits": {
+                "timeout_seconds": float(standard_limits["timeout_seconds"]),
+                "memory_limit_mb": int(standard_limits["memory_limit_mb"]),
+                "checker_timeout_seconds": float(execution_config.get("checker_timeout_seconds", 5)),
+                "checker_memory_limit_mb": int(execution_config.get("checker_memory_limit_mb", 512)),
+            },
+            "category_results": category_results,
+            "case_results": case_results,
+        }
+    )
+    atomic_write_json(result_path, base_result)
+    return {"action": "completed", "path": str(result_path), "passed": passed}
+
+
+def run_experiment(
+    *,
+    manifest_path: Path,
+    models_path: Path,
+    output_root: Path,
+    run_id: str,
+    client_factory: ClientFactory | None = None,
+) -> dict[str, Any]:
+    manifest, manifest_sha256 = load_and_validate_manifest(manifest_path)
+    models, concurrency = load_model_configs(models_path)
+    run_dir = output_root.resolve() / safe_filename(run_id)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    client_factory = client_factory or OpenAICompatibleClient
+    clients = {model.model_id: client_factory(model) for model in models}
+    run_metadata = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "created_at": utc_now_iso(),
+        "manifest_path": str(manifest_path.resolve()),
+        "manifest_sha256": manifest_sha256,
+        "manifest_content_fingerprint": manifest.get("content_fingerprint", ""),
+        "models_path": str(models_path.resolve()),
+        "concurrency": concurrency,
+        "sampling_attempts_per_problem": 1,
+        "models": [model.public_dict() for model in models],
+        "problem_count": len(manifest["problems"]),
+    }
+    atomic_write_json(run_dir / "run_metadata.json", run_metadata)
+
+    jobs = []
+    for model in models:
+        model_dir = run_dir / "results" / storage_name(model.model_id)
+        for problem in manifest["problems"]:
+            jobs.append(
+                {
+                    "problem": problem,
+                    "model": model,
+                    "client": clients[model.model_id],
+                    "manifest_sha256": manifest_sha256,
+                    "result_path": model_dir / f"{storage_name(problem['problem_id'])}.json",
+                }
+            )
+    outcomes: list[dict[str, Any]] = []
+    if concurrency == 1:
+        for index, job in enumerate(jobs, start=1):
+            print(f"[experiment {index}/{len(jobs)}] {job['model'].model_id} / {job['problem']['problem_id']}")
+            outcomes.append(_evaluate_job(**job))
+    else:
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            future_map = {executor.submit(_evaluate_job, **job): job for job in jobs}
+            for index, future in enumerate(as_completed(future_map), start=1):
+                job = future_map[future]
+                print(f"[experiment {index}/{len(jobs)}] {job['model'].model_id} / {job['problem']['problem_id']}")
+                outcomes.append(future.result())
+    summary = {
+        "run_dir": str(run_dir),
+        "job_count": len(jobs),
+        "completed_count": sum(item["action"] in {"completed", "skipped"} for item in outcomes),
+        "infrastructure_error_count": sum(item["action"] == "infrastructure_error" for item in outcomes),
+        "skipped_count": sum(item["action"] == "skipped" for item in outcomes),
+    }
+    atomic_write_json(run_dir / "run_outcome.json", summary)
+    return summary

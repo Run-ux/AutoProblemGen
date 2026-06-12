@@ -89,8 +89,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--exclude-sample-dir",
-        default="",
-        help="递归读取已有样本 JSON，并按 problem_id 从候选池中排除。",
+        action="append",
+        default=[],
+        help="递归读取已有样本 JSON，并按 problem_id 从候选池中排除；可重复传入多个目录。",
     )
     parser.add_argument(
         "--coverage-fields",
@@ -175,9 +176,11 @@ def main() -> int:
     else:
         filter_report = {}
 
-    if args.exclude_sample_dir:
-        exclude_sample_dir = Path(args.exclude_sample_dir).resolve()
-        excluded_problem_ids, exclude_report = load_excluded_problem_ids(exclude_sample_dir)
+    exclude_sample_dirs = [Path(value).resolve() for value in args.exclude_sample_dir]
+    if exclude_sample_dirs:
+        excluded_problem_ids, exclude_report = load_excluded_problem_ids_from_dirs(
+            exclude_sample_dirs
+        )
         if full_rows_for_filter is None:
             print("[taco] 读取完整字段以匹配待排除 problem_id。", flush=True)
             full_rows_for_filter = load_all_records(parquet_paths)
@@ -232,9 +235,10 @@ def main() -> int:
         "chunk_size": args.chunk_size,
         "coverage_fields": coverage_report.get("coverage_fields", []),
         "unicode_filter": bool(args.unicode_filter),
-        "exclude_sample_dir": str(Path(args.exclude_sample_dir).resolve())
-        if args.exclude_sample_dir
+        "exclude_sample_dir": str(exclude_sample_dirs[0])
+        if len(exclude_sample_dirs) == 1
         else "",
+        "exclude_sample_dirs": [str(path) for path in exclude_sample_dirs],
         "excluded_sample_report": exclude_report,
     }
     if filter_report:
@@ -363,6 +367,34 @@ def load_excluded_problem_ids(sample_dir: Path) -> tuple[set[str], dict[str, Any
         "unique_problem_id_count": len(problem_ids),
         "duplicate_problem_id_count": duplicate_count,
     }
+
+
+def load_excluded_problem_ids_from_dirs(
+    sample_dirs: list[Path],
+) -> tuple[set[str], dict[str, Any]]:
+    if not sample_dirs:
+        raise ValueError("待排除样本目录不能为空。")
+
+    problem_ids: set[str] = set()
+    directory_reports: list[dict[str, Any]] = []
+    duplicate_count = 0
+    for sample_dir in sample_dirs:
+        directory_ids, directory_report = load_excluded_problem_ids(sample_dir)
+        duplicate_count += directory_report["duplicate_problem_id_count"]
+        duplicate_count += len(problem_ids & directory_ids)
+        problem_ids.update(directory_ids)
+        directory_reports.append(directory_report)
+
+    report = {
+        "sample_dirs": [str(path) for path in sample_dirs],
+        "directory_reports": directory_reports,
+        "json_file_count": sum(report["json_file_count"] for report in directory_reports),
+        "unique_problem_id_count": len(problem_ids),
+        "duplicate_problem_id_count": duplicate_count,
+    }
+    if len(sample_dirs) == 1:
+        report["sample_dir"] = str(sample_dirs[0])
+    return problem_ids, report
 
 
 def match_excluded_problem_keys(

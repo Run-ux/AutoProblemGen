@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import copy
+import json
 import logging
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from extract import (
     RateLimiter,
+    extract_all_problems,
     extract_single_dimension,
     normalize_input_structure_result,
     validate_input_structure_result,
@@ -250,6 +255,63 @@ class InputStructureValidationTests(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["result"], {})
         self.assertIn("components[0].role_description", result["error"])
+
+
+class ResumeTests(unittest.TestCase):
+    def test_resume_reuses_only_successful_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            output_dir = Path(tempdir)
+            raw_dir = output_dir / "raw"
+            raw_dir.mkdir()
+            problem_id = "demo"
+            (raw_dir / f"{problem_id}_input_structure.json").write_text(
+                json.dumps({"status": "success", "result": {"kept": True}}),
+                encoding="utf-8",
+            )
+            (raw_dir / f"{problem_id}_core_constraints.json").write_text(
+                json.dumps({"status": "failed", "error": "HTTP Error 402: Payment Required"}),
+                encoding="utf-8",
+            )
+            (raw_dir / f"{problem_id}_objective.json").write_text("not-json", encoding="utf-8")
+            (raw_dir / f"{problem_id}_invariant.json").write_text(
+                json.dumps({"result": {}}),
+                encoding="utf-8",
+            )
+
+            def successful_result(_client, problem, dimension_name, _rate_limiter, _logger, temperature=0.4):
+                return {
+                    "problem_id": problem["problem_id"],
+                    "source": problem.get("source", ""),
+                    "dimension": dimension_name,
+                    "result": {"retried": True},
+                    "status": "success",
+                }
+
+            with mock.patch("extract.extract_single_dimension", side_effect=successful_result) as extract_mock:
+                extract_all_problems(
+                    client=FakeClient({}),
+                    problems=[{"problem_id": problem_id, "source": "codeforces"}],
+                    output_dir=output_dir,
+                    resume=True,
+                    logger=logging.getLogger("extract-resume-test"),
+                    temperature=0.0,
+                )
+
+            retried_dimensions = [call.args[2] for call in extract_mock.call_args_list]
+            self.assertEqual(
+                retried_dimensions,
+                ["core_constraints", "objective", "invariant"],
+            )
+            kept = json.loads(
+                (raw_dir / f"{problem_id}_input_structure.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(kept["result"], {"kept": True})
+            for dimension in retried_dimensions:
+                payload = json.loads(
+                    (raw_dir / f"{problem_id}_{dimension}.json").read_text(encoding="utf-8")
+                )
+                self.assertEqual(payload["status"], "success")
+                self.assertEqual(payload["result"], {"retried": True})
 
 
 class QwenClientResponseValidationTests(unittest.TestCase):

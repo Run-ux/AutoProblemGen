@@ -32,7 +32,10 @@ from orchestrator import (
     WorkflowConfig,
     WorkflowError,
     _VERIFICATION_ENV_CHECK_CACHE,
+    _can_skip_previous_failure,
     _ensure_verification_python_environment,
+    _http_402_failure_stages,
+    _resume_decision,
     run_workflow,
 )
 from runtime_config import (
@@ -285,6 +288,7 @@ class FakeCommandRunner:
                         "dimension": dimension,
                         "status": status,
                         "result": self._dimension_result(dimension),
+                        "error": "fake extraction failure" if status == "failed" else "",
                     },
                 )
 
@@ -620,6 +624,125 @@ class CliTests(unittest.TestCase):
 
 
 class OrchestratorTests(unittest.TestCase):
+    def _historical_failure(self, **overrides: Any) -> dict[str, Any]:
+        problem = {
+            "problem_id": "A",
+            "status": "generation_failed",
+            "tuple": {},
+            "generation": {},
+            "previous_input_sha256": "same-hash",
+            "input_sha256": "same-hash",
+        }
+        problem.update(overrides)
+        return problem
+
+    def test_skip_previous_failures_retries_http_402_from_all_summary_stages(self) -> None:
+        cases = [
+            (
+                "generation",
+                self._historical_failure(
+                    generation={"error_reason": "HTTP Error 402: Payment Required"}
+                ),
+                "题面生成",
+            ),
+            (
+                "verification",
+                self._historical_failure(
+                    status="verification_failed",
+                    generation={"verification_error": "HTTP 402 Payment Required"},
+                ),
+                "验证",
+            ),
+            (
+                "tuple",
+                self._historical_failure(
+                    status="skipped_before_generation",
+                    tuple={
+                        "dimension_errors": {
+                            "objective": "HTTPError: HTTP Error 402: Payment Required"
+                        }
+                    },
+                ),
+                "四元组抽取",
+            ),
+        ]
+
+        for name, problem, expected_stage in cases:
+            with self.subTest(name=name):
+                self.assertFalse(_can_skip_previous_failure(problem))
+                self.assertEqual(_http_402_failure_stages(problem), [expected_stage])
+                decision = _resume_decision(problem)
+                self.assertIn("HTTP 402 Payment Required", decision)
+                self.assertIn(expected_stage, decision)
+
+    def test_skip_previous_failures_keeps_other_http_errors_skippable(self) -> None:
+        for error in (
+            "HTTP Error 429: Too Many Requests",
+            "HTTP Error 500: Internal Server Error",
+            "Payment Required without status code",
+            "HTTP Error 402 without reason phrase",
+        ):
+            with self.subTest(error=error):
+                problem = self._historical_failure(generation={"error_reason": error})
+                self.assertTrue(_can_skip_previous_failure(problem))
+                self.assertEqual(_http_402_failure_stages(problem), [])
+
+    def test_skip_previous_failures_detects_http_402_from_legacy_tuple_raw(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            raw_dir = Path(tempdir)
+            _write_json(
+                raw_dir / "A_objective.json",
+                {
+                    "problem_id": "A",
+                    "dimension": "objective",
+                    "status": "failed",
+                    "error": "调用失败：HTTP Error 402: Payment Required",
+                },
+            )
+            problem = self._historical_failure(status="skipped_before_generation")
+
+            self.assertFalse(_can_skip_previous_failure(problem, raw_dir))
+            self.assertEqual(_http_402_failure_stages(problem, raw_dir), ["四元组抽取"])
+
+    def test_skip_previous_failures_reprocesses_generation_http_402_history(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            input_path = temp / "A.json"
+            _make_input(input_path)
+            first = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=FakeCommandRunner(
+                    quality_status="revise_quality",
+                    stop_reason="reached_requested_rounds",
+                ),
+                progress_writer=lambda _: None,
+            )
+            summary_path = Path(first["paths"]["summary"])
+            historical = json.loads(summary_path.read_text(encoding="utf-8"))
+            historical_problem = historical["problems"][0]
+            historical_problem["status"] = "generation_failed"
+            historical_problem["generation"] = {
+                "error_reason": "调用 LLM 失败：HTTP Error 402: Payment Required"
+            }
+            _write_json(summary_path, historical)
+
+            progress: list[str] = []
+            runner = FakeCommandRunner()
+            second = run_workflow(
+                _make_workflow_config(input_path=input_path, output_root=temp / "out", run_id=None),
+                command_runner=runner,
+                progress_writer=progress.append,
+                skip_previous_failures=True,
+            )
+
+            problem = second["problems"][0]
+            self.assertEqual(problem["status"], "verified")
+            self.assertTrue(problem["processed_this_run"])
+            self.assertFalse(problem["skipped_this_run"])
+            self.assertGreater(len(runner.calls), 0)
+            self.assertIn("HTTP 402 Payment Required", problem["resume_decision"])
+            self.assertTrue(any("HTTP 402强制重试=1" in message for message in progress))
+
     def test_extract_failure_skips_generation(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp = Path(tempdir)
@@ -635,6 +758,10 @@ class OrchestratorTests(unittest.TestCase):
 
             self.assertEqual(summary["status"], "completed_with_failures")
             self.assertEqual(summary["problems"][0]["status"], "skipped_before_generation")
+            self.assertEqual(
+                summary["problems"][0]["tuple"]["dimension_errors"]["objective"],
+                "fake extraction failure",
+            )
             self.assertFalse(
                 any(Path(call["command"][1]).parent.name == "生成题面" for call in runner.calls)
             )
