@@ -18,6 +18,20 @@ class PromptingTests(unittest.TestCase):
         self.assertNotIn("changed_axes", combined)
         self.assertNotIn("standard_solution", combined)
 
+    def test_prompt_contains_single_turn_solution_contract(self) -> None:
+        artifact = generation_artifact()
+        system_prompt, user_prompt = build_prompts(artifact["generated_problem"])
+
+        combined = system_prompt + user_prompt
+        self.assertIn("solve(input_str: str) -> str", combined)
+        self.assertIn("只返回一份 Python 代码", combined)
+        self.assertIn("不要返回解释", combined)
+        self.assertIn("不要从真实 stdin 读取", combined)
+        self.assertIn("不要向 stdout 打印", combined)
+        self.assertIn("内部完成以下检查", combined)
+        self.assertIn("最大约束", combined)
+        self.assertIn("边界", system_prompt)
+
     def test_extracts_single_python_block(self) -> None:
         code = extract_and_validate_code("```python\ndef solve(input_str):\n    return 'ok'\n```")
         self.assertIn("def solve", code)

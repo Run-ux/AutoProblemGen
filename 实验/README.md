@@ -36,8 +36,9 @@ python D:\AutoProblemGen\实验\main.py build-manifest `
 
 ## 2. 配置模型
 
-复制 `models.example.json` 为自用配置文件。支持两种密钥来源：
+复制 `models.example.json` 为自用配置文件。支持三种密钥来源；直接填写 `api_key` 时优先使用该字段，未填写时保持原有 `api_key_env` 或 `config_file` 读取规则：
 
+- `api_key`：直接在 JSON 中填写密钥，运行时从当前模型配置读取。
 - `config_file`：读取现有 dotenv 文件中的 `API_KEY`、`BASE_URL`、`MODEL`、`TIMEOUT_SECONDS` 和 `MAX_RETRIES`。
 - `api_key_env`：从指定环境变量读取密钥，其他字段直接写在 JSON 中。
 
@@ -49,7 +50,9 @@ python D:\AutoProblemGen\实验\main.py build-manifest `
   "models": [
     {
       "id": "qwen-main",
-      "config_file": "../总流程/generation_llm.env",
+      "model": "qwen3.6-plus",
+      "base_url": "https://example.com/v1",
+      "api_key": "replace-with-api-key",
       "temperature": 0,
       "input_price_per_million": null,
       "output_price_per_million": null
@@ -58,7 +61,7 @@ python D:\AutoProblemGen\实验\main.py build-manifest `
 }
 ```
 
-配置指纹不包含 API Key，结果文件也不会保存 API Key。只有同时配置输入、输出每百万 token 单价时才计算美元成本。
+配置指纹不包含 API Key，结果文件也不会保存 API Key。若直接在 JSON 中填写真实密钥，应将自用配置文件保留在本地，避免提交到仓库。只有同时配置输入、输出每百万 token 单价时才计算美元成本。
 
 `concurrency` 默认为 `1`。提高并发前应确认各服务端限流策略；正式报告会记录实际并发和模型参数。
 
