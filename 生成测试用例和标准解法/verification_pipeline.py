@@ -104,6 +104,9 @@ STANDARD_DEBUG_PROMPT_FAILED_CASE_LIMIT = 10
 STANDARD_DEBUG_PROMPT_ANCHOR_LIMIT = 3
 STANDARD_DEBUG_DIFF_MAX_CHARS = 8_000
 STANDARD_DEBUG_RECENT_DIFF_COUNT = 2
+DEFAULT_RANDOM_TEST_INPUT_COUNT = 10
+DEFAULT_ADVERSARIAL_TEST_INPUT_COUNT = 10
+DEFAULT_SMALL_CHALLENGE_TEST_INPUT_COUNT = 10
 
 
 class VerificationError(RuntimeError):
@@ -143,6 +146,27 @@ class LLMContextLimits:
             max_llm_prompt_chars=int(getattr(value, "max_llm_prompt_chars", DEFAULT_MAX_LLM_PROMPT_CHARS)),
             llm_trace_max_text_chars=int(
                 getattr(value, "llm_trace_max_text_chars", DEFAULT_LLM_TRACE_MAX_TEXT_CHARS)
+            ),
+        )
+
+
+@dataclass(frozen=True)
+class TestGenerationConfig:
+    """控制基础测试输入来源的收集数量。"""
+
+    random_count: int = DEFAULT_RANDOM_TEST_INPUT_COUNT
+    adversarial_count: int = DEFAULT_ADVERSARIAL_TEST_INPUT_COUNT
+    small_challenge_count: int = DEFAULT_SMALL_CHALLENGE_TEST_INPUT_COUNT
+
+    @classmethod
+    def from_object(cls, value: Any | None) -> "TestGenerationConfig":
+        if value is None:
+            return cls()
+        return cls(
+            random_count=int(getattr(value, "random_count", DEFAULT_RANDOM_TEST_INPUT_COUNT)),
+            adversarial_count=int(getattr(value, "adversarial_count", DEFAULT_ADVERSARIAL_TEST_INPUT_COUNT)),
+            small_challenge_count=int(
+                getattr(value, "small_challenge_count", DEFAULT_SMALL_CHALLENGE_TEST_INPUT_COUNT)
             ),
         )
 
@@ -482,11 +506,12 @@ def _collect_generated_inputs_once(
     generator_code: str,
     validate_code: str,
     start_index: int,
+    count: int,
     execution_config: ExecutionConfig,
     context_limits: LLMContextLimits,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     cases: list[dict[str, Any]] = []
-    for local_index in range(1, 11):
+    for local_index in range(1, count + 1):
         result = run_generate_test_input(
             generator_code,
             timeout_seconds=execution_config.test_input_timeout_seconds,
@@ -610,6 +635,7 @@ def _collect_generated_inputs(
     source: str,
     payload: dict[str, Any],
     start_index: int,
+    count: int,
     execution_config: ExecutionConfig,
     context_limits: LLMContextLimits,
 ) -> dict[str, Any]:
@@ -621,6 +647,7 @@ def _collect_generated_inputs(
             generator_code=current_payload["generate_test_input_code"],
             validate_code=current_payload["validate_test_input_code"],
             start_index=start_index,
+            count=count,
             execution_config=execution_config,
             context_limits=context_limits,
         )
@@ -628,7 +655,7 @@ def _collect_generated_inputs(
             if repair_history:
                 _emit_progress(
                     f"[verification repair] {source} 测试输入修复循环结束；"
-                    f"累计修复 {len(repair_history)} 轮，重新收集 10 条输入通过。"
+                    f"累计修复 {len(repair_history)} 轮，重新收集 {count} 条输入通过。"
                 )
             return {
                 "payload": current_payload,
@@ -663,7 +690,7 @@ def _collect_generated_inputs(
             }
         )
         current_payload = repair
-        _emit_repair_progress(f"{source} 测试输入修复", repair_round, "完成，重新收集该来源 10 条输入。")
+        _emit_repair_progress(f"{source} 测试输入修复", repair_round, f"完成，重新收集该来源 {count} 条输入。")
 
 
 def _collect_small_challenge_inputs(
@@ -673,11 +700,12 @@ def _collect_small_challenge_inputs(
     initial_payload: dict[str, Any],
     validate_code: str,
     start_index: int,
+    count: int,
     execution_config: ExecutionConfig,
     context_limits: LLMContextLimits,
 ) -> list[dict[str, Any]]:
     cases: list[dict[str, Any]] = []
-    for local_index in range(1, 11):
+    for local_index in range(1, count + 1):
         if local_index == 1:
             payload = initial_payload
         else:
@@ -718,13 +746,15 @@ def collect_verified_test_inputs(
     client: ChatLLMClient,
     execution_config: ExecutionConfig,
     context_limits: LLMContextLimits,
+    test_generation_config: TestGenerationConfig | None = None,
 ) -> dict[str, Any]:
-    """收集 30 个已通过本地 validate 函数的合法输入。"""
+    """收集已通过本地 validate 函数的合法输入。"""
 
     test_inputs = generated_artifacts["test_inputs"]
     random_payload = test_inputs["random"]
     adversarial_payload = test_inputs["adversarial"]
     small_payload = test_inputs["small_challenge"]
+    active_generation_config = test_generation_config or TestGenerationConfig()
 
     cases: list[dict[str, Any]] = []
     repair_history: list[dict[str, Any]] = []
@@ -734,6 +764,7 @@ def collect_verified_test_inputs(
         source="random",
         payload=random_payload,
         start_index=1,
+        count=active_generation_config.random_count,
         execution_config=execution_config,
         context_limits=context_limits,
     )
@@ -747,7 +778,8 @@ def collect_verified_test_inputs(
         client=client,
         source="adversarial",
         payload=adversarial_payload,
-        start_index=11,
+        start_index=active_generation_config.random_count + 1,
+        count=active_generation_config.adversarial_count,
         execution_config=execution_config,
         context_limits=context_limits,
     )
@@ -761,7 +793,8 @@ def collect_verified_test_inputs(
             client=client,
             initial_payload=small_payload,
             validate_code=random_payload["validate_test_input_code"],
-            start_index=21,
+            start_index=active_generation_config.random_count + active_generation_config.adversarial_count + 1,
+            count=active_generation_config.small_challenge_count,
             execution_config=execution_config,
             context_limits=context_limits,
         )
@@ -771,11 +804,11 @@ def collect_verified_test_inputs(
         "cases": cases,
         "count": len(cases),
         "source_counts": {
-            "random": 10,
-            "adversarial": 10,
-            "small_challenge": 10,
+            "random": active_generation_config.random_count,
+            "adversarial": active_generation_config.adversarial_count,
+            "small_challenge": active_generation_config.small_challenge_count,
         },
-        "small_challenge_llm_calls_including_initial": 10,
+        "small_challenge_llm_calls_including_initial": active_generation_config.small_challenge_count,
         "test_input_repair_history": repair_history,
         "test_input_repair_iteration_count": len(repair_history),
     }
@@ -2600,6 +2633,7 @@ def generate_verified_artifacts(
     client: ChatLLMClient | None = None,
     execution_config: ExecutionConfig | None = None,
     context_limits: Any | None = None,
+    test_generation_config: Any | None = None,
 ) -> dict[str, Any]:
     """生成全部产物，并执行测试输入、暴力解法和 checker 验证闭环。"""
 
@@ -2608,6 +2642,7 @@ def generate_verified_artifacts(
         raise RuntimeError("ExecutionConfig 必须由总流程注入，子模块不再读取本地 .env。")
     active_execution_config = execution_config
     active_context_limits = LLMContextLimits.from_object(context_limits)
+    active_test_generation_config = TestGenerationConfig.from_object(test_generation_config)
     _emit_progress("[verification 2/7] Prompt 与 LLM 生成开始。")
     generated_artifacts = generate_all_artifacts(artifact, resolved_config, client=active_client)
     _emit_progress("[verification 2/7] Prompt 与 LLM 生成完成。")
@@ -2619,6 +2654,7 @@ def generate_verified_artifacts(
         active_client,
         active_execution_config,
         active_context_limits,
+        active_test_generation_config,
     )
     _emit_progress(
         f"[verification 4/7] 合法输入收集完成；count={verified_test_inputs['count']}。"
@@ -2752,6 +2788,11 @@ def generate_verified_artifacts(
                     "llm_case_max_count": active_context_limits.llm_case_max_count,
                     "max_llm_prompt_chars": active_context_limits.max_llm_prompt_chars,
                     "llm_trace_max_text_chars": active_context_limits.llm_trace_max_text_chars,
+                },
+                "test_generation_config": {
+                    "random_count": active_test_generation_config.random_count,
+                    "adversarial_count": active_test_generation_config.adversarial_count,
+                    "small_challenge_count": active_test_generation_config.small_challenge_count,
                 },
                 "verified_test_input_count": verified_test_inputs["count"],
                 "solved_case_count": bruteforce_verification["solved_case_count"],

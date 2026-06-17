@@ -61,7 +61,10 @@ class ModelConfig:
         model = str(payload.get("model") or file_values.get("MODEL") or "").strip()
         base_url = str(payload.get("base_url") or file_values.get("BASE_URL") or "").strip() or None
         api_key_env = str(payload.get("api_key_env") or "").strip()
-        api_key = os.environ.get(api_key_env, "") if api_key_env else file_values.get("API_KEY", "")
+        api_key = str(payload.get("api_key") or "").strip()
+        if not api_key:
+            api_key = os.environ.get(api_key_env, "") if api_key_env else file_values.get("API_KEY", "")
+            api_key = api_key.strip()
         if not model_id or not model or not api_key:
             raise ModelConfigError(f"模型 {model_id or '<unknown>'} 缺少 id、model 或 API Key。")
         max_retries = int(payload.get("max_retries", file_values.get("MAX_RETRIES", 3)))
