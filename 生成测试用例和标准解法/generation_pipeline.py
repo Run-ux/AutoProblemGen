@@ -266,6 +266,7 @@ def generate_verified_artifacts(
     client: ChatLLMClient | None = None,
     execution_config: Any | None = None,
     context_limits: Any | None = None,
+    test_generation_config: Any | None = None,
 ) -> dict[str, Any]:
     """生成全部产物，并执行测试输入、暴力解法和 checker 验证闭环。"""
 
@@ -280,4 +281,5 @@ def generate_verified_artifacts(
         client=client,
         execution_config=execution_config,
         context_limits=context_limits,
+        test_generation_config=test_generation_config,
     )
