@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_c36008528718",
+  "title": "constrained subsequence sum",
+  "description": "Given an integer array nums and an integer k, return the maximum sum of a non-empty subsequence of that array such that for every two consecutive integers in the subsequence, nums[i] and nums[j], where i < j, the condition j - i <= k is satisfied.\nA subsequence of an array is obtained by deleting some number of elements (can be zero) from the array, leaving the remaining elements in their original order.\n \nExample 1:\nInput: nums = [10,2,-10,5,20], k = 2\nOutput: 37\nExplanation: The subsequence is [10, 2, 5, 20].\n\nExample 2:\nInput: nums = [-1,-2,-3], k = 1\nOutput: -1\nExplanation: The subsequence must be non-empty, so we choose the largest number.\n\nExample 3:\nInput: nums = [10,-2,-10,-5,20], k = 2\nOutput: 23\nExplanation: The subsequence is [10, -2, -5, 20].\n\n \nConstraints:\n\n1 <= k <= nums.length <= 10^5\n-10^4 <= nums[i] <= 10^4",
+  "input": "",
+  "output": "",
+  "constraints": "1 <= k <= nums.length <= 10^5\n-10^4 <= nums[i] <= 10^4",
+  "source": "leetcode",
+  "standard_solution_code": "from collections import deque\n\nclass Solution:\n\n\tdef constrainedSubsetSum(self, nums, k):\n\t\t(N, queue) = (len(nums), deque())\n\t\tdp = [val for val in nums]\n\t\tfor (i, val) in enumerate(nums):\n\t\t\tif queue and i - queue[0] > k:\n\t\t\t\tqueue.popleft()\n\t\t\tif queue and dp[queue[0]] > 0:\n\t\t\t\tdp[i] += dp[queue[0]]\n\t\t\twhile queue and dp[i] >= dp[queue[-1]]:\n\t\t\t\tqueue.pop()\n\t\t\tqueue.append(i)\n\t\treturn max(dp)"
+}

@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_76a910cec03e",
+  "title": "3sum with multiplicity",
+  "description": "Given an integer array A, and an integer target, return the number of tuples i, j, k  such that i < j < k and A[i] + A[j] + A[k] == target.\nAs the answer can be very large, return it modulo 109 + 7.\n \nExample 1:\nInput: A = [1,1,2,2,3,3,4,4,5,5], target = 8\nOutput: 20\nExplanation: \nEnumerating by the values (A[i], A[j], A[k]):\n(1, 2, 5) occurs 8 times;\n(1, 3, 4) occurs 8 times;\n(2, 2, 4) occurs 2 times;\n(2, 3, 3) occurs 2 times.\n\nExample 2:\nInput: A = [1,1,2,2,2,2], target = 5\nOutput: 12\nExplanation: \nA[i] = 1, A[j] = A[k] = 2 occurs 12 times:\nWe choose one 1 from [1,1] in 2 ways,\nand two 2s from [2,2,2,2] in 6 ways.\n\n \nConstraints:\n\n3 <= A.length <= 3000\n0 <= A[i] <= 100\n0 <= target <= 300",
+  "input": "",
+  "output": "",
+  "constraints": "3 <= A.length <= 3000\n0 <= A[i] <= 100\n0 <= target <= 300",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef threeSumMulti(self, A: List[int], target: int) -> int:\n\t\tcounter = collections.Counter(A)\n\t\t(i, res, l, ckey) = (0, 0, len(counter), sorted(list(counter.keys())))\n\t\tif target % 3 == 0:\n\t\t\tres += math.comb(counter[target // 3], 3)\n\t\tfor i in range(l):\n\t\t\tni = ckey[i]\n\t\t\tnk = target - 2 * ni\n\t\t\tif ni != nk and nk >= 0:\n\t\t\t\tres += math.comb(counter[ni], 2) * counter[nk]\n\t\tfor i in range(l):\n\t\t\tfor j in range(i + 1, l):\n\t\t\t\t(ni, nj) = (ckey[i], ckey[j])\n\t\t\t\tnk = target - ni - nj\n\t\t\t\tif ni < nj < nk <= 100:\n\t\t\t\t\tres += counter[ni] * counter[nj] * counter[nk]\n\t\treturn res % (10 ** 9 + 7)"
+}
