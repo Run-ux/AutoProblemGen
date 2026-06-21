@@ -37,6 +37,28 @@ python D:\AutoProblemGen\实验_消融实验\main.py run `
   --limit 1
 ```
 
+同一个 manifest 可以按 1 基闭区间拆分到多个终端并行运行；多个终端使用同一个 `--run-id` 时，最终仍用同一个 `report` 汇总：
+
+```powershell
+# 终端 1：第 1-20 题
+python D:\AutoProblemGen\实验_消融实验\main.py run `
+  --manifest D:\AutoProblemGen\实验_消融实验\manifests\testcase_eval_80.json `
+  --output-root D:\AutoProblemGen\实验_消融实验\output `
+  --run-id testcase_eval_80 `
+  --workflow-config D:\AutoProblemGen\总流程\workflow.env `
+  --start-index 1 `
+  --end-index 20
+
+# 终端 2：第 21-40 题
+python D:\AutoProblemGen\实验_消融实验\main.py run `
+  --manifest D:\AutoProblemGen\实验_消融实验\manifests\testcase_eval_80.json `
+  --output-root D:\AutoProblemGen\实验_消融实验\output `
+  --run-id testcase_eval_80 `
+  --workflow-config D:\AutoProblemGen\总流程\workflow.env `
+  --start-index 21 `
+  --end-index 40
+```
+
 汇总报告：
 
 ```powershell
@@ -50,3 +72,4 @@ python D:\AutoProblemGen\实验_消融实验\main.py report `
 - manifest 默认每题至少需要 3 个正确提交和 50 个错误提交，并固定选取最多 3 个正确提交、50 个错误提交进入评测。
 - TestCase-Eval 正确提交不参与测试输出构造；输出由本项目生成的暴力解、标准解和大规模真值流程产生。
 - `size_control` 用于控制“用例数量增加”这一混杂因素，判断 targeted 输入是否带来额外覆盖。
+- 并行分片运行时，`run_metadata.json` 和 `run_summary.json` 可能被不同终端覆盖；正式结果以 `report` 扫描到的各题 `result.json` 为准。

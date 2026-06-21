@@ -13,6 +13,7 @@ import pandas as pd
 from .config import VERIFICATION_DIR, load_runtime_config
 from .manifest import load_manifest
 from .problem_adapter import artifact_from_problem, load_problem_rows, write_tuple_input
+from .problem_selection import select_manifest_problem_range
 from .submission_execution import evaluate_submission_on_cases
 from .suites import build_suites
 from .tuple_extraction import extract_tuple_snapshot
@@ -153,9 +154,17 @@ def run_ablation(
     run_id: str,
     workflow_config_path: Path | None = None,
     limit: int | None = None,
+    start_index: int | None = None,
+    end_index: int | None = None,
     resume: bool = True,
 ) -> dict[str, Any]:
     manifest = load_manifest(manifest_path)
+    selected_problems, selected_range = select_manifest_problem_range(
+        manifest["problems"],
+        limit=limit,
+        start_index=start_index,
+        end_index=end_index,
+    )
     runtime = load_runtime_config(workflow_config_path)
     run_dir = output_root.resolve() / safe_name(run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -167,12 +176,13 @@ def run_ablation(
             "manifest_path": str(manifest_path.resolve()),
             "manifest_content_fingerprint": manifest.get("content_fingerprint", ""),
             "problem_count": manifest["problem_count"],
+            "selected_problem_range": selected_range,
             "test_generation_config": {"random_count": 20, "adversarial_count": 20, "small_challenge_count": 10},
             "workflow_config_path": str((workflow_config_path or Path("D:/AutoProblemGen/总流程/workflow.env")).resolve()),
         },
     )
 
-    problems = manifest["problems"][: limit or None]
+    problems = [problem for _, problem in selected_problems]
     problem_rows = load_problem_rows(manifest["problem_parquet_url"])
     selected_submission_ids = {
         int(submission_id)
@@ -182,8 +192,12 @@ def run_ablation(
     submissions_by_id = _submission_rows(manifest["submission_parquet_url"], selected_submission_ids)
 
     outcomes: list[dict[str, Any]] = []
-    for index, problem in enumerate(problems, start=1):
-        print(f"[ablation {index}/{len(problems)}] {problem['problem_id']} {problem.get('title', '')}", flush=True)
+    for shard_index, (manifest_index, problem) in enumerate(selected_problems, start=1):
+        print(
+            f"[ablation {manifest_index}/{manifest['problem_count']} shard {shard_index}/{len(selected_problems)}] "
+            f"{problem['problem_id']} {problem.get('title', '')}",
+            flush=True,
+        )
         outcomes.append(
             _evaluate_problem(
                 problem=problem,
@@ -194,10 +208,14 @@ def run_ablation(
                 resume=resume,
             )
         )
-    write_json(run_dir / "run_summary.json", {"run_dir": str(run_dir), "outcomes": outcomes})
+    write_json(
+        run_dir / "run_summary.json",
+        {"run_dir": str(run_dir), "selected_problem_range": selected_range, "outcomes": outcomes},
+    )
     return {
         "run_dir": str(run_dir),
         "problem_count": len(problems),
+        "selected_problem_range": selected_range,
         "completed_count": sum(item.get("status") == "completed" for item in outcomes),
         "failed_count": sum(item.get("status") == "failed" for item in outcomes),
     }

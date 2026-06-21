@@ -3,13 +3,17 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
 
 import path_setup  # noqa: F401
+from main import main as cli_main
 from ablation_core.manifest import build_manifest
+from ablation_core.problem_selection import select_manifest_problem_range
 from ablation_core.reporting import generate_report
 from ablation_core.suites import baseline_cases, build_suites, ours_cases
 from ablation_core.utils import write_json
@@ -108,6 +112,76 @@ class ManifestTests(unittest.TestCase):
             for problem in manifest["problems"]:
                 self.assertEqual(problem["selected_right_submission_count"], 3)
                 self.assertEqual(problem["selected_wrong_submission_count"], 50)
+
+
+class ProblemSelectionTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.problems = [{"problem_id": f"p{index}"} for index in range(1, 5)]
+
+    def _ids(self, selected: list[tuple[int, dict]]) -> list[str]:
+        return [problem["problem_id"] for _, problem in selected]
+
+    def _indexes(self, selected: list[tuple[int, dict]]) -> list[int]:
+        return [index for index, _ in selected]
+
+    def test_selects_closed_one_based_range_from_start(self) -> None:
+        selected, metadata = select_manifest_problem_range(self.problems, start_index=1, end_index=2)
+
+        self.assertEqual(self._ids(selected), ["p1", "p2"])
+        self.assertEqual(self._indexes(selected), [1, 2])
+        self.assertEqual(metadata["selected_problem_count"], 2)
+
+    def test_selects_closed_one_based_middle_range(self) -> None:
+        selected, _ = select_manifest_problem_range(self.problems, start_index=2, end_index=3)
+
+        self.assertEqual(self._ids(selected), ["p2", "p3"])
+        self.assertEqual(self._indexes(selected), [2, 3])
+
+    def test_start_index_without_end_runs_to_manifest_end(self) -> None:
+        selected, metadata = select_manifest_problem_range(self.problems, start_index=3)
+
+        self.assertEqual(self._ids(selected), ["p3", "p4"])
+        self.assertEqual(metadata["start_index"], 3)
+        self.assertEqual(metadata["end_index"], 4)
+
+    def test_limit_keeps_existing_prefix_behavior(self) -> None:
+        selected, metadata = select_manifest_problem_range(self.problems, limit=1)
+
+        self.assertEqual(self._ids(selected), ["p1"])
+        self.assertEqual(metadata["mode"], "limit")
+
+    def test_rejects_invalid_range_arguments(self) -> None:
+        with self.assertRaises(ValueError):
+            select_manifest_problem_range(self.problems, start_index=0)
+        with self.assertRaises(ValueError):
+            select_manifest_problem_range(self.problems, start_index=3, end_index=2)
+        with self.assertRaises(ValueError):
+            select_manifest_problem_range(self.problems, start_index=1, end_index=5)
+        with self.assertRaises(ValueError):
+            select_manifest_problem_range(self.problems, limit=1, start_index=1)
+
+
+class CliTests(unittest.TestCase):
+    def test_limit_cannot_mix_with_range_args(self) -> None:
+        with redirect_stderr(StringIO()):
+            with self.assertRaises(SystemExit) as context:
+                cli_main(
+                    [
+                        "run",
+                        "--manifest",
+                        "manifest.json",
+                        "--output-root",
+                        "output",
+                        "--run-id",
+                        "testcase_eval_80",
+                        "--limit",
+                        "1",
+                        "--start-index",
+                        "1",
+                    ]
+                )
+
+        self.assertEqual(context.exception.code, 2)
 
 
 class SuiteTests(unittest.TestCase):
