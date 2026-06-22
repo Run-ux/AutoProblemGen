@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_ca5973fbf635",
+  "title": "regular expression matching",
+  "description": "Given an input string (s) and a pattern (p), implement regular expression matching with support for '.' and '*'.\n\n\n'.' Matches any single character.\n'*' Matches zero or more of the preceding element.\n\n\nThe matching should cover the entire input string (not partial).\n\nNote:\n\n\n       s could be empty and contains only lowercase letters a-z.\n       p could be empty and contains only lowercase letters a-z, and characters like . or *.\n\n\nExample 1:\n\n\nInput:\ns = \"aa\"\np = \"a\"\nOutput: false\nExplanation: \"a\" does not match the entire string \"aa\".\n\n\nExample 2:\n\n\nInput:\ns = \"aa\"\np = \"a*\"\nOutput: true\nExplanation: '*' means zero or more of the precedeng element, 'a'. Therefore, by repeating 'a' once, it becomes \"aa\".\n\n\nExample 3:\n\n\nInput:\ns = \"ab\"\np = \".*\"\nOutput: true\nExplanation: \".*\" means \"zero or more (*) of any character (.)\".\n\n\nExample 4:\n\n\nInput:\ns = \"aab\"\np = \"c*a*b\"\nOutput: true\nExplanation: c can be repeated 0 times, a can be repeated 1 time. Therefore it matches \"aab\".\n\n\nExample 5:\n\n\nInput:\ns = \"mississippi\"\np = \"mis*is*p*.\"\nOutput: false",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\tcache = {}\n\n\tdef isMatch(self, s, p):\n\t\tif (s, p) in self.cache:\n\t\t\treturn self.cache[s, p]\n\t\tif not p:\n\t\t\treturn not s\n\t\tif p[-1] == '*':\n\t\t\tif self.isMatch(s, p[:-2]):\n\t\t\t\tself.cache[s, p] = True\n\t\t\t\treturn True\n\t\t\tif s and (s[-1] == p[-2] or p[-2] == '.') and self.isMatch(s[:-1], p):\n\t\t\t\tself.cache[s, p] = True\n\t\t\t\treturn True\n\t\tif s and (p[-1] == s[-1] or p[-1] == '.') and self.isMatch(s[:-1], p[:-1]):\n\t\t\tself.cache[s, p] = True\n\t\t\treturn True\n\t\tself.cache[s, p] = False\n\t\treturn False"
+}

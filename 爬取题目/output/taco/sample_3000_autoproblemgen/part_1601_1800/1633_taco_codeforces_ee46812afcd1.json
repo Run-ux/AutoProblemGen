@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_ee46812afcd1",
+  "title": "C",
+  "description": "This is yet another problem dealing with regular bracket sequences.\n\nWe should remind you that a bracket sequence is called regular, if by inserting «+» and «1» into it we can get a correct mathematical expression. For example, sequences «(())()», «()» and «(()(()))» are regular, while «)(», «(()» and «(()))(» are not. \n\nYou are given a string of «(» and «)» characters. You are to find its longest substring that is a regular bracket sequence. You are to find the number of such substrings as well.\n\nInput\n\nThe first line of the input file contains a non-empty string, consisting of «(» and «)» characters. Its length does not exceed 106.\n\nOutput\n\nPrint the length of the longest substring that is a regular bracket sequence, and the number of such substrings. If there are no such substrings, write the only line containing \"0 1\".\n\nExamples\n\nInput\n\n)((())))(()())\n\n\nOutput\n\n6 2\n\n\nInput\n\n))(\n\n\nOutput\n\n0 1",
+  "input": "The first line of the input file contains a non-empty string, consisting of «(» and «)» characters. Its length does not exceed 106.",
+  "output": "Print the length of the longest substring that is a regular bracket sequence, and the number of such substrings. If there are no such substrings, write the only line containing \"0 1\".",
+  "constraints": "time limit: 2.0 seconds\nmemory limit: 256.0 megabytes",
+  "source": "codeforces",
+  "standard_solution_code": "string = input()\nn = len(string)\nstack = []\nmapping = [0] * n\nfor (idx, char) in enumerate(string):\n\tif char == '(':\n\t\tstack.append(idx)\n\telif char == ')' and stack:\n\t\tmapping[stack.pop()] = idx\ni = 0\nmx = 0\ncnt = 1\ntmp_max = 0\nprev_join_idx = 0\nwhile i < n:\n\tif mapping[i]:\n\t\tcurr_len = mapping[i] - i + 1\n\t\tif i == prev_join_idx + 1:\n\t\t\ttmp_max += curr_len\n\t\telse:\n\t\t\ttmp_max = curr_len\n\t\tif tmp_max > mx:\n\t\t\tmx = tmp_max\n\t\t\tcnt = 1\n\t\telif tmp_max == mx:\n\t\t\tcnt += 1\n\t\tprev_join_idx = mapping[i]\n\t\ti = mapping[i] + 1\n\telse:\n\t\ti += 1\nprint(mx, cnt)"
+}

@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from finiteness_verification.prompts import prompt_normalize
-from finiteness_verification.qwen_client import QwenClient, QwenConfig
+from finiteness_verification.llm_client import LLMClient
 
 
 DIMENSIONS = [
@@ -267,7 +267,7 @@ def apply_mapping_to_rounds(
 
 
 def normalize_labels_with_llm(
-    client: QwenClient,
+    client: LLMClient,
     registry: LabelRegistry,
     dimension: str,
     raw_labels: List[str],
@@ -338,7 +338,7 @@ def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 
 
 def normalize_labels_with_embedding(
-    client: QwenClient,
+    client: LLMClient,
     registry: LabelRegistry,
     raw_labels: List[str],
     similarity_threshold: float,
@@ -443,9 +443,9 @@ def normalize_all_problems(
         registries[dim] = reg
 
     try:
-        client = QwenClient(QwenConfig(model="qwen-flash"))
+        client = LLMClient()
     except RuntimeError as e:
-        logger.error(f"Qwen 客户端初始化失败：{e}")
+        logger.error(f"LLM 客户端初始化失败：{e}")
         return
 
     processed = 0

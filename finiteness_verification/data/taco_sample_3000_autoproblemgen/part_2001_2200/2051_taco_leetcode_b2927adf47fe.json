@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_b2927adf47fe",
+  "title": "minimum cost to hire k workers",
+  "description": "There are N workers.  The i-th worker has a quality[i] and a minimum wage expectation wage[i].\nNow we want to hire exactly K workers to form a paid group.  When hiring a group of K workers, we must pay them according to the following rules:\n\nEvery worker in the paid group should be paid in the ratio of their quality compared to other workers in the paid group.\nEvery worker in the paid group must be paid at least their minimum wage expectation.\n\nReturn the least amount of money needed to form a paid group satisfying the above conditions.\n \n\n\n\nExample 1:\nInput: quality = [10,20,5], wage = [70,50,30], K = 2\nOutput: 105.00000\nExplanation: We pay 70 to 0-th worker and 35 to 2-th worker.\n\n\nExample 2:\nInput: quality = [3,1,10,10,1], wage = [4,8,2,2,7], K = 3\nOutput: 30.66667\nExplanation: We pay 4 to 0-th worker, 13.33333 to 2-th and 3-th workers seperately. \n\n \nNote:\n\n1 <= K <= N <= 10000, where N = quality.length = wage.length\n1 <= quality[i] <= 10000\n1 <= wage[i] <= 10000\nAnswers within 10^-5 of the correct answer will be considered correct.",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "from typing import *\nfrom heapq import heappop, heappush\n\nclass Solution:\n\n\tdef mincostToHireWorkers(self, quality: List[int], wage: List[int], K: int) -> float:\n\t\tN = len(quality)\n\t\theap_quality = []\n\t\tworkers = [i for i in range(N)]\n\t\tworkers = sorted(workers, key=lambda x: wage[x] / quality[x])\n\t\tsum_quality = 0\n\t\tfor i in range(K):\n\t\t\theappush(heap_quality, -quality[workers[i]])\n\t\t\tsum_quality += quality[workers[i]]\n\t\tans = sum_quality * (wage[workers[K - 1]] / quality[workers[K - 1]])\n\t\tfor i in range(K, N):\n\t\t\theappush(heap_quality, -quality[workers[i]])\n\t\t\tsum_quality += quality[workers[i]]\n\t\t\tsum_quality += heappop(heap_quality)\n\t\t\tans = min(ans, sum_quality * (wage[workers[i]] / quality[workers[i]]))\n\t\treturn ans"
+}

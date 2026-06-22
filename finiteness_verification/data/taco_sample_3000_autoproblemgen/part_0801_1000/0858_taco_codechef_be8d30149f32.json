@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codechef_be8d30149f32",
+  "title": "MINSUBAR",
+  "description": "You are given a sequence of n integers a1, a2, ..., an and an integer d.\nFind the length of the shortest non-empty contiguous subsequence with sum of elements at least d. Formally, you should find the smallest positive integer k with the following property: there is an integer s (1 ≤ s ≤ N-k+1) such that as + as+1 + ... + as+k-1 ≥ d.\n\n-----Input-----\n\n- The first line of the input contains a single integer T denoting the number of test cases. The description of T test cases follows.\n- The first line of each test case contains two space-separated integers n and d.\n- The second line contains n space-separated integers a1, a2, ..., an.\n\n-----Output-----\nFor each test case, print a single line containing one integer — the length of the shortest contiguous subsequence with sum of elements ≥ d. If there is no such subsequence, print -1 instead.\n\n-----Constraints-----\n- 1 ≤ T ≤ 105\n- 1 ≤ n ≤ 105\n- -109 ≤ d ≤ 109\n- -104 ≤ ai ≤ 104\n- 1 ≤ sum of n over all test cases ≤ 2 · 105\n\n-----Example-----\nInput:\n\n2\n5 5\n1 2 3 1 -5\n5 1\n1 2 3 1 -5\n\nOutput:\n\n2\n1",
+  "input": "2\n5 5\n1 2 3 1 -5\n5 1\n1 2 3 1 -5",
+  "output": "2\n1",
+  "constraints": "time limit: 1 seconds\nmemory limit: 50000 bytes",
+  "source": "codechef",
+  "standard_solution_code": "T = int(input())\nfor test in range(T):\n\t(n, d) = [int(v) for v in input().split()]\n\tA = [int(v) for v in input().split()]\n\tif d <= 0:\n\t\tif max(A) >= d:\n\t\t\tprint(1)\n\t\telse:\n\t\t\tprint(-1)\n\t\tcontinue\n\ttot = 0\n\thist = [(0, 0)]\n\tbest = float('inf')\n\tind = -1\n\tfor i in range(n):\n\t\twhile hist and tot <= hist[-1][0]:\n\t\t\thist.pop()\n\t\t\tif ind == len(hist):\n\t\t\t\tind -= 1\n\t\thist.append((tot, i))\n\t\ttot += A[i]\n\t\twhile ind < len(hist) - 1 and hist[ind + 1][0] <= tot - d:\n\t\t\tind += 1\n\t\tif ind > -1 and best > i - hist[ind][1] + 1:\n\t\t\tbest = i - hist[ind][-1] + 1\n\tif best < float('inf'):\n\t\tprint(best)\n\telse:\n\t\tprint(-1)"
+}

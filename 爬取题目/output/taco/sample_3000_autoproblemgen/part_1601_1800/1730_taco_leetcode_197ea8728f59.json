@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_197ea8728f59",
+  "title": "palindrome partitioning iii",
+  "description": "You are given a string s containing lowercase letters and an integer k. You need to :\n\nFirst, change some characters of s to other lowercase English letters.\nThen divide s into k non-empty disjoint substrings such that each substring is palindrome.\n\nReturn the minimal number of characters that you need to change to divide the string.\n \nExample 1:\nInput: s = \"abc\", k = 2\nOutput: 1\nExplanation: You can split the string into \"ab\" and \"c\", and change 1 character in \"ab\" to make it palindrome.\n\nExample 2:\nInput: s = \"aabbc\", k = 3\nOutput: 0\nExplanation: You can split the string into \"aa\", \"bb\" and \"c\", all of them are palindrome.\nExample 3:\nInput: s = \"leetcode\", k = 8\nOutput: 0\n\n \nConstraints:\n\n1 <= k <= s.length <= 100.\ns only contains lowercase English letters.",
+  "input": "",
+  "output": "",
+  "constraints": "1 <= k <= s.length <= 100.\ns only contains lowercase English letters.",
+  "source": "leetcode",
+  "standard_solution_code": "from functools import lru_cache\n\nclass Solution:\n\n\tdef palindromePartition(self, s: str, k: int) -> int:\n\t\tn = len(s)\n\t\tif n == k:\n\t\t\treturn 0\n\n\t\t@lru_cache(None)\n\t\tdef cnt(left, right):\n\t\t\tif left >= right:\n\t\t\t\treturn 0\n\t\t\treturn cnt(left + 1, right - 1) + (s[left] != s[right])\n\n\t\t@lru_cache(None)\n\t\tdef dp(length, partition):\n\t\t\tif partition == length:\n\t\t\t\treturn 0\n\t\t\tif partition == 1:\n\t\t\t\treturn cnt(0, length - 1)\n\t\t\treturn min((dp(prelength, partition - 1) + cnt(prelength, length - 1) for prelength in range(partition - 1, length)))\n\t\treturn dp(n, k)"
+}

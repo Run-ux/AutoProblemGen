@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_hackerrank_8ac1110fdde4",
+  "title": "problem",
+  "description": "Given a matrix you need to find the submatrix with the largest number of elements, where the GCD (Greatest Common Divisor) of its elements is greater than one. A submatrix of the matrix is a sub-section composed of contiguous rows and columns of the original matrix.\n\nInput\nTwo numbers n,m in the first line. Followed by n lines with m numbers in each line.\n\nConstraints  \n\n1<=N,M<=200\n\n1<=numbers<=10000\n\nOutput\nJust a largest area where GCD is greater than 1.\n\nSample Input  \n\n3 3\n2 6 8\n4 8 3\n6 9 4\n\nSample Output  \n\n4\n\nIf you observe the following submatrix:  \n\n2 6  \n4 8  \n\nThe GCD is 2.\nThere is no matrix larger than this with a GCD > 1.",
+  "input": "Two numbers n,m in the first line. Followed by n lines with m numbers in each line.",
+  "output": "Just a largest area where GCD is greater than 1.",
+  "constraints": "1<=N,M<=200\n\n1<=numbers<=10000",
+  "source": "hackerrank",
+  "standard_solution_code": "from sys import stderr\n\ndef main():\n\tprint(solve(readcase()))\n\ndef readcase():\n\t(n, m) = readints()\n\tmtx = []\n\tfor _ in range(n):\n\t\tmtx.append(readints())\n\t\tassert len(mtx[0]) == m\n\treturn mtx\n\ndef readints():\n\treturn [int(f) for f in input().split()]\n\ndef solve(m):\n\tbest = 0\n\t(nrows, ncols) = (len(m), len(m[0]))\n\tfor irow in range(nrows):\n\t\tfor icol in range(ncols):\n\t\t\tupperrow = [m[irow][icol]] * (ncols - icol)\n\t\t\tcur = m[irow][icol]\n\t\t\tfor jrow in range(irow, nrows):\n\t\t\t\tprev = m[irow][icol]\n\t\t\t\tgoodcols = 0\n\t\t\t\tfor jcol in range(icol, ncols):\n\t\t\t\t\tprev = gcd(prev, gcd(upperrow[jcol - icol], m[jrow][jcol]))\n\t\t\t\t\tif prev == 1:\n\t\t\t\t\t\tupperrow[jcol - icol:] = [1] * (ncols - jcol)\n\t\t\t\t\t\tbreak\n\t\t\t\t\tgoodcols += 1\n\t\t\t\t\tupperrow[jcol - icol] = prev\n\t\t\t\tif best >= (nrows - irow) * goodcols:\n\t\t\t\t\tbreak\n\t\t\t\tbest = max(best, (jrow - irow + 1) * goodcols)\n\treturn best\n\ndef gcd(a, b):\n\t(a, b) = (max(a, b), min(a, b))\n\twhile b != 0:\n\t\t(a, b) = (b, a % b)\n\treturn a\nmain()"
+}

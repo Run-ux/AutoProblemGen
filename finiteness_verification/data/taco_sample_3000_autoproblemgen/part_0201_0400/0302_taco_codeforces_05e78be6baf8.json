@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_05e78be6baf8",
+  "title": "D",
+  "description": "You are given $n$ positive integers $a_1, \\ldots, a_n$, and an integer $k \\geq 2$. Count the number of pairs $i, j$ such that $1 \\leq i < j \\leq n$, and there exists an integer $x$ such that $a_i \\cdot a_j = x^k$.\n\n\n-----Input-----\n\nThe first line contains two integers $n$ and $k$ ($2 \\leq n \\leq 10^5$, $2 \\leq k \\leq 100$).\n\nThe second line contains $n$ integers $a_1, \\ldots, a_n$ ($1 \\leq a_i \\leq 10^5$).\n\n\n-----Output-----\n\nPrint a single integer — the number of suitable pairs.\n\n\n-----Example-----\nInput\n6 3\n1 3 9 8 24 1\n\nOutput\n5\n\n\n\n-----Note-----\n\nIn the sample case, the suitable pairs are: $a_1 \\cdot a_4 = 8 = 2^3$; $a_1 \\cdot a_6 = 1 = 1^3$; $a_2 \\cdot a_3 = 27 = 3^3$; $a_3 \\cdot a_5 = 216 = 6^3$; $a_4 \\cdot a_6 = 8 = 2^3$.",
+  "input": "6 3\n1 3 9 8 24 1",
+  "output": "5\n\n\n\n-----Note-----\n\nIn the sample case, the suitable pairs are: $a_1 \\cdot a_4 = 8 = 2^3$; $a_1 \\cdot a_6 = 1 = 1^3$; $a_2 \\cdot a_3 = 27 = 3^3$; $a_3 \\cdot a_5 = 216 = 6^3$; $a_4 \\cdot a_6 = 8 = 2^3$.",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "from collections import defaultdict\n(n, k) = map(int, input().split())\na = list(map(int, input().split()))\nn = int(max(a) ** 0.5)\nmark = [True] * (n + 1)\nprime = []\nfor i in range(2, n + 1):\n\tif mark[i]:\n\t\tfor j in range(i, n + 1, i):\n\t\t\tmark[j] = False\n\t\tprime.append(i)\nd = defaultdict(int)\n(ans, count) = (0, 0)\nfor i in a:\n\t(t, t1) = ((), ())\n\tfor j in prime:\n\t\tif i == 1:\n\t\t\tbreak\n\t\tif i % j == 0:\n\t\t\tcount = 0\n\t\t\twhile i % j == 0:\n\t\t\t\ti //= j\n\t\t\t\tcount += 1\n\t\t\tz = count % k\n\t\t\tif z:\n\t\t\t\tt += (j, z)\n\t\t\t\tt1 += (j, k - z)\n\tif i > 1:\n\t\tt += (i, 1)\n\t\tt1 += (i, k - 1)\n\tans += d[t1]\n\td[t] += 1\nprint(ans)"
+}

@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_03d39fdbb35f",
+  "title": "shortest subarray with sum at least k",
+  "description": "Return the length of the shortest, non-empty, contiguous subarray of A with sum at least K.\nIf there is no non-empty subarray with sum at least K, return -1.\n \n\n\n\nExample 1:\nInput: A = [1], K = 1\nOutput: 1\n\n\nExample 2:\nInput: A = [1,2], K = 4\nOutput: -1\n\n\nExample 3:\nInput: A = [2,-1,2], K = 3\nOutput: 3\n\n \nNote:\n\n1 <= A.length <= 50000\n-10 ^ 5 <= A[i] <= 10 ^ 5\n1 <= K <= 10 ^ 9",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "import collections\n\nclass Solution:\n\n\tdef shortestSubarray(self, A: List[int], K: int) -> int:\n\t\tcum_sum = 0\n\t\tqueue = collections.deque([(-1, 0)])\n\t\tresult = len(A) + 1\n\t\tfor (i, v) in enumerate(A):\n\t\t\tcum_sum += v\n\t\t\tif v > 0:\n\t\t\t\twhile queue and cum_sum - queue[0][1] >= K:\n\t\t\t\t\te = queue.popleft()\n\t\t\t\t\tresult = min(result, i - e[0])\n\t\t\telse:\n\t\t\t\twhile queue and cum_sum <= queue[-1][1]:\n\t\t\t\t\te = queue.pop()\n\t\t\tqueue.append((i, cum_sum))\n\t\treturn result if result <= len(A) else -1"
+}

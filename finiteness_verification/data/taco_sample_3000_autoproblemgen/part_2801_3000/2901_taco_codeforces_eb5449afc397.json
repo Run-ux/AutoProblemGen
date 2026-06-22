@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_eb5449afc397",
+  "title": "C",
+  "description": "You are given two positive integer numbers a and b. Permute (change order) of the digits of a to construct maximal number not exceeding b. No number in input and/or output can start with the digit 0.\n\nIt is allowed to leave a as it is.\n\n\n-----Input-----\n\nThe first line contains integer a (1 ≤ a ≤ 10^18). The second line contains integer b (1 ≤ b ≤ 10^18). Numbers don't have leading zeroes. It is guaranteed that answer exists.\n\n\n-----Output-----\n\nPrint the maximum possible number that is a permutation of digits of a and is not greater than b. The answer can't have any leading zeroes. It is guaranteed that the answer exists.\n\nThe number in the output should have exactly the same length as number a. It should be a permutation of digits of a.\n\n\n-----Examples-----\nInput\n123\n222\n\nOutput\n213\n\nInput\n3921\n10000\n\nOutput\n9321\n\nInput\n4940\n5000\n\nOutput\n4940",
+  "input": "123\n222\n\n3921\n10000\n\n4940\n5000",
+  "output": "213\n\n9321\n\n4940",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "fact_ = [1] * 50\n\ndef fact(n):\n\treturn fact_[n]\n\ndef get_perm(n, k):\n\tif k > fact(n):\n\t\texit(123)\n\tif n == 1:\n\t\treturn [1]\n\tk -= 1\n\tres = []\n\tnot_used = [i for i in range(1, n + 1)]\n\tsize = fact(n - 1)\n\tfor i in range(n):\n\t\tcnt = k // size\n\t\tres.append(not_used[cnt])\n\t\tnot_used.pop(cnt)\n\t\tk %= size\n\t\tif i != n - 1:\n\t\t\tsize //= n - 1 - i\n\treturn res[:]\n\ndef num_by_perm(x):\n\tnonlocal n, a\n\tv = get_perm(n, x)\n\tres = []\n\tfor i in range(n):\n\t\tres.append(a[v[i] - 1])\n\treturn int(''.join(res))\n\ndef check(x):\n\tnonlocal n, a, b\n\tv = num_by_perm(x)\n\tif v > b:\n\t\treturn False\n\telse:\n\t\treturn True\nfor i in range(1, 20):\n\tfact_[i] = fact_[i - 1] * i\na = list(input())\nb = int(input())\nn = len(a)\na.sort()\nl = 1\nr = fact(n) + 1\nwhile r - l > 1:\n\tm = l + (r - l) // 2\n\tif check(m):\n\t\tl = m\n\telse:\n\t\tr = m\nprint(num_by_perm(l))"
+}

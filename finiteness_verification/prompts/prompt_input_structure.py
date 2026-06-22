@@ -29,6 +29,10 @@ if TYPE_CHECKING:
     from typing import Dict, Any
 
 
+def _is_taco_problem(problem: Dict[str, Any]) -> bool:
+    return str(problem.get("problem_id", "")).startswith("taco_")
+
+
 def build_system_prompt() -> str:
     """构建系统提示词（角色定义与输出格式要求）"""
     return """你是编程竞赛题目输入结构分析专家。
@@ -77,6 +81,37 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
     Returns:
         格式化的用户提示词
     """
+    if _is_taco_problem(problem):
+        return f"""请分析以下题目的输入结构：
+
+标题：{problem.get('title', 'N/A')}
+
+完整题面：
+{problem.get('description', '')}
+
+---
+
+请输出该题的输入结构 JSON，格式如下：
+
+{{
+    "type": "数据类型（如 array, graph, tree, string, matrix 等）",
+    "length": {{"min": 最小长度, "max": 最大长度}},
+    "value_range": {{"min": 最小值, "max": 最大值}},
+    "properties": {{
+        "ordered": true/false（是否有序，可选）,
+        "connected": true/false（是否连通，图/树专用，可选）,
+        "weighted": true/false（是否带权，图/树专用，可选）,
+        ... (其他性质)
+    }}
+}}
+
+注意：
+1. 如果题目有多个输入数据结构，请选择最主要的核心数据结构
+2. length 和 value_range 的 min/max 必须是整数（如果题面未明确给出，请合理推断）
+3. properties 中只包含明确可识别的性质，不确定的性质不要包含
+4. 所有输出必须是数据结构领域的抽象概念，不得包含题目中的具体情境词汇（如人名、动物名、物品名、地名等）
+"""
+
     return f"""请分析以下题目的输入结构：
 
 标题：{problem.get('title', 'N/A')}

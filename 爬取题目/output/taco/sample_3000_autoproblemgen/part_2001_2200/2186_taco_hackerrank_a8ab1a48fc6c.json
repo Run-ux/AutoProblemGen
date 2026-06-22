@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_hackerrank_a8ab1a48fc6c",
+  "title": "problem",
+  "description": "How many n-digit numbers (without leading zeros) are there such that no digit occurs more than k times?  \n\nAs the count of such n-digit numbers can be very large, print the answer mod (10^{9}+7)  \n\nInput Format  \n\nThe first line contains an integer, T , the number of test cases. This is followed by T lines each containing 2 space separated integers, n and k  \n\nConstraints  \n\nT ≤ 100000 \n\n1 ≤ n ≤ 1000 \n\n1 ≤ k ≤ 10^{9}\n\nSample Input\n\n2\n2 3\n2 1\n\nSample Output\n\n90\n81\n\nExplanation \n\nCase 1: A number can appear three times. So we have 9 (all except 0) numbers for first digit and 10 numbers for the second digit. \n\nCase 2: A number can appear only once. So we have 9 choices for the first digit and 9(all except the first one) for the second digit.",
+  "input": "The first line contains an integer, T , the number of test cases. This is followed by T lines each containing 2 space separated integers, n and k",
+  "output": "",
+  "constraints": "T ≤ 100000 \n\n1 ≤ n ≤ 1000 \n\n1 ≤ k ≤ 10^{9}",
+  "source": "hackerrank",
+  "standard_solution_code": "from math import factorial\n\ndef choose(n, k):\n\ttotal = factorial(n) // factorial(k)\n\ttotal = total // factorial(n - k)\n\treturn int(total)\n\ndef incl(n, k, i):\n\ttotal = 1\n\tfor j in range(0, i):\n\t\ttotal = (10 - j) * total * choose(n - j * k, k)\n\treturn total\n\ndef excl(n, k, i):\n\ttotal = choose(n - 1, k - 1)\n\tfor j in range(1, i):\n\t\ttotal = (10 - j - 1) * total * choose(n - j * k, k)\n\treturn total\nT = int(input())\nfor k in range(T):\n\tpair = str(input()).split(' ')\n\tN = int(pair[0])\n\tK = int(pair[1]) + 1\n\ttotal = 10 ** N - 10 ** (N - 1)\n\ti = 1\n\twhile N >= i * K:\n\t\tif i % 2 == 1:\n\t\t\ttotal = total - incl(N, K, i) + excl(N, K, i)\n\t\telse:\n\t\t\ttotal = total + incl(N, K, i) - excl(N, K, i)\n\t\ti = i + 1\n\ttotal = total % (10 ** 9 + 7)\n\tprint(total)"
+}

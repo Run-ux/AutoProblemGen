@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from finiteness_verification.qwen_client import QwenClient
+from finiteness_verification.llm_client import LLMClient
 from finiteness_verification.prompts.prompt_input_structure import (
     build_system_prompt as build_i_system,
     build_user_prompt as build_i_user,
@@ -40,7 +40,7 @@ def load_problems(count: int = 2):
     return problems[:count]
 
 
-def test_dimension(client: QwenClient, dimension: str, build_sys, build_usr, problem: dict):
+def test_dimension(client: LLMClient, dimension: str, build_sys, build_usr, problem: dict):
     print(f"\n{'='*60}")
     print(f"测试维度: {dimension}")
     print(f"题目: {problem['problem_id']} - {problem['title']}")
@@ -66,7 +66,7 @@ def test_dimension(client: QwenClient, dimension: str, build_sys, build_usr, pro
 
 def main():
     problems = load_problems(count=2)
-    client = QwenClient()
+    client = LLMClient()
     
     evidence = {}
     

@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_fd606c64b855",
+  "title": "D",
+  "description": "Let's call the roundness of the number the number of zeros to which it ends.\n\nYou have an array of n numbers. You need to choose a subset of exactly k numbers so that the roundness of the product of the selected numbers will be maximum possible.\n\nInput\n\nThe first line contains two integer numbers n and k (1 ≤ n ≤ 200, 1 ≤ k ≤ n).\n\nThe second line contains n space-separated integer numbers a1, a2, ..., an (1 ≤ ai ≤ 1018).\n\nOutput\n\nPrint maximal roundness of product of the chosen subset of length k.\n\nExamples\n\nInput\n\n3 2\n50 4 20\n\n\nOutput\n\n3\n\n\nInput\n\n5 3\n15 16 3 25 9\n\n\nOutput\n\n3\n\n\nInput\n\n3 3\n9 77 13\n\n\nOutput\n\n0\n\nNote\n\nIn the first example there are 3 subsets of 2 numbers. [50, 4] has product 200 with roundness 2, [4, 20] — product 80, roundness 1, [50, 20] — product 1000, roundness 3.\n\nIn the second example subset [15, 16, 25] has product 6000, roundness 3.\n\nIn the third example all subsets has product with roundness 0.",
+  "input": "The first line contains two integer numbers n and k (1 ≤ n ≤ 200, 1 ≤ k ≤ n).\n\nThe second line contains n space-separated integer numbers a1, a2, ..., an (1 ≤ ai ≤ 1018).",
+  "output": "Print maximal roundness of product of the chosen subset of length k.",
+  "constraints": "time limit: 2.0 seconds\nmemory limit: 256.0 megabytes",
+  "source": "codeforces",
+  "standard_solution_code": "import sys\n(n, K) = map(int, input().split())\na = list(map(int, input().split()))\n(m2, m5) = ([0] * n, [0] * n)\nfor (i, x) in enumerate(a):\n\twhile x % 2 == 0:\n\t\tx //= 2\n\t\tm2[i] += 1\n\twhile x % 5 == 0:\n\t\tx //= 5\n\t\tm5[i] += 1\ndp = [[-10 ** 9] * 5100 for _ in range(K)]\ndp[0][0] = 0\nfor i in range(n):\n\t(x, y) = (m5[i], m2[i])\n\tfor j in range(min(K - 1, i) - 1, -1, -1):\n\t\tfor k in range(5000, -1, -1):\n\t\t\tdp[j + 1][k + x] = max(dp[j + 1][k + x], dp[j][k] + y)\n\tdp[0][x] = max(dp[0][x], y)\nans = 0\nfor i in range(5001):\n\tans = max(ans, min(i, dp[-1][i]))\nprint(ans)"
+}

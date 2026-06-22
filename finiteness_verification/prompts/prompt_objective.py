@@ -22,6 +22,10 @@ if TYPE_CHECKING:
     from typing import Dict, Any
 
 
+def _is_taco_problem(problem: Dict[str, Any]) -> bool:
+    return str(problem.get("problem_id", "")).startswith("taco_")
+
+
 def build_system_prompt() -> str:
     """构建系统提示词（角色定义与输出格式要求）"""
     return """你是编程竞赛题目目标函数分析专家。
@@ -85,6 +89,37 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
     Returns:
         格式化的用户提示词
     """
+    if _is_taco_problem(problem):
+        return f"""请识别以下题目的目标函数：
+
+标题：{problem.get('title', 'N/A')}
+
+完整题面：
+{problem.get('description', '')}
+
+---
+
+请输出该题的目标函数 JSON，格式如下：
+
+{{
+    "type": "目标类型（maximize_value, minimize_value, maximize_count, feasibility, construction 等）",
+    "description": "目标函数的中文描述（如：求满足条件的最长子数组长度）"
+}}
+
+注意：
+1. type 必须简洁且符合常见分类（maximize_*, minimize_*, count, feasibility, construction 等）
+2. description 必须完整描述题目要求输出什么
+3. 如果题目要求输出多个值，选择主要目标（通常是第一个或最重要的）
+4. 常见模式：
+   - 求"最长"、"最大" → maximize_value
+   - 求"最短"、"最小" → minimize_value
+   - 求"有多少个" → enumeration 或 maximize_count
+   - 判断"是否存在" → feasibility
+   - 要求"输出方案" → construction
+5. 所有输出必须是算法领域的抽象概括，不得包含题目中的具体情境词汇（如角色名、物品名等），需翻译为通用的算法术语
+6. 如果推荐清单中没有合适类型，必须自由新增更准确的目标类型，不要为了套用而强行归类
+"""
+
     return f"""请识别以下题目的目标函数：
 
 标题：{problem.get('title', 'N/A')}

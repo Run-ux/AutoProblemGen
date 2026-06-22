@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_dac7d1d9540c",
+  "title": "distinct echo substrings",
+  "description": "Return the number of distinct non-empty substrings of text that can be written as the concatenation of some string with itself (i.e. it can be written as a + a where a is some string).\n \nExample 1:\nInput: text = \"abcabcabc\"\nOutput: 3\nExplanation: The 3 substrings are \"abcabc\", \"bcabca\" and \"cabcab\".\n\nExample 2:\nInput: text = \"leetcodeleetcode\"\nOutput: 2\nExplanation: The 2 substrings are \"ee\" and \"leetcodeleetcode\".\n\n \nConstraints:\n\n1 <= text.length <= 2000\ntext has only lowercase English letters.",
+  "input": "",
+  "output": "",
+  "constraints": "1 <= text.length <= 2000\ntext has only lowercase English letters.",
+  "source": "leetcode",
+  "standard_solution_code": "from collections import defaultdict, deque\n\nclass Solution:\n\n\tdef distinctEchoSubstrings(self, text: str) -> int:\n\t\tif all((x == text[0] for x in text)):\n\t\t\treturn len(text) // 2\n\t\tres = set()\n\t\tcharacter_locations = defaultdict(lambda : deque())\n\t\tfor (i, c) in enumerate(text):\n\t\t\tfor j in character_locations[c]:\n\t\t\t\tif i + (i - j) > len(text):\n\t\t\t\t\tbreak\n\t\t\t\tif text.startswith(text[i:i + i - j], j):\n\t\t\t\t\tres.add(text[j:i + i - j])\n\t\t\tcharacter_locations[c].appendleft(i)\n\t\treturn len(res)"
+}

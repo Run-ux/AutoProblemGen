@@ -33,6 +33,10 @@ if TYPE_CHECKING:
     from typing import Dict, Any
 
 
+def _is_taco_problem(problem: Dict[str, Any]) -> bool:
+    return str(problem.get("problem_id", "")).startswith("taco_")
+
+
 def build_system_prompt() -> str:
     """构建系统提示词（角色定义与输出格式要求）"""
     return """你是编程竞赛题目约束条件分析专家。
@@ -159,6 +163,41 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
     Returns:
         格式化的用户提示词
     """
+    if _is_taco_problem(problem):
+        return f"""请从以下题目的全文中抽取核心约束条件：
+
+标题：{problem.get('title', 'N/A')}
+
+完整题面：
+{problem.get('description', '')}
+
+---
+
+请输出该题的核心约束集合 JSON，格式如下：
+
+{{
+    "constraints": [
+        {{
+            "name": "约束的简短英文标识（如 distinct_leq_k, max_min_diff_leq_d）",
+            "description": "约束的中文描述（清晰完整，如：区间内不同元素数量不超过 K）",
+            "formal": "形式化表达（可选，如：|distinct(A[l:r])| <= K）"
+        }},
+        ...
+    ]
+}}
+
+注意：
+1. 必须阅读题目描述全文，不要只看 Constraints 字段！
+2. 只提取业务逻辑约束，不包括：
+   - 纯粹的数值范围（如 1 ≤ n ≤ 10^5）
+   - 时间/内存限制（如 Time Limit: 2s）
+3. 如果题目没有明显的业务约束，返回空数组 []
+4. 每个约束的 description 必须清晰完整，能够独立理解
+5. formal 字段可选，如果能用数学公式或伪代码表达清楚，则填写
+6. 所有约束的 name 和 description 必须是算法领域的抽象概括，不得包含题目中的具体情境词汇（如角色名、物品名、场景名等），需翻译为通用的算法/数据结构术语
+7. 如果推荐清单中没有合适标签，必须自由新增更准确的标签，不要为了套用而强行归类
+"""
+
     return f"""请从以下题目的全文中抽取核心约束条件：
 
 标题：{problem.get('title', 'N/A')}

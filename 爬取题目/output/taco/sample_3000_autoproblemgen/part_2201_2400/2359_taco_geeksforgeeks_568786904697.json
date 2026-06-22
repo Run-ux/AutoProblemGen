@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_geeksforgeeks_568786904697",
+  "title": "1",
+  "description": "You need to calculate the following sum over Q queries.:\nAssume array to be 1-indexed.\n \nExample 1:\nInput: nums = {2, 3, 4, 5, 1, 6, 7},\nQuery = {{2, 4}, {2, 6}}\nOutput: {64, 230}\nExplanation: For the 1st query,\n(1^{2} * 3 + 2^{2} * 4 + 3^{2} * 5) = 64.\nFor the second query\n(1^{2} * 3 + 2^{2} * 4 + 3^{2} * 5 + 4^{2} * 1 + 5^{2} * 6) = \n230\n \nYour Task:\nYou don't need to read or print anyhting. Your task is to complete the function FindQuery() which takes nums and Query as input parameter and returns a list containg the answer modulo 10^{9} + 7 for each query.\n \nExpected Time Complexity: O(n)\nExpected Space Complexity: O(n)\n \nConstraints:\n1 <= n <= 10^{5}\n1 <= nums[i] <= 10^{5}\n1 <= no. of queries <= 10^{4}",
+  "input": "",
+  "output": "",
+  "constraints": "1 <= n <= 10^{5}\n1 <= nums[i] <= 10^{5}\n1 <= no. of queries <= 10^{4}\n\nexpected time complexity: O(n)\nexpected auxiliary space: O(n)",
+  "source": "geeksforgeeks",
+  "standard_solution_code": "class Solution:\n\n\tdef FindQuery(self, nums, Query):\n\t\tn = len(nums)\n\t\tm = len(Query)\n\t\tdp1 = [0 for i in range(n + 1)]\n\t\tdp2 = [0 for i in range(n + 1)]\n\t\tdp3 = [0 for i in range(n + 1)]\n\t\tmod = 1000000007\n\t\tfor i in range(1, n + 1):\n\t\t\tdp1[i] = (dp1[i - 1] + nums[i - 1]) % mod\n\t\t\tdp2[i] = (dp2[i - 1] + i * nums[i - 1]) % mod\n\t\t\tdp3[i] = (dp3[i - 1] + i * i * nums[i - 1]) % mod\n\t\trst = []\n\t\tfor query in Query:\n\t\t\tstart = query[0]\n\t\t\tend = query[1]\n\t\t\tans = 0\n\t\t\tans = dp3[end] - dp3[start - 1]\n\t\t\tans += (start - 1) * (start - 1) * (dp1[end] - dp1[start - 1])\n\t\t\tans += 2 * (1 - start) * (dp2[end] - dp2[start - 1])\n\t\t\tans = ans % mod\n\t\t\trst.append(int(ans))\n\t\treturn rst"
+}
