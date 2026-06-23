@@ -34,6 +34,10 @@ if TYPE_CHECKING:
     from typing import Dict, Any
 
 
+def _is_taco_problem(problem: Dict[str, Any]) -> bool:
+    return str(problem.get("problem_id", "")).startswith("taco_")
+
+
 def build_system_prompt() -> str:
     """构建系统提示词（角色定义与输出格式要求）"""
     return """你是编程竞赛算法不变量分析专家。
@@ -140,6 +144,48 @@ def build_user_prompt(problem: Dict[str, Any]) -> str:
     Returns:
         格式化的用户提示词
     """
+    if _is_taco_problem(problem):
+        return f"""请识别以下题目解法的算法不变量：
+
+标题：{problem.get('title', 'N/A')}
+
+完整题面：
+{problem.get('description', '')}
+
+---
+
+请输出该题解法的算法不变量 JSON，格式如下：
+
+{{
+    "invariants": [
+        {{
+            "name": "不变量类型（monotonicity, optimal_substructure, greedy_choice, state_transition, interval_additivity, interval_mergeable 等）",
+            "description": "不变量的中文描述（如：双指针左右端点单调前进，区间合法性可单调维护）",
+            "properties": {{
+                "left_monotonic": true/false (双指针专用，可选),
+                "right_monotonic": true/false (双指针专用，可选),
+                "window_shrinkable": true/false (滑动窗口专用，可选),
+                ... (其他性质)
+            }}
+        }}
+    ]
+}}
+
+注意：
+1. 不变量是解法的性质，不是题目要求
+2. 常见算法范式的不变量：
+   - 双指针/滑动窗口 → monotonicity（单调性）
+   - 动态规划 → optimal_substructure（最优子结构）
+   - 贪心算法 → greedy_choice（贪心选择性质）
+   - 前缀和 → interval_additivity（区间可加性）
+   - 线段树/ST 表 → interval_mergeable（区间可合并性）
+3. 如果题目没有明显的算法不变量，可以根据输入结构和约束推断
+4. properties 中只包含明确可识别的性质，不确定的不要填写
+5. 如果存在多个关键不变量，必须全部输出，不要只选一个
+6. 所有输出必须是算法领域的抽象概括，不得包含题目的具体情境词汇（如角色名、物品名等），需要从算法结构性质的角度进行描述
+7. 如果推荐清单中没有合适类型，必须自由新增更准确的不变量类型，不要为了套用而强行归类
+"""
+
     return f"""请识别以下题目解法的算法不变量：
 
 标题：{problem.get('title', 'N/A')}

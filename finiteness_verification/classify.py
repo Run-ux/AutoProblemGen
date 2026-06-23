@@ -27,7 +27,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-from finiteness_verification.qwen_client import QwenClient
+from finiteness_verification.llm_client import LLMClient
 
 
 class RateLimiter:
@@ -165,7 +165,7 @@ def build_classification_prompt(
 
 
 def classify_single_problem(
-    client: QwenClient,
+    client: LLMClient,
     problem: Dict[str, Any],
     dimension: str,
     labels: List[str],
@@ -223,7 +223,7 @@ def classify_single_problem(
 
 
 def classify_all_problems(
-    client: QwenClient,
+    client: LLMClient,
     problems: List[Dict[str, Any]],
     labels_per_dimension: Dict[str, List[str]],
     output_dir: Path,
@@ -361,10 +361,10 @@ def main():
     logger.info(f"读取题目：{len(problems)} 题")
     
     try:
-        client = QwenClient()
-        logger.info("Qwen 客户端初始化成功")
+        client = LLMClient()
+        logger.info("LLM 客户端初始化成功")
     except RuntimeError as e:
-        logger.error(f"Qwen 客户端初始化失败：{e}")
+        logger.error(f"LLM 客户端初始化失败：{e}")
         return
     
     output_dir = Path(args.output)

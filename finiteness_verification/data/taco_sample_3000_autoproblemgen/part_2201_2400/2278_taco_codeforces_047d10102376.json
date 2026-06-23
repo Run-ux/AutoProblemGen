@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_047d10102376",
+  "title": "G",
+  "description": "Let S(n) denote the number that represents the digits of n in sorted order. For example, S(1) = 1, S(5) = 5, S(50394) = 3459, S(353535) = 333555.\n\nGiven a number X, compute <image> modulo 109 + 7.\n\nInput\n\nThe first line of input will contain the integer X (1 ≤ X ≤ 10700).\n\nOutput\n\nPrint a single integer, the answer to the question.\n\nExamples\n\nInput\n\n21\n\n\nOutput\n\n195\n\n\nInput\n\n345342\n\n\nOutput\n\n390548434\n\nNote\n\nThe first few values of S are 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 12. The sum of these values is 195.",
+  "input": "The first line of input will contain the integer X (1 ≤ X ≤ 10700).",
+  "output": "Print a single integer, the answer to the question.",
+  "constraints": "time limit: 2.0 seconds\nmemory limit: 256.0 megabytes\nexpected time complexity: O(N^2)",
+  "source": "codeforces",
+  "standard_solution_code": "num = input()\nnum_list = []\nfor i in range(len(num)):\n\tnum_list.append(int(num[i]))\nmyMod = 10 ** 9 + 7\nlength = len(num_list)\nf = [0] * (length + 1)\nt = [1] * (length + 1)\nfor i in range(length):\n\tf[i + 1] = (f[i] * 10 + 1) % myMod\n\tt[i + 1] = t[i] * 10 % myMod\nans = 0\nfor i in range(1, 10):\n\tdp = [0] * (length + 1)\n\tfor j in range(length):\n\t\tdp[j + 1] = (dp[j] * i + (10 - i) * (dp[j] * 10 + t[j])) % myMod\n\tc = 0\n\tctr = 0\n\tfor k in num_list:\n\t\tz = min(i, k)\n\t\to = k - z\n\t\tans += o * (dp[length - 1 - ctr] * t[c + 1] + f[c + 1] * t[length - 1 - ctr]) % myMod\n\t\tans += z * (dp[length - 1 - ctr] * t[c] + f[c] * t[length - 1 - ctr]) % myMod\n\t\tans %= myMod\n\t\tc += k >= i\n\t\tctr += 1\n\tans += f[c]\n\tif ans >= myMod:\n\t\tans -= myMod\nprint(ans)"
+}

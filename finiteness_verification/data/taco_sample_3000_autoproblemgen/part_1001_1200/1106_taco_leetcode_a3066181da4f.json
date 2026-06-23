@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_a3066181da4f",
+  "title": "as far from land as possible",
+  "description": "Given an N x N grid containing only values 0 and 1, where 0 represents water and 1 represents land, find a water cell such that its distance to the nearest land cell is maximized and return the distance.\nThe distance used in this problem is the Manhattan distance: the distance between two cells (x0, y0) and (x1, y1) is |x0 - x1| + |y0 - y1|.\nIf no land or water exists in the grid, return -1.\n \nExample 1:\n\nInput: [[1,0,1],[0,0,0],[1,0,1]]\nOutput: 2\nExplanation: \nThe cell (1, 1) is as far as possible from all the land with distance 2.\n\nExample 2:\n\nInput: [[1,0,0],[0,0,0],[0,0,0]]\nOutput: 4\nExplanation: \nThe cell (2, 2) is as far as possible from all the land with distance 4.\n\n \nNote:\n\n1 <= grid.length == grid[0].length <= 100\ngrid[i][j] is 0 or 1",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef maxDistance(self, grid: List[List[int]]) -> int:\n\t\tfrom collections import deque\n\t\tqueue = deque()\n\t\tfor (i, row) in enumerate(grid):\n\t\t\tfor (j, cell) in enumerate(row):\n\t\t\t\tif cell == 1:\n\t\t\t\t\tqueue.append((i, j, None, None))\n\t\tdist = {}\n\t\twhile queue:\n\t\t\t(i, j, previ, prevj) = queue.popleft()\n\t\t\tif i < 0 or j < 0 or i >= len(grid) or (j >= len(grid[0])):\n\t\t\t\tcontinue\n\t\t\tif (i, j) not in dist:\n\t\t\t\tdist[i, j] = 1 + dist.get((previ, prevj), -1)\n\t\t\t\tfor (di, dj) in [(1, 0), (0, 1), (-1, 0), (0, -1)]:\n\t\t\t\t\t(newi, newj) = (i + di, j + dj)\n\t\t\t\t\tqueue.append((newi, newj, i, j))\n\t\tans = max(list(dist.values()), default=-1)\n\t\treturn ans if ans != 0 else -1"
+}

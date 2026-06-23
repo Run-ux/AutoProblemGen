@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_2c1dae1e9347",
+  "title": "F",
+  "description": "You are given a positive (greater than zero) integer $n$.\n\nYou have to represent $n$ as the sum of integers (possibly negative) consisting only of ones (digits '1'). For example, $24 = 11 + 11 + 1 + 1$ and $102 = 111 - 11 + 1 + 1$.\n\nAmong all possible representations, you have to find the one that uses the minimum number of ones in total.\n\n\n-----Input-----\n\nThe single line contains one integer $n$ ($1 \\le n < 10^{50}$).\n\n\n-----Output-----\n\nPrint one integer $x$ — the minimum number of ones, such that there exist a representation of $n$ as the sum of integers (possibly negative) that uses $x$ ones in total.\n\n\n-----Examples-----\n\nInput\n24\nOutput\n6\nInput\n102\nOutput\n7\n\n\n-----Note-----\n\nNone",
+  "input": "24\n102",
+  "output": "6\n7\n\n\n-----Note-----\n\nNone",
+  "constraints": "time limit: 3 seconds\nmemory limit: 256 megabytes",
+  "source": "codeforces",
+  "standard_solution_code": "def ones(a):\n\treturn (10 ** a - 1) // 9\n\ndef add_in_dict(dct, key, val):\n\tif key in dct:\n\t\tdct[key] = min(dct[key], val)\n\telse:\n\t\tdct[key] = val\n_s = input()\n_n = len(_s)\n_x = int(_s)\ncur_dict = {}\ncur_dict[_x] = 0\nfor i in range(_n + 1, 0, -1):\n\tns = ones(i)\n\tnew_dict = {}\n\tfor x in cur_dict:\n\t\tv = cur_dict[x]\n\t\twhile ns <= x:\n\t\t\tx -= ns\n\t\t\tv += i\n\t\tadd_in_dict(new_dict, x, v)\n\t\tadd_in_dict(new_dict, ns - x, v + i)\n\tcur_dict = new_dict\nprint(cur_dict[0])"
+}

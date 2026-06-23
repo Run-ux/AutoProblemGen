@@ -16,7 +16,7 @@ from .prompts import prompt_transform_space
 from 生成题面.transform_space_tools import expand_transform_space
 
 if TYPE_CHECKING:
-    from .qwen_client import QwenClient
+    from .llm_client import LLMClient
 
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -37,7 +37,7 @@ def build_schema_context(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def extract_transform_space(
-    client: QwenClient,
+    client: LLMClient,
     problem: dict[str, Any],
     schema: dict[str, Any],
 ) -> dict[str, Any]:
@@ -58,7 +58,7 @@ def extract_transform_space(
 def enrich_schema_with_transform_space(
     schema: dict[str, Any],
     problem: dict[str, Any],
-    client: QwenClient,
+    client: LLMClient,
 ) -> dict[str, Any]:
     enriched = dict(schema)
     enriched["transform_space"] = extract_transform_space(client, problem, schema)
@@ -75,7 +75,7 @@ def process_directory(
     input_dir: Path,
     output_dir: Path,
     repository: ProblemRepository,
-    client: QwenClient,
+    client: LLMClient,
     overwrite: bool,
     logger: logging.Logger,
     problem_ids: list[str] | None = None,
@@ -221,10 +221,10 @@ def main() -> None:
         )
         logger.info("从失败目录读取到 %d 个待重跑题目", len(retry_problem_ids))
 
-    from .qwen_client import QwenClient
+    from .llm_client import LLMClient
 
     repository = ProblemRepository(index_root=Path(args.index_root))
-    client = QwenClient()
+    client = LLMClient()
 
     selected_problem_ids: list[str] | None = None
     if args.problem_ids and retry_problem_ids is not None:

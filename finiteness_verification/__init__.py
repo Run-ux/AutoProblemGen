@@ -1,7 +1,7 @@
 """
 finiteness_verification 包
 
-包含四维独立抽取的 Prompt 模板和千问 API 客户端。
+包含四维独立抽取的 Prompt 模板和通用 LLM API 客户端。
 """
 
 from __future__ import annotations

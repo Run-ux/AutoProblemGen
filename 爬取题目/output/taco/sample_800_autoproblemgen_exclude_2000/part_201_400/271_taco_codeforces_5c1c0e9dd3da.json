@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_5c1c0e9dd3da",
+  "title": "C",
+  "description": "Petya recieved a gift of a string s with length up to 10^5 characters for his birthday. He took two more empty strings t and u and decided to play a game. This game has two possible moves:  Extract the first character of s and append t with this character.  Extract the last character of t and append u with this character. \n\nPetya wants to get strings s and t empty and string u lexicographically minimal.\n\nYou should write a program that will help Petya win the game.\n\n\n-----Input-----\n\nFirst line contains non-empty string s (1 ≤ |s| ≤ 10^5), consisting of lowercase English letters.\n\n\n-----Output-----\n\nPrint resulting string u.\n\n\n-----Examples-----\nInput\ncab\n\nOutput\nabc\n\nInput\nacdb\n\nOutput\nabdc",
+  "input": "cab\n\nacdb",
+  "output": "abc\n\nabdc",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "ptr = ord('a')\n\ndef s_has_smaller(s_cnt_local, c):\n\tglobal ptr\n\tfor i in range(ptr, ord(c)):\n\t\tptr = i\n\t\tif s_cnt_local[i] > 0:\n\t\t\treturn True\n\treturn False\ns = list(input())\ns.reverse()\nt = []\nu = []\ns_cnt = [0] * (ord('z') + 1)\nfor x in s:\n\ts_cnt[ord(x)] += 1\nwhile s or t:\n\tif not s:\n\t\twhile t:\n\t\t\tu.append(t.pop())\n\telif not t:\n\t\tx = s.pop()\n\t\ts_cnt[ord(x)] -= 1\n\t\tt.append(x)\n\telif s_has_smaller(s_cnt, t[-1]):\n\t\tx = s.pop()\n\t\ts_cnt[ord(x)] -= 1\n\t\tt.append(x)\n\telse:\n\t\tx = t.pop()\n\t\tu.append(x)\nprint(''.join(u))"
+}

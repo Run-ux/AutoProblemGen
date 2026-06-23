@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_8641e8294b4d",
+  "title": "reverse subarray to maximize array value",
+  "description": "You are given an integer array nums. The value of this array is defined as the sum of |nums[i]-nums[i+1]| for all 0 <= i < nums.length-1.\nYou are allowed to select any subarray of the given array and reverse it. You can perform this operation only once.\nFind maximum possible value of the final array.\n \nExample 1:\nInput: nums = [2,3,1,5,4]\nOutput: 10\nExplanation: By reversing the subarray [3,1,5] the array becomes [2,5,1,3,4] whose value is 10.\n\nExample 2:\nInput: nums = [2,4,9,24,2,1,10]\nOutput: 68\n\n \nConstraints:\n\n1 <= nums.length <= 3*10^4\n-10^5 <= nums[i] <= 10^5",
+  "input": "",
+  "output": "",
+  "constraints": "1 <= nums.length <= 3*10^4\n-10^5 <= nums[i] <= 10^5",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef maxValueAfterReverse(self, nums: List[int]) -> int:\n\t\tn = len(nums)\n\t\tbase = sum([abs(nums[i] - nums[i + 1]) for i in range(n - 1)])\n\t\tif n <= 2:\n\t\t\treturn base\n\t\tinds = sorted(list(range(n)), key=lambda x: nums[x])\n\t\treturn base + max(options(inds, nums))\n\ndef switch(nums, i, j, base=0):\n\ti_inc = abs(nums[j] - nums[i - 1]) - abs(nums[i] - nums[i - 1]) if i > 0 else 0\n\tj_inc = abs(nums[j + 1] - nums[i]) - abs(nums[j + 1] - nums[j]) if j < len(nums) - 1 else 0\n\treturn base + i_inc + j_inc\n\ndef options(inds, nums):\n\t(a, b) = findRange(inds)\n\t(d, c) = findRange(inds[::-1])\n\tyield 0\n\tyield (2 * (nums[c] - nums[b]))\n\ti = max(a, b)\n\tj = max(c, d)\n\tn = len(nums)\n\tyield switch(nums, i, n - 1)\n\tyield switch(nums, j, n - 1)\n\tyield switch(nums, 0, i - 1)\n\tyield switch(nums, 0, j - 1)\n\ndef findRange(inds):\n\tseen = set()\n\tfor (i, idx) in enumerate(inds):\n\t\tif idx + 1 in seen or idx - 1 in seen:\n\t\t\treturn (idx + 1, idx) if idx + 1 in seen else (idx - 1, idx)\n\t\tseen.add(idx)"
+}

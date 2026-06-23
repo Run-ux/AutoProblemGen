@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_68720ce512df",
+  "title": "G",
+  "description": "You are given n positive integers a_1, a_2, ..., a_{n}.\n\nFor every a_{i} you need to find a positive integer k_{i} such that the decimal notation of 2^{k}_{i} contains the decimal notation of a_{i} as a substring among its last min(100, length(2^{k}_{i})) digits. Here length(m) is the length of the decimal notation of m.\n\nNote that you don't have to minimize k_{i}. The decimal notations in this problem do not contain leading zeros.\n\n\n-----Input-----\n\nThe first line contains a single integer n (1 ≤ n ≤ 2 000) — the number of integers a_{i}.\n\nEach of the next n lines contains a positive integer a_{i} (1 ≤ a_{i} < 10^11).\n\n\n-----Output-----\n\nPrint n lines. The i-th of them should contain a positive integer k_{i} such that the last min(100, length(2^{k}_{i})) digits of 2^{k}_{i} contain the decimal notation of a_{i} as a substring. Integers k_{i} must satisfy 1 ≤ k_{i} ≤ 10^50.\n\nIt can be shown that the answer always exists under the given constraints. If there are multiple answers, print any of them.\n\n\n-----Examples-----\nInput\n2\n8\n2\n\nOutput\n3\n1\n\nInput\n2\n3\n4857\n\nOutput\n5\n20",
+  "input": "2\n8\n2\n\n2\n3\n4857",
+  "output": "3\n1\n\n5\n20",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "from sys import stdin, exit\nn = int(stdin.readline())\nexp = 10\nfor _ in range(n):\n\ta = int(stdin.readline())\n\tp10 = 1\n\te10 = 0\n\twhile p10 <= a:\n\t\tp10 = p10 * 10\n\t\te10 = e10 + 1\n\tb = 5 ** exp * a % 2 ** e10\n\tb = (2 ** e10 - b) % 2 ** e10\n\tif b % 5 == 0:\n\t\tb = b + 2 ** e10\n\ta = a * 10 ** exp + b * 2 ** exp\n\te10 = e10 + exp\n\tans = -1\n\tcur = 2 ** (e10 + 5)\n\tfor dig in range(1, e10 + 1):\n\t\tstep = 4 * 5 ** (dig - 2)\n\t\tif dig == 1:\n\t\t\tstep = 1\n\t\tb = a % 10 ** dig\n\t\tfor i in range(5):\n\t\t\tx = pow(2, cur, 10 ** dig)\n\t\t\tif b == x:\n\t\t\t\tbreak\n\t\t\tcur = cur + step\n\t\telse:\n\t\t\tbreak\n\telse:\n\t\tans = cur\n\tprint('{}'.format(ans))"
+}

@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_3e9cf47a38e4",
+  "title": "D",
+  "description": "Count the number of distinct sequences a_1, a_2, ..., a_{n} (1 ≤ a_{i}) consisting of positive integers such that gcd(a_1, a_2, ..., a_{n}) = x and $\\sum_{i = 1}^{n} a_{i} = y$. As this number could be large, print the answer modulo 10^9 + 7.\n\ngcd here means the greatest common divisor.\n\n\n-----Input-----\n\nThe only line contains two positive integers x and y (1 ≤ x, y ≤ 10^9).\n\n\n-----Output-----\n\nPrint the number of such sequences modulo 10^9 + 7.\n\n\n-----Examples-----\nInput\n3 9\n\nOutput\n3\n\nInput\n5 8\n\nOutput\n0\n\n\n\n-----Note-----\n\nThere are three suitable sequences in the first test: (3, 3, 3), (3, 6), (6, 3).\n\nThere are no suitable sequences in the second test.",
+  "input": "3 9\n\n5 8",
+  "output": "3\n\n0\n\n\n\n-----Note-----\n\nThere are three suitable sequences in the first test: (3, 3, 3), (3, 6), (6, 3).\n\nThere are no suitable sequences in the second test.",
+  "constraints": "",
+  "source": "codeforces",
+  "standard_solution_code": "mod = 1000000007\n\ndef modpow(a, x):\n\tif x == 0:\n\t\treturn 1\n\tif x == 1:\n\t\treturn a\n\tb = modpow(a, x // 2)\n\treturn b * b * a ** (x % 2) % mod\nimport sys\n(x, y) = list(map(int, input().split()))\nif y % x != 0:\n\tprint(0)\n\tsys.exit(0)\nif x == y:\n\tprint(1)\n\tsys.exit(0)\na = y // x\ndivs = []\ni = 2\nwhile i * i < a:\n\tif a % i == 0:\n\t\tdivs.append(i)\n\t\tdivs.append(a // i)\n\ti += 1\nif int(a ** 0.5) ** 2 == a:\n\tdivs.append(int(a ** 0.5))\ndivs.append(a)\ndivs.sort()\nres = modpow(2, a - 1)\nmuls = [0 for _ in divs]\nmuls[0] = 1\nfor (xid, d) in enumerate(divs):\n\tprevs = 0\n\tfor (id, d2) in enumerate(divs):\n\t\tif d2 < d and d % d2 == 0:\n\t\t\tprevs += muls[id]\n\tmuls[xid] = 1 - prevs\n\tres += (prevs - 1) * modpow(2, a // d - 1)\n\tres = (res + 1000 * mod) % mod\nprint(res)"
+}

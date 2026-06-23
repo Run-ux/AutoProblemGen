@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codewars_ec45f56b1b6c",
+  "title": "5aa417aa4a6b344e2200009d",
+  "description": "This kata generalizes [Twice Linear](https://www.codewars.com/kata/5672682212c8ecf83e000050). You may want to attempt that kata first.\n\n## Sequence\n\nConsider an integer sequence `U(m)` defined as:\n\n1. `m` is a given non-empty set of positive integers.\n2. `U(m)[0] = 1`, the first number is always 1.\n3. For each `x` in `U(m)`, and each `y` in `m`, `x * y + 1` must also be in `U(m)`.\n4. No other numbers are in `U(m)`.\n5. `U(m)` is sorted, with no duplicates.\n\n### Sequence Examples\n\n#### `U(2, 3) = [1, 3, 4, 7, 9, 10, 13, 15, 19, 21, 22, 27, ...]`\n\n1 produces 3 and 4, since `1 * 2 + 1 = 3`, and `1 * 3 + 1 = 4`.\n\n3 produces 7 and 10, since `3 * 2 + 1 = 7`, and `3 * 3 + 1 = 10`.\n\n#### `U(5, 7, 8) = [1, 6, 8, 9, 31, 41, 43, 46, 49, 57, 64, 65, 73, 156, 206, ...]`\n\n1 produces 6, 8, and 9.\n\n6 produces 31, 43, and 49.\n\n## Task:\n\nImplement `n_linear` or `nLinear`: given a set of postive integers `m`, and an index `n`, find `U(m)[n]`, the `n`th value in the `U(m)` sequence.\n\n### Tips\n\n* Tests use large n values. Slow algorithms may time-out.\n* Tests use large values in the m set. Algorithms which multiply further than neccessary may overflow.\n* Linear run time and memory usage is possible.\n* How can you build the sequence iteratively, without growing extra data structures?",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "codewars",
+  "standard_solution_code": "from heapq import *\n\ndef n_linear(ms, n):\n\tlst = [1] * (n + 1)\n\tq = [(1 + v, v, 1) for v in ms]\n\theapify(q)\n\tfor i in range(1, n + 1):\n\t\t(v, x, j) = heappop(q)\n\t\tlst[i] = v\n\t\theappush(q, (lst[j] * x + 1, x, j + 1))\n\t\twhile q[0][0] == lst[i]:\n\t\t\t(v, x, j) = heappop(q)\n\t\t\theappush(q, (lst[j] * x + 1, x, j + 1))\n\treturn lst[n]"
+}

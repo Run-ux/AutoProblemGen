@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codeforces_47f31df5a2eb",
+  "title": "F",
+  "description": "You have an array a consisting of n distinct positive integers, numbered from 1 to n. Define p_k as $$$p_k = ∑_{1 ≤ i, j ≤ k} a_i mod a_j, where x \\bmod y denotes the remainder when x is divided by y. You have to find and print p_1, p_2, \\ldots, p_n$$$. \n\nInput\n\nThe first line contains n — the length of the array (2 ≤ n ≤ 2 ⋅ 10^5).\n\nThe second line contains n space-separated distinct integers a_1, …, a_n (1 ≤ a_i ≤ 3 ⋅ 10^5, a_i ≠ a_j if i ≠ j). \n\nOutput\n\nPrint n integers p_1, p_2, …, p_n. \n\nExamples\n\nInput\n\n\n4\n6 2 7 3\n\n\nOutput\n\n\n0 2 12 22\n\n\nInput\n\n\n3\n3 2 1\n\n\nOutput\n\n\n0 3 5",
+  "input": "The first line contains n — the length of the array (2 ≤ n ≤ 2 ⋅ 10^5).\n\nThe second line contains n space-separated distinct integers a_1, …, a_n (1 ≤ a_i ≤ 3 ⋅ 10^5, a_i ≠ a_j if i ≠ j).",
+  "output": "Print n integers p_1, p_2, …, p_n.",
+  "constraints": "time limit: 4.0 seconds\nmemory limit: 256.0 megabytes",
+  "source": "codeforces",
+  "standard_solution_code": "from sys import stdin, stdout\n\ndef bit_update(bit_a, i, v):\n\twhile i < len(bit_a):\n\t\tbit_a[i] += v\n\t\ti += i & -i\n\ndef bit_query(bit_a, i):\n\tr = 0\n\twhile i > 0:\n\t\tr += bit_a[i]\n\t\ti -= i & -i\n\treturn r\n\ndef bit_range_query(bit_a, l, r):\n\treturn bit_query(bit_a, r) - bit_query(bit_a, l - 1)\nn = int(stdin.readline())\na_a = list(map(int, stdin.readline().split()))\nN = max(a_a) + 1\nbit_a = [0 for _ in range(N * 2)]\nbit_a2 = [0 for _ in range(N * 2)]\np_a = [0] * n\nans = sum = 0\nfor i in range(1, n + 1):\n\tx = a_a[i - 1]\n\tans += x * (i - 1)\n\tans += sum\n\tsum += x\n\tans -= bit_query(bit_a, x)\n\tj = x\n\twhile j < N:\n\t\tl = j\n\t\tr = l + x - 1\n\t\tans -= bit_range_query(bit_a2, l, r) * j\n\t\tbit_update(bit_a, l, x)\n\t\tj += x\n\tbit_update(bit_a2, x, 1)\n\tp_a[i - 1] = ans\nstdout.write(' '.join(map(str, p_a)))"
+}

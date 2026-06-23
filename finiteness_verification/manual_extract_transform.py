@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Dict, Any
 
-from finiteness_verification.qwen_client import QwenClient
+from finiteness_verification.llm_client import LLMClient
 from finiteness_verification.prompts import prompt_transform_space
 
 # 配置
@@ -49,7 +49,7 @@ def parse_md_file(file_path: Path) -> Dict[str, str]:
     
     return parts
 
-def extract_transform_space(client: QwenClient, problem_data: Dict[str, Any]) -> Dict[str, Any]:
+def extract_transform_space(client: LLMClient, problem_data: Dict[str, Any]) -> Dict[str, Any]:
     """调用 API 提取 Transform Space"""
     system_prompt = prompt_transform_space.build_system_prompt()
     user_prompt = prompt_transform_space.build_user_prompt(problem_data)
@@ -67,12 +67,12 @@ def extract_transform_space(client: QwenClient, problem_data: Dict[str, Any]) ->
         return {}
 
 def main():
-    # 初始化客户端 (需要环境变量 DASHSCOPE_API_KEY)
+    # 初始化客户端（需要系统环境变量或 .env 中的 LLM_* 配置）
     try:
-        client = QwenClient()
+        client = LLMClient()
     except Exception as e:
         print(f"客户端初始化失败: {e}")
-        print("请确保已设置 DASHSCOPE_API_KEY 环境变量")
+        print("请确保已设置 LLM_* 环境变量或 .env 配置")
         return
 
     for problem_id in TARGET_IDS:

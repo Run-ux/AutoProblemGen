@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_cbdd207b0a56",
+  "title": "largest component size by common factor",
+  "description": "Given a non-empty array of unique positive integers A, consider the following graph:\n\nThere are A.length nodes, labelled A[0] to A[A.length - 1];\nThere is an edge between A[i] and A[j] if and only if A[i] and A[j] share a common factor greater than 1.\n\nReturn the size of the largest connected component in the graph.\n \n\n\n\nExample 1:\nInput: [4,6,15,35]\nOutput: 4\n\n\n\nExample 2:\nInput: [20,50,9,63]\nOutput: 2\n\n\n\nExample 3:\nInput: [2,3,6,7,4,12,21,39]\nOutput: 8\n\n\nNote:\n\n1 <= A.length <= 20000\n1 <= A[i] <= 100000",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "from collections import defaultdict\n\nclass Solution:\n\tMAXPRIME = 100001\n\tisPrime = [0 for _ in range(MAXPRIME + 1)]\n\tisPrime[0] = -1\n\tisPrime[1] = -1\n\tfor i in range(2, MAXPRIME):\n\t\tif isPrime[i] == 0:\n\t\t\tfor multiple in range(i * i, MAXPRIME + 1, i):\n\t\t\t\tif isPrime[multiple] == 0:\n\t\t\t\t\tisPrime[multiple] = i\n\t\t\tisPrime[i] = i\n\n\tdef largestComponentSize(self, A: List[int]) -> int:\n\t\tlabel = defaultdict(int)\n\n\t\tdef findRoot(key):\n\t\t\tif label[key] > 0:\n\t\t\t\tlabel[key] = findRoot(label[key])\n\t\t\t\treturn label[key]\n\t\t\telse:\n\t\t\t\treturn key\n\n\t\tdef mergeRoot(k1, k2):\n\t\t\t(r1, r2) = (findRoot(k1), findRoot(k2))\n\t\t\tif r1 != r2:\n\t\t\t\t(r1, r2) = (min(r1, r2), max(r1, r2))\n\t\t\t\tlabel[r1] += label[r2]\n\t\t\t\tlabel[r2] = r1\n\t\t\treturn r1\n\t\tfor x in A:\n\t\t\troot_id = 0\n\t\t\tprime_factors = set()\n\t\t\twhile Solution.isPrime[x] != -1:\n\t\t\t\tp = Solution.isPrime[x]\n\t\t\t\troot_id = findRoot(p) if root_id == 0 else mergeRoot(root_id, p)\n\t\t\t\tx //= p\n\t\t\tlabel[root_id] -= 1\n\t\treturn -min(label.values())"
+}

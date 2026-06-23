@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_leetcode_11dd133805d7",
+  "title": "longest duplicate substring",
+  "description": "Given a string S, consider all duplicated substrings: (contiguous) substrings of S that occur 2 or more times.  (The occurrences may overlap.)\nReturn any duplicated substring that has the longest possible length.  (If S does not have a duplicated substring, the answer is \"\".)\n \nExample 1:\nInput: \"banana\"\nOutput: \"ana\"\n\nExample 2:\nInput: \"abcd\"\nOutput: \"\"\n\n \nNote:\n\n2 <= S.length <= 10^5\nS consists of lowercase English letters.",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "leetcode",
+  "standard_solution_code": "class Solution:\n\n\tdef longestDupSubstring(self, S):\n\t\t(nums, N) = ([ord(c) - ord('a') for c in S], len(S))\n\t\t(BASE, MOD) = (26, 2 ** 32)\n\n\t\tdef check(L):\n\t\t\t(cur_hash, seen) = (0, set())\n\t\t\tfor val in nums[:L]:\n\t\t\t\tcur_hash = (cur_hash * BASE + val) % MOD\n\t\t\tseen.add(cur_hash)\n\t\t\tX = pow(BASE, L - 1, MOD)\n\t\t\tfor (idx, val) in enumerate(nums[L:]):\n\t\t\t\tcur_hash -= nums[idx] * X\n\t\t\t\tcur_hash = (cur_hash * BASE + val) % MOD\n\t\t\t\tif cur_hash in seen:\n\t\t\t\t\treturn idx + 1\n\t\t\t\tseen.add(cur_hash)\n\t\t\treturn -1\n\t\t(low, high) = (1, N + 1)\n\t\tstart = 0\n\t\twhile low < high:\n\t\t\tmid = (low + high) // 2\n\t\t\tidx = check(mid)\n\t\t\tif idx != -1:\n\t\t\t\tlow = mid + 1\n\t\t\t\tstart = idx\n\t\t\telse:\n\t\t\t\thigh = mid\n\t\treturn S[start:start + low - 1]"
+}

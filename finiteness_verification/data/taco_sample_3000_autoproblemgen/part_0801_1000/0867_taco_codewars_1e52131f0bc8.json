@@ -1,0 +1,10 @@
+{
+  "problem_id": "taco_codewars_1e52131f0bc8",
+  "title": "570f1c56cd0531d88e000832",
+  "description": "This kata is a continuation of [Part 1](http://www.codewars.com/kata/the-fibfusc-function-part-1). The `fibfusc` function is defined recursively as follows:\n\n    fibfusc(0) = (1, 0)\n    fibfusc(1) = (0, 1)\n    fibfusc(2n) = ((x + y)(x - y), y(2x + 3y)), where (x, y) = fibfusc(n)\n    fibfusc(2n + 1) = (-y(2x + 3y), (x + 2y)(x + 4y)), where (x, y) = fibfusc(n)\n\nYour job is to produce the code for the `fibfusc` function. In this kata, your function will be tested with large values of n (up to 2000 bits), so you should be concerned about stack overflow and timeouts. Moreover, since the `fibfusc` function grows exponentially, your function should take an extra argument `num_digits` with a default value of `None`. When not `None`, `num_digits` takes a positive `int` value and the returned values shall be truncated to the last `num_digits` digits. \n\nFor example, let `n = 101`. With `num_digits` not set or set to `None`, `fibfusc` should return: \n`(-280571172992510140037611932413038677189525L, 734544867157818093234908902110449296423351L)`. If `num_digits = 12`, the function should return `(-38677189525L, 449296423351L)`. Notice in particular, that for any value of `n` greater than 1, `x` is negative, and the truncated value of `x` should also be negative.\n\nHint 1: Use modulo `10 ** num_digits` arithmetic to keep all intermediary results small.\n\nHint 2: Consider using an iterative [\"number climber\"](http://www.codewars.com/kata/number-climber) to avoid stack overflows.",
+  "input": "",
+  "output": "",
+  "constraints": "",
+  "source": "codewars",
+  "standard_solution_code": "def fibfusc(n, num_digits=None):\n\tif n < 2:\n\t\treturn (1 - n, n)\n\tb = bin(n)[2:]\n\t(x, y) = fibfusc(int(b[0]))\n\tfor bit in b[1:]:\n\t\tif bit == '1':\n\t\t\t(x, y) = (-y * (2 * x + 3 * y), (x + 2 * y) * (x + 4 * y))\n\t\telse:\n\t\t\t(x, y) = ((x + y) * (x - y), y * (2 * x + 3 * y))\n\t\tif num_digits:\n\t\t\t(x, y) = (x % 10 ** num_digits - 10 ** num_digits, y % 10 ** num_digits)\n\treturn (x, y)"
+}

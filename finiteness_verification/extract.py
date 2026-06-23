@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-from finiteness_verification.qwen_client import QwenClient
+from finiteness_verification.llm_client import LLMClient
 from finiteness_verification.prompts import (
     prompt_input_structure,
     prompt_constraints,
@@ -78,7 +78,7 @@ DIMENSIONS = {
 # 主抽取逻辑
 # ---------------------------------------------------------------------------
 def extract_single_dimension(
-    client: QwenClient,
+    client: LLMClient,
     problem: Dict[str, Any],
     dimension_name: str,
     round_num: int,
@@ -90,7 +90,7 @@ def extract_single_dimension(
     对单个题目的单个维度进行一次抽取
 
     Args:
-        client: Qwen API 客户端
+        client: LLM API 客户端
         problem: 题目字典（包含 problem_id, title, description, input, output, constraints）
         dimension_name: 维度名称（如 input_structure, core_constraints 等）
         round_num: 抽取轮次（1, 2, 3）
@@ -136,7 +136,7 @@ def extract_single_dimension(
 
 
 def extract_all_rounds(
-    client: QwenClient,
+    client: LLMClient,
     problems: List[Dict[str, Any]],
     output_dir: Path,
     rounds: int,
@@ -151,7 +151,7 @@ def extract_all_rounds(
         raw/{problem_id}_{dimension}_round{N}.json
 
     Args:
-        client: Qwen API 客户端
+        client: LLM API 客户端
         problems: 题目列表
         output_dir: 输出根目录
         rounds: 抽取轮次（默认 3）
@@ -283,13 +283,13 @@ def main():
     problems = json.loads(input_path.read_text(encoding="utf-8"))
     logger.info(f"读取样本：{len(problems)} 题")
 
-    # 初始化 Qwen 客户端
+    # 初始化通用 LLM 客户端
     try:
-        client = QwenClient()
-        logger.info("Qwen 客户端初始化成功")
+        client = LLMClient()
+        logger.info("LLM 客户端初始化成功")
     except RuntimeError as e:
-        logger.error(f"Qwen 客户端初始化失败：{e}")
-        logger.error("请设置环境变量 DASHSCOPE_API_KEY 或 QWEN_API_KEY")
+        logger.error(f"LLM 客户端初始化失败：{e}")
+        logger.error("请在系统环境变量或 .env 文件中设置 LLM_* 配置")
         return
 
     # 执行抽取
