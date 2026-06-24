@@ -58,68 +58,145 @@ class LLMAugmenter:
     def generate_prompt(self, problem: Problem, transformation_type: str) -> str:
         """Generate a detailed prompt for the LLM to perform the transformation"""
         
+        GENERAL_NOTE = """
+Note: The modification cases given in the requirements are only illustrative references.
+You are not limited to these examples, you need to design your own reasonable, differentiated modification schemes that conform to the definition of this transformation type.
+Do not make trivial tiny modifications; ensure the new problem has obvious, effective changes matching this augmentation axis.
+"""
+        
+        DOUBLE_CHECK = """
+After modification, double check:
+1. The core algorithm difficulty and problem essence of the seed problem are not changed
+2. All modifications strictly match the definition of the current transformation type, not mixed with other types of transformation
+"""
+        
         transformation_instructions = {
-            "narrative": """
+            "narrative": f"""
 You are a problem augmentation expert. Transform this competitive programming problem 
 by changing the narrative context, variable names, and thematic background while preserving 
 the core algorithmic logic.
 
+{GENERAL_NOTE}
+
 Requirements:
-1. Change all variable names (e.g., nums -> arr, target -> goal)
-2. Change the thematic context (e.g., stock prices -> inventory levels)
-3. Add some irrelevant but natural-sounding contextual details
-4. Keep the core algorithmic problem unchanged
+1. Modify all variable names throughout the problem description, input/output format, constraints, and examples. The examples below are only reference ideas, DO NOT be limited to these cases:
+   Reference examples: nums → arr, target → goal, s → text
+2. Change the thematic context and scenario background. The examples below are only reference ideas, DO NOT be limited to these cases:
+   Reference examples: stock prices → inventory levels, path finding → route planning
+3. Add appropriate, natural-sounding contextual details that are irrelevant to the core algorithm
+4. Ensure all changes are consistent across the entire problem (description, examples, format)
+5. Critical guarantee: The core algorithmic problem and solving approach must remain unchanged
+
+{DOUBLE_CHECK}
 """,
-            "rule": """
+            "rule": f"""
 You are a problem augmentation expert. Transform this competitive programming problem 
 by modifying the operational rules and boundary conditions while preserving the core 
 algorithmic category.
 
+{GENERAL_NOTE}
+
 Requirements:
-1. Change comparison rules (e.g., strictly increasing -> non-decreasing)
-2. Modify boundary conditions (e.g., >= instead of >)
-3. Adjust constraints or limits
-4. Keep the core algorithmic approach similar
+1. Modify comparison logic and boundary judgment rules. The examples below are only reference ideas, DO NOT be limited to these cases, you need to design your own reasonable rule changes:
+   Reference examples: strictly increasing → non-decreasing, replace > with >=
+2. Independently adjust problem boundary thresholds, quantitative restrictions and preconditions
+3. Modify numerical constraint ranges appropriately
+4. Critical guarantee: The core algorithm category and overall solving idea of the original problem must remain unchanged
+5. Your modification must be substantial, avoid only modifying individual words for perfunctory adjustment
+
+{DOUBLE_CHECK}
 """,
-            "efficiency": """
+            "efficiency": f"""
 You are a problem augmentation expert. Transform this competitive programming problem 
 by scaling up the input size to require a more efficient algorithm.
 
+{GENERAL_NOTE}
+
 Requirements:
-1. Increase input constraints significantly (e.g., n from 1000 to 10^5)
-2. Add hints about required time complexity
-3. Modify examples to reflect larger scale
-4. This should force O(n^2) solutions to fail
+1. Significantly increase input scale and constraints. The examples below are only reference ideas, DO NOT be limited to these cases:
+   Reference examples: n from 1000 to 10^5, data range expansion
+2. Add explicit hints about required time complexity level
+3. Modify examples to reflect the larger input scale, with new input/output cases that demonstrate the scale change
+4. The scaling should force naive solutions (e.g., O(n^2)) to fail within time limits
+5. Ensure the core algorithm requirement is elevated but the fundamental problem type remains the same
+
+{DOUBLE_CHECK}
 """,
-            "sequential": """
+            "sequential": f"""
 You are a problem augmentation expert. Transform this competitive programming problem 
 by adding sequential composition - chaining multiple algorithmic steps together.
 
+{GENERAL_NOTE}
+
 Requirements:
-1. Add an additional algorithmic step after the main computation
-2. The new step should be logically connected
-3. Modify the description and examples accordingly
-4. Keep the original problem as the first step
+1. Design and add a meaningful additional algorithmic step that follows the main computation
+2. The new step should be logically connected to the original problem and require a distinct algorithmic operation
+3. Modify the problem description, input/output format, constraints, and examples to fully incorporate the new step
+4. Keep the original problem as the first step, ensuring it remains intact
+5. Ensure the new step adds genuine complexity without changing the core of the original problem
+
+{DOUBLE_CHECK}
 """,
-            "fusion": """
+            "fusion": f"""
 You are a problem augmentation expert. Transform this competitive programming problem 
 by fusing it with another algorithmic concept.
 
+{GENERAL_NOTE}
+
 Requirements:
-1. Introduce a new algorithmic concept to merge with the existing one
-2. The fusion should create a more complex problem
-3. Modify the description and add appropriate tags
-4. Examples should reflect the combined concepts
+1. Select an appropriate algorithmic concept that can be meaningfully fused with the original problem
+2. Design a creative fusion that combines the original concept with the new one, creating a more complex but coherent problem
+3. Modify the problem description, constraints, and examples to reflect the combined concepts
+4. Update tags to reflect both the original and new algorithmic concepts
+5. Critical guarantee: The original problem's core must remain identifiable and solvable using its original approach
+
+{DOUBLE_CHECK}
 """,
-            "all": """
+            "all": f"""
 You are a problem augmentation expert. Apply ALL of the following transformations 
 to this competitive programming problem:
 
-1. **Narrative Perturbation**: Change variable names, thematic backgrounds, add context
-2. **Rule Modification**: Alter operational rules and boundary conditions
-3. **Efficiency Scaling**: Increase input size to require more efficient algorithms
-4. **Sequential Composition**: Add additional algorithmic steps
-5. **Concept Fusion**: Merge with another algorithmic concept
+{GENERAL_NOTE}
+
+Execute transformations in this fixed order:
+1. Narrative Perturbation → 2. Rule Modification → 3. Efficiency Scaling → 4. Sequential Composition → 5. Concept Fusion
+Each step builds on the result of the previous step, do not skip or reverse order.
+
+Detailed Requirements for Each Step:
+
+1. **Narrative Perturbation**:
+   - Modify all variable names throughout the problem
+   - Change the thematic context and scenario background
+   - Add appropriate contextual details
+   - Ensure all changes are consistent across the entire problem
+
+2. **Rule Modification**:
+   - Modify comparison logic and boundary judgment rules
+   - Adjust problem boundary thresholds and preconditions
+   - Modify numerical constraint ranges appropriately
+   - Keep the core algorithm category unchanged
+
+3. **Efficiency Scaling**:
+   - Significantly increase input scale and constraints
+   - Add hints about required time complexity
+   - Modify examples to reflect larger scale
+   - Force naive solutions to fail
+
+4. **Sequential Composition**:
+   - Add a meaningful additional algorithmic step
+   - Ensure logical connection to the original problem
+   - Update all problem components to incorporate the new step
+
+5. **Concept Fusion**:
+   - Select and fuse with another algorithmic concept
+   - Design a creative and coherent fusion
+   - Update description, constraints, examples, and tags
+
+After all transformations, double check:
+1. The core algorithm difficulty and problem essence of the seed problem are preserved
+2. Each transformation strictly matches its definition, with no cross-contamination between types
+3. All problem components (description, input/output format, constraints, examples) are consistent and updated
+4. The final problem is significantly different from the original while maintaining algorithmic equivalence
 
 Preserve the core algorithmic challenge while making the problem significantly different.
 """
