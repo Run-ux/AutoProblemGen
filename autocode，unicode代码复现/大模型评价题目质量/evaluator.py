@@ -7,12 +7,31 @@ Uses LLM to evaluate the quality of generated algorithmic problems across 4 dime
 4. Difficulty - Appropriate difficulty level
 """
 
+import argparse
+import glob
 import json
 import os
-from typing import Dict, Any, Union
+import sys
+from typing import Dict, Any, Union, List, Optional, Tuple
 from dataclasses import dataclass, asdict
-from dotenv import load_dotenv
-from openai import OpenAI
+
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    def load_dotenv() -> bool:
+        return False
+
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    OpenAI = None
+
+
+# Windows 管道环境默认编码可能不是 UTF-8，统一输出避免中文日志乱码。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 
 # Load environment variables
@@ -41,6 +60,9 @@ class ProblemEvaluator:
     """LLM-powered problem quality evaluator"""
     
     def __init__(self):
+        if OpenAI is None:
+            raise RuntimeError("缺少 openai 依赖，请先执行: pip install openai")
+
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL")
@@ -226,113 +248,216 @@ Do NOT include any other text, explanations, or markdown formatting.
         print(f"  Novelty: {result.novelty}/100")
         print(f"  Difficulty: {result.difficulty}/100")
 
-    def evaluate_folder(self, folder_path: str) -> None:
-        """Evaluate all problems in a single problem folder and save scores.json"""
-        folder_name = os.path.basename(folder_path)
-        
-        # Load seed problem
-        source_dir = os.path.join(folder_path, "source")
-        seed_problem = None
-        if os.path.isdir(source_dir):
-            source_files = [f for f in os.listdir(source_dir) if f.endswith('.json')]
-            if source_files:
-                seed_path = os.path.join(source_dir, source_files[0])
-                with open(seed_path, 'r', encoding='utf-8') as f:
-                    seed_data = json.load(f)
-                # Use original_problem field if available, otherwise use whole data
-                seed_problem = seed_data.get("original_problem", seed_data)
-        
-        if seed_problem is None:
-            print(f"[SKIP] No seed problem found for {folder_name}")
-            return
-        
-        scores = {}
-        
-        # 1. Evaluate other_methods/autocode.json
-        autocode_path = os.path.join(folder_path, "other_methods", "autocode.json")
-        if os.path.exists(autocode_path):
-            try:
-                with open(autocode_path, 'r', encoding='utf-8') as f:
-                    autocode_problem = json.load(f)
-                print(f"[EVAL] {folder_name} - autocode.json")
-                result = self.evaluate(seed_problem, autocode_problem)
-                scores["autocode"] = {
-                    "solvability": result.solvability,
-                    "clarity": result.clarity,
-                    "novelty": result.novelty,
-                    "difficulty": result.difficulty,
-                    "overall_score": result.overall_score
-                }
-            except Exception as e:
-                print(f"[ERROR] {folder_name} - autocode.json: {e}")
-                scores["autocode"] = {"error": str(e)}
-        else:
-            scores["autocode"] = {"error": "file not found"}
-        
-        # 2. Evaluate other_methods/unicode.json
-        unicode_path = os.path.join(folder_path, "other_methods", "unicode.json")
-        if os.path.exists(unicode_path):
-            try:
-                with open(unicode_path, 'r', encoding='utf-8') as f:
-                    unicode_problem = json.load(f)
-                print(f"[EVAL] {folder_name} - unicode.json")
-                result = self.evaluate(seed_problem, unicode_problem)
-                scores["unicode"] = {
-                    "solvability": result.solvability,
-                    "clarity": result.clarity,
-                    "novelty": result.novelty,
-                    "difficulty": result.difficulty,
-                    "overall_score": result.overall_score
-                }
-            except Exception as e:
-                print(f"[ERROR] {folder_name} - unicode.json: {e}")
-                scores["unicode"] = {"error": str(e)}
-        else:
-            scores["unicode"] = {"error": "file not found"}
-        
-        # 3. Evaluate last md file in output/
-        output_dir = os.path.join(folder_path, "output")
-        if os.path.isdir(output_dir):
-            md_files = sorted([f for f in os.listdir(output_dir) if f.endswith('.md')])
-            if md_files:
-                last_md = md_files[-1]
-                md_path = os.path.join(output_dir, last_md)
-                try:
-                    with open(md_path, 'r', encoding='utf-8') as f:
-                        md_content = f.read()
-                    print(f"[EVAL] {folder_name} - {last_md}")
-                    result = self.evaluate(seed_problem, md_content)
-                    scores["output_md"] = {
-                        "solvability": result.solvability,
-                        "clarity": result.clarity,
-                        "novelty": result.novelty,
-                        "difficulty": result.difficulty,
-                        "overall_score": result.overall_score
-                    }
-                except Exception as e:
-                    print(f"[ERROR] {folder_name} - {last_md}: {e}")
-                    scores["output_md"] = {"error": str(e)}
-            else:
-                scores["output_md"] = {"error": "no md files found"}
-        else:
-            scores["output_md"] = {"error": "output directory not found"}
-        
-        # Save scores.json
-        scores_path = os.path.join(folder_path, "scores.json")
+    @staticmethod
+    def default_input_dir() -> str:
+        """返回仓库默认的 successful_output 输入目录。"""
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(project_root, "input", "successful_output")
+
+    @staticmethod
+    def _score_fields(result: EvaluationResult) -> Dict[str, float]:
+        """只保留最终落盘需要的分数字段。"""
+        return {
+            "solvability": result.solvability,
+            "clarity": result.clarity,
+            "novelty": result.novelty,
+            "difficulty": result.difficulty,
+            "overall_score": result.overall_score
+        }
+
+    @staticmethod
+    def _write_scores(scores_path: str, scores: Dict[str, Any]) -> None:
         with open(scores_path, 'w', encoding='utf-8') as f:
             json.dump(scores, f, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def _list_problem_folders(base_dir: str) -> List[str]:
+        return sorted(
+            folder for folder in glob.glob(os.path.join(base_dir, "*"))
+            if os.path.isdir(folder) and not os.path.basename(folder).startswith('_')
+        )
+
+    @staticmethod
+    def _resolve_batch_dirs(root_dir: str, batch_name: Optional[str]) -> List[str]:
+        if not os.path.isdir(root_dir):
+            raise FileNotFoundError(f"输入目录不存在: {root_dir}")
+
+        if batch_name:
+            batch_dir = batch_name if os.path.isabs(batch_name) else os.path.join(root_dir, batch_name)
+            if not os.path.isdir(batch_dir):
+                raise FileNotFoundError(f"指定 batch 不存在: {batch_dir}")
+            return [batch_dir]
+
+        batch_dirs = sorted(
+            folder for folder in glob.glob(os.path.join(root_dir, "batch*"))
+            if os.path.isdir(folder)
+        )
+        return batch_dirs if batch_dirs else [root_dir]
+
+    def _load_seed_problem(self, folder_path: str) -> Tuple[Dict[str, Any], str]:
+        original_input_dir = os.path.join(folder_path, "original_input")
+        if not os.path.isdir(original_input_dir):
+            raise FileNotFoundError(f"original_input 目录不存在: {original_input_dir}")
+
+        json_files = sorted(glob.glob(os.path.join(original_input_dir, "*.json")))
+        if not json_files:
+            raise FileNotFoundError(f"original_input 中没有 JSON 文件: {original_input_dir}")
+
+        seed_path = json_files[0]
+        with open(seed_path, 'r', encoding='utf-8') as f:
+            seed_data = json.load(f)
+
+        if not isinstance(seed_data, dict):
+            raise ValueError(f"种子题 JSON 顶层必须是对象: {seed_path}")
+
+        # 兼容旧数据：部分文件会把原题包在 original_problem 字段中。
+        seed_problem = seed_data.get("original_problem", seed_data)
+        if not isinstance(seed_problem, dict):
+            raise ValueError(f"original_problem 字段必须是对象: {seed_path}")
+
+        return seed_problem, seed_path
+
+    def _evaluate_json_candidate(self, seed_problem: Dict[str, Any],
+                                 candidate_path: str,
+                                 folder_name: str,
+                                 display_name: str) -> Dict[str, Any]:
+        if not os.path.exists(candidate_path):
+            error = f"文件不存在: {candidate_path}"
+            print(f"[ERROR] {folder_name} - {display_name}: {error}")
+            return {"error": error}
+
+        try:
+            with open(candidate_path, 'r', encoding='utf-8') as f:
+                candidate_problem = json.load(f)
+            if not isinstance(candidate_problem, dict):
+                raise ValueError("候选题 JSON 顶层必须是对象")
+
+            print(f"[EVAL] {folder_name} - {display_name}")
+            result = self.evaluate(seed_problem, candidate_problem)
+            return self._score_fields(result)
+        except Exception as e:
+            print(f"[ERROR] {folder_name} - {display_name}: {e}")
+            return {"error": str(e)}
+
+    def _evaluate_output_md(self, seed_problem: Dict[str, Any],
+                            folder_path: str,
+                            folder_name: str) -> Dict[str, Any]:
+        output_dir = os.path.join(folder_path, "output")
+        if not os.path.isdir(output_dir):
+            error = f"output 目录不存在: {output_dir}"
+            print(f"[ERROR] {folder_name} - output_md: {error}")
+            return {"error": error}
+
+        md_files = sorted(
+            file_name for file_name in os.listdir(output_dir)
+            if file_name.lower().endswith(".md")
+        )
+        if not md_files:
+            error = f"output 中没有 md 文件: {output_dir}"
+            print(f"[ERROR] {folder_name} - output_md: {error}")
+            return {"error": error}
+
+        last_md = md_files[-1]
+        md_path = os.path.join(output_dir, last_md)
+        try:
+            with open(md_path, 'r', encoding='utf-8') as f:
+                md_content = f.read()
+
+            print(f"[EVAL] {folder_name} - {last_md}")
+            result = self.evaluate(seed_problem, md_content)
+            return self._score_fields(result)
+        except Exception as e:
+            print(f"[ERROR] {folder_name} - {last_md}: {e}")
+            return {"error": str(e)}
+
+    def evaluate_folder(self, folder_path: str) -> Dict[str, Any]:
+        """评估单个题目文件夹，并在题目目录下覆盖写入 scores.json。"""
+        folder_name = os.path.basename(os.path.normpath(folder_path))
+        scores_path = os.path.join(folder_path, "scores.json")
+
+        try:
+            seed_problem, seed_path = self._load_seed_problem(folder_path)
+            print(f"[SEED] {folder_name} - {os.path.basename(seed_path)}")
+        except Exception as e:
+            error = f"种子题加载失败: {e}"
+            print(f"[ERROR] {folder_name}: {error}")
+            scores = {
+                "_error": error,
+                "autocode": {"error": error},
+                "unicode": {"error": error},
+                "output_md": {"error": error}
+            }
+            self._write_scores(scores_path, scores)
+            print(f"[DONE] {folder_name} - scores saved to {scores_path}")
+            return {
+                "folder": folder_name,
+                "status": "failed",
+                "error": error,
+                "scores_path": scores_path
+            }
+
+        scores = {
+            "autocode": self._evaluate_json_candidate(
+                seed_problem,
+                os.path.join(folder_path, "other_methods", "autocode.json"),
+                folder_name,
+                "other_methods/autocode.json"
+            ),
+            "unicode": self._evaluate_json_candidate(
+                seed_problem,
+                os.path.join(folder_path, "other_methods", "unicode.json"),
+                folder_name,
+                "other_methods/unicode.json"
+            ),
+            "output_md": self._evaluate_output_md(seed_problem, folder_path, folder_name)
+        }
+
+        self._write_scores(scores_path, scores)
         print(f"[DONE] {folder_name} - scores saved to {scores_path}")
 
-    def batch_evaluate(self, root_dir: str) -> None:
-        """Evaluate all problem folders under root_dir"""
-        if not os.path.isdir(root_dir):
-            print(f"[ERROR] Root directory does not exist: {root_dir}")
-            return
-        
-        for entry in sorted(os.listdir(root_dir)):
-            folder_path = os.path.join(root_dir, entry)
-            if os.path.isdir(folder_path) and not entry.startswith('_'):
-                self.evaluate_folder(folder_path)
+        has_error = any(isinstance(item, dict) and "error" in item for item in scores.values())
+        return {
+            "folder": folder_name,
+            "status": "failed" if has_error else "success",
+            "scores_path": scores_path
+        }
+
+    def batch_evaluate(self, root_dir: str, batch_name: Optional[str] = None) -> Dict[str, Any]:
+        """评估 successful_output 下的 batch 或兼容旧版单层题目目录。"""
+        root_dir = os.path.abspath(root_dir)
+        target_dirs = self._resolve_batch_dirs(root_dir, batch_name)
+
+        summary = {
+            "input": root_dir,
+            "batch": batch_name,
+            "total": 0,
+            "success": 0,
+            "failed": 0,
+            "details": []
+        }
+
+        for target_dir in target_dirs:
+            target_name = os.path.basename(os.path.normpath(target_dir))
+            problem_folders = self._list_problem_folders(target_dir)
+            print(f"[BATCH] {target_name} - found {len(problem_folders)} problem folders")
+
+            for index, folder_path in enumerate(problem_folders, 1):
+                folder_name = os.path.basename(os.path.normpath(folder_path))
+                print(f"[PROBLEM] {target_name} [{index}/{len(problem_folders)}] {folder_name}")
+                result = self.evaluate_folder(folder_path)
+                result["batch"] = target_name
+                summary["details"].append(result)
+                summary["total"] += 1
+                if result["status"] == "success":
+                    summary["success"] += 1
+                else:
+                    summary["failed"] += 1
+
+        print(
+            f"[SUMMARY] total={summary['total']} "
+            f"success={summary['success']} failed={summary['failed']}"
+        )
+        return summary
 
 
 def demo():
@@ -396,14 +521,45 @@ def demo():
     print(f"  {result.overall_comment}")
 
 
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="大模型题目质量批量评分工具")
+    parser.add_argument(
+        "legacy_input",
+        nargs="?",
+        help="兼容旧用法的位置参数输入目录，等价于 --input"
+    )
+    parser.add_argument(
+        "--input",
+        "-i",
+        default=ProblemEvaluator.default_input_dir(),
+        help="successful_output 根目录，默认使用仓库下的 input/successful_output"
+    )
+    parser.add_argument(
+        "--batch",
+        help="只处理指定 batch 文件夹，例如 batch1；不指定时处理所有 batch*"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = parse_args(argv)
+    target_dir = args.legacy_input or args.input
+
+    try:
+        ProblemEvaluator._resolve_batch_dirs(os.path.abspath(target_dir), args.batch)
+    except FileNotFoundError as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
+        return 1
+
+    try:
+        evaluator = ProblemEvaluator()
+    except RuntimeError as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
+        return 1
+
+    evaluator.batch_evaluate(target_dir, args.batch)
+    return 0
+
+
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1:
-        target_dir = sys.argv[1]
-    else:
-        # Default target directory
-        target_dir = "/home/zsdx/AutoProblemGen/autocode，unicode代码复现/input/successful_output"
-    
-    evaluator = ProblemEvaluator()
-    evaluator.batch_evaluate(target_dir)
+    sys.exit(main())

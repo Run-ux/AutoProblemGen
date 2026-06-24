@@ -31,11 +31,48 @@ TEMPERATURE=0.2
 
 ## 使用方法
 
-### 方法1：直接运行demo
+### 方法1：按 batch 批量评分
 
-```bash
-python evaluator.py
+输入目录应为 `input/successful_output`。目录结构如下：
+
+```text
+successful_output/
+├── batch1/
+│   └── taco_codechef_0a14d59045fe/
+│       ├── original_input/
+│       │   └── xxx.json
+│       ├── other_methods/
+│       │   ├── autocode.json
+│       │   └── unicode.json
+│       └── output/
+│           ├── a.md
+│           └── b.md
+└── batch2/
 ```
+
+每个题目文件夹会读取：
+
+- `original_input/*.json` 中按文件名排序后的第一个 JSON 作为种子题
+- `other_methods/autocode.json`
+- `other_methods/unicode.json`
+- `output/*.md` 中按文件名排序后的最后一个 `.md`
+
+只处理一个 batch：
+
+```powershell
+python .\大模型评价题目质量\evaluator.py `
+  --input "D:\AutoProblemGen\autocode，unicode代码复现\input\successful_output" `
+  --batch batch1
+```
+
+不指定 `--batch` 时，会按名称排序处理所有 `batch*` 文件夹；如果输入目录下没有 `batch*`，则兼容旧结构，把 `--input` 本身视为题目文件夹集合：
+
+```powershell
+python .\大模型评价题目质量\evaluator.py `
+  --input "D:\AutoProblemGen\autocode，unicode代码复现\input\successful_output"
+```
+
+每个题目文件夹会覆盖写入一个新的 `scores.json`。
 
 ### 方法2：从文件评估
 
@@ -78,7 +115,37 @@ print(f"Overall Score: {result.overall_score}/100")
 
 ## 输出格式
 
-评估结果包含以下字段：
+`scores.json` 正常结果包含 3 个候选题的 4 个维度评分和综合分：
+
+```json
+{
+  "autocode": {
+    "solvability": 85,
+    "clarity": 90,
+    "novelty": 45,
+    "difficulty": 80,
+    "overall_score": 74.75
+  },
+  "unicode": {
+    "solvability": 82,
+    "clarity": 88,
+    "novelty": 62,
+    "difficulty": 79,
+    "overall_score": 77.65
+  },
+  "output_md": {
+    "solvability": 91,
+    "clarity": 86,
+    "novelty": 70,
+    "difficulty": 83,
+    "overall_score": 82.9
+  }
+}
+```
+
+如果单个候选文件缺失或解析失败，对应字段会写入 `error`，程序继续处理同 batch 的其它题目。若种子题无法读取，`scores.json` 会记录顶层 `_error` 并跳过该题目的三个候选评分。
+
+单次 `evaluate_from_files()` 返回的完整评估结果包含以下字段：
 
 ```json
 {
