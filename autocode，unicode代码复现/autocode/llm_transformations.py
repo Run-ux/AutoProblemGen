@@ -1,7 +1,11 @@
 import random
 from typing import List, Dict, Any
-from .schema import Problem
-from .llm import LLMClient
+try:
+    from .schema import Problem
+    from .llm import LLMClient
+except ImportError:
+    from schema import Problem
+    from llm import LLMClient
 
 class LLMTransformationEngine:
     def __init__(self, llm_client: LLMClient):

@@ -1,6 +1,9 @@
 import random
 from typing import List, Dict, Any
-from .schema import Problem, ProblemConstraints, TestCase
+try:
+    from .schema import Problem, ProblemConstraints, TestCase
+except ImportError:
+    from schema import Problem, ProblemConstraints, TestCase
 
 class TransformationEngine:
     def __init__(self):

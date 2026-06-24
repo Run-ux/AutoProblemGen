@@ -36,192 +36,80 @@ class Problem:
     tags: List[str]  # e.g., ["dynamic-programming", "greedy"]
     
     def to_dict(self) -> Dict:
-        return asdict(self)
+        result = asdict(self)
+        return result
+    
+    def to_dict_for_prompt(self) -> Dict:
+        """精简数据用于 prompt，排除不必要的字段"""
+        result = asdict(self)
+        # 这些字段不存在于 Problem dataclass，但可能在原始数据中
+        # 不需要排除，因为 dataclass 只有定义的字段
+        return result
     
     @classmethod
     def from_dict(cls, data: Dict) -> 'Problem':
-        return cls(**data)
+        return cls(
+            title=data.get('title', ''),
+            description=data.get('description', ''),
+            input_format=data.get('input_format', data.get('input', '')),
+            output_format=data.get('output_format', data.get('output', '')),
+            constraints=data.get('constraints', []),
+            examples=data.get('examples', []),
+            difficulty=data.get('difficulty', 'Medium'),
+            tags=data.get('tags', [])
+        )
 
 
 class LLMAugmenter:
     """LLM-powered problem augmentation through conversation"""
     
-    def __init__(self):
+    def __init__(self, model: str = None):
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL")
         )
-        self.model = os.getenv("MODEL_NAME", "gpt-4o-mini")
-        self.max_tokens = int(os.getenv("MAX_TOKENS", 2000))
+        self.model = model or os.getenv("MODEL_NAME", "deepseek-v4-pro")
+        self.max_tokens = int(os.getenv("MAX_TOKENS", 8000))  # 增加到8000
         self.temperature = float(os.getenv("TEMPERATURE", 0.7))
     
     def generate_prompt(self, problem: Problem, transformation_type: str) -> str:
-        """Generate a detailed prompt for the LLM to perform the transformation"""
+        """Generate a concise prompt for the LLM to perform the transformation"""
         
-        GENERAL_NOTE = """
-Note: The modification cases given in the requirements are only illustrative references.
-You are not limited to these examples, you need to design your own reasonable, differentiated modification schemes that conform to the definition of this transformation type.
-Do not make trivial tiny modifications; ensure the new problem has obvious, effective changes matching this augmentation axis.
-"""
-        
-        DOUBLE_CHECK = """
-After modification, double check:
-1. The core algorithm difficulty and problem essence of the seed problem are not changed
-2. All modifications strictly match the definition of the current transformation type, not mixed with other types of transformation
-"""
-        
-        transformation_instructions = {
-            "narrative": f"""
-You are a problem augmentation expert. Transform this competitive programming problem 
-by changing the narrative context, variable names, and thematic background while preserving 
-the core algorithmic logic.
-
-{GENERAL_NOTE}
-
-Requirements:
-1. Modify all variable names throughout the problem description, input/output format, constraints, and examples. The examples below are only reference ideas, DO NOT be limited to these cases:
-   Reference examples: nums → arr, target → goal, s → text
-2. Change the thematic context and scenario background. The examples below are only reference ideas, DO NOT be limited to these cases:
-   Reference examples: stock prices → inventory levels, path finding → route planning
-3. Add appropriate, natural-sounding contextual details that are irrelevant to the core algorithm
-4. Ensure all changes are consistent across the entire problem (description, examples, format)
-5. Critical guarantee: The core algorithmic problem and solving approach must remain unchanged
-
-{DOUBLE_CHECK}
-""",
-            "rule": f"""
-You are a problem augmentation expert. Transform this competitive programming problem 
-by modifying the operational rules and boundary conditions while preserving the core 
-algorithmic category.
-
-{GENERAL_NOTE}
-
-Requirements:
-1. Modify comparison logic and boundary judgment rules. The examples below are only reference ideas, DO NOT be limited to these cases, you need to design your own reasonable rule changes:
-   Reference examples: strictly increasing → non-decreasing, replace > with >=
-2. Independently adjust problem boundary thresholds, quantitative restrictions and preconditions
-3. Modify numerical constraint ranges appropriately
-4. Critical guarantee: The core algorithm category and overall solving idea of the original problem must remain unchanged
-5. Your modification must be substantial, avoid only modifying individual words for perfunctory adjustment
-
-{DOUBLE_CHECK}
-""",
-            "efficiency": f"""
-You are a problem augmentation expert. Transform this competitive programming problem 
-by scaling up the input size to require a more efficient algorithm.
-
-{GENERAL_NOTE}
-
-Requirements:
-1. Significantly increase input scale and constraints. The examples below are only reference ideas, DO NOT be limited to these cases:
-   Reference examples: n from 1000 to 10^5, data range expansion
-2. Add explicit hints about required time complexity level
-3. Modify examples to reflect the larger input scale, with new input/output cases that demonstrate the scale change
-4. The scaling should force naive solutions (e.g., O(n^2)) to fail within time limits
-5. Ensure the core algorithm requirement is elevated but the fundamental problem type remains the same
-
-{DOUBLE_CHECK}
-""",
-            "sequential": f"""
-You are a problem augmentation expert. Transform this competitive programming problem 
-by adding sequential composition - chaining multiple algorithmic steps together.
-
-{GENERAL_NOTE}
-
-Requirements:
-1. Design and add a meaningful additional algorithmic step that follows the main computation
-2. The new step should be logically connected to the original problem and require a distinct algorithmic operation
-3. Modify the problem description, input/output format, constraints, and examples to fully incorporate the new step
-4. Keep the original problem as the first step, ensuring it remains intact
-5. Ensure the new step adds genuine complexity without changing the core of the original problem
-
-{DOUBLE_CHECK}
-""",
-            "fusion": f"""
-You are a problem augmentation expert. Transform this competitive programming problem 
-by fusing it with another algorithmic concept.
-
-{GENERAL_NOTE}
-
-Requirements:
-1. Select an appropriate algorithmic concept that can be meaningfully fused with the original problem
-2. Design a creative fusion that combines the original concept with the new one, creating a more complex but coherent problem
-3. Modify the problem description, constraints, and examples to reflect the combined concepts
-4. Update tags to reflect both the original and new algorithmic concepts
-5. Critical guarantee: The original problem's core must remain identifiable and solvable using its original approach
-
-{DOUBLE_CHECK}
-""",
-            "all": f"""
-You are a problem augmentation expert. Apply ALL of the following transformations 
-to this competitive programming problem:
-
-{GENERAL_NOTE}
-
-Execute transformations in this fixed order:
-1. Narrative Perturbation → 2. Rule Modification → 3. Efficiency Scaling → 4. Sequential Composition → 5. Concept Fusion
-Each step builds on the result of the previous step, do not skip or reverse order.
-
-Detailed Requirements for Each Step:
-
-1. **Narrative Perturbation**:
-   - Modify all variable names throughout the problem
-   - Change the thematic context and scenario background
-   - Add appropriate contextual details
-   - Ensure all changes are consistent across the entire problem
-
-2. **Rule Modification**:
-   - Modify comparison logic and boundary judgment rules
-   - Adjust problem boundary thresholds and preconditions
-   - Modify numerical constraint ranges appropriately
-   - Keep the core algorithm category unchanged
-
-3. **Efficiency Scaling**:
-   - Significantly increase input scale and constraints
-   - Add hints about required time complexity
-   - Modify examples to reflect larger scale
-   - Force naive solutions to fail
-
-4. **Sequential Composition**:
-   - Add a meaningful additional algorithmic step
-   - Ensure logical connection to the original problem
-   - Update all problem components to incorporate the new step
-
-5. **Concept Fusion**:
-   - Select and fuse with another algorithmic concept
-   - Design a creative and coherent fusion
-   - Update description, constraints, examples, and tags
-
-After all transformations, double check:
-1. The core algorithm difficulty and problem essence of the seed problem are preserved
-2. Each transformation strictly matches its definition, with no cross-contamination between types
-3. All problem components (description, input/output format, constraints, examples) are consistent and updated
-4. The final problem is significantly different from the original while maintaining algorithmic equivalence
-
-Preserve the core algorithmic challenge while making the problem significantly different.
-"""
+        transformation_desc = {
+            "narrative": "Change variable names and thematic background while preserving core algorithmic logic",
+            "rule": "Modify operational rules and boundary conditions while preserving core algorithmic category",
+            "efficiency": "Scale up input size to require more efficient algorithm",
+            "sequential": "Add additional sequential algorithmic steps",
+            "fusion": "Fuse with another algorithmic concept",
+            "all": "Apply all transformations: narrative perturbation, rule modification, efficiency scaling, sequential composition, and concept fusion"
         }
         
-        instruction = transformation_instructions.get(transformation_type, transformation_instructions["all"])
+        desc = transformation_desc.get(transformation_type, transformation_desc["all"])
         
-        problem_json = json.dumps(problem.to_dict(), ensure_ascii=False, indent=2)
+        # 使用精简的数据
+        problem_json = json.dumps(problem.to_dict_for_prompt(), ensure_ascii=False, indent=2)
         
         prompt = f"""
-{instruction}
+You are a competitive programming problem setter. Transform the given seed problem by applying the following transformation:
 
-Return ONLY a valid JSON object representing the transformed problem with the same structure:
+{desc}
+
+Rules:
+1. Keep the core algorithmic challenge unchanged
+2. Make the problem significantly different from the original
+3. Ensure all problem components are consistent (description, input/output format, constraints, examples)
+
+Output format (JSON only, no markdown):
 {{
-  "title": "...",
-  "description": "...",
-  "input_format": "...",
-  "output_format": "...",
-  "constraints": ["..."],
+  "title": "New Problem Title",
+  "description": "New problem description",
+  "input_format": "Input format description",
+  "output_format": "Output format description",
+  "constraints": ["constraint1", "constraint2"],
   "examples": [{{"input": "...", "output": "...", "explanation": "..."}}],
   "difficulty": "...",
-  "tags": ["..."]
+  "tags": ["tag1", "tag2"]
 }}
-
-Do NOT include any other text, explanations, or markdown formatting.
 
 Seed Problem:
 {problem_json}
@@ -232,6 +120,11 @@ Seed Problem:
         """Transform problem using LLM"""
         prompt = self.generate_prompt(problem, transformation_type)
         
+        # 动态估算需要的输出 token 数
+        seed_size = len(json.dumps(problem.to_dict_for_prompt()))
+        estimated_tokens = min(seed_size // 3 + 4000, 16000)  # 最大16000
+        actual_max_tokens = max(self.max_tokens, estimated_tokens)
+        
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -239,22 +132,72 @@ Seed Problem:
                     {"role": "system", "content": "You are an expert competitive programming problem generator."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                response_format={"type": "json_object"}
+                max_tokens=actual_max_tokens,
+                temperature=self.temperature
             )
             
-            result = response.choices[0].message.content
+            content = response.choices[0].message.content
+            finish_reason = response.choices[0].finish_reason
+            
+            # 检查是否被截断
+            if finish_reason == "length":
+                print(f"⚠️  Warning: Output was truncated! max_tokens={actual_max_tokens}, consider increasing")
+            
+            if not content:
+                print(f"LLM returned empty response. Finish reason: {finish_reason}")
+                return problem.to_dict()
+            
+            content = content.strip()
             
             try:
-                return json.loads(result)
-            except json.JSONDecodeError:
-                print(f"JSON decode error. Response: {result[:500]}")
-                return problem.to_dict()
+                start = content.index('{')
+                end = content.rindex('}') + 1
+                json_str = content[start:end]
+                return json.loads(json_str)
+            except (ValueError, json.JSONDecodeError):
+                print(f"JSON decode error. Finish reason: {finish_reason}. Response: {content[:500]}")
+                return self._parse_fallback(content)
                 
         except Exception as e:
             print(f"LLM API error: {e}")
             return problem.to_dict()
+    
+    def _parse_fallback(self, content: str) -> Dict[str, Any]:
+        """Fallback parser for non-standard JSON responses"""
+        lines = content.split('\n')
+        result = {
+            "title": "Generated Problem",
+            "description": content,
+            "input_format": "",
+            "output_format": "",
+            "constraints": [],
+            "examples": [],
+            "difficulty": "Medium",
+            "tags": []
+        }
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('"title"') or line.startswith("'title'"):
+                try:
+                    parts = line.split(':', 1)[1].strip()
+                    result["title"] = parts.strip('",\'' )
+                except (ValueError, IndexError):
+                    pass
+            elif line.startswith('"description"') or line.startswith("'description'"):
+                try:
+                    parts = line.split(':', 1)[1].strip()
+                    result["description"] = parts.strip('",\'' )
+                except (ValueError, IndexError):
+                    pass
+            elif line.startswith('"difficulty"') or line.startswith("'difficulty'"):
+                try:
+                    parts = line.split(':', 1)[1].strip()
+                    result["difficulty"] = parts.strip('",\'' )
+                except (ValueError, IndexError):
+                    pass
+        
+        return result
 
 
 class NarrativePerturbation:

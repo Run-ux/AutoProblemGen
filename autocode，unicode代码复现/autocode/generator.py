@@ -5,10 +5,16 @@ import os
 import glob
 import datetime
 from typing import Dict, Any, Optional, List
-from .schema import Problem
-from .transformations import TransformationEngine
-from .llm_transformations import LLMTransformationEngine
-from .llm import LLMClient
+try:
+    from .schema import Problem
+    from .transformations import TransformationEngine
+    from .llm_transformations import LLMTransformationEngine
+    from .llm import LLMClient
+except ImportError:
+    from schema import Problem
+    from transformations import TransformationEngine
+    from llm_transformations import LLMTransformationEngine
+    from llm import LLMClient
 
 class Logger:
     def __init__(self, log_file: str = None):
@@ -52,10 +58,43 @@ class ProblemGenerator:
         else:
             self.engine = TransformationEngine()
     
+    def _convert_seed_format(self, seed_data: Dict[str, Any]) -> Dict[str, Any]:
+        constraints_str = seed_data.get("constraints", "")
+        time_limit = "2 seconds"
+        memory_limit = "256 megabytes"
+        
+        if constraints_str:
+            for line in constraints_str.split('\n'):
+                if "time limit" in line.lower():
+                    time_limit = line.strip()
+                elif "memory limit" in line.lower():
+                    memory_limit = line.strip()
+        
+        return {
+            "title": seed_data.get("title", "Untitled"),
+            "description": seed_data.get("description", ""),
+            "constraints": {
+                "time_limit": time_limit,
+                "memory_limit": memory_limit,
+                "input_format": "",
+                "output_format": ""
+            },
+            "input_description": seed_data.get("input", ""),
+            "output_description": seed_data.get("output", ""),
+            "examples": [],
+            "difficulty": 1000,
+            "tags": [],
+            "original_seed": seed_data.get("problem_id", None),
+            "transformation_type": None
+        }
+    
     def generate_from_file(self, input_path: str, output_path: str, 
                            num_transformations: int = 1) -> Problem:
         with open(input_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
+        if "problem_id" in data and "title" in data and "description" in data:
+            data = self._convert_seed_format(data)
         
         seed_problem = Problem.from_dict(data)
         new_problem = self.engine.apply_multiple_transformations(
@@ -162,6 +201,113 @@ class ProblemGenerator:
         logger.info(f"Batch statistics saved to: {stats_file}")
         
         return results
+    
+    def process_problem_folders(self, base_dir: str, num_transformations: int = 1, 
+                                logger: Logger = None) -> Dict[str, Any]:
+        if logger is None:
+            logger = Logger()
+        
+        problem_folders = [f for f in glob.glob(os.path.join(base_dir, "*")) 
+                           if os.path.isdir(f) and not f.startswith('_')]
+        
+        if not problem_folders:
+            logger.warning(f"No problem folders found in base directory: {base_dir}")
+            return {"total": 0, "success": 0, "failed": 0, "details": []}
+        
+        logger.info(f"Found {len(problem_folders)} problem folders")
+        logger.info(f"Base directory: {base_dir}")
+        logger.info(f"Number of transformations: {num_transformations}")
+        logger.info(f"Using LLM: {self.use_llm}")
+        
+        results = {
+            "total": len(problem_folders),
+            "success": 0,
+            "failed": 0,
+            "details": [],
+            "start_time": datetime.datetime.now().isoformat()
+        }
+        
+        for i, problem_folder in enumerate(problem_folders, 1):
+            folder_name = os.path.basename(problem_folder)
+            original_input_dir = os.path.join(problem_folder, "original_input")
+            
+            logger.info(f"\n[{i}/{len(problem_folders)}] Processing: {folder_name}")
+            
+            if not os.path.exists(original_input_dir):
+                logger.warning(f"  original_input directory not found: {original_input_dir}")
+                results["failed"] += 1
+                results["details"].append({
+                    "folder": folder_name,
+                    "status": "failed",
+                    "error": "original_input directory not found"
+                })
+                continue
+            
+            json_files = glob.glob(os.path.join(original_input_dir, "*.json"))
+            
+            if not json_files:
+                logger.warning(f"  No JSON files found in original_input: {original_input_dir}")
+                results["failed"] += 1
+                results["details"].append({
+                    "folder": folder_name,
+                    "status": "failed",
+                    "error": "no JSON files found in original_input"
+                })
+                continue
+            
+            seed_file = json_files[0]
+            other_methods_dir = os.path.join(problem_folder, "other_methods")
+            os.makedirs(other_methods_dir, exist_ok=True)
+            output_path = os.path.join(other_methods_dir, "autocode.json")
+            
+            logger.info(f"  Seed file: {os.path.basename(seed_file)}")
+            logger.info(f"  Output: {output_path}")
+            
+            try:
+                new_problem = self.generate_from_file(seed_file, output_path, num_transformations)
+                
+                logger.success(f"  Successfully generated: {new_problem.title}")
+                logger.info(f"    Transformations: {new_problem.transformation_type}")
+                logger.info(f"    Difficulty: {new_problem.difficulty}")
+                
+                results["success"] += 1
+                results["details"].append({
+                    "folder": folder_name,
+                    "seed_file": os.path.basename(seed_file),
+                    "title": new_problem.title,
+                    "transformations": new_problem.transformation_type,
+                    "difficulty": new_problem.difficulty,
+                    "status": "success"
+                })
+                
+            except Exception as e:
+                logger.error(f"  Failed to process {folder_name}: {str(e)}")
+                
+                results["failed"] += 1
+                results["details"].append({
+                    "folder": folder_name,
+                    "status": "failed",
+                    "error": str(e)
+                })
+        
+        results["end_time"] = datetime.datetime.now().isoformat()
+        duration = datetime.datetime.fromisoformat(results["end_time"]) - datetime.datetime.fromisoformat(results["start_time"])
+        results["duration"] = str(duration)
+        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"Processing complete")
+        logger.info(f"Total: {results['total']}")
+        logger.info(f"Success: {results['success']}")
+        logger.info(f"Failed: {results['failed']}")
+        logger.info(f"Duration: {results['duration']}")
+        logger.info(f"{'='*60}")
+        
+        stats_file = os.path.join(base_dir, "autocode_batch_stats.json")
+        with open(stats_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        logger.info(f"Batch statistics saved to: {stats_file}")
+        
+        return results
 
 def main():
     parser = argparse.ArgumentParser(
@@ -203,13 +349,42 @@ def main():
         '--batch', action='store_true',
         help='Enable batch mode for processing multiple JSON files'
     )
+    parser.add_argument(
+        '--process-folders', action='store_true',
+        help='Process problem folders in successful_output format'
+    )
     
     args = parser.parse_args()
     
     input_path = args.input
     output_path = args.output
     
-    if args.batch:
+    if args.process_folders:
+        base_dir = input_path
+        
+        if not os.path.isdir(base_dir):
+            print(f"Error: Input path is not a directory: {base_dir}")
+            return
+        
+        log_file = os.path.join(base_dir, "autocode_batch_log.txt")
+        
+        logger = Logger(log_file)
+        
+        logger.info(f"{'='*60}")
+        logger.info("AutoCode Problem Generator - Process Folders Mode")
+        logger.info(f"{'='*60}")
+        
+        generator = ProblemGenerator(
+            seed=args.seed,
+            use_llm=args.use_llm,
+            api_key=args.api_key,
+            base_url=args.base_url,
+            model=args.model
+        )
+        
+        generator.process_problem_folders(base_dir, args.transformations, logger)
+        
+    elif args.batch:
         input_dir = input_path
         
         if not os.path.isdir(input_dir):
