@@ -91,6 +91,24 @@ autocode/output/test_batch_generated_20240101_120000/
 └── ...
 ```
 
+### 4. successful_output 并行处理模式
+
+处理 `successful_output` 下的题目文件夹。每个直接子目录视为一个题目，程序会读取该题目目录下 `original_input/*.json` 中按文件名排序后的第一个 JSON，并输出到 `other_methods/autocode.json`。
+
+```powershell
+python -m autocode.parallel_generator `
+  --input "D:\AutoProblemGen\autocode，unicode代码复现\input\successful_output" `
+  --use-llm `
+  --batch-size 5 `
+  --processes 5 `
+  --max-tokens 16000
+```
+
+说明：
+- `--batch-size` 控制每个批次处理多少个题目，默认 5。
+- `--processes` 控制最多同时运行多少个批次，默认 5。
+- 每个批次会在输入目录下写出独立的 `autocode_batch_<n>_log.txt` 和 `autocode_batch_<n>_stats.json`，最终汇总到 `autocode_parallel_stats.json`。
+
 ## 命令行参数
 
 | 参数 | 简写 | 说明 | 默认值 |
@@ -103,7 +121,16 @@ autocode/output/test_batch_generated_20240101_120000/
 | `--api-key` | | OpenAI API密钥 | 从环境变量读取 |
 | `--base-url` | | OpenAI API基础URL | 从环境变量读取 |
 | `--model` | | LLM模型名称 | gpt-4o |
+| `--max-tokens` | | LLM生成的最大 completion token 数 | `MAX_TOKENS` 或 16000 |
 | `--batch` | | 启用批量模式处理多个JSON文件 | False |
+| `--process-folders` | | 处理 successful_output 题目目录结构 | False |
+
+`autocode.parallel_generator` 额外支持：
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `--batch-size` | 每个批次处理的题目数量 | 5 |
+| `--processes` | 并行进程数上限 | 5 |
 
 ## 输入输出格式
 
@@ -206,6 +233,7 @@ autocode/
 ├── llm.py                 # LLM调用模块
 ├── llm_transformations.py # LLM变换引擎
 ├── generator.py           # 主程序入口
+├── parallel_generator.py  # successful_output 并行处理入口
 ├── .env                   # API配置文件
 ├── README.md              # 使用文档
 ├── autocode.pdf           # 原始论文

@@ -1,13 +1,20 @@
 import os
 import json
 from typing import Optional, Dict, Any
-from openai import OpenAI, AsyncOpenAI
+from openai import OpenAI
 
 class LLMClient:
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: str = "gpt-4o",
+        max_tokens: Optional[int] = None
+    ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.base_url = base_url or os.environ.get("OPENAI_BASE_URL")
         self.model = model
+        self.max_tokens = self._resolve_max_tokens(max_tokens)
         
         if not self.api_key:
             raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass it explicitly.")
@@ -16,6 +23,18 @@ class LLMClient:
             api_key=self.api_key,
             base_url=self.base_url if self.base_url else None
         )
+
+    @staticmethod
+    def _resolve_max_tokens(max_tokens: Optional[int]) -> int:
+        value = max_tokens if max_tokens is not None else os.environ.get("MAX_TOKENS", 16000)
+        try:
+            resolved = int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("MAX_TOKENS must be a positive integer.") from exc
+
+        if resolved <= 0:
+            raise ValueError("MAX_TOKENS must be a positive integer.")
+        return resolved
     
     def generate_problem(self, seed_problem: Dict[str, Any], transformation_type: str = "random") -> Dict[str, Any]:
         system_prompt = """
@@ -64,7 +83,7 @@ Follow the output format exactly.
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=self.max_tokens
         )
         
         content = response.choices[0].message.content.strip()
@@ -153,7 +172,7 @@ Follow the output format exactly.
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.8,
-            max_tokens=2500
+            max_tokens=self.max_tokens
         )
         
         content = response.choices[0].message.content.strip()

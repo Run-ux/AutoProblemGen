@@ -15,8 +15,13 @@ import re
 import os
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
-from dotenv import load_dotenv
 from openai import OpenAI
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        return False
 
 
 # Load environment variables
@@ -48,29 +53,65 @@ class Problem:
     
     @classmethod
     def from_dict(cls, data: Dict) -> 'Problem':
+        constraints_data = data.get('constraints', [])
+        input_format = data.get('input_format', data.get('input', ''))
+        output_format = data.get('output_format', data.get('output', ''))
+
+        if isinstance(constraints_data, dict):
+            input_format = input_format or constraints_data.get('input_format', '')
+            output_format = output_format or constraints_data.get('output_format', '')
+            constraints = [
+                value for value in [
+                    constraints_data.get('time_limit'),
+                    constraints_data.get('memory_limit')
+                ] if value
+            ]
+        elif isinstance(constraints_data, str):
+            constraints = [line.strip() for line in constraints_data.splitlines() if line.strip()]
+        elif isinstance(constraints_data, list):
+            constraints = [str(item) for item in constraints_data]
+        else:
+            constraints = []
+
+        tags = data.get('tags', [])
+        if isinstance(tags, str):
+            tags = [tag.strip() for tag in tags.split(',') if tag.strip()]
+
         return cls(
             title=data.get('title', ''),
             description=data.get('description', ''),
-            input_format=data.get('input_format', data.get('input', '')),
-            output_format=data.get('output_format', data.get('output', '')),
-            constraints=data.get('constraints', []),
+            input_format=input_format,
+            output_format=output_format,
+            constraints=constraints,
             examples=data.get('examples', []),
             difficulty=data.get('difficulty', 'Medium'),
-            tags=data.get('tags', [])
+            tags=tags
         )
 
 
 class LLMAugmenter:
     """LLM-powered problem augmentation through conversation"""
     
-    def __init__(self, model: str = None):
+    def __init__(self, model: str = None, max_tokens: Optional[int] = None):
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL")
         )
         self.model = model or os.getenv("MODEL_NAME", "deepseek-v4-pro")
-        self.max_tokens = int(os.getenv("MAX_TOKENS", 8000))  # 增加到8000
+        self.max_tokens = self._resolve_max_tokens(max_tokens)
         self.temperature = float(os.getenv("TEMPERATURE", 0.7))
+
+    @staticmethod
+    def _resolve_max_tokens(max_tokens: Optional[int]) -> int:
+        value = max_tokens if max_tokens is not None else os.getenv("MAX_TOKENS", 16000)
+        try:
+            resolved = int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("MAX_TOKENS must be a positive integer.") from exc
+
+        if resolved <= 0:
+            raise ValueError("MAX_TOKENS must be a positive integer.")
+        return resolved
     
     def generate_prompt(self, problem: Problem, transformation_type: str) -> str:
         """Generate a concise prompt for the LLM to perform the transformation"""
@@ -120,11 +161,6 @@ Seed Problem:
         """Transform problem using LLM"""
         prompt = self.generate_prompt(problem, transformation_type)
         
-        # 动态估算需要的输出 token 数
-        seed_size = len(json.dumps(problem.to_dict_for_prompt()))
-        estimated_tokens = min(seed_size // 3 + 4000, 16000)  # 最大16000
-        actual_max_tokens = max(self.max_tokens, estimated_tokens)
-        
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -132,7 +168,7 @@ Seed Problem:
                     {"role": "system", "content": "You are an expert competitive programming problem generator."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=actual_max_tokens,
+                max_tokens=self.max_tokens,
                 temperature=self.temperature
             )
             
@@ -141,7 +177,7 @@ Seed Problem:
             
             # 检查是否被截断
             if finish_reason == "length":
-                print(f"⚠️  Warning: Output was truncated! max_tokens={actual_max_tokens}, consider increasing")
+                print(f"Warning: Output was truncated! max_tokens={self.max_tokens}, consider increasing")
             
             if not content:
                 print(f"LLM returned empty response. Finish reason: {finish_reason}")
@@ -380,9 +416,10 @@ class ConceptFusion:
 class ProblemAugmenter:
     """Main class for augmenting problems using multiple axes and LLM"""
     
-    def __init__(self, seed_problem: Problem):
+    def __init__(self, seed_problem: Problem, max_tokens: Optional[int] = None):
         self.seed = seed_problem
-        self.llm_augmenter = LLMAugmenter()
+        self.max_tokens = max_tokens
+        self.llm_augmenter = None
     
     def augment(self, 
                  axes: Optional[List[str]] = None,
@@ -410,6 +447,8 @@ class ProblemAugmenter:
             Augmented problem as dict
         """
         if use_llm:
+            if self.llm_augmenter is None:
+                self.llm_augmenter = LLMAugmenter(max_tokens=self.max_tokens)
             result = self.llm_augmenter.transform(self.seed, llm_transformation)
             result["augmentation_history"] = [f"llm_{llm_transformation}"]
             result["seed_title"] = self.seed.title
@@ -460,13 +499,14 @@ class ProblemAugmenter:
                           output_path: str,
                           use_llm: bool = False,
                           llm_transformation: str = "all",
+                          max_tokens: Optional[int] = None,
                           **kwargs) -> None:
         """Read seed problem from JSON, augment, and save result"""
         with open(input_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         seed = Problem.from_dict(data)
-        augmenter = cls(seed)
+        augmenter = cls(seed, max_tokens=max_tokens)
         augmented = augmenter.augment(
             use_llm=use_llm,
             llm_transformation=llm_transformation,

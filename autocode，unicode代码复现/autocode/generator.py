@@ -46,46 +46,101 @@ class Logger:
 class ProblemGenerator:
     def __init__(self, seed: Optional[int] = None, use_llm: bool = False,
                  api_key: Optional[str] = None, base_url: Optional[str] = None,
-                 model: str = "gpt-4o"):
+                 model: str = "gpt-4o", max_tokens: Optional[int] = None):
         if seed is not None:
             random.seed(seed)
         
         self.use_llm = use_llm
         
         if use_llm:
-            self.llm_client = LLMClient(api_key=api_key, base_url=base_url, model=model)
+            self.llm_client = LLMClient(
+                api_key=api_key,
+                base_url=base_url,
+                model=model,
+                max_tokens=max_tokens
+            )
             self.engine = LLMTransformationEngine(self.llm_client)
         else:
             self.engine = TransformationEngine()
     
-    def _convert_seed_format(self, seed_data: Dict[str, Any]) -> Dict[str, Any]:
-        constraints_str = seed_data.get("constraints", "")
+    @staticmethod
+    def _normalize_difficulty(value: Any) -> int:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+        if isinstance(value, str):
+            mapping = {
+                "easy": 800,
+                "medium": 1400,
+                "hard": 2000
+            }
+            normalized = value.strip().lower()
+            if normalized in mapping:
+                return mapping[normalized]
+            try:
+                return int(normalized)
+            except ValueError:
+                return 1000
+        return 1000
+
+    @staticmethod
+    def _normalize_constraints_text(constraints: Any) -> List[str]:
+        if isinstance(constraints, list):
+            return [str(item) for item in constraints]
+        if isinstance(constraints, str):
+            return [line.strip() for line in constraints.splitlines() if line.strip()]
+        return []
+
+    @staticmethod
+    def _normalize_tags(tags: Any) -> List[str]:
+        if isinstance(tags, list):
+            return [str(tag) for tag in tags]
+        if isinstance(tags, str):
+            return [tag.strip() for tag in tags.split(',') if tag.strip()]
+        return []
+
+    def _normalize_seed_format(self, seed_data: Dict[str, Any]) -> Dict[str, Any]:
+        constraints_data = seed_data.get("constraints", {})
         time_limit = "2 seconds"
         memory_limit = "256 megabytes"
-        
-        if constraints_str:
-            for line in constraints_str.split('\n'):
+
+        if isinstance(constraints_data, dict):
+            time_limit = constraints_data.get("time_limit", time_limit)
+            memory_limit = constraints_data.get("memory_limit", memory_limit)
+            input_format = constraints_data.get("input_format") or seed_data.get("input_format", "")
+            output_format = constraints_data.get("output_format") or seed_data.get("output_format", "")
+            constraints_lines = []
+        else:
+            input_format = seed_data.get("input_format", "")
+            output_format = seed_data.get("output_format", "")
+            constraints_lines = self._normalize_constraints_text(constraints_data)
+            for line in constraints_lines:
                 if "time limit" in line.lower():
                     time_limit = line.strip()
                 elif "memory limit" in line.lower():
                     memory_limit = line.strip()
-        
+
+        description = seed_data.get("description", "")
+        if constraints_lines:
+            description = f"{description}\n\nConstraints:\n" + "\n".join(constraints_lines)
+
         return {
             "title": seed_data.get("title", "Untitled"),
-            "description": seed_data.get("description", ""),
+            "description": description,
             "constraints": {
                 "time_limit": time_limit,
                 "memory_limit": memory_limit,
-                "input_format": "",
-                "output_format": ""
+                "input_format": input_format,
+                "output_format": output_format
             },
-            "input_description": seed_data.get("input", ""),
-            "output_description": seed_data.get("output", ""),
-            "examples": [],
-            "difficulty": 1000,
-            "tags": [],
-            "original_seed": seed_data.get("problem_id", None),
-            "transformation_type": None
+            "input_description": seed_data.get("input_description") or seed_data.get("input") or input_format,
+            "output_description": seed_data.get("output_description") or seed_data.get("output") or output_format,
+            "examples": seed_data.get("examples", []),
+            "difficulty": self._normalize_difficulty(seed_data.get("difficulty", 1000)),
+            "tags": self._normalize_tags(seed_data.get("tags", [])),
+            "original_seed": seed_data.get("original_seed") or seed_data.get("problem_id"),
+            "transformation_type": seed_data.get("transformation_type")
         }
     
     def generate_from_file(self, input_path: str, output_path: str, 
@@ -93,8 +148,7 @@ class ProblemGenerator:
         with open(input_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        if "problem_id" in data and "title" in data and "description" in data:
-            data = self._convert_seed_format(data)
+        data = self._normalize_seed_format(data)
         
         seed_problem = Problem.from_dict(data)
         new_problem = self.engine.apply_multiple_transformations(
@@ -109,6 +163,7 @@ class ProblemGenerator:
     
     def generate_from_dict(self, seed_data: Dict[str, Any], 
                           num_transformations: int = 1) -> Dict[str, Any]:
+        seed_data = self._normalize_seed_format(seed_data)
         seed_problem = Problem.from_dict(seed_data)
         new_problem = self.engine.apply_multiple_transformations(
             seed_problem, num_transformations
@@ -120,7 +175,7 @@ class ProblemGenerator:
         if logger is None:
             logger = Logger()
         
-        json_files = glob.glob(os.path.join(input_dir, "*.json"))
+        json_files = sorted(glob.glob(os.path.join(input_dir, "*.json")))
         
         if not json_files:
             logger.warning(f"No JSON files found in input directory: {input_dir}")
@@ -207,8 +262,10 @@ class ProblemGenerator:
         if logger is None:
             logger = Logger()
         
-        problem_folders = [f for f in glob.glob(os.path.join(base_dir, "*")) 
-                           if os.path.isdir(f) and not f.startswith('_')]
+        problem_folders = sorted(
+            f for f in glob.glob(os.path.join(base_dir, "*"))
+            if os.path.isdir(f) and not os.path.basename(f).startswith('_')
+        )
         
         if not problem_folders:
             logger.warning(f"No problem folders found in base directory: {base_dir}")
@@ -243,7 +300,7 @@ class ProblemGenerator:
                 })
                 continue
             
-            json_files = glob.glob(os.path.join(original_input_dir, "*.json"))
+            json_files = sorted(glob.glob(os.path.join(original_input_dir, "*.json")))
             
             if not json_files:
                 logger.warning(f"  No JSON files found in original_input: {original_input_dir}")
@@ -346,6 +403,10 @@ def main():
         help='LLM model to use (default: gpt-4o)'
     )
     parser.add_argument(
+        '--max-tokens', type=int,
+        help='Maximum completion tokens for LLM generation (default: MAX_TOKENS or 16000)'
+    )
+    parser.add_argument(
         '--batch', action='store_true',
         help='Enable batch mode for processing multiple JSON files'
     )
@@ -379,7 +440,8 @@ def main():
             use_llm=args.use_llm,
             api_key=args.api_key,
             base_url=args.base_url,
-            model=args.model
+            model=args.model,
+            max_tokens=args.max_tokens
         )
         
         generator.process_problem_folders(base_dir, args.transformations, logger)
@@ -416,7 +478,8 @@ def main():
             use_llm=args.use_llm,
             api_key=args.api_key,
             base_url=args.base_url,
-            model=args.model
+            model=args.model,
+            max_tokens=args.max_tokens
         )
         
         generator.batch_generate(input_dir, output_dir, args.transformations, logger)
@@ -431,7 +494,8 @@ def main():
             use_llm=args.use_llm,
             api_key=args.api_key,
             base_url=args.base_url,
-            model=args.model
+            model=args.model,
+            max_tokens=args.max_tokens
         )
         
         new_problem = generator.generate_from_file(
