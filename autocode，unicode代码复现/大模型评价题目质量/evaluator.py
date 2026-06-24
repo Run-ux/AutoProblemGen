@@ -9,7 +9,7 @@ Uses LLM to evaluate the quality of generated algorithmic problems across 4 dime
 
 import json
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from dataclasses import dataclass, asdict
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -49,11 +49,15 @@ class ProblemEvaluator:
         self.max_tokens = int(os.getenv("MAX_TOKENS", 4000))
         self.temperature = float(os.getenv("TEMPERATURE", 0.2))
     
-    def generate_evaluation_prompt(self, seed_problem: Dict, new_problem: Dict) -> str:
+    def generate_evaluation_prompt(self, seed_problem: Dict, new_problem: Union[Dict, str]) -> str:
         """Generate detailed prompt for LLM evaluation"""
         
         seed_json = json.dumps(seed_problem, ensure_ascii=False, indent=2)
-        new_json = json.dumps(new_problem, ensure_ascii=False, indent=2)
+        if isinstance(new_problem, dict):
+            new_json = json.dumps(new_problem, ensure_ascii=False, indent=2)
+            new_problem_section = f"NEW PROBLEM (Generated):\n{new_json}"
+        else:
+            new_problem_section = f"NEW PROBLEM (Generated):\n{new_problem}"
         
         prompt = f"""
 You are an expert competitive programming problem evaluator. Your task is to evaluate the quality of a newly generated algorithmic problem by comparing it with its seed (original) problem.
@@ -61,8 +65,7 @@ You are an expert competitive programming problem evaluator. Your task is to eva
 SEED PROBLEM (Original):
 {seed_json}
 
-NEW PROBLEM (Generated):
-{new_json}
+{new_problem_section}
 
 Evaluate the new problem across the following 4 dimensions:
 
@@ -126,7 +129,7 @@ Do NOT include any other text, explanations, or markdown formatting.
 """
         return prompt
     
-    def evaluate(self, seed_problem: Dict, new_problem: Dict) -> EvaluationResult:
+    def evaluate(self, seed_problem: Dict, new_problem: Union[Dict, str]) -> EvaluationResult:
         """Evaluate the new problem using LLM"""
         prompt = self.generate_evaluation_prompt(seed_problem, new_problem)
         
@@ -223,6 +226,114 @@ Do NOT include any other text, explanations, or markdown formatting.
         print(f"  Novelty: {result.novelty}/100")
         print(f"  Difficulty: {result.difficulty}/100")
 
+    def evaluate_folder(self, folder_path: str) -> None:
+        """Evaluate all problems in a single problem folder and save scores.json"""
+        folder_name = os.path.basename(folder_path)
+        
+        # Load seed problem
+        source_dir = os.path.join(folder_path, "source")
+        seed_problem = None
+        if os.path.isdir(source_dir):
+            source_files = [f for f in os.listdir(source_dir) if f.endswith('.json')]
+            if source_files:
+                seed_path = os.path.join(source_dir, source_files[0])
+                with open(seed_path, 'r', encoding='utf-8') as f:
+                    seed_data = json.load(f)
+                # Use original_problem field if available, otherwise use whole data
+                seed_problem = seed_data.get("original_problem", seed_data)
+        
+        if seed_problem is None:
+            print(f"[SKIP] No seed problem found for {folder_name}")
+            return
+        
+        scores = {}
+        
+        # 1. Evaluate other_methods/autocode.json
+        autocode_path = os.path.join(folder_path, "other_methods", "autocode.json")
+        if os.path.exists(autocode_path):
+            try:
+                with open(autocode_path, 'r', encoding='utf-8') as f:
+                    autocode_problem = json.load(f)
+                print(f"[EVAL] {folder_name} - autocode.json")
+                result = self.evaluate(seed_problem, autocode_problem)
+                scores["autocode"] = {
+                    "solvability": result.solvability,
+                    "clarity": result.clarity,
+                    "novelty": result.novelty,
+                    "difficulty": result.difficulty,
+                    "overall_score": result.overall_score
+                }
+            except Exception as e:
+                print(f"[ERROR] {folder_name} - autocode.json: {e}")
+                scores["autocode"] = {"error": str(e)}
+        else:
+            scores["autocode"] = {"error": "file not found"}
+        
+        # 2. Evaluate other_methods/unicode.json
+        unicode_path = os.path.join(folder_path, "other_methods", "unicode.json")
+        if os.path.exists(unicode_path):
+            try:
+                with open(unicode_path, 'r', encoding='utf-8') as f:
+                    unicode_problem = json.load(f)
+                print(f"[EVAL] {folder_name} - unicode.json")
+                result = self.evaluate(seed_problem, unicode_problem)
+                scores["unicode"] = {
+                    "solvability": result.solvability,
+                    "clarity": result.clarity,
+                    "novelty": result.novelty,
+                    "difficulty": result.difficulty,
+                    "overall_score": result.overall_score
+                }
+            except Exception as e:
+                print(f"[ERROR] {folder_name} - unicode.json: {e}")
+                scores["unicode"] = {"error": str(e)}
+        else:
+            scores["unicode"] = {"error": "file not found"}
+        
+        # 3. Evaluate last md file in output/
+        output_dir = os.path.join(folder_path, "output")
+        if os.path.isdir(output_dir):
+            md_files = sorted([f for f in os.listdir(output_dir) if f.endswith('.md')])
+            if md_files:
+                last_md = md_files[-1]
+                md_path = os.path.join(output_dir, last_md)
+                try:
+                    with open(md_path, 'r', encoding='utf-8') as f:
+                        md_content = f.read()
+                    print(f"[EVAL] {folder_name} - {last_md}")
+                    result = self.evaluate(seed_problem, md_content)
+                    scores["output_md"] = {
+                        "solvability": result.solvability,
+                        "clarity": result.clarity,
+                        "novelty": result.novelty,
+                        "difficulty": result.difficulty,
+                        "overall_score": result.overall_score
+                    }
+                except Exception as e:
+                    print(f"[ERROR] {folder_name} - {last_md}: {e}")
+                    scores["output_md"] = {"error": str(e)}
+            else:
+                scores["output_md"] = {"error": "no md files found"}
+        else:
+            scores["output_md"] = {"error": "output directory not found"}
+        
+        # Save scores.json
+        scores_path = os.path.join(folder_path, "scores.json")
+        with open(scores_path, 'w', encoding='utf-8') as f:
+            json.dump(scores, f, ensure_ascii=False, indent=2)
+        print(f"[DONE] {folder_name} - scores saved to {scores_path}")
+
+    def batch_evaluate(self, root_dir: str) -> None:
+        """Evaluate all problem folders under root_dir"""
+        if not os.path.isdir(root_dir):
+            print(f"[ERROR] Root directory does not exist: {root_dir}")
+            return
+        
+        for entry in sorted(os.listdir(root_dir)):
+            folder_path = os.path.join(root_dir, entry)
+            if os.path.isdir(folder_path) and not entry.startswith('_'):
+                self.evaluate_folder(folder_path)
+
 
 def demo():
     """Demonstrate the evaluator with sample problems"""
@@ -286,4 +397,13 @@ def demo():
 
 
 if __name__ == "__main__":
-    demo()
+    import sys
+    
+    if len(sys.argv) > 1:
+        target_dir = sys.argv[1]
+    else:
+        # Default target directory
+        target_dir = "/home/zsdx/AutoProblemGen/autocode，unicode代码复现/input/successful_output"
+    
+    evaluator = ProblemEvaluator()
+    evaluator.batch_evaluate(target_dir)
