@@ -1,7 +1,8 @@
 # 生题质量消融实验
 
-本目录用于复现“只到生成题面阶段”的组件消融实验。实验种子来自
-`D:\AutoProblemGen\总流程\successful_output` 中已经成功生成并验证的题。
+本目录用于复现“只到生成题面阶段”的组件消融实验。实验种子默认来自
+`AutoProblemGen/autocode，unicode代码复现/input/successful_output` 中已经成功生成并验证的题。
+该目录可直接按 `batch1` 到 `batch20` 分批存放题目文件夹，manifest 构建会按 batch 数字顺序扫描其中的题目。
 
 ## 实验组
 
@@ -61,6 +62,35 @@ EMBEDDING_MAX_RETRIES=3
 - `--shard-index K`：当前分片编号，默认 `0`，范围为 `0 <= K < N`。
 - 分片规则为 manifest 顺序下的 `problem_index % shard_count == shard_index`。
 - 若同时传入 `--limit`，会先截取前 N 题，再做分片。
+- 参数名是 `--shard-count`，不是 `sharedcount`。
+
+Ubuntu 下 100 分片并行运行示例：
+
+```bash
+cd /path/to/AutoProblemGen
+mkdir -p "实验_消融实验_生题质量/logs/quality_ablation"
+
+MAIN="$PWD/实验_消融实验_生题质量/main.py"
+RUN_ID="quality_ablation"
+SHARD_COUNT=100
+LOG_DIR="$PWD/实验_消融实验_生题质量/logs/$RUN_ID"
+
+python "$MAIN" build-manifest
+
+for i in $(seq 0 $((SHARD_COUNT - 1))); do
+  python "$MAIN" run --run-id "$RUN_ID" --shard-count "$SHARD_COUNT" --shard-index "$i" \
+    > "$LOG_DIR/run_shard_${i}.log" 2>&1 &
+done
+wait
+
+for i in $(seq 0 $((SHARD_COUNT - 1))); do
+  python "$MAIN" judge --run-id "$RUN_ID" --shard-count "$SHARD_COUNT" --shard-index "$i" \
+    > "$LOG_DIR/judge_shard_${i}.log" 2>&1 &
+done
+wait
+
+python "$MAIN" report --run-id "$RUN_ID"
+```
 
 4 个终端并行运行生成阶段示例：
 

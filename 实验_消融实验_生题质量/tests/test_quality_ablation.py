@@ -133,6 +133,33 @@ class QualityAblationTests(unittest.TestCase):
             self.assertEqual(manifest["eligible_count"], 2)
             self.assertEqual([item["problem_id"] for item in manifest["problems"]], ["p1", "p2"])
 
+    def test_manifest_scans_batch_problem_dirs_in_numeric_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "successful_output"
+            _make_successful_problem(root / "batch10", problem_id="p10")
+            _make_successful_problem(root / "batch2", problem_id="p2")
+            _make_successful_problem(root / "batch1", problem_id="p1")
+            _make_successful_problem(root / "batch20", problem_id="p20")
+            manifest_path = Path(temp_dir) / "manifest.json"
+
+            manifest = build_manifest(successful_root=root, output_path=manifest_path)
+
+            self.assertEqual(manifest["eligible_count"], 4)
+            self.assertEqual(
+                [item["problem_id"] for item in manifest["problems"]],
+                ["p1", "p2", "p10", "p20"],
+            )
+
+    def test_manifest_rejects_duplicate_problem_ids_across_batches(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "successful_output"
+            _make_successful_problem(root / "batch1", problem_id="dup")
+            _make_successful_problem(root / "batch2", problem_id="dup")
+            manifest_path = Path(temp_dir) / "manifest.json"
+
+            with self.assertRaisesRegex(ValueError, "重复 problem_id"):
+                build_manifest(successful_root=root, output_path=manifest_path)
+
     def test_no_tuple_prompt_does_not_include_external_tuple_values(self) -> None:
         source = _source_payload(problem_id="p1", unique_tuple_value="UNIQUE_TUPLE_SECRET")
 

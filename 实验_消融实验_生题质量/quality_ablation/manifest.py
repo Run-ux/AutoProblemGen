@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -84,11 +85,50 @@ def _candidate_problem_dirs(root: Path) -> list[Path]:
                 target = root / problem_id
             if target.exists():
                 add_dir(target)
-        # 上游 _manifest 可能滞后于目录内容；保留其顺序，再补充根目录中的新增题。
-        for path in sorted(root.iterdir()):
+        # 上游 _manifest 可能滞后于目录内容；保留其顺序，再补充根目录和 batch 中的新增题。
+        for path in _discover_problem_dirs(root):
             add_dir(path)
+        _validate_unique_problem_ids(dirs)
         return dirs
-    return sorted(path for path in root.iterdir() if path.is_dir())
+    dirs = _discover_problem_dirs(root)
+    _validate_unique_problem_ids(dirs)
+    return dirs
+
+
+def _discover_problem_dirs(root: Path) -> list[Path]:
+    direct_problem_dirs: list[Path] = []
+    batch_dirs: list[tuple[int, str, Path]] = []
+    for path in sorted(root.iterdir()):
+        if not path.is_dir():
+            continue
+        batch_index = _batch_index(path.name)
+        if batch_index is None:
+            direct_problem_dirs.append(path)
+        else:
+            batch_dirs.append((batch_index, path.name, path))
+
+    problem_dirs = list(direct_problem_dirs)
+    for _batch_index_value, _batch_name, batch_dir in sorted(batch_dirs):
+        problem_dirs.extend(sorted(path for path in batch_dir.iterdir() if path.is_dir()))
+    return problem_dirs
+
+
+def _batch_index(name: str) -> int | None:
+    match = re.fullmatch(r"batch(\d+)", name)
+    return int(match.group(1)) if match else None
+
+
+def _validate_unique_problem_ids(problem_dirs: list[Path]) -> None:
+    by_problem_id: dict[str, Path] = {}
+    for problem_dir in problem_dirs:
+        problem_id = problem_dir.name
+        existing = by_problem_id.get(problem_id)
+        if existing is not None and existing.resolve() != problem_dir.resolve():
+            raise ValueError(
+                "发现重复 problem_id，可能导致输出目录互相覆盖："
+                f"{problem_id} -> {existing.resolve()} ; {problem_dir.resolve()}"
+            )
+        by_problem_id[problem_id] = problem_dir
 
 
 def _build_problem_entry(problem_dir: Path) -> tuple[bool, str, dict[str, Any]]:
