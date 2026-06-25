@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .manifest import load_manifest
+from .llm_config import load_qwen_client
 from .utils import (
-    DEFAULT_WORKFLOW_CONFIG,
+    DEFAULT_LLM_ENV,
     GENERATION_DIR,
     GENERATED_CONDITIONS,
     TUPLE_FIELDS,
@@ -30,12 +31,10 @@ from models import DifferencePlan, GeneratedProblem, NewSchema, Theme, VariantPl
 from problem_generator import ProblemGenerator
 from problem_quality import ProblemEvaluator
 from problem_quality.report_renderer import render_report_markdown as render_quality_report_markdown
-from qwen_client import QwenClient
 from rulebook import RuleBook
 from schema_tools import compute_changed_axes, compute_schema_distance
 from variant_planner import THEMES, VariantPlanner
 
-from orchestrator import WorkflowConfig
 from pipeline import GenerationPipeline
 
 
@@ -47,7 +46,7 @@ def run_generations(
     manifest_path: Path,
     output_root: Path,
     run_id: str,
-    workflow_config_path: Path = DEFAULT_WORKFLOW_CONFIG,
+    llm_env_path: Path = DEFAULT_LLM_ENV,
     conditions: list[str] | None = None,
     limit: int | None = None,
     resume: bool = True,
@@ -68,7 +67,8 @@ def run_generations(
     file_suffix = shard_file_suffix(shard_count=shard_count, shard_index=shard_index)
     run_dir = output_root.resolve() / safe_name(run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
-    active_client = client or _load_qwen_client(workflow_config_path)
+    requires_llm = any(condition != "full" for condition in selected_conditions)
+    active_client = client or (load_qwen_client(llm_env_path) if requires_llm else None)
 
     outcomes: list[dict[str, Any]] = []
     write_json(
@@ -84,7 +84,7 @@ def run_generations(
             "shard_count": shard_count,
             "shard_index": shard_index,
             "started_at": utc_now_iso(),
-            "workflow_config_path": str(workflow_config_path.resolve()),
+            "llm_env_path": str(llm_env_path.resolve()),
         },
     )
 
@@ -613,11 +613,6 @@ def _normalize_generated_problem(raw: dict[str, Any], *, status: str, fallback_e
         ],
         "notes": str(raw.get("notes", "")),
     }
-
-
-def _load_qwen_client(workflow_config_path: Path) -> QwenClient:
-    config = WorkflowConfig.from_file(workflow_config_path)
-    return QwenClient(generation_config=config.generation_llm, embedding_config=config.embedding_llm)
 
 
 def _load_rule_summaries() -> list[dict[str, Any]]:

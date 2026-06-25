@@ -17,6 +17,8 @@
 - `no_rules` 保留四元组和原题文本，但不读取 `D:\AutoProblemGen\生成题面\planning_rules.json`，也不使用规则 handler/helper。
 - `no_quality_loop` 使用原生成链路和规则库，`quality_iterations=0`，保留 JSON/题面结构合同 retry。
 
+`full` 组仍只复用 `successful_output` 产物；`no_tuple`、`no_rules`、`no_quality_loop` 和 `judge` 的 LLM 调用均使用本目录 `.env`。
+
 ## CLI
 
 所有命令从本目录或项目任意目录运行均可：
@@ -27,6 +29,31 @@ python D:\AutoProblemGen\实验_消融实验_生题质量\main.py run
 python D:\AutoProblemGen\实验_消融实验_生题质量\main.py judge
 python D:\AutoProblemGen\实验_消融实验_生题质量\main.py report
 ```
+
+首次运行 `run` 或 `judge` 前，需要复制本目录模板并填写真实 LLM 配置：
+
+```powershell
+Copy-Item D:\AutoProblemGen\实验_消融实验_生题质量\.env.example D:\AutoProblemGen\实验_消融实验_生题质量\.env
+```
+
+`.env` 使用本实验独立的双端点配置，不再读取 `D:\AutoProblemGen\总流程\workflow.env`：
+
+```dotenv
+GENERATION_API_KEY=your_generation_key
+GENERATION_BASE_URL=https://api.deepseek.com
+GENERATION_MODEL=deepseek-v4-pro
+GENERATION_TIMEOUT_SECONDS=1200
+GENERATION_MAX_RETRIES=3
+GENERATION_TEMPERATURE=0.3
+
+EMBEDDING_API_KEY=your_embedding_key
+EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+EMBEDDING_MODEL=text-embedding-v4
+EMBEDDING_TIMEOUT_SECONDS=1200
+EMBEDDING_MAX_RETRIES=3
+```
+
+如需临时使用其它配置文件，可在 `run` 或 `judge` 中传入 `--env-file <path>`。旧参数 `--workflow-config` 已废弃；一旦传入会直接报错，避免误读总流程配置。
 
 `run` 和 `judge` 支持按题目分片并行：
 

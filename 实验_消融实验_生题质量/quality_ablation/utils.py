@@ -26,7 +26,7 @@ TUPLE_FIELDS = ("input_structure", "core_constraints", "objective", "invariant")
 ALL_CONDITIONS = ("full", "no_tuple", "no_rules", "no_quality_loop")
 GENERATED_CONDITIONS = ("no_tuple", "no_rules", "no_quality_loop")
 DEFAULT_SUCCESSFUL_ROOT = PROJECT_ROOT / "总流程" / "successful_output"
-DEFAULT_WORKFLOW_CONFIG = PROJECT_ROOT / "总流程" / "workflow.env"
+DEFAULT_LLM_ENV = EXPERIMENT_ROOT / ".env"
 
 
 def utc_now_iso() -> str:

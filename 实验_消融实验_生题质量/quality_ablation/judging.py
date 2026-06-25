@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .generation import DECLARED_FAILURE_STATUSES
+from .llm_config import load_qwen_client
 from .manifest import load_manifest
 from .utils import (
     ALL_CONDITIONS,
-    DEFAULT_WORKFLOW_CONFIG,
+    DEFAULT_LLM_ENV,
     average,
     append_jsonl,
     limited_rows,
@@ -23,9 +24,6 @@ from .utils import (
     utc_now_iso,
     write_jsonl,
 )
-
-from qwen_client import QwenClient
-from orchestrator import WorkflowConfig
 
 
 JUDGE_METRICS = ("solvability", "clarity", "novelty", "difficulty")
@@ -42,7 +40,7 @@ def run_judging(
     *,
     manifest_path: Path,
     run_dir: Path,
-    workflow_config_path: Path = DEFAULT_WORKFLOW_CONFIG,
+    llm_env_path: Path = DEFAULT_LLM_ENV,
     conditions: list[str] | None = None,
     limit: int | None = None,
     resume: bool = True,
@@ -77,7 +75,7 @@ def run_judging(
 
     scores_path = run_dir.resolve() / f"scores{file_suffix}.jsonl"
     existing_ids = _load_existing_score_ids(scores_path) if resume else set()
-    active_client = client or _load_qwen_client(workflow_config_path)
+    active_client = client or load_qwen_client(llm_env_path)
 
     scored_count = 0
     skipped_count = 0
@@ -101,6 +99,7 @@ def run_judging(
         "limited_problem_count": len(limited_problems),
         "shard_count": shard_count,
         "shard_index": shard_index,
+        "llm_env_path": str(llm_env_path.resolve()),
         "blind_item_count": len(items),
         "scored_count": scored_count,
         "skipped_count": skipped_count,
@@ -392,8 +391,3 @@ def _load_existing_score_ids(scores_path: Path) -> set[str]:
                 continue
             ids.add(str(item.get("blind_id", "")))
     return ids
-
-
-def _load_qwen_client(workflow_config_path: Path) -> QwenClient:
-    config = WorkflowConfig.from_file(workflow_config_path)
-    return QwenClient(generation_config=config.generation_llm, embedding_config=config.embedding_llm)

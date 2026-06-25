@@ -9,8 +9,8 @@ from quality_ablation.manifest import build_manifest
 from quality_ablation.reporting import build_report
 from quality_ablation.utils import (
     ALL_CONDITIONS,
+    DEFAULT_LLM_ENV,
     DEFAULT_SUCCESSFUL_ROOT,
-    DEFAULT_WORKFLOW_CONFIG,
     EXPERIMENT_ROOT,
     GENERATED_CONDITIONS,
     parse_conditions,
@@ -20,6 +20,17 @@ from quality_ablation.utils import (
 DEFAULT_MANIFEST = EXPERIMENT_ROOT / "manifests" / "quality_ablation_manifest.json"
 DEFAULT_OUTPUT_ROOT = EXPERIMENT_ROOT / "output"
 DEFAULT_RUN_ID = "quality_ablation"
+
+
+class DeprecatedWorkflowConfigAction(argparse.Action):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: str | None = None,
+    ) -> None:
+        parser.error("--workflow-config 已废弃；请改用 --env-file 指向本实验目录下的 .env。")
 
 
 def main() -> None:
@@ -40,7 +51,7 @@ def main() -> None:
             manifest_path=Path(args.manifest),
             output_root=Path(args.output_root),
             run_id=args.run_id,
-            workflow_config_path=Path(args.workflow_config),
+            llm_env_path=Path(args.env_file),
             conditions=parse_conditions(args.conditions, default=GENERATED_CONDITIONS),
             limit=args.limit,
             resume=not args.no_resume,
@@ -52,7 +63,7 @@ def main() -> None:
         result = run_judging(
             manifest_path=Path(args.manifest),
             run_dir=_resolve_run_dir(args),
-            workflow_config_path=Path(args.workflow_config),
+            llm_env_path=Path(args.env_file),
             conditions=parse_conditions(args.conditions, default=ALL_CONDITIONS),
             limit=args.limit,
             resume=not args.no_resume,
@@ -84,11 +95,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="运行 no_tuple/no_rules/no_quality_loop 生成")
     add_manifest_arg(run_parser)
     add_run_location_args(run_parser)
-    run_parser.add_argument(
-        "--workflow-config",
-        default=str(DEFAULT_WORKFLOW_CONFIG),
-        help="总流程 workflow.env 路径，用于读取 LLM 配置",
-    )
+    add_llm_env_args(run_parser)
     run_parser.add_argument(
         "--conditions",
         action="append",
@@ -101,11 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     judge_parser = subparsers.add_parser("judge", help="构建盲评队列并调用 LLM judge")
     add_manifest_arg(judge_parser)
     add_run_location_args(judge_parser)
-    judge_parser.add_argument(
-        "--workflow-config",
-        default=str(DEFAULT_WORKFLOW_CONFIG),
-        help="总流程 workflow.env 路径，用于读取 LLM 配置",
-    )
+    add_llm_env_args(judge_parser)
     judge_parser.add_argument(
         "--conditions",
         action="append",
@@ -132,6 +135,15 @@ def add_run_location_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT), help="实验输出根目录")
     parser.add_argument("--run-id", default=DEFAULT_RUN_ID, help="本次实验 run id")
     parser.add_argument("--run-dir", help="已存在的 run 目录；若提供则优先于 output-root/run-id")
+
+
+def add_llm_env_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--env-file", default=str(DEFAULT_LLM_ENV), help="本实验 LLM .env 配置路径")
+    parser.add_argument(
+        "--workflow-config",
+        action=DeprecatedWorkflowConfigAction,
+        help="已废弃；请改用 --env-file",
+    )
 
 
 def add_shard_args(parser: argparse.ArgumentParser) -> None:

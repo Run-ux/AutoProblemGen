@@ -1,20 +1,25 @@
 from __future__ import annotations
 
 import json
+import io
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
 if str(EXPERIMENT_ROOT) not in sys.path:
     sys.path.insert(0, str(EXPERIMENT_ROOT))
 
+from main import build_parser as build_cli_parser
 from quality_ablation.generation import build_custom_generation_prompts, condition_quality_iterations, run_generations
 from quality_ablation.judging import build_blind_items, build_judge_prompt, run_judging
+from quality_ablation.llm_config import load_llm_endpoint_configs
 from quality_ablation.manifest import build_manifest
 from quality_ablation.reporting import build_report
-from quality_ablation.utils import limited_rows, read_jsonl, sharded_rows, validate_shard, write_json, write_jsonl
+from quality_ablation.utils import limited_rows, read_json, read_jsonl, sharded_rows, validate_shard, write_json, write_jsonl
+from runtime_config import RuntimeConfigError
 
 
 class QualityAblationTests(unittest.TestCase):
@@ -33,6 +38,72 @@ class QualityAblationTests(unittest.TestCase):
             validate_shard(shard_count=0, shard_index=0)
         with self.assertRaisesRegex(ValueError, "--shard-index"):
             validate_shard(shard_count=2, shard_index=2)
+
+    def test_local_llm_env_loads_generation_and_embedding_endpoints(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_path = Path(temp_dir) / ".env"
+            env_path.write_text(
+                "\n".join(
+                    [
+                        "GENERATION_API_KEY=generation-key",
+                        "GENERATION_BASE_URL=https://generation.test/v1/",
+                        "GENERATION_MODEL=chat-model",
+                        "GENERATION_TIMEOUT_SECONDS=12.5",
+                        "GENERATION_MAX_RETRIES=2",
+                        "GENERATION_TEMPERATURE=0.3",
+                        "EMBEDDING_API_KEY=embedding-key",
+                        "EMBEDDING_BASE_URL=https://embedding.test/v1/",
+                        "EMBEDDING_MODEL=embedding-model",
+                        "EMBEDDING_TIMEOUT_SECONDS=7",
+                        "EMBEDDING_MAX_RETRIES=4",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            generation, embedding = load_llm_endpoint_configs(env_path)
+
+            self.assertEqual(generation.api_key, "generation-key")
+            self.assertEqual(generation.base_url, "https://generation.test/v1")
+            self.assertEqual(generation.model, "chat-model")
+            self.assertEqual(generation.timeout_seconds, 12.5)
+            self.assertEqual(generation.max_retries, 2)
+            self.assertEqual(generation.temperature, 0.3)
+            self.assertEqual(embedding.api_key, "embedding-key")
+            self.assertEqual(embedding.base_url, "https://embedding.test/v1")
+            self.assertEqual(embedding.model, "embedding-model")
+            self.assertEqual(embedding.timeout_seconds, 7.0)
+            self.assertEqual(embedding.max_retries, 4)
+
+    def test_local_llm_env_requires_prefixed_endpoint_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_path = Path(temp_dir) / ".env"
+            env_path.write_text(
+                "\n".join(
+                    [
+                        "GENERATION_API_KEY=generation-key",
+                        "GENERATION_BASE_URL=https://generation.test/v1",
+                        "GENERATION_MODEL=chat-model",
+                        "EMBEDDING_API_KEY=embedding-key",
+                        "EMBEDDING_BASE_URL=https://embedding.test/v1",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(RuntimeConfigError, "EMBEDDING_MODEL"):
+                load_llm_endpoint_configs(env_path)
+
+    def test_cli_accepts_env_file_and_rejects_workflow_config(self) -> None:
+        parser = build_cli_parser()
+
+        args = parser.parse_args(["run", "--env-file", "local.env"])
+
+        self.assertEqual(args.env_file, "local.env")
+        with self.assertRaises(SystemExit) as raised:
+            with redirect_stderr(io.StringIO()):
+                parser.parse_args(["judge", "--workflow-config", "workflow.env"])
+        self.assertEqual(raised.exception.code, 2)
 
     def test_manifest_identifies_final_full_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -106,6 +177,7 @@ class QualityAblationTests(unittest.TestCase):
                 manifest_path=manifest_path,
                 output_root=output_root,
                 run_id="quality",
+                llm_env_path=Path(temp_dir) / ".env",
                 conditions=["full"],
                 client=object(),
                 shard_count=2,
@@ -114,6 +186,8 @@ class QualityAblationTests(unittest.TestCase):
 
             run_dir = output_root / "quality"
             self.assertEqual(result["problem_count"], 1)
+            metadata = read_json(run_dir / "run_metadata_shard_1_of_2.json")
+            self.assertEqual(metadata["llm_env_path"], str((Path(temp_dir) / ".env").resolve()))
             self.assertTrue((run_dir / "run_metadata_shard_1_of_2.json").is_file())
             self.assertTrue((run_dir / "run_summary_shard_1_of_2.json").is_file())
             self.assertFalse((run_dir / "run_summary.json").exists())
@@ -169,6 +243,7 @@ class QualityAblationTests(unittest.TestCase):
             result = run_judging(
                 manifest_path=manifest_path,
                 run_dir=run_dir,
+                llm_env_path=Path(temp_dir) / ".env",
                 conditions=["full"],
                 client=client,
                 shard_count=2,
@@ -177,6 +252,7 @@ class QualityAblationTests(unittest.TestCase):
 
             scores_path = run_dir / "scores_shard_0_of_2.jsonl"
             self.assertEqual(result["problem_count"], 2)
+            self.assertEqual(result["llm_env_path"], str((Path(temp_dir) / ".env").resolve()))
             self.assertEqual(client.call_count, 2)
             self.assertTrue(scores_path.is_file())
             self.assertFalse((run_dir / "scores.jsonl").exists())
