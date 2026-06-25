@@ -63,8 +63,11 @@ def main(argv: list[str] | None = None) -> int:
             resume=not args.no_resume,
         )
         print(f"[run] run_dir={result['run_dir']}")
-        print(f"[run] completed={result['completed_count']} failed={result['failed_count']}")
-        return 0 if result["failed_count"] == 0 else 2
+        print(
+            f"[run] completed={result['completed_count']} "
+            f"new_failed={result['new_failed_count']} skipped={result['skipped_count']}"
+        )
+        return 0 if result["new_failed_count"] == 0 else 2
     summary = generate_report(args.run_dir)
     print(f"[report] status={summary['status']} completed={summary['completed_problem_count']}")
     return 0 if summary["status"] == "complete" else 2

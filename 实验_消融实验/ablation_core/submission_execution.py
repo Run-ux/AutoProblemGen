@@ -34,6 +34,15 @@ class ScriptResult:
         return asdict(self)
 
 
+def _kill_process(process: subprocess.Popen[str]) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        process.kill()
+    except OSError:
+        pass
+
+
 def _monitor_memory(
     process: subprocess.Popen[str],
     *,
@@ -49,7 +58,7 @@ def _monitor_memory(
                 peak_memory["value"] = memory_mb
             if memory_mb > memory_limit_mb:
                 killed_by_memory["value"] = True
-                process.kill()
+                _kill_process(process)
                 return
         time.sleep(0.02)
 
@@ -88,23 +97,42 @@ def run_submission_script(
         daemon=True,
     )
     monitor.start()
-    try:
-        stdout, stderr = process.communicate(input_string, timeout=timeout_seconds)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        stdout, stderr = process.communicate()
+
+    communication: dict[str, Any] = {"stdout": "", "stderr": "", "error": None}
+
+    def communicate() -> None:
+        try:
+            stdout, stderr = process.communicate(input_string)
+            communication["stdout"] = stdout
+            communication["stderr"] = stderr
+        except BaseException as exc:  # noqa: BLE001 - 子线程异常需要带回主线程归类。
+            communication["error"] = exc
+
+    # communicate(input) 在 Windows 上可能卡在 stdin 管道写入阶段；
+    # 主线程独立执行墙钟超时，确保低效提交不会无限挂住实验分片。
+    communication_thread = threading.Thread(target=communicate, daemon=True)
+    communication_thread.start()
+    communication_thread.join(max(0.0, timeout_seconds))
+    timed_out = communication_thread.is_alive()
+    if timed_out:
+        _kill_process(process)
+        communication_thread.join(5.0)
+
+    stdout = str(communication["stdout"])
+    stderr = str(communication["stderr"])
+    duration = time.monotonic() - start
+    if timed_out:
         return ScriptResult(
             status=EXECUTION_TIMEOUT,
             stdout=stdout,
             stderr=stderr,
             returncode=process.returncode,
-            duration_seconds=time.monotonic() - start,
+            duration_seconds=duration,
             timeout_seconds=timeout_seconds,
             memory_limit_mb=memory_limit_mb,
             peak_memory_mb=peak_memory["value"],
             error_message=f"执行超过 {timeout_seconds} 秒。",
         )
-    duration = time.monotonic() - start
     if killed_by_memory["value"]:
         return ScriptResult(
             status=EXECUTION_MEMORY_LIMIT,
@@ -116,6 +144,18 @@ def run_submission_script(
             memory_limit_mb=memory_limit_mb,
             peak_memory_mb=peak_memory["value"],
             error_message=f"执行内存超过 {memory_limit_mb} MB。",
+        )
+    if communication["error"] is not None:
+        return ScriptResult(
+            status=EXECUTION_ERROR,
+            stdout=stdout,
+            stderr=stderr,
+            returncode=process.returncode,
+            duration_seconds=duration,
+            timeout_seconds=timeout_seconds,
+            memory_limit_mb=memory_limit_mb,
+            peak_memory_mb=peak_memory["value"],
+            error_message=str(communication["error"]),
         )
     if process.returncode != 0:
         return ScriptResult(

@@ -2,19 +2,26 @@ from __future__ import annotations
 
 import json
 import tempfile
+import time
 import unittest
 from contextlib import redirect_stderr
 from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pandas as pd
 
-import path_setup  # noqa: F401
+try:
+    from . import path_setup  # noqa: F401
+except ImportError:
+    import path_setup  # noqa: F401
 from main import main as cli_main
 from ablation_core.manifest import build_manifest
+from ablation_core.pipeline import _evaluate_problem
 from ablation_core.problem_selection import select_manifest_problem_range
 from ablation_core.reporting import generate_report
+from ablation_core.submission_execution import EXECUTION_OK, EXECUTION_TIMEOUT, run_submission_script
 from ablation_core.suites import baseline_cases, build_suites, ours_cases
 from ablation_core.utils import write_json
 
@@ -206,6 +213,152 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(len(suites["ours_pipeline"]), 5)
         # 生成器代码为空，无法补齐 size_control；该情况会在报告中体现为保留用例数不足。
         self.assertEqual(len(suites["size_control"]), 4)
+
+
+class SubmissionExecutionTests(unittest.TestCase):
+    def test_normal_submission_returns_ok(self) -> None:
+        result = run_submission_script(
+            "import sys\nprint(sys.stdin.readline().strip())",
+            "hello\n",
+            timeout_seconds=1.0,
+            memory_limit_mb=256,
+        )
+
+        self.assertEqual(result.status, EXECUTION_OK)
+        self.assertEqual(result.stdout.strip(), "hello")
+
+    def test_infinite_loop_is_killed_by_timeout(self) -> None:
+        start = time.monotonic()
+        result = run_submission_script(
+            "while True:\n    pass",
+            "",
+            timeout_seconds=0.5,
+            memory_limit_mb=256,
+        )
+
+        self.assertEqual(result.status, EXECUTION_TIMEOUT)
+        self.assertLess(time.monotonic() - start, 5.0)
+
+    def test_non_reading_process_with_large_stdin_is_killed_by_timeout(self) -> None:
+        start = time.monotonic()
+        result = run_submission_script(
+            "while True:\n    pass",
+            "x" * (1024 * 1024),
+            timeout_seconds=0.5,
+            memory_limit_mb=256,
+        )
+
+        self.assertEqual(result.status, EXECUTION_TIMEOUT)
+        self.assertLess(time.monotonic() - start, 5.0)
+
+
+class ResumeTests(unittest.TestCase):
+    def _problem(self, problem_id: str = "p1") -> dict:
+        return {
+            "problem_id": problem_id,
+            "right_submission_ids": [1],
+            "wrong_submission_ids": [],
+        }
+
+    def _runtime(self) -> dict:
+        return {
+            "generation_llm": object(),
+            "llm_config": object(),
+            "execution_config": SimpleNamespace(),
+            "context_limits": object(),
+        }
+
+    def _evaluate(self, run_dir: Path, problem_id: str = "p1", resume: bool = True) -> dict:
+        return _evaluate_problem(
+            problem=self._problem(problem_id),
+            problem_row={"problem_id": problem_id},
+            submissions_by_id={
+                1: {
+                    "id": 1,
+                    "language": "Python 3",
+                    "type": "right_submission",
+                    "source": "print('ok')",
+                }
+            },
+            run_dir=run_dir,
+            runtime=self._runtime(),
+            resume=resume,
+        )
+
+    def test_completed_result_is_reused(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir)
+            problem_dir = run_dir / "problems" / "p1"
+            write_json(problem_dir / "result.json", {"status": "completed", "problem_id": "p1"})
+
+            result = self._evaluate(run_dir)
+
+            self.assertEqual(result["status"], "completed")
+
+    def test_failed_result_is_skipped_without_rerun(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir)
+            problem_dir = run_dir / "problems" / "p1"
+            write_json(problem_dir / "result.json", {"status": "failed", "problem_id": "p1"})
+
+            result = self._evaluate(run_dir)
+
+            self.assertEqual(result["status"], "skipped")
+            self.assertEqual(result["existing_status"], "failed")
+
+    def test_problem_directory_without_result_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir)
+            (run_dir / "problems" / "p1").mkdir(parents=True)
+
+            result = self._evaluate(run_dir)
+
+            self.assertEqual(result["status"], "skipped")
+            self.assertEqual(result["skip_reason"], "problem_dir_without_result")
+
+    def test_invalid_result_json_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir)
+            problem_dir = run_dir / "problems" / "p1"
+            problem_dir.mkdir(parents=True)
+            (problem_dir / "result.json").write_text("{", encoding="utf-8")
+
+            result = self._evaluate(run_dir)
+
+            self.assertEqual(result["status"], "skipped")
+            self.assertEqual(result["skip_reason"], "invalid_result_json")
+
+    def test_new_problem_runs_and_writes_result(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir)
+            verification = verification_fixture()
+            with (
+                patch("ablation_core.pipeline.extract_tuple_snapshot", return_value={}),
+                patch("ablation_core.pipeline.artifact_from_problem", return_value={}),
+                patch("ablation_core.pipeline.generate_verified_artifacts", return_value=verification),
+                patch(
+                    "ablation_core.pipeline.build_suites",
+                    return_value={
+                        "unicode_style_baseline": [{"case_id": "c1", "input": "", "output": ""}],
+                        "size_control": [{"case_id": "c1", "input": "", "output": ""}],
+                        "ours_pipeline": [{"case_id": "c1", "input": "", "output": ""}],
+                    },
+                ),
+                patch(
+                    "ablation_core.pipeline.evaluate_submission_on_cases",
+                    return_value={
+                        "suite": "unicode_style_baseline",
+                        "submission_id": 1,
+                        "submission_type": "right_submission",
+                        "accepted": True,
+                    },
+                ),
+            ):
+                result = self._evaluate(run_dir, problem_id="fresh")
+
+            self.assertEqual(result["status"], "completed")
+            self.assertTrue((run_dir / "problems" / "fresh" / "result.json").is_file())
+            self.assertTrue((run_dir / "problems" / "fresh" / "candidate_verdicts.jsonl").is_file())
 
 
 class ReportingTests(unittest.TestCase):

@@ -61,6 +61,31 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def _skipped_attempt(problem_id: str, result_path: Path, reason: str, existing_status: str = "") -> dict[str, Any]:
+    return {
+        "status": "skipped",
+        "problem_id": problem_id,
+        "skip_reason": reason,
+        "existing_status": existing_status,
+        "result_path": str(result_path),
+    }
+
+
+def _resume_existing_attempt(problem_dir: Path, result_path: Path, problem_id: str) -> dict[str, Any] | None:
+    if not problem_dir.exists():
+        return None
+    if not result_path.is_file():
+        return _skipped_attempt(problem_id, result_path, "problem_dir_without_result")
+    try:
+        payload = read_json(result_path)
+    except Exception as exc:  # noqa: BLE001 - 损坏或不可读结果都视为已尝试，避免反复卡同一题。
+        return _skipped_attempt(problem_id, result_path, "invalid_result_json", type(exc).__name__)
+    if isinstance(payload, dict) and payload.get("status") == "completed":
+        return payload
+    existing_status = str(payload.get("status", "")) if isinstance(payload, dict) else type(payload).__name__
+    return _skipped_attempt(problem_id, result_path, "existing_non_completed_result", existing_status)
+
+
 def _evaluate_problem(
     *,
     problem: dict[str, Any],
@@ -72,10 +97,12 @@ def _evaluate_problem(
 ) -> dict[str, Any]:
     problem_id = str(problem["problem_id"])
     problem_dir = run_dir / "problems" / safe_name(problem_id)
-    problem_dir.mkdir(parents=True, exist_ok=True)
     result_path = problem_dir / "result.json"
-    if resume and result_path.is_file():
-        return read_json(result_path)
+    if resume:
+        existing_attempt = _resume_existing_attempt(problem_dir, result_path, problem_id)
+        if existing_attempt is not None:
+            return existing_attempt
+    problem_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         write_tuple_input(problem_dir / "tuple_input.json", problem_row)
@@ -217,5 +244,7 @@ def run_ablation(
         "problem_count": len(problems),
         "selected_problem_range": selected_range,
         "completed_count": sum(item.get("status") == "completed" for item in outcomes),
+        "new_failed_count": sum(item.get("status") == "failed" for item in outcomes),
         "failed_count": sum(item.get("status") == "failed" for item in outcomes),
+        "skipped_count": sum(item.get("status") == "skipped" for item in outcomes),
     }
