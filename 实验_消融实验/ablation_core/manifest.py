@@ -99,19 +99,28 @@ def build_manifest(
     min_wrong: int = 50,
     eval_right_per_problem: int = 3,
     eval_wrong_per_problem: int = 50,
+    language_regex: str = PYTHON3_LANGUAGE_RE,
+    exclude_manifest_path: Path | None = None,
     problem_parquet_url: str = DEFAULT_PROBLEM_PARQUET_URL,
     submission_parquet_url: str = DEFAULT_SUBMISSION_PARQUET_URL,
 ) -> dict[str, Any]:
     problem_df = pd.read_parquet(problem_parquet_url)
     submission_df = pd.read_parquet(submission_parquet_url, columns=["id", "language", "problem_id", "type"])
-    python_df = submission_df[submission_df["language"].astype(str).str.contains(PYTHON3_LANGUAGE_RE, case=False, na=False)]
-    counts = python_df.groupby(["problem_id", "type"]).size().unstack(fill_value=0)
+    filtered_submission_df = submission_df[
+        submission_df["language"].astype(str).str.contains(language_regex, case=False, na=False)
+    ]
+    counts = filtered_submission_df.groupby(["problem_id", "type"]).size().unstack(fill_value=0)
     for column in ("right_submission", "wrong_submission"):
         if column not in counts.columns:
             counts[column] = 0
     eligible_ids = set(
         counts[(counts["right_submission"] >= min_right) & (counts["wrong_submission"] >= min_wrong)].index.astype(str)
     )
+    exclude_manifest: dict[str, Any] | None = None
+    if exclude_manifest_path is not None:
+        exclude_manifest = load_manifest(exclude_manifest_path)
+        excluded_ids = {str(problem["problem_id"]) for problem in exclude_manifest["problems"]}
+        eligible_ids -= excluded_ids
     eligible_problem_df = problem_df[problem_df["problem_id"].astype(str).isin(eligible_ids)].copy()
     if len(eligible_problem_df) < sample_size:
         raise ManifestError(f"可用题目不足：eligible={len(eligible_problem_df)} sample_size={sample_size}")
@@ -121,8 +130,8 @@ def build_manifest(
     problem_by_id = {str(row["problem_id"]): row for row in problem_df.to_dict("records")}
     for problem_id in sampled_ids:
         row = problem_by_id[problem_id]
-        right_ids = _submission_ids(python_df, problem_id, "right_submission")
-        wrong_ids = _submission_ids(python_df, problem_id, "wrong_submission")
+        right_ids = _submission_ids(filtered_submission_df, problem_id, "right_submission")
+        wrong_ids = _submission_ids(filtered_submission_df, problem_id, "wrong_submission")
         problems.append(
             {
                 "problem_id": problem_id,
@@ -148,7 +157,7 @@ def build_manifest(
         "sample_size": sample_size,
         "seed": seed,
         "filters": {
-            "language_regex": PYTHON3_LANGUAGE_RE,
+            "language_regex": language_regex,
             "min_right_submission": min_right,
             "min_wrong_submission": min_wrong,
             "eval_right_per_problem": eval_right_per_problem,
@@ -157,6 +166,9 @@ def build_manifest(
         "problem_count": len(problems),
         "problems": problems,
     }
+    if exclude_manifest_path is not None and exclude_manifest is not None:
+        manifest["filters"]["exclude_manifest_path"] = str(exclude_manifest_path)
+        manifest["filters"]["exclude_manifest_content_fingerprint"] = exclude_manifest.get("content_fingerprint", "")
     manifest["content_fingerprint"] = stable_hash({"schema_version": MANIFEST_SCHEMA_VERSION, "problems": problems})
     write_json(output_path, manifest)
     return manifest

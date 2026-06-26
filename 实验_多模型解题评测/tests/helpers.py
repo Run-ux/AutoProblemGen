@@ -97,3 +97,47 @@ def create_workflow_fixture(root: Path, *, problem_status: str = "verified") -> 
         },
     )
     return generation_path, verification_path, input_path
+
+
+def create_successful_output_fixture(
+    root: Path,
+    *,
+    source_problem_id: str = "seed_p1",
+    artifact_problem_id: str = "generated_p1",
+    source: str = "codeforces",
+) -> tuple[Path, Path, Path]:
+    problem_dir = root / source_problem_id
+    artifact_name = f"{source_problem_id}_round1.json"
+    verification_name = f"{source_problem_id}_round1_verified_artifacts.json"
+    generation_path = problem_dir / "artifacts" / artifact_name
+    verification_path = problem_dir / "verification" / verification_name
+    input_path = problem_dir / "original_input" / f"{source_problem_id}.json"
+    source_path = problem_dir / "source" / f"{source_problem_id}.json"
+
+    generation = generation_artifact(artifact_problem_id)
+    generation["source_problem_ids"] = [source_problem_id]
+    write_json(generation_path, generation)
+    write_json(verification_path, verification_artifact())
+    write_json(input_path, {"problem_id": source_problem_id, "source": source})
+    write_json(source_path, {"problem_id": source_problem_id, "source": source})
+    write_json(
+        problem_dir / "metadata" / "problem_record.json",
+        {
+            "problem": {
+                "problem_id": source_problem_id,
+                "status": "verified",
+                "generation": {
+                    "status": "verified",
+                    "generated_status": "ok",
+                    "artifact_path": f"D:\\old\\workflow\\artifacts\\{artifact_name}",
+                    "verification_result_path": f"/root/old/workflow/verification/{verification_name}",
+                },
+                "input_path": f"D:\\old\\inputs\\{source_problem_id}.json",
+            },
+            "source_summary_path": f"D:\\old\\workflow\\{source_problem_id}\\workflow_summary.json",
+            "source_run_dir": f"D:\\old\\workflow\\{source_problem_id}",
+            "run_id": "old_run",
+            "export_root": str(problem_dir),
+        },
+    )
+    return generation_path, verification_path, input_path

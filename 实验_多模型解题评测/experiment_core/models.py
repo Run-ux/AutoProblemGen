@@ -33,6 +33,22 @@ def _read_env_file(path: Path) -> dict[str, str]:
 
 
 @dataclass(frozen=True)
+class ExperimentConcurrency:
+    """实验调度并发配置。"""
+
+    problem_workers: int
+    models_per_problem: int
+    raw_config: Any
+
+    def public_dict(self) -> dict[str, Any]:
+        return {
+            "raw": self.raw_config,
+            "problems": self.problem_workers,
+            "models_per_problem": self.models_per_problem,
+        }
+
+
+@dataclass(frozen=True)
 class ModelConfig:
     model_id: str
     model: str
@@ -117,7 +133,37 @@ def _optional_float(value: Any) -> float | None:
     return float(value)
 
 
-def load_model_configs(path: Path) -> tuple[list[ModelConfig], int]:
+def _require_positive_int(value: Any, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ModelConfigError(f"{field_name} 必须为正整数。")
+    return value
+
+
+def _parse_concurrency(value: Any) -> ExperimentConcurrency:
+    if isinstance(value, bool):
+        raise ModelConfigError("concurrency 必须为正整数或对象。")
+    if isinstance(value, int):
+        worker_count = _require_positive_int(value, "concurrency")
+        return ExperimentConcurrency(
+            problem_workers=worker_count,
+            models_per_problem=1,
+            raw_config=value,
+        )
+    if isinstance(value, dict):
+        if "problems" not in value or "models_per_problem" not in value:
+            raise ModelConfigError("concurrency 对象必须包含 problems 和 models_per_problem。")
+        return ExperimentConcurrency(
+            problem_workers=_require_positive_int(value["problems"], "concurrency.problems"),
+            models_per_problem=_require_positive_int(
+                value["models_per_problem"],
+                "concurrency.models_per_problem",
+            ),
+            raw_config=dict(value),
+        )
+    raise ModelConfigError("concurrency 必须为正整数或对象。")
+
+
+def load_model_configs(path: Path) -> tuple[list[ModelConfig], ExperimentConcurrency]:
     import json
 
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -127,9 +173,7 @@ def load_model_configs(path: Path) -> tuple[list[ModelConfig], int]:
     ids = [model.model_id for model in models]
     if not models or len(ids) != len(set(ids)):
         raise ModelConfigError("模型列表不能为空，且 id 不能重复。")
-    concurrency = int(payload.get("concurrency", 1))
-    if concurrency <= 0:
-        raise ModelConfigError("concurrency 必须为正整数。")
+    concurrency = _parse_concurrency(payload.get("concurrency", 1))
     return models, concurrency
 
 

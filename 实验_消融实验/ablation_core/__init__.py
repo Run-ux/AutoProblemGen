@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-__all__ = ["build_manifest", "generate_report", "load_manifest", "run_ablation"]
+__all__ = ["backfill_wrong_pool_runs", "build_manifest", "generate_report", "load_manifest", "run_ablation"]
+
+
+def backfill_wrong_pool_runs(*args, **kwargs):
+    from .wrong_pool_backfill import backfill_wrong_pool_runs as _backfill_wrong_pool_runs
+
+    return _backfill_wrong_pool_runs(*args, **kwargs)
 
 
 def build_manifest(*args, **kwargs):

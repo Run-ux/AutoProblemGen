@@ -267,7 +267,7 @@ def run_python_function(
             "function_name": function_name,
             "args": _strip_surrogate_chars(args or []),
         },
-        ensure_ascii=False,
+        ensure_ascii=True,
     )
     start_time = time.monotonic()
     # 允许用户站点包中的 cyaron 可见，同时避免把当前工作目录自动加入 sys.path。

@@ -26,6 +26,18 @@ class LocalExecutionTests(unittest.TestCase):
         self.assertEqual(result.status, EXECUTION_OK)
         self.assertEqual(result.return_value, "ok!")
 
+    def test_run_python_function_accepts_non_ascii_code_payload(self) -> None:
+        result = run_python_function(
+            "def solve(input_str):\n    # 中文注释不能破坏子进程编码\n    return '答案:' + input_str.strip()",
+            "solve",
+            ["通过"],
+            timeout_seconds=2,
+            memory_limit_mb=512,
+        )
+
+        self.assertEqual(result.status, EXECUTION_OK)
+        self.assertEqual(result.return_value, "答案:通过")
+
     def test_run_python_function_captures_runtime_error(self) -> None:
         result = run_python_function(
             "def solve(input_str):\n    raise ValueError('bad input')",

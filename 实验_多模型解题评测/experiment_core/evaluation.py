@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
 from pathlib import Path
-from typing import Any
+from threading import Lock
+from typing import Any, Callable
 
 from .manifest import load_and_validate_manifest
 from .models import ClientFactory, InfrastructureError, ModelConfig, OpenAICompatibleClient, load_model_configs
@@ -196,11 +197,14 @@ def _evaluate_job(
     client: Any,
     manifest_sha256: str,
     result_path: Path,
+    generation: dict[str, Any] | None = None,
+    verification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     identity = _result_identity(manifest_sha256, model, problem["problem_id"])
     if _is_completed_result(result_path, identity):
         return {"action": "skipped", "path": str(result_path)}
-    generation, verification = _load_problem_payload(problem)
+    if generation is None or verification is None:
+        generation, verification = _load_problem_payload(problem)
     generated_problem = generation["generated_problem"]
     system_prompt, user_prompt = build_prompts(generated_problem)
     base_result: dict[str, Any] = {
@@ -317,6 +321,56 @@ def _evaluate_job(
     return {"action": "completed", "path": str(result_path), "passed": passed}
 
 
+def _evaluate_problem_jobs(
+    *,
+    problem: dict[str, Any],
+    jobs: list[dict[str, Any]],
+    model_executor: ThreadPoolExecutor,
+    models_per_problem: int,
+    on_job_finished: Callable[[dict[str, Any]], None],
+) -> list[dict[str, Any]]:
+    outcomes: list[dict[str, Any]] = []
+    pending_jobs = []
+    for job in jobs:
+        identity = _result_identity(job["manifest_sha256"], job["model"], problem["problem_id"])
+        if _is_completed_result(job["result_path"], identity):
+            outcomes.append({"action": "skipped", "path": str(job["result_path"])})
+            on_job_finished(job)
+        else:
+            pending_jobs.append(job)
+    if not pending_jobs:
+        return outcomes
+
+    generation, verification = _load_problem_payload(problem)
+    job_iterator = iter(pending_jobs)
+    active = {}
+
+    def submit_next() -> None:
+        try:
+            job = next(job_iterator)
+        except StopIteration:
+            return
+        future = model_executor.submit(
+            _evaluate_job,
+            **job,
+            generation=generation,
+            verification=verification,
+        )
+        active[future] = job
+
+    for _ in range(min(models_per_problem, len(pending_jobs))):
+        submit_next()
+
+    while active:
+        done, _ = wait(active, return_when=FIRST_COMPLETED)
+        for future in done:
+            job = active.pop(future)
+            on_job_finished(job)
+            outcomes.append(future.result())
+            submit_next()
+    return outcomes
+
+
 def run_experiment(
     *,
     manifest_path: Path,
@@ -331,6 +385,9 @@ def run_experiment(
     run_dir.mkdir(parents=True, exist_ok=True)
     client_factory = client_factory or OpenAICompatibleClient
     clients = {model.model_id: client_factory(model) for model in models}
+    effective_problem_workers = min(concurrency.problem_workers, len(manifest["problems"]))
+    effective_models_per_problem = min(concurrency.models_per_problem, len(models))
+    max_model_workers = max(1, effective_problem_workers * effective_models_per_problem)
     run_metadata = {
         "schema_version": 1,
         "run_id": run_id,
@@ -339,17 +396,25 @@ def run_experiment(
         "manifest_sha256": manifest_sha256,
         "manifest_content_fingerprint": manifest.get("content_fingerprint", ""),
         "models_path": str(models_path.resolve()),
-        "concurrency": concurrency,
+        "concurrency": {
+            "requested": concurrency.public_dict(),
+            "effective": {
+                "problem_workers": effective_problem_workers,
+                "models_per_problem": effective_models_per_problem,
+                "max_model_workers": max_model_workers,
+            },
+        },
         "sampling_attempts_per_problem": 1,
         "models": [model.public_dict() for model in models],
         "problem_count": len(manifest["problems"]),
     }
     atomic_write_json(run_dir / "run_metadata.json", run_metadata)
 
-    jobs = []
-    for model in models:
-        model_dir = run_dir / "results" / storage_name(model.model_id)
-        for problem in manifest["problems"]:
+    problem_jobs = []
+    for problem in manifest["problems"]:
+        jobs = []
+        for model in models:
+            model_dir = run_dir / "results" / storage_name(model.model_id)
             jobs.append(
                 {
                     "problem": problem,
@@ -359,21 +424,40 @@ def run_experiment(
                     "result_path": model_dir / f"{storage_name(problem['problem_id'])}.json",
                 }
             )
+        problem_jobs.append({"problem": problem, "jobs": jobs})
+
+    job_count = sum(len(item["jobs"]) for item in problem_jobs)
     outcomes: list[dict[str, Any]] = []
-    if concurrency == 1:
-        for index, job in enumerate(jobs, start=1):
-            print(f"[experiment {index}/{len(jobs)}] {job['model'].model_id} / {job['problem']['problem_id']}")
-            outcomes.append(_evaluate_job(**job))
-    else:
-        with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            future_map = {executor.submit(_evaluate_job, **job): job for job in jobs}
-            for index, future in enumerate(as_completed(future_map), start=1):
-                job = future_map[future]
-                print(f"[experiment {index}/{len(jobs)}] {job['model'].model_id} / {job['problem']['problem_id']}")
-                outcomes.append(future.result())
+    progress_lock = Lock()
+    progress = {"count": 0}
+
+    def on_job_finished(job: dict[str, Any]) -> None:
+        with progress_lock:
+            progress["count"] += 1
+            print(
+                f"[experiment {progress['count']}/{job_count}] "
+                f"{job['model'].model_id} / {job['problem']['problem_id']}"
+            )
+
+    with ThreadPoolExecutor(max_workers=max_model_workers) as model_executor, ThreadPoolExecutor(
+        max_workers=effective_problem_workers
+    ) as problem_executor:
+        future_map = {
+            problem_executor.submit(
+                _evaluate_problem_jobs,
+                problem=item["problem"],
+                jobs=item["jobs"],
+                model_executor=model_executor,
+                models_per_problem=effective_models_per_problem,
+                on_job_finished=on_job_finished,
+            ): item
+            for item in problem_jobs
+        }
+        for future in as_completed(future_map):
+            outcomes.extend(future.result())
     summary = {
         "run_dir": str(run_dir),
-        "job_count": len(jobs),
+        "job_count": job_count,
         "completed_count": sum(item["action"] in {"completed", "skipped"} for item in outcomes),
         "infrastructure_error_count": sum(item["action"] == "infrastructure_error" for item in outcomes),
         "skipped_count": sum(item["action"] == "skipped" for item in outcomes),

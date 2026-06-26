@@ -26,11 +26,11 @@
 
 ```powershell
 python D:\AutoProblemGen\实验\main.py build-manifest `
-  --workflow-output-root D:\AutoProblemGen\总流程\output `
+  --workflow-output-root D:\AutoProblemGen\总流程\successful_output `
   --output D:\AutoProblemGen\实验\manifests\generated_v1.json
 ```
 
-清单只收录工作流状态为 `verified` 且四类真值完整的题目。大规模真值必须为 `status=ok` 且没有失败项。若同一生成题出现在多个历史 run 中，只选择修改时间最新的有效版本，其他版本记录为 `superseded_duplicate`。
+清单默认从 `successful_output` 的每题导出目录构建，并冻结其中本地复制的生成 artifact 和验证 artifact。旧版 `总流程\output` 的 `workflow_summary.json` 目录树仍兼容。清单只收录工作流状态为 `verified` 且四类真值完整的题目。大规模真值必须为 `status=ok` 且没有失败项。若使用旧版 workflow output，且同一生成题出现在多个历史 run 中，只选择修改时间最新的有效版本，其他版本记录为 `superseded_duplicate`。
 
 命令同时生成 `generated_v1_excluded.json`，记录未收录题目及原因。Manifest 保存生成 artifact 和验证 artifact 的 SHA-256；运行实验前会重新校验，文件变化时 fail-fast，避免实验样本静默漂移。
 
@@ -46,7 +46,10 @@ python D:\AutoProblemGen\实验\main.py build-manifest `
 
 ```json
 {
-  "concurrency": 1,
+  "concurrency": {
+    "problems": 200,
+    "models_per_problem": 6
+  },
   "models": [
     {
       "id": "qwen-main",
@@ -63,7 +66,12 @@ python D:\AutoProblemGen\实验\main.py build-manifest `
 
 配置指纹不包含 API Key，结果文件也不会保存 API Key。若直接在 JSON 中填写真实密钥，应将自用配置文件保留在本地，避免提交到仓库。只有同时配置输入、输出每百万 token 单价时才计算美元成本。
 
-`concurrency` 默认为 `1`。提高并发前应确认各服务端限流策略；正式报告会记录实际并发和模型参数。
+`concurrency` 默认为 `1`，兼容旧配置，等价于 `problems=1`、`models_per_problem=1`。新版对象配置含义如下：
+
+- `problems`：同时调度的题目 worker 数。
+- `models_per_problem`：同一道题内同时调用的模型数。
+
+最大同时模型调用数约为 `problems * models_per_problem`，并会受题目数和模型数自然截断。例如 200 道题、6 个模型、`problems=200`、`models_per_problem=6` 时，最多会同时发起约 1200 个模型调用。若遇到官网限流、连接错误或本机资源吃紧，应先降低这两个值。正式报告会记录请求并发和实际生效并发。
 
 ## 3. 运行实验
 

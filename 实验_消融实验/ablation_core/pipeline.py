@@ -138,6 +138,8 @@ def _evaluate_problem(
         timeout_seconds = _standard_timeout(problem, verification)
         memory_limit_mb = _standard_memory(verification)
         submission_results: list[dict[str, Any]] = []
+        prepared_submissions: dict[str, Any] = {}
+        submission_cache_dir = problem_dir / "compiled_submissions"
         for suite_name, cases in suites.items():
             for submission_id in [*problem["right_submission_ids"], *problem["wrong_submission_ids"]]:
                 submission = submissions_by_id[int(submission_id)]
@@ -148,6 +150,8 @@ def _evaluate_problem(
                         cases=cases,
                         timeout_seconds=timeout_seconds,
                         memory_limit_mb=memory_limit_mb,
+                        submission_cache_dir=submission_cache_dir,
+                        prepared_submissions=prepared_submissions,
                     )
                 )
         _write_jsonl(problem_dir / "candidate_verdicts.jsonl", submission_results)
