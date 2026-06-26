@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -186,6 +187,7 @@ def _backfill_problem(
     before_targeted = int(
         verification.get("wrong_solution_pool_verification", {}).get("targeted_input_count", 0)
     )
+    print(f"[backfill:{problem_id}] wrong_solution_pool start", flush=True)
     wrong_pool_result = verify_wrong_solution_pool(
         artifact,
         verification,
@@ -196,12 +198,28 @@ def _backfill_problem(
         runtime["execution_config"],
         runtime["context_limits"],
     )
+    print(
+        f"[backfill:{problem_id}] wrong_solution_pool done "
+        f"targeted={wrong_pool_result['verification'].get('targeted_input_count', 0)} "
+        f"killed={wrong_pool_result['verification'].get('killed_count', 0)} "
+        f"survived={wrong_pool_result['verification'].get('survived_count', 0)}",
+        flush=True,
+    )
     updated_verification = _update_verification_with_wrong_pool(verification, wrong_pool_result)
     write_json(verification_path, updated_verification)
 
+    print(f"[backfill:{problem_id}] build_suites start", flush=True)
     suites = build_suites(updated_verification, execution_config=runtime["execution_config"])
     write_json(problem_dir / "suites.json", suites)
+    print(
+        f"[backfill:{problem_id}] build_suites done "
+        f"baseline={len(suites.get('unicode_style_baseline', []))} "
+        f"ours={len(suites.get('ours_pipeline', []))} "
+        f"size_control={len(suites.get('size_control', []))}",
+        flush=True,
+    )
 
+    print(f"[backfill:{problem_id}] submission evaluation start", flush=True)
     submission_results, right_ids, wrong_ids = _evaluate_problem_submissions(
         problem_dir=problem_dir,
         problem=problem,
@@ -212,6 +230,7 @@ def _backfill_problem(
     )
     verdict_path = problem_dir / "candidate_verdicts.jsonl"
     _write_jsonl(verdict_path, submission_results)
+    print(f"[backfill:{problem_id}] submission evaluation done verdicts={len(submission_results)}", flush=True)
 
     result_path = problem_dir / "result.json"
     updated_result = {
@@ -241,6 +260,27 @@ def _backfill_problem(
     }
 
 
+def _apply_llm_overrides(
+    runtime: dict[str, Any],
+    *,
+    llm_timeout_seconds: float | None,
+    llm_max_retries: int | None,
+) -> dict[str, Any]:
+    if llm_timeout_seconds is None and llm_max_retries is None:
+        return runtime
+    llm_config = runtime["llm_config"]
+    updates: dict[str, Any] = {}
+    if llm_timeout_seconds is not None:
+        if llm_timeout_seconds <= 0:
+            raise ValueError("llm_timeout_seconds 必须大于 0。")
+        updates["timeout_seconds"] = llm_timeout_seconds
+    if llm_max_retries is not None:
+        if llm_max_retries <= 0:
+            raise ValueError("llm_max_retries 必须大于 0。")
+        updates["max_retries"] = llm_max_retries
+    return {**runtime, "llm_config": replace(llm_config, **updates)}
+
+
 def backfill_wrong_pool_run(
     *,
     run_dir: Path,
@@ -249,6 +289,9 @@ def backfill_wrong_pool_run(
     problem_ids: set[str] | None = None,
     limit: int | None = None,
     skip_report: bool = False,
+    force: bool = False,
+    llm_timeout_seconds: float | None = None,
+    llm_max_retries: int | None = None,
 ) -> dict[str, Any]:
     run_dir = run_dir.resolve()
     metadata = _read_run_metadata(run_dir)
@@ -261,6 +304,12 @@ def backfill_wrong_pool_run(
             problem_dir
             for problem_dir in completed_dirs
             if _problem_id_from_dir(problem_dir, read_json(problem_dir / "result.json")) in problem_ids
+        ]
+    if not force:
+        completed_dirs = [
+            problem_dir
+            for problem_dir in completed_dirs
+            if "wrong_pool_backfill" not in read_json(problem_dir / "result.json")
         ]
     if limit is not None:
         completed_dirs = completed_dirs[:limit]
@@ -275,6 +324,18 @@ def backfill_wrong_pool_run(
         return {"status": "dry_run", **dry_run_summary, "outcomes": []}
 
     runtime = load_runtime_config(_workflow_config_from_metadata(metadata, workflow_config_path))
+    runtime = _apply_llm_overrides(
+        runtime,
+        llm_timeout_seconds=llm_timeout_seconds,
+        llm_max_retries=llm_max_retries,
+    )
+    if llm_timeout_seconds is not None or llm_max_retries is not None:
+        print(
+            "[backfill] llm_overrides "
+            f"timeout={runtime['llm_config'].timeout_seconds} "
+            f"max_retries={runtime['llm_config'].max_retries}",
+            flush=True,
+        )
     client = OpenAIChatLLMClient(runtime["llm_config"])
     all_submission_ids: set[int] = set()
     problem_results: list[tuple[Path, dict[str, Any], dict[str, Any]]] = []
@@ -340,6 +401,9 @@ def backfill_wrong_pool_runs(
     problem_ids: set[str] | None = None,
     limit: int | None = None,
     skip_report: bool = False,
+    force: bool = False,
+    llm_timeout_seconds: float | None = None,
+    llm_max_retries: int | None = None,
 ) -> dict[str, Any]:
     run_summaries = [
         backfill_wrong_pool_run(
@@ -349,6 +413,9 @@ def backfill_wrong_pool_runs(
             problem_ids=problem_ids,
             limit=limit,
             skip_report=skip_report,
+            force=force,
+            llm_timeout_seconds=llm_timeout_seconds,
+            llm_max_retries=llm_max_retries,
         )
         for run_dir in run_dirs
     ]

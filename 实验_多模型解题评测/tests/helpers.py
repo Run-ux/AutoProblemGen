@@ -105,6 +105,7 @@ def create_successful_output_fixture(
     source_problem_id: str = "seed_p1",
     artifact_problem_id: str = "generated_p1",
     source: str = "codeforces",
+    problem_status: str = "verified",
 ) -> tuple[Path, Path, Path]:
     problem_dir = root / source_problem_id
     artifact_name = f"{source_problem_id}_round1.json"
@@ -125,7 +126,7 @@ def create_successful_output_fixture(
         {
             "problem": {
                 "problem_id": source_problem_id,
-                "status": "verified",
+                "status": problem_status,
                 "generation": {
                     "status": "verified",
                     "generated_status": "ok",

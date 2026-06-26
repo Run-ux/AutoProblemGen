@@ -15,7 +15,9 @@ def build_parser() -> argparse.ArgumentParser:
     manifest_parser.add_argument("--output", required=True, type=Path)
 
     run_parser = subparsers.add_parser("run", help="让配置模型解题并执行隐藏测试")
-    run_parser.add_argument("--manifest", required=True, type=Path)
+    run_source = run_parser.add_mutually_exclusive_group(required=True)
+    run_source.add_argument("--manifest", type=Path)
+    run_source.add_argument("--workflow-output-root", type=Path)
     run_parser.add_argument("--models", required=True, type=Path)
     run_parser.add_argument("--output-root", required=True, type=Path)
     run_parser.add_argument("--run-id", required=True)
@@ -36,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run":
         result = run_experiment(
             manifest_path=args.manifest,
+            workflow_output_root=args.workflow_output_root,
             models_path=args.models,
             output_root=args.output_root,
             run_id=args.run_id,

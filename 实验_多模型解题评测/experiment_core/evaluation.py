@@ -8,7 +8,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any, Callable
 
-from .manifest import load_and_validate_manifest
+from .manifest import load_and_validate_manifest, load_successful_output_problem_set
 from .models import ClientFactory, InfrastructureError, ModelConfig, OpenAICompatibleClient, load_model_configs
 from .prompting import CodeResponseError, build_prompts, extract_and_validate_code
 from .utils import atomic_write_json, read_json, safe_filename, sha256_bytes, storage_name, truncate_text, utc_now_iso
@@ -171,9 +171,10 @@ def _cost(model: ModelConfig, usage: dict[str, int]) -> float | None:
     ) / 1_000_000
 
 
-def _result_identity(manifest_sha256: str, model: ModelConfig, problem_id: str) -> dict[str, Any]:
+def _result_identity(problem_set_fingerprint: str, model: ModelConfig, problem_id: str) -> dict[str, Any]:
     return {
-        "manifest_sha256": manifest_sha256,
+        # 兼容既有报告与结果文件字段名；直接运行模式下这里保存的是问题集指纹。
+        "manifest_sha256": problem_set_fingerprint,
         "model_config_fingerprint": model.fingerprint,
         "problem_id": problem_id,
         "attempt": 1,
@@ -195,12 +196,12 @@ def _evaluate_job(
     problem: dict[str, Any],
     model: ModelConfig,
     client: Any,
-    manifest_sha256: str,
+    problem_set_fingerprint: str,
     result_path: Path,
     generation: dict[str, Any] | None = None,
     verification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    identity = _result_identity(manifest_sha256, model, problem["problem_id"])
+    identity = _result_identity(problem_set_fingerprint, model, problem["problem_id"])
     if _is_completed_result(result_path, identity):
         return {"action": "skipped", "path": str(result_path)}
     if generation is None or verification is None:
@@ -332,7 +333,7 @@ def _evaluate_problem_jobs(
     outcomes: list[dict[str, Any]] = []
     pending_jobs = []
     for job in jobs:
-        identity = _result_identity(job["manifest_sha256"], job["model"], problem["problem_id"])
+        identity = _result_identity(job["problem_set_fingerprint"], job["model"], problem["problem_id"])
         if _is_completed_result(job["result_path"], identity):
             outcomes.append({"action": "skipped", "path": str(job["result_path"])})
             on_job_finished(job)
@@ -373,28 +374,38 @@ def _evaluate_problem_jobs(
 
 def run_experiment(
     *,
-    manifest_path: Path,
+    manifest_path: Path | None = None,
+    workflow_output_root: Path | None = None,
     models_path: Path,
     output_root: Path,
     run_id: str,
     client_factory: ClientFactory | None = None,
 ) -> dict[str, Any]:
-    manifest, manifest_sha256 = load_and_validate_manifest(manifest_path)
+    if (manifest_path is None) == (workflow_output_root is None):
+        raise ValueError("必须且只能指定 manifest_path 或 workflow_output_root。")
+    if manifest_path is not None:
+        problem_set, problem_set_fingerprint = load_and_validate_manifest(manifest_path)
+        problem_source_type = "manifest"
+    else:
+        problem_set, problem_set_fingerprint = load_successful_output_problem_set(workflow_output_root)
+        problem_source_type = "successful_output"
+
     models, concurrency = load_model_configs(models_path)
     run_dir = output_root.resolve() / safe_filename(run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
     client_factory = client_factory or OpenAICompatibleClient
     clients = {model.model_id: client_factory(model) for model in models}
-    effective_problem_workers = min(concurrency.problem_workers, len(manifest["problems"]))
+    effective_problem_workers = min(concurrency.problem_workers, len(problem_set["problems"]))
     effective_models_per_problem = min(concurrency.models_per_problem, len(models))
     max_model_workers = max(1, effective_problem_workers * effective_models_per_problem)
     run_metadata = {
         "schema_version": 1,
         "run_id": run_id,
         "created_at": utc_now_iso(),
-        "manifest_path": str(manifest_path.resolve()),
-        "manifest_sha256": manifest_sha256,
-        "manifest_content_fingerprint": manifest.get("content_fingerprint", ""),
+        "problem_source_type": problem_source_type,
+        "manifest_sha256": problem_set_fingerprint,
+        "problem_set_fingerprint": problem_set_fingerprint,
+        "manifest_content_fingerprint": problem_set.get("content_fingerprint", ""),
         "models_path": str(models_path.resolve()),
         "concurrency": {
             "requested": concurrency.public_dict(),
@@ -406,12 +417,17 @@ def run_experiment(
         },
         "sampling_attempts_per_problem": 1,
         "models": [model.public_dict() for model in models],
-        "problem_count": len(manifest["problems"]),
+        "problem_count": len(problem_set["problems"]),
     }
+    if manifest_path is not None:
+        run_metadata["manifest_path"] = str(manifest_path.resolve())
+    else:
+        run_metadata["workflow_output_root"] = str(workflow_output_root.resolve())
+        run_metadata["excluded_count"] = int(problem_set.get("excluded_count", 0))
     atomic_write_json(run_dir / "run_metadata.json", run_metadata)
 
     problem_jobs = []
-    for problem in manifest["problems"]:
+    for problem in problem_set["problems"]:
         jobs = []
         for model in models:
             model_dir = run_dir / "results" / storage_name(model.model_id)
@@ -420,7 +436,7 @@ def run_experiment(
                     "problem": problem,
                     "model": model,
                     "client": clients[model.model_id],
-                    "manifest_sha256": manifest_sha256,
+                    "problem_set_fingerprint": problem_set_fingerprint,
                     "result_path": model_dir / f"{storage_name(problem['problem_id'])}.json",
                 }
             )

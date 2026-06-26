@@ -253,7 +253,7 @@ def generate_reports(run_dir: Path) -> dict[str, Any]:
         "# 生成题质量评测报告",
         "",
         f"- 实验状态：`{experiment_status}`",
-        f"- 冻结题目数：{expected_problem_count}",
+        f"- 题目数：{expected_problem_count}",
         f"- 配置模型数：{len(configured_models)}",
         f"- 完整模型数：{len(complete_models)}",
         f"- 基础设施错误数：{infrastructure_error_count}",

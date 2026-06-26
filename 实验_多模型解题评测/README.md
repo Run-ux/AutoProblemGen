@@ -22,17 +22,31 @@
 
 少于三个完整模型时仍输出逐题通过率，但不形成正式难度分档。
 
-## 1. 冻结题目清单
+## 1. 题目来源
+
+默认直接从 `successful_output` 运行模型解题，不需要先生成 manifest：
 
 ```powershell
-python D:\AutoProblemGen\实验\main.py build-manifest `
+python D:\AutoProblemGen\实验_多模型解题评测\main.py run `
   --workflow-output-root D:\AutoProblemGen\总流程\successful_output `
-  --output D:\AutoProblemGen\实验\manifests\generated_v1.json
+  --models D:\AutoProblemGen\实验_多模型解题评测\models.json `
+  --output-root D:\AutoProblemGen\实验_多模型解题评测\output `
+  --run-id generated_v1
+```
+
+直接模式只轻量枚举 `successful_output` 的每题导出目录：读取 metadata、生成 artifact 和本地验证 artifact 路径，不提前扫描验证 JSON 内部用例，也不计算 artifact SHA-256。运行实验时才会读取验证 artifact 并执行隐藏测试；如果验证文件内容损坏或测试类别缺失，会在评测该题时暴露。
+
+如需为可复现实验提前固定题目集合，仍可选择生成 manifest：
+
+```powershell
+python D:\AutoProblemGen\实验_多模型解题评测\main.py build-manifest `
+  --workflow-output-root D:\AutoProblemGen\总流程\successful_output `
+  --output D:\AutoProblemGen\实验_多模型解题评测\manifests\generated_v1.json
 ```
 
 清单默认从 `successful_output` 的每题导出目录构建，并冻结其中本地复制的生成 artifact 和验证 artifact。旧版 `总流程\output` 的 `workflow_summary.json` 目录树仍兼容。清单只收录工作流状态为 `verified` 且四类真值完整的题目。大规模真值必须为 `status=ok` 且没有失败项。若使用旧版 workflow output，且同一生成题出现在多个历史 run 中，只选择修改时间最新的有效版本，其他版本记录为 `superseded_duplicate`。
 
-命令同时生成 `generated_v1_excluded.json`，记录未收录题目及原因。Manifest 保存生成 artifact 和验证 artifact 的 SHA-256；运行实验前会重新校验，文件变化时 fail-fast，避免实验样本静默漂移。
+命令同时生成 `generated_v1_excluded.json`，记录未收录题目及原因。Manifest 保存生成 artifact 和验证 artifact 的本地路径、题目元数据和测试类别计数；运行实验前只校验引用文件仍然存在，不再计算或校验 artifact SHA-256。
 
 ## 2. 配置模型
 
@@ -76,22 +90,22 @@ python D:\AutoProblemGen\实验\main.py build-manifest `
 ## 3. 运行实验
 
 ```powershell
-python D:\AutoProblemGen\实验\main.py run `
-  --manifest D:\AutoProblemGen\实验\manifests\generated_v1.json `
-  --models D:\AutoProblemGen\实验\models.json `
-  --output-root D:\AutoProblemGen\实验\output `
+python D:\AutoProblemGen\实验_多模型解题评测\main.py run `
+  --workflow-output-root D:\AutoProblemGen\总流程\successful_output `
+  --models D:\AutoProblemGen\实验_多模型解题评测\models.json `
+  --output-root D:\AutoProblemGen\实验_多模型解题评测\output `
   --run-id generated_v1
 ```
 
 结果写入 `output/<run_id>/results/<model>/<problem>.json`。每条结果记录统一提示词、原始 API 响应、token、延迟、提取代码、逐用例判定和资源消耗。
 
-相同 manifest、模型配置指纹、题目和 attempt 的 `completed` 结果会跳过。`infrastructure_error` 会在重跑时再次调用；模型生成出的错误代码不会自动修复或重新采样。
+相同问题集指纹、模型配置指纹、题目和 attempt 的 `completed` 结果会跳过。`infrastructure_error` 会在重跑时再次调用；模型生成出的错误代码不会自动修复或重新采样。若使用 manifest，可将 `--workflow-output-root` 替换为 `--manifest D:\AutoProblemGen\实验_多模型解题评测\manifests\generated_v1.json`。
 
 ## 4. 生成报告
 
 ```powershell
-python D:\AutoProblemGen\实验\main.py report `
-  --run-dir D:\AutoProblemGen\实验\output\generated_v1
+python D:\AutoProblemGen\实验_多模型解题评测\main.py report `
+  --run-dir D:\AutoProblemGen\实验_多模型解题评测\output\generated_v1
 ```
 
 输出包括：
@@ -103,12 +117,12 @@ python D:\AutoProblemGen\实验\main.py report `
 - `summary.json`：机器可读汇总和数据完整性状态。
 - `report.md`：实验摘要与模型排名。
 
-只要任一配置模型存在缺失结果或基础设施错误，报告状态就是 `incomplete`；正式排名只纳入完整覆盖全部冻结题目的模型。
+只要任一配置模型存在缺失结果或基础设施错误，报告状态就是 `incomplete`；正式排名只纳入完整覆盖全部题目的模型。
 
 ## 测试
 
 ```powershell
-python -m unittest discover -s D:\AutoProblemGen\实验\tests -v
+python -m unittest discover -s D:\AutoProblemGen\实验_多模型解题评测\tests -v
 ```
 
 测试使用假模型，不会请求真实 API。

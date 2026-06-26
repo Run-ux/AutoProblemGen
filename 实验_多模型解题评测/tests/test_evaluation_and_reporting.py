@@ -15,8 +15,13 @@ from experiment_core.evaluation import _evaluate_case, run_experiment
 from experiment_core.manifest import build_manifest
 from experiment_core.models import InfrastructureError
 from experiment_core.reporting import generate_reports
-from experiment_core.utils import sha256_file
-from helpers import create_workflow_fixture, generation_artifact, verification_artifact, write_json
+from helpers import (
+    create_successful_output_fixture,
+    create_workflow_fixture,
+    generation_artifact,
+    verification_artifact,
+    write_json,
+)
 
 
 class FakeClient:
@@ -139,9 +144,7 @@ class EvaluationAndReportingTests(unittest.TestCase):
                     "changed_axes": [],
                     "algorithm_tags": [],
                     "generation_artifact_path": str(generation_path),
-                    "generation_artifact_sha256": sha256_file(generation_path),
                     "verification_artifact_path": str(verification_path),
-                    "verification_artifact_sha256": sha256_file(verification_path),
                 }
             )
         manifest_path = root / "manifest.json"
@@ -209,6 +212,39 @@ class EvaluationAndReportingTests(unittest.TestCase):
             self.assertEqual(first["infrastructure_error_count"], 1)
             self.assertEqual(second["infrastructure_error_count"], 0)
             self.assertEqual(client.calls, 2)
+
+    def test_run_experiment_from_successful_output_skips_and_reports(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            workflow_output_root = root / "successful_output"
+            create_successful_output_fixture(workflow_output_root)
+            models_path = self._models_file(root, ["m1"])
+            client = FakeClient("def solve(input_str):\n    return 'ok\\n'")
+
+            first = run_experiment(
+                workflow_output_root=workflow_output_root,
+                models_path=models_path,
+                output_root=root / "output",
+                run_id="run",
+                client_factory=lambda _config: client,
+            )
+            second = run_experiment(
+                workflow_output_root=workflow_output_root,
+                models_path=models_path,
+                output_root=root / "output",
+                run_id="run",
+                client_factory=lambda _config: client,
+            )
+            run_dir = root / "output" / "run"
+            metadata = json.loads((run_dir / "run_metadata.json").read_text(encoding="utf-8"))
+            report_summary = generate_reports(run_dir)
+
+            self.assertEqual(first["completed_count"], 1)
+            self.assertEqual(second["skipped_count"], 1)
+            self.assertEqual(client.calls, 1)
+            self.assertEqual(metadata["problem_source_type"], "successful_output")
+            self.assertEqual(metadata["workflow_output_root"], str(workflow_output_root.resolve()))
+            self.assertEqual(report_summary["status"], "complete")
 
     def test_two_level_concurrency_runs_multiple_problems_and_models(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -40,6 +40,9 @@ def build_parser() -> argparse.ArgumentParser:
     backfill_parser.add_argument("--workflow-config", type=Path, default=None, help="覆盖 run_metadata 中的 workflow 配置")
     backfill_parser.add_argument("--dry-run", action="store_true", help="只扫描将处理的题目和提交语言分布，不写文件")
     backfill_parser.add_argument("--skip-report", action="store_true", help="回填后不重建报告，适合多进程分片并行")
+    backfill_parser.add_argument("--force", action="store_true", help="强制重跑已经有 wrong_pool_backfill 标记的题")
+    backfill_parser.add_argument("--llm-timeout-seconds", type=float, default=None, help="覆盖本次回填的单次 LLM 请求超时")
+    backfill_parser.add_argument("--llm-max-retries", type=int, default=None, help="覆盖本次回填的 LLM 最大重试次数")
     backfill_parser.add_argument("--problem-id", action="append", default=None, help="只回填指定题号，可重复传入")
     backfill_parser.add_argument("--limit", type=int, default=None, help="每个 run 最多回填前 N 个 completed 题")
     return parser
@@ -89,6 +92,9 @@ def main(argv: list[str] | None = None) -> int:
             problem_ids=set(args.problem_id) if args.problem_id else None,
             limit=args.limit,
             skip_report=args.skip_report,
+            force=args.force,
+            llm_timeout_seconds=args.llm_timeout_seconds,
+            llm_max_retries=args.llm_max_retries,
         )
         print(f"[backfill] status={summary['status']} run_count={summary['run_count']}")
         for item in summary["runs"]:
